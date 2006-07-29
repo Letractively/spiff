@@ -1,0 +1,320 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="210mm"
+   height="297mm"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.44+devel"
+   sodipodi:docbase="C:\Dokumente und Einstellungen\Abels\Desktop"
+   sodipodi:docname="door.svg">
+  <defs
+     id="defs4">
+    <linearGradient
+       inkscape:collect="always"
+       id="linearGradient3871">
+      <stop
+         style="stop-color:#353535;stop-opacity:1;"
+         offset="0"
+         id="stop3873" />
+      <stop
+         style="stop-color:#353535;stop-opacity:0;"
+         offset="1"
+         id="stop3875" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient2891">
+      <stop
+         id="stop2893"
+         offset="0"
+         style="stop-color:white;stop-opacity:1;" />
+      <stop
+         id="stop2895"
+         offset="1"
+         style="stop-color:#fdb200;stop-opacity:0;" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient2794">
+      <stop
+         style="stop-color:#1b1b1b;stop-opacity:1;"
+         offset="0"
+         id="stop2796" />
+      <stop
+         style="stop-color:#1b1b1b;stop-opacity:0;"
+         offset="1"
+         id="stop2798" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient2777">
+      <stop
+         style="stop-color:#646464;stop-opacity:1;"
+         offset="0"
+         id="stop2779" />
+      <stop
+         style="stop-color:#3b3b3b;stop-opacity:1;"
+         offset="1"
+         id="stop2781" />
+    </linearGradient>
+    <radialGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient2777"
+       id="radialGradient2783"
+       cx="196.1378"
+       cy="519.24036"
+       fx="196.1378"
+       fy="519.24036"
+       r="16.878307"
+       gradientTransform="matrix(1,0,0,1.034483,0,-17.90483)"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient2794"
+       id="linearGradient2800"
+       x1="218.41104"
+       y1="519.24048"
+       x2="204.38701"
+       y2="519.20197"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.230417,0,0,0.259859,235.3286,268.9274)" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient2794"
+       id="linearGradient2804"
+       gradientUnits="userSpaceOnUse"
+       x1="223.6916"
+       y1="513.71564"
+       x2="204.38701"
+       y2="519.20197"
+       gradientTransform="matrix(0.230417,0,0,0.259859,235.3286,268.9274)" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient2794"
+       id="linearGradient2808"
+       gradientUnits="userSpaceOnUse"
+       x1="221.82961"
+       y1="533.57001"
+       x2="204.38701"
+       y2="519.20197"
+       gradientTransform="matrix(0.230417,0,0,0.259859,235.3286,268.9274)" />
+    <radialGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3871"
+       id="radialGradient3877"
+       cx="282.5"
+       cy="408.86218"
+       fx="282.5"
+       fy="408.86218"
+       r="44.5"
+       gradientTransform="matrix(1,0,0,0.977528,0,9.187914)"
+       gradientUnits="userSpaceOnUse" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="3.7410503"
+     inkscape:cx="279.72596"
+     inkscape:cy="657.61538"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     inkscape:window-width="1056"
+     inkscape:window-height="819"
+     inkscape:window-x="66"
+     inkscape:window-y="66" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Ebene 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <path
+       sodipodi:type="arc"
+       style="opacity:1;fill:url(#radialGradient3877);fill-opacity:1;stroke:none;stroke-opacity:1"
+       id="path3869"
+       sodipodi:cx="282.5"
+       sodipodi:cy="408.86218"
+       sodipodi:rx="44.5"
+       sodipodi:ry="43.5"
+       d="M 327 408.86218 A 44.5 43.5 0 1 1  238,408.86218 A 44.5 43.5 0 1 1  327 408.86218 z"
+       transform="matrix(1.247191,0,0,1.448276,-66.83146,-184.783)"
+       inkscape:export-filename="C:\Dokumente und Einstellungen\Abels\Desktop\door.png"
+       inkscape:export-xdpi="29.581202"
+       inkscape:export-ydpi="29.581202" />
+    <path
+       inkscape:export-ydpi="29.581202"
+       inkscape:export-xdpi="29.581202"
+       inkscape:export-filename="C:\Dokumente und Einstellungen\Abels\Desktop\door.png"
+       style="fill:black;fill-opacity:1;stroke:none"
+       d="M 248.84299,369.66027 L 314.15687,354.24133 L 314.15687,450.92223 L 249.18834,432.90518 L 248.84299,369.66027 z "
+       id="path3879"
+       sodipodi:nodetypes="ccccc" />
+    <path
+       sodipodi:nodetypes="ccccc"
+       id="path2812"
+       d="M 245.6449,369.66027 L 310.95878,354.24133 L 310.95878,450.92223 L 245.99025,432.90518 L 245.6449,369.66027 z "
+       style="fill:#4d1803;fill-opacity:1;stroke:none"
+       inkscape:export-filename="C:\Dokumente und Einstellungen\Abels\Desktop\door.png"
+       inkscape:export-xdpi="29.581202"
+       inkscape:export-ydpi="29.581202" />
+    <path
+       style="fill:#fefefe;fill-opacity:1;stroke:none"
+       d="M 251.99569,378.22222 L 302.66243,366.68586 L 302.66243,448.56672 L 252.05844,433.83449 L 251.99569,378.22222 z "
+       id="rect2769"
+       sodipodi:nodetypes="ccccc"
+       inkscape:export-filename="C:\Dokumente und Einstellungen\Abels\Desktop\door.png"
+       inkscape:export-xdpi="29.581202"
+       inkscape:export-ydpi="29.581202" />
+    <path
+       sodipodi:nodetypes="ccccc"
+       id="path2877"
+       d="M 251.61727,377.53685 L 295.01373,365.18369 L 295.01373,450.68646 L 252.19535,434.2359 L 251.61727,377.53685 z "
+       style="opacity:1;fill:black;fill-opacity:1;stroke:none"
+       inkscape:export-filename="C:\Dokumente und Einstellungen\Abels\Desktop\door.png"
+       inkscape:export-xdpi="29.581202"
+       inkscape:export-ydpi="29.581202" />
+    <path
+       style="opacity:1;fill:lime;fill-opacity:1;stroke:none"
+       d="M 251.61727,377.41277 L 292.41104,365.18369 L 292.41104,450.68646 L 252.16068,434.68742 L 251.61727,377.41277 z "
+       id="rect1872"
+       sodipodi:nodetypes="ccccc"
+       inkscape:export-filename="C:\Dokumente und Einstellungen\Abels\Desktop\door.png"
+       inkscape:export-xdpi="29.581202"
+       inkscape:export-ydpi="29.581202" />
+    <path
+       sodipodi:nodetypes="ccccc"
+       id="path2789"
+       d="M 279.86977,397.57352 L 288.54584,396.61189 L 288.54584,422.57595 L 280.34695,420.41219 L 279.86977,397.57352 z "
+       style="fill:#1b1b1b;fill-opacity:1;stroke:none"
+       inkscape:export-filename="C:\Dokumente und Einstellungen\Abels\Desktop\door.png"
+       inkscape:export-xdpi="29.581202"
+       inkscape:export-ydpi="29.581202" />
+    <path
+       style="fill:#b7b7b7;fill-opacity:1;stroke:none"
+       d="M 279.04988,397.76236 L 287.72596,396.80799 L 287.72596,422.57595 L 279.76748,420.90031 L 279.04988,397.76236 z "
+       id="rect1875"
+       sodipodi:nodetypes="ccccc"
+       inkscape:export-filename="C:\Dokumente und Einstellungen\Abels\Desktop\door.png"
+       inkscape:export-xdpi="29.581202"
+       inkscape:export-ydpi="29.581202" />
+    <path
+       transform="matrix(0.164957,0,0,0.637692,269.6194,105.5061)"
+       d="M 90.79365 484.90186 A 4.6560845 5.2380953 0 1 1  81.481481,484.90186 A 4.6560845 5.2380953 0 1 1  90.79365 484.90186 z"
+       sodipodi:ry="5.2380953"
+       sodipodi:rx="4.6560845"
+       sodipodi:cy="484.90186"
+       sodipodi:cx="86.137566"
+       id="path2810"
+       style="opacity:1;fill:#ddd;fill-opacity:1;stroke:none"
+       sodipodi:type="arc"
+       inkscape:export-filename="C:\Dokumente und Einstellungen\Abels\Desktop\door.png"
+       inkscape:export-xdpi="29.581202"
+       inkscape:export-ydpi="29.581202" />
+    <path
+       sodipodi:type="arc"
+       style="opacity:1;fill:#3d3d3d;fill-opacity:1;stroke:none"
+       id="path2765"
+       sodipodi:cx="86.137566"
+       sodipodi:cy="484.90186"
+       sodipodi:rx="4.6560845"
+       sodipodi:ry="5.2380953"
+       d="M 90.79365 484.90186 A 4.6560845 5.2380953 0 1 1  81.481481,484.90186 A 4.6560845 5.2380953 0 1 1  90.79365 484.90186 z"
+       transform="matrix(0.153729,0,0,0.637692,270.2111,105.5061)"
+       inkscape:export-filename="C:\Dokumente und Einstellungen\Abels\Desktop\door.png"
+       inkscape:export-xdpi="29.581202"
+       inkscape:export-ydpi="29.581202" />
+    <path
+       transform="matrix(0.230417,0,0,0.259859,236.0711,268.9274)"
+       d="M 220 519.24048 A 16.878307 17.460318 0 1 1  186.24338,519.24048 A 16.878307 17.460318 0 1 1  220 519.24048 z"
+       sodipodi:ry="17.460318"
+       sodipodi:rx="16.878307"
+       sodipodi:cy="519.24048"
+       sodipodi:cx="203.12169"
+       id="path2774"
+       style="opacity:1;fill:#d9d9d9;fill-opacity:1;stroke:none"
+       sodipodi:type="arc"
+       inkscape:export-filename="C:\Dokumente und Einstellungen\Abels\Desktop\door.png"
+       inkscape:export-xdpi="29.581202"
+       inkscape:export-ydpi="29.581202" />
+    <path
+       sodipodi:type="arc"
+       style="opacity:1;fill:url(#radialGradient2783);fill-opacity:1;stroke:none"
+       id="path2767"
+       sodipodi:cx="203.12169"
+       sodipodi:cy="519.24048"
+       sodipodi:rx="16.878307"
+       sodipodi:ry="17.460318"
+       d="M 220 519.24048 A 16.878307 17.460318 0 1 1  186.24338,519.24048 A 16.878307 17.460318 0 1 1  220 519.24048 z"
+       transform="matrix(0.230417,0,0,0.259859,235.3286,268.9274)"
+       inkscape:export-filename="C:\Dokumente und Einstellungen\Abels\Desktop\door.png"
+       inkscape:export-xdpi="29.581202"
+       inkscape:export-ydpi="29.581202" />
+    <path
+       style="fill:url(#linearGradient2800);fill-opacity:1;stroke:none"
+       d="M 286.0204,403.85699 C 286.0204,406.36154 284.4932,408.8961 280.62569,408.17912 C 278.5149,407.78781 281.97443,406.2166 281.97443,403.71205 C 281.97443,401.2075 279.41101,399.39145 281.55777,399.39145 C 284.4215,399.39145 286.0204,401.35243 286.0204,403.85699 z "
+       id="path2791"
+       sodipodi:nodetypes="csssc"
+       inkscape:export-filename="C:\Dokumente und Einstellungen\Abels\Desktop\door.png"
+       inkscape:export-xdpi="29.581202"
+       inkscape:export-ydpi="29.581202" />
+    <path
+       sodipodi:nodetypes="csssc"
+       id="path2802"
+       d="M 286.0204,403.85699 C 286.0204,406.36154 284.4932,408.8961 280.62569,408.17912 C 278.5149,407.78781 281.97443,406.2166 281.97443,403.71205 C 281.97443,401.2075 279.4394,399.73945 281.55777,399.39145 C 284.07877,398.97732 286.0204,401.35243 286.0204,403.85699 z "
+       style="fill:url(#linearGradient2804);fill-opacity:1;stroke:none"
+       inkscape:export-filename="C:\Dokumente und Einstellungen\Abels\Desktop\door.png"
+       inkscape:export-xdpi="29.581202"
+       inkscape:export-ydpi="29.581202" />
+    <path
+       style="fill:url(#linearGradient2808);fill-opacity:1;stroke:none"
+       d="M 286.0204,403.85699 C 286.0204,406.36154 284.4932,408.8961 280.62569,408.17912 C 278.5149,407.78781 281.97443,406.2166 281.97443,403.71205 C 281.97443,401.2075 279.4366,399.72197 281.55777,399.39145 C 284.30726,398.96304 286.0204,401.35243 286.0204,403.85699 z "
+       id="path2806"
+       sodipodi:nodetypes="csssc"
+       inkscape:export-filename="C:\Dokumente und Einstellungen\Abels\Desktop\door.png"
+       inkscape:export-xdpi="29.581202"
+       inkscape:export-ydpi="29.581202" />
+    <path
+       style="opacity:1;fill:#7c5700;fill-opacity:1;stroke:none;stroke-opacity:1"
+       d="M 238.41545,382.17237 C 240.70264,388.39084 242.49972,393.61338 243.47571,398.57016 L 196.19114,398.57016 L 196.19114,412.91823 L 243.71911,412.91823 C 242.91364,417.46373 241.21825,422.3532 238.41545,428.08619 L 263.42208,405.53922 C 263.42208,405.53922 257.27291,397.75027 238.41545,382.17237 z "
+       id="rect2832"
+       inkscape:export-filename="C:\Dokumente und Einstellungen\Abels\Desktop\door.png"
+       inkscape:export-xdpi="29.581202"
+       inkscape:export-ydpi="29.581202" />
+    <path
+       id="path2875"
+       d="M 237.18562,378.89281 C 239.4728,385.11128 241.26989,390.33382 242.24587,395.2906 L 194.96131,395.2906 L 194.96131,409.63867 L 242.48928,409.63867 C 241.6838,414.18417 239.98841,419.07364 237.18562,424.80663 L 262.19225,402.25967 C 262.19225,402.25967 256.04308,394.47071 237.18562,378.89281 z "
+       style="opacity:1;fill:#fdb200;fill-opacity:1;stroke:none;stroke-opacity:1"
+       inkscape:export-filename="C:\Dokumente und Einstellungen\Abels\Desktop\door.png"
+       inkscape:export-xdpi="29.581202"
+       inkscape:export-ydpi="29.581202" />
+    <rect
+       style="opacity:1;fill:white;fill-opacity:0.4766355;stroke:none;stroke-opacity:1"
+       id="rect2879"
+       width="46.286011"
+       height="5.4475021"
+       x="195.02161"
+       y="395.38995"
+       inkscape:export-xdpi="29.581202"
+       inkscape:export-ydpi="29.581202"
+       inkscape:export-filename="C:\Dokumente und Einstellungen\Abels\Desktop\door.png" />
+  </g>
+</svg>

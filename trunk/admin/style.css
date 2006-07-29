@@ -1,0 +1,123 @@
+body {
+  font-family: verdana, sans-serif, arial, helvetica;
+  margin: 0px;
+}
+
+h2 {
+  text-align: center;
+  margin-top: 0;
+  margin-bottom: 10;
+}
+
+h3 {
+  margin-left: 5;
+  margin-top: 15;
+  margin-bottom: 0;
+}
+
+td.banner_left {
+  background: url(img/top_left.png);
+}
+
+td.banner_right {
+  color: white;
+  background: url(img/top_right.png);
+  width: 482px;
+  height: 70px;
+}
+
+img.logo {
+  margin: 8px;
+  margin-left: 17px;
+}
+
+.header {
+  margin-bottom: 10px;
+}
+
+a.title {
+  color: white;
+  text-decoration: none;
+  font-size: 1em;
+}
+
+span.title {
+  color: white;
+  font-size: 1.4em;
+  vertical-align: top;
+}
+
+.trade {
+  font-size: 0.6em;
+  color: white;
+}
+
+.breadcrumbs {
+  margin-left: 10px;
+  font-weight: bold;
+}
+
+.container {
+  padding: 10px;
+  padding-top: 5px;
+}
+
+table.menu {
+  font-size: 1.08em;
+  white-space: nowrap;
+}
+
+table.menu img {
+  margin-top: 2px;
+  margin-left: 2px;
+}
+
+table.indent {
+  margin-left: 25;
+  margin-bottom: 10;
+}
+
+table.options {
+  margin-left: 12;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+textarea {
+  width: 100%;
+  padding: 2px;
+  border: 1px solid #888;
+  background-color: #f3f3f3;
+}
+
+input {
+  padding: 2px;
+  border: 1px solid #888;
+  background-color: #f3f3f3;
+}
+
+.field {
+  width: 100%;
+}
+
+select {
+  background-color: #f3f3f3;
+  border: 1px solid #ddd;
+}
+
+select.multiple {
+  width: 100%;
+  height: 6em;
+}
+
+.button {
+  margin-top: 7px;
+  padding: 7px;
+}
+
+.footer {
+  font-size: 0.8em;
+  padding-right: 5px;
+}
