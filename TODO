@@ -10,11 +10,15 @@
 * Create not only an ARO, but also an AXO for every user, also in
   setup.php.
 
+* Add a navigation bar ("breadcrumbs") to the admin GUI.
+
 * Create a user friendly group admin GUI that correctly reflects
   permission inheritance.
 
 * Create a user friendly user admin GUI that correctly reflects
   permission inheritance.
+
+* Implement login for the admin GUI.
 
 * Create a bus over which plugins are able to communicate. Investigate
   open standard protocols, maybe there is even an implementation
