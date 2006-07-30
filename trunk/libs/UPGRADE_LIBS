@@ -34,3 +34,7 @@ global $options;
 * Open libs/phpgacl/setup.php
 
 * Make sure that libs/phpgacl/admin/acl_admin.php works.
+
+* Edit admin/setup.php so that the require_once statements point to the new version of phpgacl.
+
+* Edit admin/index.php so that the require_once statements point to the new version of phpgacl.

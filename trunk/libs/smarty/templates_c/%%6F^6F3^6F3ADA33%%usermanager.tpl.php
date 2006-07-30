@@ -1,4 +1,4 @@
-<?php /* Smarty version 2.6.9, created on 2006-07-23 19:53:40
+<?php /* Smarty version 2.6.9, created on 2006-07-30 18:01:53
          compiled from usermanager.tpl */ ?>
 <table class="container" width="100%" border="0" cellpadding="0" cellspacing="0">
   <tr>
@@ -17,8 +17,9 @@
 <?php $_from = $this->_tpl_vars['groups']; if (!is_array($_from) && !is_object($_from)) { settype($_from, 'array'); }if (count($_from)):
     foreach ($_from as $this->_tpl_vars['group']):
 ?>
-      <tr><td><img src="img/group.png" alt="Group:" /> <?php echo $this->_tpl_vars['group']; ?>
- ()</td></tr>
+      <tr><td><img src="img/group.png" alt="Group:" /> <?php echo $this->_tpl_vars['group']['name']; ?>
+ (<?php echo $this->_tpl_vars['group']['count']; ?>
+)</td></tr>
 <?php endforeach; endif; unset($_from);  if ($this->_tpl_vars['users']): ?>
       <tr><td height="1" bgcolor="#aaaaaa"></td></tr>
 <?php endif;  $_from = $this->_tpl_vars['users']; if (!is_array($_from) && !is_object($_from)) { settype($_from, 'array'); }if (count($_from)):
