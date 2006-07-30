@@ -13,7 +13,7 @@
     <td valign="top">
     <table class="menu" width="100%" cellpadding="0">
 {foreach from=$groups item=group}
-      <tr><td><img src="img/group.png" alt="Group:" /> {$group} ()</td></tr>
+      <tr><td><img src="img/group.png" alt="Group:" /> {$group.name} ({$group.count})</td></tr>
 {/foreach}
 {if $users}
       <tr><td height="1" bgcolor="#aaaaaa"></td></tr>

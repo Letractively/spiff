@@ -18,61 +18,45 @@
   */
 ?>
 <?php
+function phpgacl_get_group_list($gacl_api, $parentid)
+{
+  $group_table     = $gacl_api->_db_table_prefix . 'aro_groups';
+  $group_map_table = $gacl_api->_db_table_prefix . 'groups_aro_map';
+  $query = '
+    SELECT		a.id, a.name, a.value, count(b.aro_id)
+    FROM		  '. $group_table     .' a
+    LEFT JOIN	'. $group_map_table .' b ON b.group_id=a.id
+    WHERE     a.parent_id='. $parentid*1 .'
+    GROUP BY	a.id,a.name,a.value';
+  $rs = &$gacl_api->db->Execute($query);
+  //echo $query;
+  $group_data = array();
+  
+  if(is_object($rs)) {
+    while($row = $rs->FetchRow()) {
+      $group_data[$row[0]] = array(
+        'name' => $row[1],
+        'value' => $row[2],
+        'count' => $row[3]
+      );
+    }
+  }
+  
+  return $group_data;
+}
+
   class UserManagerPrinter extends PrinterBase {
     function show() {
-      $gid      = $this->gacl->get_group_id('everybody');
-      $groupids = $this->gacl->get_group_children($gid);
-      $objects  = $this->gacl->get_group_objects($gid);
-      $groups   = array();
-      $users    = array();
-      foreach ($groupids as $gid) {
-        $data = $this->gacl->get_group_data($gid);
-        $groups[$gid] = $data[3];
-      }
-      if (isset($objects['users'])) {
-        foreach ($objects['users'] as $alias) {
-          $uid  = $this->gacl->get_object_id('users', $alias, 'ARO');
-          $data = $this->gacl->get_object_data($uid, 'ARO');
-          $users[$uid] = $data[0][3];
-        }
-      }
+      if (isset($_GET['gid']))
+        $gid = $_GET['gid'] * 1;
+      else
+        $gid = $this->gacl->get_group_id('everybody');
+
+      $groups = phpgacl_get_group_list($this->gacl, $gid);
       $this->smarty->clear_all_assign();
       $this->smarty->assign_by_ref('groups', $groups);
-      $this->smarty->assign_by_ref('users',  $users);
+      //$this->smarty->assign_by_ref('users',  $users);
       $this->parent->append_content($this->smarty->fetch('usermanager.tpl'));
     }
   }
-
-  $gacl = new gacl_api();
-  $gacl->clear_database() or die('Unable to clear db.');
-
-  // Create main sections.
-  $gacl->add_object_section('Content', 'content', 10, FALSE, 'AXO')
-           or die('Section "Content" failed.');
-  $gacl->add_object_section('Users', 'users', 10, FALSE, 'ARO')
-           or die('Section "Users" failed.');
-
-  // Add homepage objects.
-  $gacl->add_object('content', 'Homepage', 'homepage', 10, FALSE, 'AXO')
-           or die('Homepage AXO creation for "view" failed.');
-
-  // Create groups.
-  $content_gid = $gacl->add_group('content', 'Content', 0, 'AXO')
-           or die('Content group AXO creation failure.');
-  $everybody_gid = $gacl->add_group('everybody', 'Everybody', 0, 'ARO')
-           or die('"Everybody" user group ARO creation failure.');
-  $admin_gid = $gacl->add_group('administrators', 'Administrators', $everybody_gid, 'ARO')
-           or die('Root user group ARO creation failure.');
-  $user_gid = $gacl->add_group('users', 'Users', $everybody_gid, 'ARO')
-           or die('User group ARO creation failure.');
-
-  // Add users into groups.
-  $gacl->add_object('users', 'Administrator', 'administrator', 10, FALSE, 'ARO')
-           or die('Root user ARO creation failure.');
-  $gacl->add_group_object($admin_gid, 'users', 'administrator', 'ARO')
-           or die('Root user assign failure.');
-  $gacl->add_object('users', 'Anonymous George', 'anonymous', 10, FALSE, 'ARO')
-           or die('Anonymous user ARO creation failure.');
-  $gacl->add_group_object($user_gid, 'users', 'anonymous', 'ARO')
-           or die('Anonymous user assign failure.');
 ?>
