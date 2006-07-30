@@ -67,9 +67,14 @@ table.menu {
   white-space: nowrap;
 }
 
+table.menu a {
+  text-decoration: none;
+}
+
 table.menu img {
   margin-top: 2px;
   margin-left: 2px;
+  border: 0px;
 }
 
 table.indent {

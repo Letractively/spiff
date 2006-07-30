@@ -12,14 +12,14 @@
     <td><img src="img/line_left.png" alt="" height="100%" width="14" /></td>
     <td valign="top">
     <table class="menu" width="100%" cellpadding="0">
-{foreach from=$groups item=group}
-      <tr><td><img src="img/group.png" alt="Group:" /> {$group.name} ({$group.count})</td></tr>
+{foreach from=$groups item=group key=gid}
+      <tr><td><a href="?manage_users=1&gid={$gid}"><img src="img/group.png" alt="Group:" /> {$group.name}</a> ({$group.count})</td></tr>
 {/foreach}
-{if $users}
+{if $groups and $users}
       <tr><td height="1" bgcolor="#aaaaaa"></td></tr>
 {/if}
 {foreach from=$users item=user}
-      <tr><td><img src="img/user.png" alt="User:" /> {$user}</td></tr>
+      <tr><td><img src="img/user.png" alt="User:" /> {$user.name}</td></tr>
 {/foreach}
     </table>
     </td>
