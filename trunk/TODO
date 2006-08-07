@@ -12,9 +12,6 @@
 
 * Add a navigation bar ("breadcrumbs") to the admin GUI.
 
-* Create a user friendly group admin GUI that correctly reflects
-  permission inheritance.
-
 * Create a user friendly user admin GUI that correctly reflects
   permission inheritance.
 

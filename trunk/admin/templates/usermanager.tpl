@@ -12,14 +12,14 @@
     <td><img src="img/line_left.png" alt="" height="100%" width="14" /></td>
     <td valign="top">
     <table class="menu" width="100%" cellpadding="0">
-{foreach from=$groups item=group key=gid}
-      <tr><td><a href="?manage_users=1&gid={$gid}"><img src="img/group.png" alt="Group:" /> {$group.name}</a> ({$group.count})</td></tr>
+{foreach from=$groups item=current key=gid}
+      <tr><td><a href="?manage_users=1&gid={$gid}"><img src="img/group.png" alt="Group:" /> {$current.name}</a> ({$current.count})</td></tr>
 {/foreach}
 {if $groups and $users}
       <tr><td height="1" bgcolor="#aaaaaa"></td></tr>
 {/if}
-{foreach from=$users item=user}
-      <tr><td><img src="img/user.png" alt="User:" /> {$user.name}</td></tr>
+{foreach from=$users item=current}
+      <tr><td><img src="img/user.png" alt="User:" /> {$current.name}</td></tr>
 {/foreach}
     </table>
     </td>
@@ -28,12 +28,12 @@
     <td><img src="img/line_left.png" alt="" height="100%" width="14" /></td>
     <td>
     <form action="?submit=1" method="POST">
-    <h2>Group "Everybody"</h2>
+    <h2>{$group.name}</h2>
     <table width='100%' cellpadding="0" cellspacing="0"><tr><td height="1" bgcolor="#000000"></td></tr></table>
     <h3>Public Group Information</h3>
     <table class="indent" width="100%" cellpadding="0" cellspacing="5">
-      <tr><td class="nowrap">Group Name:</td><td width="100%"><input type="text" class="field" name="name" value="Everybody" /></td></tr>
-      <tr><td class="nowrap" valign="top">Description:</td><td width="100%"><textarea name="description">People</textarea></td></tr>
+      <tr><td class="nowrap">Group Name:</td><td width="100%"><input type="text" class="field" name="name" value="{$group.name}" /></td></tr>
+      <tr><td class="nowrap" valign="top">Description:</td><td width="100%"><textarea name="description">{$group.descr}</textarea></td></tr>
     </table>
 
     <h3>Defaults</h3>
@@ -44,30 +44,53 @@
       </tr>
     </table>
 
-    <h3>Grant Access To This Group</h3>
-    <table class="indent" cellpadding="3">
+    <h3>Things This Group May Do</h3>
+    <table class="indent" cellpadding="0">
       <tr>
-        <td class="nowrap">Specify users who may</td>
-        <td class="nowrap"><input type="checkbox" class="check" name="group_view" checked="checked" />view,</td>
-        <td class="nowrap"><input type="checkbox" class="check" name="group_create" checked="checked" />add,</td>
+        <td><b>Create new users</b> in the following groups:</td>
+        <td>&nbsp;</td>
+        <td><i>(None)</i></td>
+        <td>&nbsp;</td>
+        <td><input type="button" name="change" value="Change..." /></td>
       </tr>
       <tr>
-        <td></td>
-        <td><img src="img/0.png" alt="" width="180" height="1" /><select name="select" class="multiple" multiple><option>Administrators</option><option>User</option></td>
-        <td><img src="img/0.png" alt="" width="180" height="1" /><select name="select" class="multiple" multiple><option>Group</option><option>User</option></td>
-        <td></td>
+        <td><b>Modify existing users</b> in the following groups:</td>
+        <td>&nbsp;</td>
+        <td><i>(None)</i></td>
+        <td>&nbsp;</td>
+        <td><input type="button" name="change" value="Change..." /></td>
       </tr>
       <tr>
-        <td></td>
-        <td class="nowrap"><input type="checkbox" class="check" name="group_edit" />edit, or</td>
-        <td class="nowrap" colspan="2"><input type="checkbox" class="check" name="group_delete" />delete the members in this group.</td>
+        <td><b>Delete existing users</b> in the following groups:</td>
+        <td>&nbsp;</td>
+        <td><i>(None)</i></td>
+        <td>&nbsp;</td>
+        <td><input type="button" name="change" value="Change..." /></td>
+      </tr>
+    </table>
+
+    <h3>Things This Group Is Not Allowed To Do</h3>
+    <table class="indent" cellpadding="0">
+      <tr>
+        <td><b>Create new users</b> in the following groups:</td>
+        <td>&nbsp;</td>
+        <td><i>(Any)</i></td>
+        <td>&nbsp;</td>
+        <td><input type="button" name="change" value="Change..." /></td>
       </tr>
       <tr>
-        <td></td>
-        <td><img src="img/0.png" alt="" width="180" height="1" /><select name="select" class="multiple" multiple><option>Group</option><option>User</option></td>
-        <td><img src="img/0.png" alt="" width="180" height="1" /><select name="select" class="multiple" multiple><option>Group</option><option>User</option></td>
-        <td width="100%">&nbsp;</td>
-        <td></td>
+        <td><b>Modify existing users</b> in the following groups:</td>
+        <td>&nbsp;</td>
+        <td><i>(Any)</i></td>
+        <td>&nbsp;</td>
+        <td><input type="button" name="change" value="Change..." /></td>
+      </tr>
+      <tr>
+        <td><b>Delete existing users</b> in the following groups:</td>
+        <td>&nbsp;</td>
+        <td><i>(Any)</i></td>
+        <td>&nbsp;</td>
+        <td><input type="button" name="change" value="Change..." /></td>
       </tr>
     </table>
     </form>

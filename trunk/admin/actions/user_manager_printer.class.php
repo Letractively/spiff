@@ -83,6 +83,8 @@ function phpgacl_get_user_list($gacl_api, $group_id)
         $gid = $_GET['gid'] * 1;
 
       if (isset($gid)) {
+        // Get the group info from phpgacl, joined with the group attributes.
+        //$group  = get_group_info();
         $groups = phpgacl_get_group_list($this->gacl, $gid);
         $users  = phpgacl_get_user_list($this->gacl, $gid);
       }
@@ -90,6 +92,7 @@ function phpgacl_get_user_list($gacl_api, $group_id)
       $this->smarty->clear_all_assign();
       $this->smarty->assign_by_ref('groups', $groups);
       $this->smarty->assign_by_ref('users',  $users);
+      $this->smarty->assign_by_ref('group',  $group);
       $this->parent->append_content($this->smarty->fetch('usermanager.tpl'));
     }
   }
