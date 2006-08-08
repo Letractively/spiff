@@ -1,25 +1,40 @@
-* Create functions that do everything that phpgacl should but does not.
+* Assign default permissions to the Administrators group. (setup.php)
 
-* Create not only an ARO, but also an AXO for every user, also in
-  setup.php.
+* Add an attribute table for users (that also stores the password).
 
-* Add a navigation bar ("breadcrumbs") to the admin GUI.
+* Implement login for the admin GUI.
+
+* Make groups changeable.
+
+* Make groups deletable.
+
+* Add the possibility to create a new group.
 
 * Create a user friendly user admin GUI that correctly reflects
   permission inheritance.
 
-* Implement login for the admin GUI.
+* Add the possibility to create a new user.
+
+* Add the possibility to edit an existing user.
+
+* Add the possibility to delete an existing user.
+
+* I18Nize the admin interface.
+
+* Add a navigation bar ("breadcrumbs") to the admin GUI.
+
+* Create use cases for plugins.
 
 * Create a bus over which plugins are able to communicate. Investigate
   open standard protocols, maybe there is even an implementation
   already.
-
-* Create an admin GUI for content management. Essentially, this GUI
-  is our "Plugin Central", where the user can add different plugins
-  into his website.
 
 * Define the plugin API. Stuff that should be easy to do for plugins:
   - Using the authentication framework.
   - Storing simple type/value pairs.
   - Communication with other plugins.
   - ...
+
+* Create an admin GUI for content management. Essentially, this GUI
+  is our "Plugin Central", where the user can add different plugins
+  into his website.
