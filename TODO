@@ -1,4 +1,15 @@
-* Assign default permissions to the Administrators group. (setup.php)
+* Create phpgacl_create_user and phpgacl_create_group functions
+  that create an ARO and an AXO both.
+
+* Use phpgacl_create_user and phpgacl_create_group to simplify setup.php.
+
+* Possibly create phpgacl_set_permission or something that simplifies
+  the permission process. Also use this to simplify setup.php.
+
+* Assign sane default permissions to the Administrators group, the Users
+  group, and the Anonymous user. (setup.php)
+
+* Make the permissions show up in the group editor page.
 
 * Add an attribute table for users (that also stores the password).
 
