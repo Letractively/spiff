@@ -32,6 +32,7 @@
   include_once 'functions/string.inc.php';
   include_once 'functions/httpquery.inc.php';
   include_once 'functions/files.inc.php';
+  include_once 'functions/phpgacl.inc.php';
   
   include_once 'config.inc.php';
   include_once 'error.inc.php';

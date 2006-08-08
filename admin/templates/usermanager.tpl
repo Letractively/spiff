@@ -33,14 +33,19 @@
     <h3>Public Group Information</h3>
     <table class="indent" width="100%" cellpadding="0" cellspacing="5">
       <tr><td class="nowrap">Group Name:</td><td width="100%"><input type="text" class="field" name="name" value="{$group.name}" /></td></tr>
-      <tr><td class="nowrap" valign="top">Description:</td><td width="100%"><textarea name="description">{$group.descr}</textarea></td></tr>
+      <tr><td class="nowrap" valign="top">Description:</td><td width="100%"><textarea name="description">{$group.description}</textarea></td></tr>
     </table>
 
     <h3>Defaults</h3>
     <table class="indent" cellpadding="0">
       <tr>
         <td>Content created by users in this group is by default owned by:</td>
-        <td><select name="select"><option>Group</option><option>User</option></td>
+        <td>
+        <select name="use_group_rights">
+          <option{if $group.use_group_rights} selected{/if}>Group</option>
+          <option{if !$group.use_group_rights} selected{/if}>User</option>
+        </select>
+        </td>
       </tr>
     </table>
 
