@@ -22,7 +22,7 @@
     <td bgcolor='#f5f5f2'>
     <h2>Spiff&trade; Installation Process Running...</h2>
     <small><i>Dear user, please ignore the technical hogwash below.<br/>
-    You can just scroll to the bottom of this page. Thank you.</i></small>
+    You can just scroll down to the bottom of this page. Thank you.</i></small>
 <?php
 require_once '../libs/phpgacl-v3.3.6/gacl.class.php';
 require_once '../libs/phpgacl-v3.3.6/gacl_api.class.php';
