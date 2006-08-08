@@ -1,11 +1,4 @@
-* Create aro_attribs table to extend phpgacl with attribute support:
-  CREATE TABLE aro_attribs (
-    int(11) aro_id not null,
-    varchar(100) description,
-    bool use_group_rights,
-    ...
-    foreign key(aro_id) REFERENCES aro(id) ON DELETE CASCADE
-  )
+* Create functions that do everything that phpgacl should but does not.
 
 * Create not only an ARO, but also an AXO for every user, also in
   setup.php.
