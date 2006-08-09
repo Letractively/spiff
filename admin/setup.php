@@ -47,9 +47,9 @@ function check_database_connection($gacl) {
 }
 
 // Test DBMS type.
-$jobs['check_database_type'] = 'Checking whether the database server type is supported';
+$jobs['check_database_type'] = 'Checking whether the database server type "'.$gacl->_db_type.'" is supported';
 function check_database_type($gacl) {
-  return $gacl->_db_type === 'mysql' ? SUCCESS : FAILED;
+  return $gacl->_db_type === 'mysqlt' || $gacl->_db_type === 'mysqli' ? SUCCESS : FAILED;
 }
 
 // Test whether the specified database exists.
@@ -60,7 +60,7 @@ function check_database_exists($gacl) {
 }
 
 // Make sure that the installation was not already finished previously.
-$jobs['check_installation_necessary'] = 'Making sure that we are not installing above another installation';
+//$jobs['check_installation_necessary'] = 'Making sure that we are not installing above another installation';
 function check_installation_necessary($gacl) {
   return SUCCESS;
 }
@@ -400,19 +400,21 @@ foreach ($jobs as $job => $descr) {
   echo "$descr: ";
   switch (call_user_func($job, $gacl)) {
   case SUCCESS:
-    echo "<font color='green'>Success!</font><br/>";
-    continue;
+    echo "<font color='green'><b>Success!</b></font><br/>";
+    break;
 
   case UNNECESSARY:
-    echo "<font color='green'>Unnecessary.</font><br/>";
-    continue;
+    echo "<font color='green'><b>Not necessary.</b></font><br/>";
+    break;
 
   default:
-    echo "<font color='red'>Failed! Sorry dude.</font><br/>\n";
+    echo "<font color='red'><b>Failed! Sorry dude.</b></font><br/>\n";
     $success = FALSE;
     break;
-    continue;
   }
+
+  if (!$success)
+    break;
 }
 ?>
     </td>
