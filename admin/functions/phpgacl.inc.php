@@ -99,4 +99,16 @@ function phpgacl_get_group_info($gacl_api, $group_id)
   
   return $group_data;
 }
+
+function phpgacl_create_user_group($gacl_api, $name, $parent_gid)
+{
+  $sys_name = preg_replace("/[^a-zA-Z0-9]/g", "//", $name);
+  $gid->axo = $gacl->add_group($sys_name, $name,     $parent_gid->axo, 'AXO');
+  $gid->aro = $gacl->add_group($sys_name, $sys_name, $parent_gid->aro, 'ARO');
+  return $gid;
+}
+
+function phpgacl_create_user($gacl_api, $name, $group_id)
+{
+}
 ?>

@@ -31,10 +31,15 @@ global $options;
 
 * mkdir libs/smarty/templates_c && chmod 777 libs/smarty/templates_c/
 
-* Open libs/phpgacl/setup.php
+* Hopfully libs/phpgacl/setup.php was not changed, otherwise you have to
+  implement the same changes in admin/setup.php.
 
-* Make sure that libs/phpgacl/admin/acl_admin.php works.
+* Edit admin/setup.php so that PHPGACL_DIR points to the new version of phpgacl.
 
-* Edit admin/setup.php so that the require_once statements point to the new version of phpgacl.
+* Edit admin/index.php so that PHPGACL_DIR points to the new version of phpgacl.
 
-* Edit admin/index.php so that the require_once statements point to the new version of phpgacl.
+* Drop all database tables.
+
+* Reinitialize spiff using admin/setup.php.
+
+* Make sure that libs/phpgacl/admin/acl_admin.php works in your browser.
