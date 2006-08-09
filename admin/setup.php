@@ -33,6 +33,7 @@ require_once PHPGACL_DIR . 'gacl.class.php';
 require_once PHPGACL_DIR . 'gacl_api.class.php';
 require_once PHPGACL_DIR . 'admin/gacl_admin.inc.php';
 require_once ADODB_DIR   . '/adodb-xmlschema.inc.php';
+require_once dirname(__FILE__).'/functions/phpgacl.inc.php';
 
 $jobs = array();
 
@@ -160,88 +161,81 @@ function create_axo_section_root($gacl) {
 
 $jobs['create_axo_root_root'] = 'Creating access control group "root"';
 function create_axo_root_root($gacl) {
-  global $axo_root_gid;
-  return ($axo_root_gid = $gacl->add_group('root', 'root', 0, 'AXO')) ? SUCCESS : FAILED;
+  global $root_gid;
+  $root_gid->axo = $gacl->add_group('root', 'root', 0, 'AXO');
+  $root_gid->aro = 0;
+  return $root_gid->axo ? SUCCESS : FAILED;
 }
 
 
 /*******************************************************************
- * Build the following axo table:
+ * Create user sections.
+ *******************************************************************/
+$jobs['Initializing User And Group Sections'] = '-';
+$jobs['create_axo_section_users'] = 'Creating access control section "Users"';
+function create_axo_section_users($gacl) {
+ return $gacl->add_object_section('Users', 'users', 10, FALSE, 'AXO') ? SUCCESS : FAILED;
+}
+
+$jobs['create_aro_section_users'] = 'Creating access request section "Users"';
+function create_aro_section_users($gacl) {
+ return $gacl->add_object_section('Users', 'users', 10, FALSE, 'ARO') ? SUCCESS : FAILED;
+}
+
+
+/*******************************************************************
+ * Build the following group table:
  * users:   Everybody
  *            |-Administrators
  *            |   \-Administrator
  *            \-Users
  *                \-Anonymous
  *******************************************************************/
-$jobs['Initializing User AXOs'] = '-';
-$jobs['create_axo_section_users'] = 'Creating access control section "Users"';
-function create_axo_section_users($gacl) {
- return $gacl->add_object_section('Users', 'users', 10, FALSE, 'AXO') ? SUCCESS : FAILED;
+$jobs['Creating Default Groups'] = '-';
+$jobs['create_users_everybody'] = 'Creating group "Everybody"';
+function create_users_everybody($gacl) {
+  global $root_gid;
+  global $everybody_gid;
+  $everybody_gid = phpgacl_create_group($gacl, "Everybody", $root_gid);
+  return $everybody_gid ? SUCCESS : FAILED;
 }
 
-$jobs['create_axo_users_everybody'] = 'Creating access control group "Everybody"';
-function create_axo_users_everybody($gacl) {
-  global $axo_root_gid;
-  global $axo_everybody_gid;
-  return ($axo_everybody_gid = $gacl->add_group('everybody', 'Everybody', $axo_root_gid, 'AXO')) ? SUCCESS : FAILED;
+$jobs['create_users_everybody_administrators'] = 'Creating group "Administrators"';
+function create_users_everybody_administrators($gacl) {
+  global $everybody_gid;
+  global $everybody_administrators_gid;
+  $everybody_administrators_gid = phpgacl_create_group($gacl, "Administrators", $everybody_gid);
+  return $everybody_administrators_gid ? SUCCESS : FAILED;
 }
 
-$jobs['create_axo_users_everybody_administrators'] = 'Creating access control group "Administrators"';
-function create_axo_users_everybody_administrators($gacl) {
-  global $axo_everybody_gid;
-  global $axo_everybody_administrators_gid;
-  return ($axo_everybody_administrators_gid = $gacl->add_group('administrators',
-                                                               'Administrators',
-                                                               $axo_everybody_gid,
-                                                               'AXO')) ? SUCCESS : FAILED;
+$jobs['create_users_everybody_users'] = 'Creating group "Users"';
+function create_users_everybody_users($gacl) {
+  global $everybody_gid;
+  global $everybody_users_gid;
+  $everybody_users_gid = phpgacl_create_group($gacl, "Users", $everybody_gid);
+  return $everybody_users_gid ? SUCCESS : FAILED;
 }
 
-$jobs['create_axo_users_everybody_administrators_administrator'] = 'Creating access control object "Administrator"';
-function create_axo_users_everybody_administrators_administrator($gacl) {
-  return $gacl->add_object('users',
-                           'Administrator',
-                           'administrator',
-                           10,
-                           FALSE,
-                           'AXO') ? SUCCESS : FAILED;
+
+/*******************************************************************
+ * Build the following user table:
+ * users:   Everybody
+ *            |-Administrators
+ *            |   \-Administrator
+ *            \-Users
+ *                \-Anonymous
+ *******************************************************************/
+$jobs['Creating Default Users'] = '-';
+$jobs['create_users_everybody_administrators_administrator'] = 'Creating user "Administrator"';
+function create_users_everybody_administrators_administrator($gacl) {
+  global $everybody_administrators_gid;
+  return phpgacl_create_user($gacl, "Administrator", $everybody_administrators_gid) ? SUCCESS : FAILED;
 }
 
-$jobs['assign_axo_users_everybody_administrators_administrator'] = 'Assigning user "Administrator" to AXO group "Administrators"';
-function assign_axo_users_everybody_administrators_administrator($gacl) {
-  global $axo_everybody_administrators_gid;
-  return $gacl->add_group_object($axo_everybody_administrators_gid,
-                                 'users',
-                                 'administrator',
-                                 'AXO') ? SUCCESS : FAILED;
-}
-
-$jobs['create_axo_users_everybody_users'] = 'Creating access control group "Users"';
-function create_axo_users_everybody_users($gacl) {
-  global $axo_everybody_gid;
-  global $axo_everybody_users_gid;
-  return ($axo_everybody_users_gid = $gacl->add_group('users',
-                                                      'users',
-                                                      $axo_everybody_gid,
-                                                      'AXO')) ? SUCCESS : FAILED;
-}
-
-$jobs['create_axo_users_everybody_users_anonymous'] = 'Creating access control object "Anonymous"';
-function create_axo_users_everybody_users_anonymous($gacl) {
-  return $gacl->add_object('users',
-                           'Anonymous',
-                           'anonymous',
-                           10,
-                           FALSE,
-                           'AXO') ? SUCCESS : FAILED;
-}
-
-$jobs['assign_axo_users_everybody_users_anonymous'] = 'Assigning user "Anonymous" to AXO group "Users"';
-function assign_axo_users_everybody_users_anonymous($gacl) {
-  global $axo_everybody_users_gid;
-  return $gacl->add_group_object($axo_everybody_users_gid,
-                                 'users',
-                                 'anonymous',
-                                 'AXO') ? SUCCESS : FAILED;
+$jobs['create_users_everybody_users_anonymous'] = 'Creating user "Anonymous"';
+function create_users_everybody_users_anonymous($gacl) {
+  global $everybody_users_gid;
+  return phpgacl_create_user($gacl, "Anonymous George", $everybody_users_gid) ? SUCCESS : FAILED;
 }
 
 
@@ -258,9 +252,9 @@ function create_axo_section_content($gacl) {
 
 $jobs['create_axo_content_content'] = 'Creating access control group "Content"';
 function create_axo_content_content($gacl) {
-  global $axo_root_gid;
+  global $root_gid;
   global $axo_content_gid;
-  return $axo_content_gid = $gacl->add_group('content', 'Content', $axo_root_gid, 'AXO') ? SUCCESS : FAILED;
+  return ($axo_content_gid = $gacl->add_group('content', 'Content', $root_gid->axo, 'AXO')) ? SUCCESS : FAILED;
 }
 
 $jobs['create_axo_content_content_homepage'] = 'Creating access control object "Homepage" in "Content"';
@@ -275,96 +269,12 @@ function create_axo_content_content_homepage($gacl) {
 
 
 /*******************************************************************
- * Build the following aro table:
- * Everybody
- *  |-Administrators
- *  |  \-Administrator
- *  \-Users
- *     \-Anonymous
- *******************************************************************/
-$jobs['Initializing Users And Groups'] = '-';
-$jobs['create_aro_section_users'] = 'Creating access request section "Users"';
-function create_aro_section_users($gacl) {
- return $gacl->add_object_section('Users', 'users', 10, FALSE, 'ARO') ? SUCCESS : FAILED;
-}
-
-$jobs['create_aro_users_everybody'] = 'Creating access group "Everybody"';
-function create_aro_users_everybody($gacl) {
-  global $everybody_gid;
-  return ($everybody_gid = $gacl->add_group('everybody', 'Everybody', 0, 'ARO')) ? SUCCESS : FAILED;
-}
-
-$jobs['create_aro_users_administrators'] = 'Creating access group "Administrators"';
-function create_aro_users_administrators($gacl) {
-  global $everybody_gid;
-  global $admin_gid;
-  return ($admin_gid = $gacl->add_group('administrators',
-                                        'Administrators',
-                                        $everybody_gid,
-                                        'ARO')) ? SUCCESS : FAILED;
-}
-
-$jobs['create_aro_users_administrators_administrator'] = 'Creating user "Administrator"';
-function create_aro_users_administrators_administrator($gacl) {
-  return $gacl->add_object('users',
-                           'Administrator',
-                           'administrator',
-                           10,
-                           FALSE,
-                           'ARO') ? SUCCESS : FAILED;
-}
-
-$jobs['create_aro_users_users'] = 'Creating access group "Users"';
-function create_aro_users_users($gacl) {
-  global $everybody_gid;
-  global $user_gid;
-  return ($user_gid = $gacl->add_group('users',
-                                       'Users',
-                                        $everybody_gid,
-                                        'ARO')) ? SUCCESS : FAILED;
-}
-
-$jobs['create_aro_users_users_anonymous'] = 'Creating user "Anonymous"';
-function create_aro_users_users_anonymous($gacl) {
-  return $gacl->add_object('users',
-                           'Anonymous George',
-                           'anonymous',
-                           10,
-                           FALSE,
-                           'ARO') ? SUCCESS : FAILED;
-}
-
-
-/*******************************************************************
- * Assign default users to the correct groups.
- *******************************************************************/
-$jobs['Assigning Users To Groups'] = '-';
-$jobs['assign_user_administrator'] = 'Assigning user "Administrator" to group "Administrators"';
-function assign_user_administrator($gacl) {
-  global $admin_gid;
-  return $gacl->add_group_object($admin_gid,
-                                 'users',
-                                 'administrator',
-                                 'ARO') ? SUCCESS : FAILED;
-}
-
-$jobs['assign_user_anonymous'] = 'Assigning user "Anonymous" to group "Users"';
-function assign_user_anonymous($gacl) {
-  global $user_gid;
-  return $gacl->add_group_object($user_gid,
-                                 'users',
-                                 'anonymous',
-                                 'ARO') ? SUCCESS : FAILED;
-}
-
-
-/*******************************************************************
  * Define permissions of the default groups.
  *******************************************************************/
 $jobs['Assigning Permissions To Groups'] = '-';
 $jobs['assign_permission_administrators'] = 'Defining permissions of group "Administrators"';
 function assign_permission_administrators($gacl) {
-  global $admin_gid;
+  global $everybody_administrators_gid;
   $aco_array = array(
     'users' => array('view'),
   );
@@ -377,7 +287,7 @@ function assign_permission_administrators($gacl) {
   //$gacl->_debug = 1; $gacl->db->debug = 1;
   $aclid = $gacl->add_acl($aco_array,
                           NULL,
-                          array($admin_gid),
+                          array($everybody_administrators_gid->aro),
                           $axo_array,
                           NULL,
                           $allow,

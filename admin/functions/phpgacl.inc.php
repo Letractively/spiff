@@ -102,7 +102,7 @@ function phpgacl_get_group_info($gacl_api, $group_id)
 
 function phpgacl_create_group($gacl, $name, $parent_gid)
 {
-  $sys_name = preg_replace("/[^a-zA-Z0-9]/g", "//", $name);
+  $sys_name = preg_replace("/[^a-z0-9]/i", "//", $name);
   //FIXME: This should be one transaction.
   $gid->axo = $gacl->add_group($sys_name, $name,     $parent_gid->axo, 'AXO');
   $gid->aro = $gacl->add_group($sys_name, $sys_name, $parent_gid->aro, 'ARO');
@@ -111,11 +111,11 @@ function phpgacl_create_group($gacl, $name, $parent_gid)
 
 function phpgacl_create_user($gacl, $name, $group_id)
 {
-  $sys_name = preg_replace("/[^a-zA-Z0-9]/g", "//", $name);
+  $sys_name = preg_replace("/[^a-z0-9]/i", "//", $name);
   //FIXME: This should be one transaction.
-  $gacl->add_object('users', $name, $sys_name, 10, FALSE, 'AXO');
+  $uid->axo = $gacl->add_object('users', $name, $sys_name, 10, FALSE, 'AXO');
   $gacl->add_group_object($group_id->axo, 'users', $sys_name, 'AXO');
-  $uid = $gacl->add_object('users', $name, $sys_name, 10, FALSE, 'ARO');
+  $uid->aro = $gacl->add_object('users', $name, $sys_name, 10, FALSE, 'ARO');
   $gacl->add_group_object($group_id->aro, 'users', $sys_name, 'ARO');
   return $uid;
 }
