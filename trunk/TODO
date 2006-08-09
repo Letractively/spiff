@@ -1,5 +1,3 @@
-* Use phpgacl_create_user and phpgacl_create_group to simplify setup.php.
-
 * Possibly create phpgacl_set_permission or something that simplifies
   the permission process. Also use this to simplify setup.php.
 
