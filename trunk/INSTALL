@@ -17,12 +17,6 @@ Installation Instructions
 * Edit spiff/admin/config.inc.php according to your webserver configuration.
   The file should be self explaining.
 
-* Open spiff/libs/phpgacl-vx.x.x/setup.php in your web browser and follow
-  the instructions (if any).
-
-* Open spiff/libs/phpgacl-vx.x.x/admin/acl_admin in your web browser and
-  make sure that no error message appears.
-
 * Open spiff/admin/setup.php in your web browser and make sure that no
   error message appears.
   !!! WARNING: This step will erase the content of the database that

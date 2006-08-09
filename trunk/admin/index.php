@@ -20,11 +20,12 @@
 ?>
 <?php
   error_reporting(E_ALL);
+  define('PHPGACL_DIR', '../libs/phpgacl-v3.3.6/');
   
   require_once '../libs/smarty/Smarty.class.php';
   require_once '../libs/adodb/adodb.inc.php';
-  require_once '../libs/phpgacl-v3.3.6/gacl.class.php';
-  require_once '../libs/phpgacl-v3.3.6/gacl_api.class.php';
+  require_once PHPGACL_DIR.'gacl.class.php';
+  require_once PHPGACL_DIR.'gacl_api.class.php';
   
   include_once 'functions/config.inc.php';
   include_once 'functions/language.inc.php';
