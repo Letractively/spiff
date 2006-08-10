@@ -27,7 +27,7 @@
       $may_admin  = phpgacl_get_group_permission_list($this->gacl,
                                                       $gid,
                                                       'users',
-                                                      'administrate');
+                                                      'administer');
       $may_create = phpgacl_get_group_permission_list($this->gacl,
                                                       $gid,
                                                       'users',
@@ -59,7 +59,7 @@
       $may_admin  = phpgacl_get_user_permission_list($this->gacl,
                                                      $uid,
                                                      'users',
-                                                     'administrate');
+                                                     'administer');
       $may_create = phpgacl_get_user_permission_list($this->gacl,
                                                      $uid,
                                                      'users',
