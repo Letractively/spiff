@@ -100,18 +100,23 @@ function phpgacl_get_group_info($gacl_api, $group_id)
   return $group_data;
 }
 
+function phpgacl_get_permitted_group_list($gacl, $group_id, $section, $action)
+{
+  //$gacl->acl_query(...);
+}
+
 function phpgacl_create_group($gacl, $name, $parent_gid)
 {
-  $sys_name = preg_replace("/[^a-z0-9]/i", "//", $name);
+  $sys_name = preg_replace("/[^a-z0-9]/", "", strtolower($name));
   //FIXME: This should be one transaction.
-  $gid->axo = $gacl->add_group($sys_name, $name,     $parent_gid->axo, 'AXO');
-  $gid->aro = $gacl->add_group($sys_name, $sys_name, $parent_gid->aro, 'ARO');
+  $gid->axo = $gacl->add_group($sys_name, $name, $parent_gid->axo, 'AXO');
+  $gid->aro = $gacl->add_group($sys_name, $name, $parent_gid->aro, 'ARO');
   return $gid;
 }
 
 function phpgacl_create_user($gacl, $name, $group_id)
 {
-  $sys_name = preg_replace("/[^a-z0-9]/i", "//", $name);
+  $sys_name = preg_replace("/[^a-z0-9]/", "", strtolower($name));
   //FIXME: This should be one transaction.
   $uid->axo = $gacl->add_object('users', $name, $sys_name, 10, FALSE, 'AXO');
   $gacl->add_group_object($group_id->axo, 'users', $sys_name, 'AXO');
