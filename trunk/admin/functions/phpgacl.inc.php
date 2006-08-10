@@ -126,10 +126,10 @@ function phpgacl_get_permitted_group_list($gacl, $group_id, $section, $action)
   
   if (is_object($rs)) {
     while($row = $rs->FetchRow()) {
-      $user_data[$row[0]] = array(
-        'name'  => $row[1],
-        'allow' => $row[2]
-      );
+      if ($row[2] == 1)
+        $user_data['allow'][$row[0]] = $row[1];
+      else
+        $user_data['deny'][$row[0]]  = $row[1];
     }
   }
   //print_r($user_data);echo "<br>";
