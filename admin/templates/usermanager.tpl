@@ -55,11 +55,11 @@
         <td><b>Administrate users</b> in the following groups:</td>
         <td>&nbsp;</td>
         <td>
-        {if count($may_admin) == 0}
+        {if count($may_admin.allow) == 0}
           <i>(None)</i>
         {else}
-          {foreach from=$may_admin item=current key=current_id}
-          {$current.name}
+          {foreach from=$may_admin.allow item=current key=current_id}
+          {$current}
           {/foreach}
         {/if}
         </td>
@@ -70,11 +70,11 @@
         <td><b>Create new users</b> in the following groups:</td>
         <td>&nbsp;</td>
         <td>
-        {if count($may_create) == 0}
+        {if count($may_create.allow) == 0}
           <i>(None)</i>
         {else}
-          {foreach from=$may_create item=current key=current_id}
-          {$current.name}
+          {foreach from=$may_create.allow item=current key=current_id}
+          {$current}
           {/foreach}
         {/if}
         </td>
@@ -85,11 +85,11 @@
         <td><b>Modify existing users</b> in the following groups:</td>
         <td>&nbsp;</td>
         <td>
-        {if count($may_edit) == 0}
+        {if count($may_edit.allow) == 0}
           <i>(None)</i>
         {else}
-          {foreach from=$may_edit item=current key=current_id}
-          {$current.name}
+          {foreach from=$may_edit.allow item=current key=current_id}
+          {$current}
           {/foreach}
         {/if}
         </td>
@@ -100,11 +100,11 @@
         <td><b>Delete existing users</b> in the following groups:</td>
         <td>&nbsp;</td>
         <td>
-        {if count($may_delete) == 0}
+        {if count($may_delete.allow) == 0}
           <i>(None)</i>
         {else}
-          {foreach from=$may_delete item=current key=current_id}
-          {$current.name}
+          {foreach from=$may_delete.allow item=current key=current_id}
+          {$current}
           {/foreach}
         {/if}
         </td>
@@ -116,23 +116,62 @@
     <h3>Things This Group Is Not Allowed To Do</h3>
     <table class="indent" cellpadding="0">
       <tr>
+        <td><b>Administrate users</b> in the following groups:</td>
+        <td>&nbsp;</td>
+        <td>
+        {if count($may_admin.deny) == 0}
+          <i>(Any)</i>
+        {else}
+          {foreach from=$may_admin.deny item=current key=current_id}
+          {$current}
+          {/foreach}
+        {/if}
+        </td>
+        <td>&nbsp;</td>
+        <td><input type="button" name="change" value="Change..." /></td>
+      </tr>
+      <tr>
         <td><b>Create new users</b> in the following groups:</td>
         <td>&nbsp;</td>
-        <td><i>(Any)</i></td>
+        <td>
+        {if count($may_create.deny) == 0}
+          <i>(Any)</i>
+        {else}
+          {foreach from=$may_create.deny item=current key=current_id}
+          {$current}
+          {/foreach}
+        {/if}
+        </td>
         <td>&nbsp;</td>
         <td><input type="button" name="change" value="Change..." /></td>
       </tr>
       <tr>
         <td><b>Modify existing users</b> in the following groups:</td>
         <td>&nbsp;</td>
-        <td><i>(Any)</i></td>
+        <td>
+        {if count($may_edit.deny) == 0}
+          <i>(Any)</i>
+        {else}
+          {foreach from=$may_edit.deny item=current key=current_id}
+          {$current}
+          {/foreach}
+        {/if}
+        </td>
         <td>&nbsp;</td>
         <td><input type="button" name="change" value="Change..." /></td>
       </tr>
       <tr>
         <td><b>Delete existing users</b> in the following groups:</td>
         <td>&nbsp;</td>
-        <td><i>(Any)</i></td>
+        <td>
+        {if count($may_delete.deny) == 0}
+          <i>(Any)</i>
+        {else}
+          {foreach from=$may_delete.deny item=current key=current_id}
+          {$current}
+          {/foreach}
+        {/if}
+        </td>
         <td>&nbsp;</td>
         <td><input type="button" name="change" value="Change..." /></td>
       </tr>
