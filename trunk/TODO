@@ -1,7 +1,7 @@
 * Possibly create phpgacl_set_permission or something that simplifies
   the permission process. Also use this to simplify setup.php.
 
-* Make the permissions show up in the group editor page.
+* Make denied permissions show up in the group editor page.
 
 * Add an attribute table for users (that also stores the password).
 

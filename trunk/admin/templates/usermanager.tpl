@@ -52,23 +52,62 @@
     <h3>Things This Group May Do</h3>
     <table class="indent" cellpadding="0">
       <tr>
+        <td><b>Administrate users</b> in the following groups:</td>
+        <td>&nbsp;</td>
+        <td>
+        {if count($may_admin) == 0}
+          <i>(None)</i>
+        {else}
+          {foreach from=$may_admin item=current key=current_id}
+          {$current.name}
+          {/foreach}
+        {/if}
+        </td>
+        <td>&nbsp;</td>
+        <td><input type="button" name="change" value="Change..." /></td>
+      </tr>
+      <tr>
         <td><b>Create new users</b> in the following groups:</td>
         <td>&nbsp;</td>
-        <td><i>(None)</i></td>
+        <td>
+        {if count($may_create) == 0}
+          <i>(None)</i>
+        {else}
+          {foreach from=$may_create item=current key=current_id}
+          {$current.name}
+          {/foreach}
+        {/if}
+        </td>
         <td>&nbsp;</td>
         <td><input type="button" name="change" value="Change..." /></td>
       </tr>
       <tr>
         <td><b>Modify existing users</b> in the following groups:</td>
         <td>&nbsp;</td>
-        <td><i>(None)</i></td>
+        <td>
+        {if count($may_edit) == 0}
+          <i>(None)</i>
+        {else}
+          {foreach from=$may_edit item=current key=current_id}
+          {$current.name}
+          {/foreach}
+        {/if}
+        </td>
         <td>&nbsp;</td>
         <td><input type="button" name="change" value="Change..." /></td>
       </tr>
       <tr>
         <td><b>Delete existing users</b> in the following groups:</td>
         <td>&nbsp;</td>
-        <td><i>(None)</i></td>
+        <td>
+        {if count($may_delete) == 0}
+          <i>(None)</i>
+        {else}
+          {foreach from=$may_delete item=current key=current_id}
+          {$current.name}
+          {/foreach}
+        {/if}
+        </td>
         <td>&nbsp;</td>
         <td><input type="button" name="change" value="Change..." /></td>
       </tr>
