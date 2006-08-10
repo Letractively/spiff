@@ -12,14 +12,8 @@
     <td><img src="img/line_left.png" alt="" height="100%" width="14" /></td>
     <td valign="top">
     <table class="menu" width="100%" cellpadding="0">
-{foreach from=$groups item=current key=gid}
-      <tr><td><a href="?manage_users=1&gid={$gid}"><img src="img/group.png" alt="Group:" /> {$current.name}</a> ({$current.count})</td></tr>
-{/foreach}
-{if $groups and $users}
-      <tr><td height="1" bgcolor="#aaaaaa"></td></tr>
-{/if}
-{foreach from=$users item=current}
-      <tr><td><img src="img/user.png" alt="User:" /> {$current.name}</td></tr>
+{foreach from=$users item=current key=uid}
+      <tr><td><a href="?manage_users=1&uid={$uid}"><img src="img/user.png" alt="User:" /> {$current.name}</a></td></tr>
 {/foreach}
     </table>
     </td>
@@ -28,35 +22,35 @@
     <td><img src="img/line_left.png" alt="" height="100%" width="14" /></td>
     <td>
     <form action="?submit=1" method="POST">
-    <h2>{$group.name}</h2>
+    <h2>{$user.name}</h2>
     <table width='100%' cellpadding="0" cellspacing="0"><tr><td height="1" bgcolor="#000000"></td></tr></table>
-    <h3>Public Group Information</h3>
+    <h3>Public User Information</h3>
     <table class="indent" width="100%" cellpadding="0" cellspacing="5">
-      <tr><td class="nowrap">Group Name:</td><td width="100%"><input type="text" class="field" name="name" value="{$group.name}" /></td></tr>
-      <tr><td class="nowrap" valign="top">Description:</td><td width="100%"><textarea name="description">{$group.description}</textarea></td></tr>
+      <tr><td class="nowrap">User Name:</td><td width="100%"><input type="text" class="field" name="name" value="{$user.name}" /></td></tr>
+      <tr><td class="nowrap" valign="top">Description:</td><td width="100%"><textarea name="description">{$user.description}</textarea></td></tr>
     </table>
 
     <h3>Defaults</h3>
     <table class="indent" cellpadding="0">
       <tr>
-        <td>Content created by users in this group is by default owned by:</td>
+        <td>Content created this user is by default owned by:</td>
         <td>
         <select name="use_group_rights">
-          <option{if $group.use_group_rights} selected{/if}>Group</option>
-          <option{if !$group.use_group_rights} selected{/if}>User</option>
+          <option{if $user.use_group_rights} selected{/if}>Group</option>
+          <option{if !$user.use_group_rights} selected{/if}>User</option>
         </select>
         </td>
       </tr>
     </table>
 
-    <h3>Things This Group May Do</h3>
+    <h3>Things This User May Do</h3>
     <table class="indent" cellpadding="0">
       <tr>
         <td><b>Administrate users</b> in the following groups:</td>
         <td>&nbsp;</td>
         <td>
         {if count($may_admin.allow) == 0}
-          <i>(None)</i>
+          <i>(None specified)</i>
         {else}
           {foreach from=$may_admin.allow item=current key=current_id}
           {$current}
@@ -71,7 +65,7 @@
         <td>&nbsp;</td>
         <td>
         {if count($may_create.allow) == 0}
-          <i>(None)</i>
+          <i>(None specified)</i>
         {else}
           {foreach from=$may_create.allow item=current key=current_id}
           {$current}
@@ -86,7 +80,7 @@
         <td>&nbsp;</td>
         <td>
         {if count($may_edit.allow) == 0}
-          <i>(None)</i>
+          <i>(None specified)</i>
         {else}
           {foreach from=$may_edit.allow item=current key=current_id}
           {$current}
@@ -101,7 +95,7 @@
         <td>&nbsp;</td>
         <td>
         {if count($may_delete.allow) == 0}
-          <i>(None)</i>
+          <i>(None specified)</i>
         {else}
           {foreach from=$may_delete.allow item=current key=current_id}
           {$current}
@@ -113,14 +107,14 @@
       </tr>
     </table>
 
-    <h3>Things This Group Is Not Allowed To Do</h3>
+    <h3>Things This User Is Not Allowed To Do</h3>
     <table class="indent" cellpadding="0">
       <tr>
         <td><b>Administrate users</b> in the following groups:</td>
         <td>&nbsp;</td>
         <td>
         {if count($may_admin.deny) == 0}
-          <i>(Any)</i>
+          <i>(None specified)</i>
         {else}
           {foreach from=$may_admin.deny item=current key=current_id}
           {$current}
@@ -135,7 +129,7 @@
         <td>&nbsp;</td>
         <td>
         {if count($may_create.deny) == 0}
-          <i>(Any)</i>
+          <i>(None specified)</i>
         {else}
           {foreach from=$may_create.deny item=current key=current_id}
           {$current}
@@ -150,7 +144,7 @@
         <td>&nbsp;</td>
         <td>
         {if count($may_edit.deny) == 0}
-          <i>(Any)</i>
+          <i>(None specified)</i>
         {else}
           {foreach from=$may_edit.deny item=current key=current_id}
           {$current}
@@ -165,7 +159,7 @@
         <td>&nbsp;</td>
         <td>
         {if count($may_delete.deny) == 0}
-          <i>(Any)</i>
+          <i>(None specified)</i>
         {else}
           {foreach from=$may_delete.deny item=current key=current_id}
           {$current}

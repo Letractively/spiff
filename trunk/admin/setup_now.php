@@ -90,7 +90,7 @@ $jobs['set_up_phpgacl_tables'] = 'Creating database tables';
 function set_up_phpgacl_tables($gacl) {
   $tables = $gacl->db->MetaTables();
   //echo "Tables: " . count($tables) . "<br/>";
-  if (count($tables) == 28) //FIXME: Should compare the count with the number of tables in the schema file.
+  if (count($tables) == 29) //FIXME: Should compare the count with the number of tables in the schema file.
     return UNNECESSARY;
 
   $schema = new adoSchema($gacl->db);
@@ -114,6 +114,19 @@ function clear_database($gacl) {
   return $gacl->clear_database() ? SUCCESS : FAILED;
 }
 
+// Add aro group attribute support to phpgacl.
+$jobs['create_aro_group_attribute_table'] = 'Creating phpgacl aro group attribute support';
+function create_aro_group_attribute_table($gacl) {
+  //$gacl->db->debug = 1;
+  $fields   = 'aro_group_id I(11),
+               use_group_rights L DEFAULT 1,
+               description C(255)';
+  $opts     = array('constraints' => ', FOREIGN KEY (aro_group_id) REFERENCES aro_groups (id) ON DELETE CASCADE');
+  $dict     = NewDataDictionary($gacl->db);
+  $sqlarray = $dict->ChangeTableSQL('aro_groups_attribs', $fields, $opts);
+  return $dict->ExecuteSQLArray($sqlarray) ? SUCCESS : FAILED;
+}
+
 // Add aro attribute support to phpgacl.
 $jobs['create_aro_attribute_table'] = 'Creating phpgacl aro attribute support';
 function create_aro_attribute_table($gacl) {
@@ -123,7 +136,7 @@ function create_aro_attribute_table($gacl) {
                description C(255)';
   $opts     = array('constraints' => ', FOREIGN KEY (aro_id) REFERENCES aro (id) ON DELETE CASCADE');
   $dict     = NewDataDictionary($gacl->db);
-  $sqlarray = $dict->ChangeTableSQL('aro_groups_attribs', $fields, $opts);
+  $sqlarray = $dict->ChangeTableSQL('aro_attribs', $fields, $opts);
   return $dict->ExecuteSQLArray($sqlarray) ? SUCCESS : FAILED;
 }
 
