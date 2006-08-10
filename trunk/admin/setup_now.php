@@ -25,7 +25,9 @@
     <small><i>Dear user, please ignore the technical hogwash below.<br/>
     You can just scroll down to the bottom of this page. Thank you.</i></small>
 <?php
-define('PHPGACL_DIR', '../libs/phpgacl-v3.3.6/');
+define('PHPGACL_DIR',      '../libs/phpgacl-v3.3.6/');
+define('SMARTY_TEMP_DIR',  '../libs/smarty/templates_c/');
+define('SPIFF_PLUGIN_DIR', 'plugins/');
 define('SUCCESS',     1);
 define('FAILED',      2);
 define('UNNECESSARY', 3);
@@ -59,6 +61,18 @@ $jobs['check_database_exists'] = 'Making sure that database "'.$gacl->_db_name.'
 function check_database_exists($gacl) {
   $databases = $gacl->db->GetCol("show databases");
   return in_array($gacl->_db_name, $databases) ? SUCCESS : FAILED;
+}
+
+$jobs['check_smarty_dir_permissions'] = 'Checking file permissions of '.SMARTY_TEMP_DIR;
+function check_smarty_dir_permissions($gacl) {
+  return is_dir(SMARTY_TEMP_DIR)
+      && substr(sprintf('%o', fileperms(SMARTY_TEMP_DIR)), -4) === "0775";
+}
+
+$jobs['check_plugin_dir_permissions'] = 'Checking file permissions of '.SPIFF_PLUGIN_DIR;
+function check_plugin_dir_permissions($gacl) {
+  return is_dir(SPIFF_PLUGIN_DIR)
+      && substr(sprintf('%o', fileperms(SPIFF_PLUGIN_DIR)), -4) === "0775";
 }
 
 // Make sure that the installation was not already finished previously.
