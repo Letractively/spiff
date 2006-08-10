@@ -80,7 +80,7 @@ function phpgacl_get_group_info($gacl_api, $group_id)
   $query = '
     SELECT a.id, a.name, a.value, at.use_group_rights, at.description
     FROM      '. $group_table     .' a
-    LEFT JOIN '. $attrib_table    .' at ON a.id=at.aro_id
+    LEFT JOIN '. $attrib_table    .' at ON a.id=at.aro_group_id
     WHERE     a.id='. $group_id*1 .'
     ORDER BY  a.name
     LIMIT     1';
@@ -100,7 +100,34 @@ function phpgacl_get_group_info($gacl_api, $group_id)
   return $group_data;
 }
 
-function phpgacl_get_permitted_group_list($gacl, $group_id, $section, $action)
+function phpgacl_get_user_info($gacl_api, $user_id)
+{
+  $user_table  = $gacl_api->_db_table_prefix . 'aro';
+  $attrib_table = $gacl_api->_db_table_prefix . 'aro_attribs';
+  $query = '
+    SELECT a.id, a.name, a.value, at.use_group_rights, at.description
+    FROM      '. $user_table      .' a
+    LEFT JOIN '. $attrib_table    .' at ON a.id=at.aro_id
+    WHERE     a.id='. $user_id*1 .'
+    ORDER BY  a.name
+    LIMIT     1';
+  //$gacl_api->db->debug = 1;
+  $rs = &$gacl_api->db->Execute($query);
+  //echo $query;
+
+  $row = $rs->FetchRow();
+  $user_data = array(
+    'id'               => $row[0],
+    'name'             => $row[1],
+    'value'            => $row[2],
+    'use_group_rights' => $row[3],
+    'description'      => $row[4]
+  );
+  //print_r($user_data);
+  return $user_data;
+}
+
+function phpgacl_get_group_permission_list($gacl, $group_id, $section, $action)
 {
   //echo "Group ID: $group_id, Section: $section, Action: $action<br>";
   $acl_table            = $gacl->_db_table_prefix . 'acl';
@@ -119,6 +146,45 @@ function phpgacl_get_permitted_group_list($gacl, $group_id, $section, $action)
     AND       ac.section_value="' . $section  . '"
     AND       ac.value="'         . $action   . '"
     AND       arg.group_id="'     . $group_id . '"
+    ORDER BY  a.updated_DATE DESC';
+  //$gacl->_debug = 1; $gacl->db->debug = 1;
+  $rs = &$gacl->db->Execute($query);
+  $user_data = array();
+  
+  if (is_object($rs)) {
+    while($row = $rs->FetchRow()) {
+      if ($row[2] == 1)
+        $user_data['allow'][$row[0]] = $row[1];
+      else
+        $user_data['deny'][$row[0]]  = $row[1];
+    }
+  }
+  //print_r($user_data);echo "<br>";
+  return $user_data;
+}
+
+function phpgacl_get_user_permission_list($gacl, $user_id, $section, $action)
+{
+  //echo "Group ID: $group_id, Section: $section, Action: $action<br>";
+  $acl_table            = $gacl->_db_table_prefix . 'acl';
+  $aco_map_table        = $gacl->_db_table_prefix . 'aco_map';
+  $aro_map_table        = $gacl->_db_table_prefix . 'aro_map';
+  $aro_table            = $gacl->_db_table_prefix . 'aro';
+  $axo_groups_map_table = $gacl->_db_table_prefix . 'axo_groups_map';
+  $axo_groups_table     = $gacl->_db_table_prefix . 'axo_groups';
+  $query = '
+    SELECT    ag.id, ag.name, a.allow
+    FROM      '. $acl_table            .' a
+    LEFT JOIN '. $aco_map_table        .' acm  ON  acm.acl_id=a.id
+    LEFT JOIN '. $aro_map_table        .' arm  ON  arm.acl_id=a.id
+    LEFT JOIN '. $aro_table            .' ar   ON  ar.section_value=arm.section_value
+                                               AND ar.value=arm.value
+    LEFT JOIN '. $axo_groups_map_table .' axgm ON  axgm.acl_id=a.id
+    LEFT JOIN '. $axo_groups_table     .' ag   ON  ag.id=axgm.group_id
+    WHERE     a.enabled=1
+    AND       acm.section_value="' . $section  . '"
+    AND       acm.value="'         . $action   . '"
+    AND       ar.id="'             . $user_id  . '"
     ORDER BY  a.updated_DATE DESC';
   //$gacl->_debug = 1; $gacl->db->debug = 1;
   $rs = &$gacl->db->Execute($query);
