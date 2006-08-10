@@ -1,5 +1,18 @@
-* Possibly create phpgacl_set_permission or something that simplifies
-  the permission process. Also use this to simplify setup.php.
+* Decide how to lay out multiple plugins on one site.
+  - Create layout containers? (Straight forward, but how can we hide
+    complexity in simple cases?)
+  - Define fixed locations depending on the plugin? (Unflexible)
+  - Let plugins configure this (Non-intuitive? Complex und complex
+    cases?)
+
+* Define the plugin API. Stuff that should be easy to do for plugins:
+  - Using the authentication framework.
+  - Storing configuration and sharing them with other plugins.
+    (Should this be done by a simple library that wraps database access?
+     Should plugins be responsible to handle this themselves?)
+  - Communication with other plugins. (And avoid the problems introduced
+    by a synchronous bus.)
+  - ...
 
 * Add an attribute table for users (that also stores the password).
 
@@ -30,12 +43,14 @@
   open standard protocols, maybe there is even an implementation
   already.
 
-* Define the plugin API. Stuff that should be easy to do for plugins:
-  - Using the authentication framework.
-  - Storing simple type/value pairs.
-  - Communication with other plugins.
-  - ...
-
 * Create an admin GUI for content management. Essentially, this GUI
   is our "Plugin Central", where the user can add different plugins
   into his website.
+
+
+Long Term TODO:
+---------------
+* Create a PHP5/PDO(with SQLlite?) based replacement for phpGACL, that uses
+  materialized path to be more scalable and has a clean OO API.
+
+* Port everything to PHP >= 5.1 and get rid of ADOdb.
