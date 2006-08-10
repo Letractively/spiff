@@ -14,8 +14,6 @@
     by a synchronous bus.)
   - ...
 
-* Add an attribute table for users (that also stores the password).
-
 * Implement login for the admin GUI. This should be done as a plugin!
 
 * Make groups changeable.

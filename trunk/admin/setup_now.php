@@ -144,7 +144,7 @@ function create_aro_attribute_table($gacl) {
 /*******************************************************************
  * Build the following aco actions:
  * content: view, create, edit, delete
- * users: administrate, view, create, edit, delete
+ * users: administer, view, create, edit, delete
  *******************************************************************/
 $jobs['Initializing ACO'] = '-';
 $jobs['create_aco_section_content'] = 'Creating access control section for content';
@@ -197,11 +197,11 @@ function create_aco_section_users($gacl) {
   return $gacl->add_object_section('Users', 'users', 10, FALSE, 'ACO') ? SUCCESS : FAILED;
 }
 
-$jobs['create_aco_users_administrate'] = 'Creating access control action "Administrate User"';
-function create_aco_users_administrate($gacl) {
+$jobs['create_aco_users_administer'] = 'Creating access control action "Administer User"';
+function create_aco_users_administer($gacl) {
   return $gacl->add_object('users',
-                           'Administrate',
-                           'administrate',
+                           'Administer',
+                           'administer',
                            10,
                            FALSE,
                            'ACO') ? SUCCESS : FAILED;
@@ -376,7 +376,7 @@ function assign_permission_administrators($gacl) {
   global $everybody_administrators_gid;
   $aco_array = array(
     'content' => array('view', 'create', 'edit', 'delete'),
-    'users'   => array('administrate', 'view', 'create', 'edit', 'delete')
+    'users'   => array('administer', 'view', 'create', 'edit', 'delete')
   );
   $allow        = TRUE;
   $enabled      = TRUE;

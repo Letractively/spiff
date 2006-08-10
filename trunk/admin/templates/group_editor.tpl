@@ -52,7 +52,7 @@
     <h3>Things This Group May Do</h3>
     <table class="indent" cellpadding="0">
       <tr>
-        <td><b>Administrate users</b> in the following groups:</td>
+        <td><b>Administer users</b> in the following groups:</td>
         <td>&nbsp;</td>
         <td>
         {if count($may_admin.allow) == 0}
@@ -116,7 +116,7 @@
     <h3>Things This Group Is Not Allowed To Do</h3>
     <table class="indent" cellpadding="0">
       <tr>
-        <td><b>Administrate users</b> in the following groups:</td>
+        <td><b>Administer users</b> in the following groups:</td>
         <td>&nbsp;</td>
         <td>
         {if count($may_admin.deny) == 0}
