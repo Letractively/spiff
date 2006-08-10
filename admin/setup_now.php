@@ -135,9 +135,49 @@ function create_aco_content_view($gacl) {
                            'ACO') ? SUCCESS : FAILED;
 }
 
+$jobs['create_aco_content_create'] = 'Creating access control action "Create Content"';
+function create_aco_content_create($gacl) {
+  return $gacl->add_object('content',
+                           'Create',
+                           'create',
+                           10,
+                           FALSE,
+                           'ACO') ? SUCCESS : FAILED;
+}
+
+$jobs['create_aco_content_edit'] = 'Creating access control action "Edit Content"';
+function create_aco_content_edit($gacl) {
+  return $gacl->add_object('content',
+                           'Edit',
+                           'edit',
+                           10,
+                           FALSE,
+                           'ACO') ? SUCCESS : FAILED;
+}
+
+$jobs['create_aco_content_delete'] = 'Creating access control action "Delete Content"';
+function create_aco_content_delete($gacl) {
+  return $gacl->add_object('content',
+                           'Delete',
+                           'delete',
+                           10,
+                           FALSE,
+                           'ACO') ? SUCCESS : FAILED;
+}
+
 $jobs['create_aco_section_users'] = 'Creating access control section for users';
 function create_aco_section_users($gacl) {
   return $gacl->add_object_section('Users', 'users', 10, FALSE, 'ACO') ? SUCCESS : FAILED;
+}
+
+$jobs['create_aco_users_administrate'] = 'Creating access control action "Administrate User"';
+function create_aco_users_administrate($gacl) {
+  return $gacl->add_object('users',
+                           'Administrate',
+                           'administrate',
+                           10,
+                           FALSE,
+                           'ACO') ? SUCCESS : FAILED;
 }
 
 $jobs['create_aco_users_view'] = 'Creating access control action "View User"';
@@ -145,6 +185,36 @@ function create_aco_users_view($gacl) {
   return $gacl->add_object('users',
                            'View',
                            'view',
+                           10,
+                           FALSE,
+                           'ACO') ? SUCCESS : FAILED;
+}
+
+$jobs['create_aco_users_create'] = 'Creating access control action "Create User"';
+function create_aco_users_create($gacl) {
+  return $gacl->add_object('users',
+                           'Create',
+                           'create',
+                           10,
+                           FALSE,
+                           'ACO') ? SUCCESS : FAILED;
+}
+
+$jobs['create_aco_users_edit'] = 'Creating access control action "Edit User"';
+function create_aco_users_edit($gacl) {
+  return $gacl->add_object('users',
+                           'Edit',
+                           'edit',
+                           10,
+                           FALSE,
+                           'ACO') ? SUCCESS : FAILED;
+}
+
+$jobs['create_aco_users_delete'] = 'Creating access control action "Delete User"';
+function create_aco_users_delete($gacl) {
+  return $gacl->add_object('users',
+                           'Delete',
+                           'delete',
                            10,
                            FALSE,
                            'ACO') ? SUCCESS : FAILED;
@@ -275,12 +345,11 @@ function create_axo_content_content_homepage($gacl) {
 $jobs['Assigning Permissions To Groups'] = '-';
 $jobs['assign_permission_administrators'] = 'Defining permissions of group "Administrators"';
 function assign_permission_administrators($gacl) {
+  global $everybody_gid;
   global $everybody_administrators_gid;
   $aco_array = array(
-    'users' => array('view'),
-  );
-  $axo_array = array(
-    'users'   => array('administrator'),
+    'content' => array('view', 'create', 'edit', 'delete'),
+    'users'   => array('administrate', 'view', 'create', 'edit', 'delete')
   );
   $allow        = TRUE;
   $enabled      = TRUE;
@@ -289,8 +358,8 @@ function assign_permission_administrators($gacl) {
   $aclid = $gacl->add_acl($aco_array,
                           NULL,
                           array($everybody_administrators_gid->aro),
-                          $axo_array,
                           NULL,
+                          array($everybody_gid->axo),
                           $allow,
                           $enabled,
                           $return_value,
@@ -352,7 +421,7 @@ foreach ($jobs as $job => $descr) {
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
   <tr><td height="1" bgcolor="#888888"></td></tr>
   <tr>
-    <td align="right"><table class="footer"><tr><td><img src="img/logo_small.png" alt="" /></td><td>powered by spiff ng</td></tr></table></td>
+    <td align="right"><table class="footer"><tr><td><img src="img/logo_small.png" alt="" /></td><td>powered by spiff</td></tr></table></td>
   </tr>
 </table>
 
