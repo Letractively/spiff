@@ -19,28 +19,42 @@
 ?>
 <?php
   class UserManagerPrinter extends PrinterBase {
+    function submit_group($gid) {
+      print "Saving group $gid<br>";
+      $group->id               = $gid;
+      $group->name             = $_POST['name'];
+      $group->description      = $_POST['description'];
+      $group->use_group_rights = $_POST['use_group_rights'] ? TRUE : FALSE;
+      phpgacl_save_group($this->gacl, $group);
+    }
+
+
+    function submit_user($uid) {
+      print "Saving user $uid<br>";
+    }
+
+
     function show_group($gid) {
       // Get the group info from phpgacl, joined with the group attributes.
-      $group      = phpgacl_get_group_info($this->gacl, $gid);
-      $groups     = phpgacl_get_group_list($this->gacl, $gid);
-      $users      = phpgacl_get_user_list($this->gacl, $gid);
-      $may_admin  = phpgacl_get_group_permission_list($this->gacl,
+      $group      = $this->gacl->get_actor_group($gid);
+      $groups     = phpgacl_get_group_list($this->gacl->gacl, $gid);
+      $users      = phpgacl_get_user_list($this->gacl->gacl, $gid);
+      $may_admin  = phpgacl_get_group_permission_list($this->gacl->gacl,
                                                       $gid,
                                                       'users',
                                                       'administer');
-      $may_create = phpgacl_get_group_permission_list($this->gacl,
+      $may_create = phpgacl_get_group_permission_list($this->gacl->gacl,
                                                       $gid,
                                                       'users',
                                                       'create');
-      $may_edit   = phpgacl_get_group_permission_list($this->gacl,
+      $may_edit   = phpgacl_get_group_permission_list($this->gacl->gacl,
                                                       $gid,
                                                       'users',
                                                       'edit');
-      $may_delete = phpgacl_get_group_permission_list($this->gacl,
+      $may_delete = phpgacl_get_group_permission_list($this->gacl->gacl,
                                                       $gid,
                                                       'users',
                                                       'delete');
-
       $this->smarty->clear_all_assign();
       $this->smarty->assign_by_ref('groups',     $groups);
       $this->smarty->assign_by_ref('users',      $users);
@@ -55,24 +69,23 @@
 
     function show_user($uid) {
       // Get the user info from phpgacl, joined with the user attributes.
-      $user       = phpgacl_get_user_info($this->gacl, $uid);
-      $may_admin  = phpgacl_get_user_permission_list($this->gacl,
+      $user       = $this->gacl->get_actor($uid);
+      $may_admin  = phpgacl_get_user_permission_list($this->gacl->gacl,
                                                      $uid,
                                                      'users',
                                                      'administer');
-      $may_create = phpgacl_get_user_permission_list($this->gacl,
+      $may_create = phpgacl_get_user_permission_list($this->gacl->gacl,
                                                      $uid,
                                                      'users',
                                                      'create');
-      $may_edit   = phpgacl_get_user_permission_list($this->gacl,
+      $may_edit   = phpgacl_get_user_permission_list($this->gacl->gacl,
                                                      $uid,
                                                      'users',
                                                      'edit');
-      $may_delete = phpgacl_get_user_permission_list($this->gacl,
+      $may_delete = phpgacl_get_user_permission_list($this->gacl->gacl,
                                                      $uid,
                                                      'users',
                                                      'delete');
-
       $this->smarty->clear_all_assign();
       $this->smarty->assign_by_ref('user',       $user);
       $this->smarty->assign_by_ref('may_admin',  $may_admin);
@@ -85,11 +98,16 @@
 
     function show() {
       if (!isset($_GET['gid']) && !isset($_GET['uid']))
-        $gid = $this->gacl->get_group_id('everybody');
+        $gid = $this->gacl->gacl->get_group_id('everybody');
       elseif (isset($_GET['gid']))
         $gid = $_GET['gid'] * 1;
       elseif (isset($_GET['uid']))
         $uid = $_GET['uid'] * 1;
+
+      if (isset($gid) && isset($_POST['save']))
+        $this->submit_group($gid);
+      elseif (isset($uid) && isset($_POST['save']))
+        $this->submit_user($uid);
 
       if (isset($gid))
         $this->show_group($gid);

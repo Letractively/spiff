@@ -28,71 +28,91 @@
 define('PHPGACL_DIR',      '../libs/phpgacl-v3.3.6/');
 define('SMARTY_TEMP_DIR',  '../libs/smarty/templates_c/');
 define('SPIFF_PLUGIN_DIR', 'plugins/');
-define('SUCCESS',     1);
-define('FAILED',      2);
-define('UNNECESSARY', 3);
 
 require_once PHPGACL_DIR . 'gacl.class.php';
 require_once PHPGACL_DIR . 'gacl_api.class.php';
 require_once PHPGACL_DIR . 'admin/gacl_admin.inc.php';
 require_once ADODB_DIR   . '/adodb-xmlschema.inc.php';
-require_once dirname(__FILE__).'/functions/phpgacl.inc.php';
+require_once dirname(__FILE__).'/services/gacl_db.class.php';
 
-$jobs = array();
+
+function category($title) {
+  echo "<h3 style='padding-left: 0px; padding-bottom: 5px;'>$title</h3>";
+}
+
+function start($message) {
+  echo "$message: ";
+}
+
+function success() {
+  echo "<font color='green'><b>Success!</b></font><br/>";
+}
+
+function unnecessary() {
+  echo "<font color='green'><b>Not necessary.</b></font><br/>";
+}
+
+function failed() {
+  echo "<font color='red'><b>Failed! Sorry dude.</b></font><br/>\n";
+}
+
+function test($result) {
+  if ($result)
+    success();
+  else {
+    failed();
+    global $success;
+    $success = FALSE;
+  }
+}
+
+$success = TRUE;
+$gacl    = new GaclDB($gacl);
 
 /*******************************************************************
  * Tests.
  *******************************************************************/
 // Test database connection.
-$jobs['Testing database'] = '-';
-$jobs['check_database_connection'] = 'Trying to connect to the database server';
-function check_database_connection($gacl) {
-  return is_resource($gacl->db->_connectionID) ? SUCCESS : FAILED;
-}
+category('Testing database');
+start('Trying to connect to the database server');
+test(is_resource($gacl->db->_connectionID));
 
-// Test DBMS type.
-$jobs['check_database_type'] = 'Checking whether the database server type "'.$gacl->_db_type.'" is supported';
-function check_database_type($gacl) {
-  return $gacl->_db_type === 'mysqlt' || $gacl->_db_type === 'mysqli' ? SUCCESS : FAILED;
-}
+start('Checking whether the database server type "' . $gacl->_db_type.
+      '" is supported');
+test($gacl->_db_type === 'mysqlt' || $gacl->_db_type === 'mysqli');
 
-// Test whether the specified database exists.
-$jobs['check_database_exists'] = 'Making sure that database "'.$gacl->_db_name.'" exists';
-function check_database_exists($gacl) {
-  $databases = $gacl->db->GetCol("show databases");
-  return in_array($gacl->_db_name, $databases) ? SUCCESS : FAILED;
-}
+start('Making sure that database "'.$gacl->_db_name.'" exists');
+$databases = $gacl->db->GetCol("show databases");
+test(in_array($gacl->_db_name, $databases));
 
-$jobs['check_smarty_dir_permissions'] = 'Checking file permissions of '.SMARTY_TEMP_DIR;
-function check_smarty_dir_permissions($gacl) {
-  return is_dir(SMARTY_TEMP_DIR)
-      && substr(sprintf('%o', fileperms(SMARTY_TEMP_DIR)), -4) === "0775";
-}
+start('Checking whether template dir ' . SMARTY_TEMP_DIR . ' exists');
+test(is_dir(SMARTY_TEMP_DIR));
 
-$jobs['check_plugin_dir_permissions'] = 'Checking file permissions of '.SPIFF_PLUGIN_DIR;
-function check_plugin_dir_permissions($gacl) {
-  return is_dir(SPIFF_PLUGIN_DIR)
-      && substr(sprintf('%o', fileperms(SPIFF_PLUGIN_DIR)), -4) === "0775";
-}
+start('Checking file permissions of ' . SMARTY_TEMP_DIR);
+test(substr(sprintf('%o', fileperms(SMARTY_TEMP_DIR)), -4) === "0775");
+
+start('Checking whether template dir ' . SPIFF_PLUGIN_DIR . ' exists');
+test(is_dir(SPIFF_PLUGIN_DIR));
+
+start('Checking file permissions of ' . SPIFF_PLUGIN_DIR);
+test(substr(sprintf('%o', fileperms(SPIFF_PLUGIN_DIR)), -4) === "0775");
 
 // Make sure that the installation was not already finished previously.
-//$jobs['check_installation_necessary'] = 'Making sure that we are not installing above another installation';
-function check_installation_necessary($gacl) {
-  return SUCCESS;
-}
+//start('Making sure that we are not installing above another installation');
+
 
 /*******************************************************************
  * Set up phpGACL.
  *******************************************************************/
 // If necessary, create tables.
-$jobs['Setting Up phpGACL'] = '-';
-$jobs['set_up_phpgacl_tables'] = 'Creating database tables';
-function set_up_phpgacl_tables($gacl) {
-  $tables = $gacl->db->MetaTables();
-  //echo "Tables: " . count($tables) . "<br/>";
-  if (count($tables) == 29) //FIXME: Should compare the count with the number of tables in the schema file.
-    return UNNECESSARY;
-
+category('Setting Up phpGACL');
+start('Creating database tables');
+$tables = $gacl->db->MetaTables();
+//echo "Tables: " . count($tables) . "<br/>";
+//FIXME: Compare the count with the number of tables in the schema file.
+if (count($tables) == 31)
+  unnecessary();
+else {
   $schema = new adoSchema($gacl->db);
   $schema->SetPrefix($gacl->_db_table_prefix);
 
@@ -103,182 +123,106 @@ function set_up_phpgacl_tables($gacl) {
   #ADODB's xmlschema is being lame, continue on error.
   $schema->ContinueOnError(TRUE);
   $result = $schema->ExecuteSchema();
-	//print $schema->getSQL('html');
+  //print $schema->getSQL('html');
   //echo "Result: $result";
-  return $result == 2 ? SUCCESS : FAILED;
+  test($result == 2);
 }
 
-// Erase all user database content (if any).
-$jobs['clear_database'] = 'Clearing phpgacl database tables';
-function clear_database($gacl) {
-  return $gacl->clear_database() ? SUCCESS : FAILED;
-}
+start('Clearing phpgacl database tables');
+test($gacl->clear_database());
+
+// Add axo group attribute support to phpgacl.
+start('Creating phpgacl AXO group attribute support');
+$fields   = 'axo_group_id I(11),
+             description C(255)';
+$opts     = array('constraints' => ', FOREIGN KEY (axo_group_id) REFERENCES axo_groups (id) ON DELETE CASCADE');
+$dict     = NewDataDictionary($gacl->db);
+$sqlarray = $dict->ChangeTableSQL('axo_groups_attribs', $fields, $opts);
+test($dict->ExecuteSQLArray($sqlarray));
+
+// Add axo attribute support to phpgacl.
+start('Creating phpgacl AXO attribute support');
+$fields   = 'axo_id I(11),
+             description C(255)';
+$opts     = array('constraints' => ', FOREIGN KEY (axo_id) REFERENCES axo (id) ON DELETE CASCADE');
+$dict     = NewDataDictionary($gacl->db);
+$sqlarray = $dict->ChangeTableSQL('axo_attribs', $fields, $opts);
+test($dict->ExecuteSQLArray($sqlarray));
 
 // Add aro group attribute support to phpgacl.
-$jobs['create_aro_group_attribute_table'] = 'Creating phpgacl aro group attribute support';
-function create_aro_group_attribute_table($gacl) {
-  //$gacl->db->debug = 1;
-  $fields   = 'aro_group_id I(11),
-               use_group_rights L DEFAULT 1,
-               description C(255)';
-  $opts     = array('constraints' => ', FOREIGN KEY (aro_group_id) REFERENCES aro_groups (id) ON DELETE CASCADE');
-  $dict     = NewDataDictionary($gacl->db);
-  $sqlarray = $dict->ChangeTableSQL('aro_groups_attribs', $fields, $opts);
-  return $dict->ExecuteSQLArray($sqlarray) ? SUCCESS : FAILED;
-}
+start('Creating phpgacl ARO group attribute support');
+$fields   = 'aro_group_id I(11),
+             use_group_rights L DEFAULT 1,
+             description C(255)';
+$opts     = array('constraints' => ', FOREIGN KEY (aro_group_id) REFERENCES aro_groups (id) ON DELETE CASCADE');
+$dict     = NewDataDictionary($gacl->db);
+$sqlarray = $dict->ChangeTableSQL('aro_groups_attribs', $fields, $opts);
+test($dict->ExecuteSQLArray($sqlarray));
 
 // Add aro attribute support to phpgacl.
-$jobs['create_aro_attribute_table'] = 'Creating phpgacl aro attribute support';
-function create_aro_attribute_table($gacl) {
-  //$gacl->db->debug = 1;
-  $fields   = 'aro_id I(11),
-               use_group_rights L DEFAULT 1,
-               description C(255)';
-  $opts     = array('constraints' => ', FOREIGN KEY (aro_id) REFERENCES aro (id) ON DELETE CASCADE');
-  $dict     = NewDataDictionary($gacl->db);
-  $sqlarray = $dict->ChangeTableSQL('aro_attribs', $fields, $opts);
-  return $dict->ExecuteSQLArray($sqlarray) ? SUCCESS : FAILED;
-}
+start('Creating phpgacl ARO attribute support');
+//$gacl->db->debug = 1;
+$fields   = 'aro_id I(11),
+             use_group_rights L DEFAULT 1,
+             description C(255)';
+$opts     = array('constraints' => ', FOREIGN KEY (aro_id) REFERENCES aro (id) ON DELETE CASCADE');
+$dict     = NewDataDictionary($gacl->db);
+$sqlarray = $dict->ChangeTableSQL('aro_attribs', $fields, $opts);
+test($dict->ExecuteSQLArray($sqlarray));
+
+category('Initializing ACO List');
+start('Creating access request section "Users"');
+test($aro_users_section = $gacl->add_actor_section('Users'));
+
+start('Creating access control section for users');
+test($aco_users = $gacl->add_action_section('Users'));
+
+start('Creating access control action "Administer User"');
+test($aco_users_admin = $gacl->add_action('Administer', $aco_users));
+
+start('Creating access control action "View User"');
+test($aco_users_view = $gacl->add_action('View', $aco_users));
+
+start('Creating access control action "Create User"');
+test($aco_users_create = $gacl->add_action('Create', $aco_users));
+
+start('Creating access control action "Edit User"');
+test($aco_users_edit = $gacl->add_action('Edit', $aco_users));
+
+start('Creating access control action "Delete User"');
+test($aco_users_delete = $gacl->add_action('Delete', $aco_users));
 
 
-/*******************************************************************
- * Build the following aco actions:
- * content: view, create, edit, delete
- * users: administer, view, create, edit, delete
- *******************************************************************/
-$jobs['Initializing ACO'] = '-';
-$jobs['create_aco_section_content'] = 'Creating access control section for content';
-function create_aco_section_content($gacl) {
-  return $gacl->add_object_section('Content', 'content', 10, FALSE, 'ACO') ? SUCCESS : FAILED;
-}
+start('Creating access control section for content');
+test($aco_content = $gacl->add_action_section('Content'));
 
-$jobs['create_aco_content_view'] = 'Creating access control action "View Content"';
-function create_aco_content_view($gacl) {
-  return $gacl->add_object('content',
-                           'View',
-                           'view',
-                           10,
-                           FALSE,
-                           'ACO') ? SUCCESS : FAILED;
-}
+start('Creating access control action "View Content"');
+test($aco_content_view = $gacl->add_action('View', $aco_content));
 
-$jobs['create_aco_content_create'] = 'Creating access control action "Create Content"';
-function create_aco_content_create($gacl) {
-  return $gacl->add_object('content',
-                           'Create',
-                           'create',
-                           10,
-                           FALSE,
-                           'ACO') ? SUCCESS : FAILED;
-}
+start('Creating access control action "Create Content"');
+test($aco_content_create = $gacl->add_action('Create', $aco_content));
 
-$jobs['create_aco_content_edit'] = 'Creating access control action "Edit Content"';
-function create_aco_content_edit($gacl) {
-  return $gacl->add_object('content',
-                           'Edit',
-                           'edit',
-                           10,
-                           FALSE,
-                           'ACO') ? SUCCESS : FAILED;
-}
+start('Creating access control action "Edit Content"');
+test($aco_content_edit = $gacl->add_action('Edit', $aco_content));
 
-$jobs['create_aco_content_delete'] = 'Creating access control action "Delete Content"';
-function create_aco_content_delete($gacl) {
-  return $gacl->add_object('content',
-                           'Delete',
-                           'delete',
-                           10,
-                           FALSE,
-                           'ACO') ? SUCCESS : FAILED;
-}
-
-$jobs['create_aco_section_users'] = 'Creating access control section for users';
-function create_aco_section_users($gacl) {
-  return $gacl->add_object_section('Users', 'users', 10, FALSE, 'ACO') ? SUCCESS : FAILED;
-}
-
-$jobs['create_aco_users_administer'] = 'Creating access control action "Administer User"';
-function create_aco_users_administer($gacl) {
-  return $gacl->add_object('users',
-                           'Administer',
-                           'administer',
-                           10,
-                           FALSE,
-                           'ACO') ? SUCCESS : FAILED;
-}
-
-$jobs['create_aco_users_view'] = 'Creating access control action "View User"';
-function create_aco_users_view($gacl) {
-  return $gacl->add_object('users',
-                           'View',
-                           'view',
-                           10,
-                           FALSE,
-                           'ACO') ? SUCCESS : FAILED;
-}
-
-$jobs['create_aco_users_create'] = 'Creating access control action "Create User"';
-function create_aco_users_create($gacl) {
-  return $gacl->add_object('users',
-                           'Create',
-                           'create',
-                           10,
-                           FALSE,
-                           'ACO') ? SUCCESS : FAILED;
-}
-
-$jobs['create_aco_users_edit'] = 'Creating access control action "Edit User"';
-function create_aco_users_edit($gacl) {
-  return $gacl->add_object('users',
-                           'Edit',
-                           'edit',
-                           10,
-                           FALSE,
-                           'ACO') ? SUCCESS : FAILED;
-}
-
-$jobs['create_aco_users_delete'] = 'Creating access control action "Delete User"';
-function create_aco_users_delete($gacl) {
-  return $gacl->add_object('users',
-                           'Delete',
-                           'delete',
-                           10,
-                           FALSE,
-                           'ACO') ? SUCCESS : FAILED;
-}
+start('Creating access control action "Delete Content"');
+test($aco_content_delete = $gacl->add_action('Delete', $aco_content));
 
 
-/*******************************************************************
- * Create a root object for the AXO table.
- *******************************************************************/
-$jobs['Initializing AXO tree'] = '-';
-$jobs['create_axo_section_root'] = 'Creating access control section "root"';
-function create_axo_section_root($gacl) {
- return $gacl->add_object_section('root', 'root', 10, FALSE, 'AXO') ? SUCCESS : FAILED;
-}
+category('Initializing AXO Tree');
+start('Creating access control section "root"');
+test($axo_section_root = $gacl->add_resource_section('Root'));
 
-$jobs['create_axo_root_root'] = 'Creating access control group "root"';
-function create_axo_root_root($gacl) {
-  global $root_gid;
-  $root_gid->axo = $gacl->add_group('root', 'root', 0, 'AXO');
-  $root_gid->aro = 0;
-  return $root_gid->axo ? SUCCESS : FAILED;
-}
+//$gacl->_debug = 1; $gacl->db->debug = 1;
+start('Creating access control group "root"');
+test($axo_group_root = $gacl->add_resource_group(NULL, 'Root'));
 
+start('Creating access control section "Content"');
+test($axo_section_root = $gacl->add_resource_section('Content'));
 
-/*******************************************************************
- * Create user sections.
- *******************************************************************/
-$jobs['Initializing User And Group Sections'] = '-';
-$jobs['create_axo_section_users'] = 'Creating access control section "Users"';
-function create_axo_section_users($gacl) {
- return $gacl->add_object_section('Users', 'users', 10, FALSE, 'AXO') ? SUCCESS : FAILED;
-}
+start('Creating access control group "Content"');
+test($axo_group_content = $gacl->add_resource_group($axo_group_root, 'Content'));
 
-$jobs['create_aro_section_users'] = 'Creating access request section "Users"';
-function create_aro_section_users($gacl) {
- return $gacl->add_object_section('Users', 'users', 10, FALSE, 'ARO') ? SUCCESS : FAILED;
-}
 
 
 /*******************************************************************
@@ -289,30 +233,15 @@ function create_aro_section_users($gacl) {
  *            \-Users
  *                \-Anonymous
  *******************************************************************/
-$jobs['Creating Default Groups'] = '-';
-$jobs['create_users_everybody'] = 'Creating group "Everybody"';
-function create_users_everybody($gacl) {
-  global $root_gid;
-  global $everybody_gid;
-  $everybody_gid = phpgacl_create_group($gacl, "Everybody", $root_gid);
-  return $everybody_gid ? SUCCESS : FAILED;
-}
+category('Creating Default Groups');
+start('Creating group "Everybody"');
+test($aro_everybody = $gacl->add_actor_group(NULL, 'Everybody'));
 
-$jobs['create_users_everybody_administrators'] = 'Creating group "Administrators"';
-function create_users_everybody_administrators($gacl) {
-  global $everybody_gid;
-  global $everybody_administrators_gid;
-  $everybody_administrators_gid = phpgacl_create_group($gacl, "Administrators", $everybody_gid);
-  return $everybody_administrators_gid ? SUCCESS : FAILED;
-}
+start('Creating group "Administrators"');
+test($aro_admin = $gacl->add_actor_group($aro_everybody, 'Administrators'));
 
-$jobs['create_users_everybody_users'] = 'Creating group "Users"';
-function create_users_everybody_users($gacl) {
-  global $everybody_gid;
-  global $everybody_users_gid;
-  $everybody_users_gid = phpgacl_create_group($gacl, "Users", $everybody_gid);
-  return $everybody_users_gid ? SUCCESS : FAILED;
-}
+start('Creating group "Users"');
+test($aro_users = $gacl->add_actor_group($aro_everybody, 'Users'));
 
 
 /*******************************************************************
@@ -324,17 +253,17 @@ function create_users_everybody_users($gacl) {
  *                \-Anonymous
  *******************************************************************/
 $jobs['Creating Default Users'] = '-';
-$jobs['create_users_everybody_administrators_administrator'] = 'Creating user "Administrator"';
-function create_users_everybody_administrators_administrator($gacl) {
-  global $everybody_administrators_gid;
-  return phpgacl_create_user($gacl, "Administrator", $everybody_administrators_gid) ? SUCCESS : FAILED;
-}
+start('Creating user "Administrator"');
+test($usr_admin = $gacl->add_actor('Administrator', $aro_users_section));
 
-$jobs['create_users_everybody_users_anonymous'] = 'Creating user "Anonymous"';
-function create_users_everybody_users_anonymous($gacl) {
-  global $everybody_users_gid;
-  return phpgacl_create_user($gacl, "Anonymous George", $everybody_users_gid) ? SUCCESS : FAILED;
-}
+start('Assigning user "Administrator" to group "Administrators"');
+test($gacl->assign_actor_to_group($usr_admin, $aro_admin));
+
+start('Creating user "Anonymous George"');
+test($usr_anon= $gacl->add_actor('Anonymous George', $aro_users_section));
+
+start('Assigning user "Anonymous George" to group "Users"');
+test($gacl->assign_actor_to_group($usr_anon, $aro_users));
 
 
 /*******************************************************************
@@ -342,87 +271,27 @@ function create_users_everybody_users_anonymous($gacl) {
  * content: Content
  *            \-Homepage
  *******************************************************************/
-$jobs['Initializing Content AXOs'] = '-';
-$jobs['create_axo_section_content'] = 'Creating access control section "Content"';
-function create_axo_section_content($gacl) {
- return $gacl->add_object_section('Content', 'content', 10, FALSE, 'AXO') ? SUCCESS : FAILED;
-}
-
-$jobs['create_axo_content_content'] = 'Creating access control group "Content"';
-function create_axo_content_content($gacl) {
-  global $root_gid;
-  global $axo_content_gid;
-  return ($axo_content_gid = $gacl->add_group('content', 'Content', $root_gid->axo, 'AXO')) ? SUCCESS : FAILED;
-}
-
-$jobs['create_axo_content_content_homepage'] = 'Creating access control object "Homepage" in "Content"';
-function create_axo_content_content_homepage($gacl) {
-  return $gacl->add_object('content',
-                           'Homepage',
-                           'homepage',
-                           10,
-                           FALSE,
-                           'AXO') ? SUCCESS : FAILED;
-}
+category('Initializing Content');
+start('Creating access control object "Homepage" in "Content"');
+test($homepage = $gacl->add_resource('Homepage', $axo_group_content));
 
 
 /*******************************************************************
  * Define permissions of the default groups.
  *******************************************************************/
-$jobs['Assigning Permissions To Groups'] = '-';
-$jobs['assign_permission_administrators'] = 'Defining permissions of group "Administrators"';
-function assign_permission_administrators($gacl) {
-  global $everybody_gid;
-  global $everybody_administrators_gid;
-  $aco_array = array(
-    'content' => array('view', 'create', 'edit', 'delete'),
-    'users'   => array('administer', 'view', 'create', 'edit', 'delete')
-  );
-  $allow        = TRUE;
-  $enabled      = TRUE;
-  $return_value = NULL;
-  //$gacl->_debug = 1; $gacl->db->debug = 1;
-  $aclid = $gacl->add_acl($aco_array,
-                          NULL,
-                          array($everybody_administrators_gid->aro),
-                          NULL,
-                          array($everybody_gid->axo),
-                          $allow,
-                          $enabled,
-                          $return_value,
-                          NULL,
-                          'user');
-  //$gacl->db->debug = 0; $gacl->_debug = 0;
-  return $aclid ? SUCCESS : FAILED;
-}
+category('Assigning Permissions To Groups');
+start('Defining permissions of group "Administrators"');
+$aco_array = array(
+  $aco_users_admin,
+  $aco_users_view,
+  $aco_users_create,
+  $aco_users_edit,
+  $aco_users_delete
+);
+$aro_array = array($aro_admin);
+$axo_array = array($aro_everybody->get_resource_group());
+test($aclid = $gacl->grant($aco_array, $aro_array, $axo_array));
 
-//$gacl = new gacl_api();
-$success = TRUE;
-
-foreach ($jobs as $job => $descr) {
-  if ($descr === "-") {
-    echo "<h3 style='padding-left: 0px; padding-bottom: 5px;'>$job</h3>";
-    continue;
-  }
-  echo "$descr: ";
-  switch (call_user_func($job, $gacl)) {
-  case SUCCESS:
-    echo "<font color='green'><b>Success!</b></font><br/>";
-    break;
-
-  case UNNECESSARY:
-    echo "<font color='green'><b>Not necessary.</b></font><br/>";
-    break;
-
-  default:
-    echo "<font color='red'><b>Failed! Sorry dude.</b></font><br/>\n";
-    $success = FALSE;
-    break;
-  }
-
-  if (!$success)
-    break;
-}
 ?>
     </td>
   </tr>

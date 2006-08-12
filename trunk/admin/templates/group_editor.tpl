@@ -1,3 +1,4 @@
+<form action="?manage_users=1&amp;gid={$group.id}" method="POST">
 <table class="container" width="100%" border="0" cellpadding="0" cellspacing="0">
   <tr>
     <td width="14"><img src="img/corner_top_left.png" alt="" height="14" width="14" /></td>
@@ -27,13 +28,12 @@
     <td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
     <td><img src="img/line_left.png" alt="" height="100%" width="14" /></td>
     <td>
-    <form action="?submit=1" method="POST">
-    <h2>{$group.name}</h2>
+    <h2>{$group->get_name()}</h2>
     <table width='100%' cellpadding="0" cellspacing="0"><tr><td height="1" bgcolor="#000000"></td></tr></table>
     <h3>Public Group Information</h3>
     <table class="indent" width="100%" cellpadding="0" cellspacing="5">
-      <tr><td class="nowrap">Group Name:</td><td width="100%"><input type="text" class="field" name="name" value="{$group.name}" /></td></tr>
-      <tr><td class="nowrap" valign="top">Description:</td><td width="100%"><textarea name="description">{$group.description}</textarea></td></tr>
+      <tr><td class="nowrap">Group Name:</td><td width="100%"><input type="text" class="field" name="name" value="{$group->get_name()}" /></td></tr>
+      <tr><td class="nowrap" valign="top">Description:</td><td width="100%"><textarea name="description">{$group->get_attribute('description')}</textarea></td></tr>
     </table>
 
     <h3>Defaults</h3>
@@ -42,12 +42,15 @@
         <td>Content created by users in this group is by default owned by:</td>
         <td>
         <select name="use_group_rights">
-          <option{if $group.use_group_rights} selected{/if}>Group</option>
-          <option{if !$group.use_group_rights} selected{/if}>User</option>
+          <option value=1{if $group->get_attribute('use_group_rights')} selected{/if}>Group</option>
+          <option value=0{if !$group->get_attribute('use_group_rights')} selected{/if}>User</option>
         </select>
         </td>
       </tr>
     </table>
+
+{assign var=gid value=$group.id}
+{assign var=perm_url value="?edit_permissions=1&amp;gid=$gid&amp;section=users"}
 
     <h3>Things This Group May Do</h3>
     <table class="indent" cellpadding="0">
@@ -64,7 +67,13 @@
         {/if}
         </td>
         <td>&nbsp;</td>
-        <td><input type="button" name="change" value="Change..." /></td>
+        <td>
+        <a target="_blank" onclick="window.open('{$perm_url}&amp;action=administer&amp;allow=1',
+                                                '_blank',
+                                                'width=350,height=640,top=300,left='+(screen.width-300)/2)">
+        <input type="button" name="change" value="Change..." />
+        </a>
+        </td>
       </tr>
       <tr>
         <td><b>Create new users</b> in the following groups:</td>
@@ -79,7 +88,13 @@
         {/if}
         </td>
         <td>&nbsp;</td>
-        <td><input type="button" name="change" value="Change..." /></td>
+        <td>
+        <a target="_blank" onclick="window.open('{$perm_url}&amp;action=create&amp;allow=1',
+                                                '_blank',
+                                                'width=350,height=640,top=300,left='+(screen.width-300)/2)">
+        <input type="button" name="change" value="Change..." />
+        </a>
+        </td>
       </tr>
       <tr>
         <td><b>Modify existing users</b> in the following groups:</td>
@@ -94,7 +109,13 @@
         {/if}
         </td>
         <td>&nbsp;</td>
-        <td><input type="button" name="change" value="Change..." /></td>
+        <td>
+        <a target="_blank" onclick="window.open('{$perm_url}&amp;action=edit&amp;allow=1',
+                                                '_blank',
+                                                'width=350,height=640,top=300,left='+(screen.width-300)/2)">
+        <input type="button" name="change" value="Change..." />
+        </a>
+        </td>
       </tr>
       <tr>
         <td><b>Delete existing users</b> in the following groups:</td>
@@ -109,7 +130,13 @@
         {/if}
         </td>
         <td>&nbsp;</td>
-        <td><input type="button" name="change" value="Change..." /></td>
+        <td>
+        <a target="_blank" onclick="window.open('{$perm_url}&amp;action=delete&amp;allow=1',
+                                                '_blank',
+                                                'width=350,height=640,top=300,left='+(screen.width-300)/2)">
+        <input type="button" name="change" value="Change..." />
+        </a>
+        </td>
       </tr>
     </table>
 
@@ -128,7 +155,13 @@
         {/if}
         </td>
         <td>&nbsp;</td>
-        <td><input type="button" name="change" value="Change..." /></td>
+        <td>
+        <a target="_blank" onclick="window.open('{$perm_url}&amp;action=administer&amp;allow=0',
+                                                '_blank',
+                                                'width=350,height=640,top=300,left='+(screen.width-300)/2)">
+        <input type="button" name="change" value="Change..." />
+        </a>
+        </td>
       </tr>
       <tr>
         <td><b>Create new users</b> in the following groups:</td>
@@ -143,7 +176,13 @@
         {/if}
         </td>
         <td>&nbsp;</td>
-        <td><input type="button" name="change" value="Change..." /></td>
+        <td>
+        <a target="_blank" onclick="window.open('{$perm_url}&amp;action=create&amp;allow=0',
+                                                '_blank',
+                                                'width=350,height=640,top=300,left='+(screen.width-300)/2)">
+        <input type="button" name="change" value="Change..." />
+        </a>
+        </td>
       </tr>
       <tr>
         <td><b>Modify existing users</b> in the following groups:</td>
@@ -158,7 +197,13 @@
         {/if}
         </td>
         <td>&nbsp;</td>
-        <td><input type="button" name="change" value="Change..." /></td>
+        <td>
+        <a target="_blank" onclick="window.open('{$perm_url}&amp;action=edit&amp;allow=0',
+                                                '_blank',
+                                                'width=350,height=640,top=300,left='+(screen.width-300)/2)">
+        <input type="button" name="change" value="Change..." />
+        </a>
+        </td>
       </tr>
       <tr>
         <td><b>Delete existing users</b> in the following groups:</td>
@@ -173,10 +218,15 @@
         {/if}
         </td>
         <td>&nbsp;</td>
-        <td><input type="button" name="change" value="Change..." /></td>
+        <td>
+        <a target="_blank" onclick="window.open('{$perm_url}&amp;action=delete&amp;allow=0',
+                                                '_blank',
+                                                'width=350,height=640,top=300,left='+(screen.width-300)/2)">
+        <input type="button" name="change" value="Change..." />
+        </a>
+        </td>
       </tr>
     </table>
-    </form>
     </td>
     <td><img src="img/line_right.png" alt="" height="100%" width="14" /></td>
   </tr>
@@ -193,9 +243,9 @@
     <td colspan="3">
     <table width="100%">
       <tr>
-        <td><input type="button" class="button" name="group_add" value="Add New Group" /></td>
+        <td><input type="submit" class="button" name="group_add" value="Add New Group" /></td>
         <td>&nbsp;</td>
-        <td><input type="button" class="button" name="user_add" value="Add New User" /></td>
+        <td><input type="submit" class="button" name="user_add" value="Add New User" /></td>
       </tr>
     </table>
     </td>
@@ -203,11 +253,12 @@
     <td colspan="3" align="right">
     <table>
       <tr>
-        <td><input type="button" class="button" name="delete" value="Delete Group" /></td>
+        <td><input type="submit" class="button" name="delete" value="Delete Group" /></td>
         <td>&nbsp;</td>
-        <td><input type="button" class="button" name="save" value="Apply Changes" /></td>
+        <td><input type="submit" class="button" name="save" value="Apply Changes" /></td>
       </tr>
     </table>
     </td>
   </tr>
 </table>
+</form>

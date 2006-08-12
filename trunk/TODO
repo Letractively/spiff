@@ -1,3 +1,6 @@
+* Implement missing methods in admin/services/gacl_db.class.php and get
+  rid of admin/functions/phpgacl.inc.php.
+
 * Decide how to lay out multiple plugins on one site.
   - Create layout containers? (Straight forward, but how can we hide
     complexity in simple cases?)
@@ -46,6 +49,6 @@
 Long Term TODO:
 ---------------
 * Create a PHP5/PDO(with SQLlite?) based replacement for phpGACL, that uses
-  materialized path to be more scalable and has a clean OO API.
+  materialized path tables to be more scalable.
 
 * Port everything to PHP >= 5.1 and get rid of ADOdb.
