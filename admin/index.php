@@ -52,6 +52,7 @@
   include_once 'actions/user_manager_printer.class.php';
   
   include_once 'services/sql_query.class.php';
+  include_once 'services/gacl_db.class.php';
   include_once 'services/trackable.class.php';
   include_once 'services/plugin_registry.class.php';
   
@@ -109,7 +110,7 @@
       $this->smarty->config_dir   = "../libs/smarty/configs";
       $this->smarty->register_function('lang', 'smarty_lang');
       
-      $this->gacl = new gacl_api();
+      $this->gacl = new GaclDB(new gacl_api());
       
       $this->_handle_cookies();
     }
@@ -256,8 +257,6 @@
       
       if (isset($_GET['manage_users']))
         $this->_print_user_manager();
-      elseif (isset($_GET['login']))
-        $this->_print_login();   // Write an answer.
       else
         $this->_print_content();
 

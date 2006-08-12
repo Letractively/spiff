@@ -73,60 +73,6 @@ function phpgacl_get_user_list($gacl_api, $group_id)
   return $user_data;
 }
 
-function phpgacl_get_group_info($gacl_api, $group_id)
-{
-  $group_table  = $gacl_api->_db_table_prefix . 'aro_groups';
-  $attrib_table = $gacl_api->_db_table_prefix . 'aro_groups_attribs';
-  $query = '
-    SELECT a.id, a.name, a.value, at.use_group_rights, at.description
-    FROM      '. $group_table     .' a
-    LEFT JOIN '. $attrib_table    .' at ON a.id=at.aro_group_id
-    WHERE     a.id='. $group_id*1 .'
-    ORDER BY  a.name
-    LIMIT     1';
-  //$gacl_api->db->debug = 1;
-  $rs = &$gacl_api->db->Execute($query);
-  //echo $query;
-
-  $row = $rs->FetchRow();
-  $group_data = array(
-    'id'               => $row[0],
-    'name'             => $row[1],
-    'value'            => $row[2],
-    'use_group_rights' => $row[3],
-    'description'      => $row[4]
-  );
-  
-  return $group_data;
-}
-
-function phpgacl_get_user_info($gacl_api, $user_id)
-{
-  $user_table  = $gacl_api->_db_table_prefix . 'aro';
-  $attrib_table = $gacl_api->_db_table_prefix . 'aro_attribs';
-  $query = '
-    SELECT a.id, a.name, a.value, at.use_group_rights, at.description
-    FROM      '. $user_table      .' a
-    LEFT JOIN '. $attrib_table    .' at ON a.id=at.aro_id
-    WHERE     a.id='. $user_id*1 .'
-    ORDER BY  a.name
-    LIMIT     1';
-  //$gacl_api->db->debug = 1;
-  $rs = &$gacl_api->db->Execute($query);
-  //echo $query;
-
-  $row = $rs->FetchRow();
-  $user_data = array(
-    'id'               => $row[0],
-    'name'             => $row[1],
-    'value'            => $row[2],
-    'use_group_rights' => $row[3],
-    'description'      => $row[4]
-  );
-  //print_r($user_data);
-  return $user_data;
-}
-
 function phpgacl_get_group_permission_list($gacl, $group_id, $section, $action)
 {
   //echo "Group ID: $group_id, Section: $section, Action: $action<br>";
@@ -202,23 +148,12 @@ function phpgacl_get_user_permission_list($gacl, $user_id, $section, $action)
   return $user_data;
 }
 
-function phpgacl_create_group($gacl, $name, $parent_gid)
+function phpgacl_save_group($gacl, $group)
 {
-  $sys_name = preg_replace("/[^a-z0-9]/", "", strtolower($name));
+  $sys_name = preg_replace("/[^a-z0-9]/", "", strtolower($group->name));
   //FIXME: This should be one transaction.
-  $gid->axo = $gacl->add_group($sys_name, $name, $parent_gid->axo, 'AXO');
-  $gid->aro = $gacl->add_group($sys_name, $name, $parent_gid->aro, 'ARO');
-  return $gid;
+  print "$group->id, $sys_name, $group->name<br/>";
+  $rs1 = $gacl->edit_group($group->id, $sys_name, $group->name, NULL, 'AXO');
+  $rs2 = $gacl->edit_group($group->id, $sys_name, $group->name, NULL, 'ARO');
+  return $rs1 && $rs2;
 }
-
-function phpgacl_create_user($gacl, $name, $group_id)
-{
-  $sys_name = preg_replace("/[^a-z0-9]/", "", strtolower($name));
-  //FIXME: This should be one transaction.
-  $uid->axo = $gacl->add_object('users', $name, $sys_name, 10, FALSE, 'AXO');
-  $gacl->add_group_object($group_id->axo, 'users', $sys_name, 'AXO');
-  $uid->aro = $gacl->add_object('users', $name, $sys_name, 10, FALSE, 'ARO');
-  $gacl->add_group_object($group_id->aro, 'users', $sys_name, 'ARO');
-  return $uid;
-}
-?>
