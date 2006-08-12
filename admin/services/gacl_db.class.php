@@ -137,6 +137,11 @@ class GaclResourceGroup {
   function get_attribute($name) {
     return $this->attributes[$name];
   }
+
+
+  function get_attribute_list() {
+    return $this->attributes;
+  }
 }
 
 
@@ -189,6 +194,11 @@ class GaclResource {
 
   function get_attribute($name) {
     return $this->attributes[$name];
+  }
+
+
+  function get_attribute_list() {
+    return $this->attributes;
   }
 }
 
@@ -264,6 +274,11 @@ class GaclActorGroup {
   function get_attribute($name) {
     return $this->attributes[$name];
   }
+
+
+  function get_attribute_list() {
+    return $this->attributes;
+  }
 }
 
 class GaclActor {
@@ -282,6 +297,7 @@ class GaclActor {
 
   function set_name($name) {
     $this->name = $name;
+    $this->resource->set_name($name);
   }
 
 
@@ -292,6 +308,7 @@ class GaclActor {
 
   function set_section($section) {
     $this->section = $section;
+    $this->resource->set_section($section);
   }
 
 
@@ -327,6 +344,11 @@ class GaclActor {
 
   function get_attribute($name) {
     return $this->attributes[$name];
+  }
+
+
+  function get_attribute_list() {
+    return $this->attributes;
   }
 }
 
@@ -463,6 +485,17 @@ class GaclDB {
   }
 
 
+  function save_resource_group($group) {
+    $sys_name = $this->_to_sys_name($group->get_name());
+    $res = $gacl->edit_group($group->get_axo(),
+                             $sys_name,
+                             $group->get_name(),
+                             NULL,
+                             'AXO');
+    return $res;
+  }
+
+
   function get_resource_group($id) {
     $group_table  = $this->_db_table_prefix . 'axo_groups';
     $attrib_table = $this->_db_table_prefix . 'axo_groups_attribs';
@@ -478,6 +511,7 @@ class GaclDB {
     $resource_group = new GaclResourceGroup($row->NAME);
     $resource_group->set_axo($id);
     unset($row['NAME']);
+    unset($row['AXO_GROUP_ID']);
     foreach ($row as $key => $var)
       $resource_group->set_attribute(strtolower($key), $var);
     
@@ -502,6 +536,42 @@ class GaclDB {
   }
 
 
+  function save_resource($resource) {
+    $sect      = $resource->get_section();
+    $sect_name = $this->_to_sys_name($sect->get_name());
+    $sys_name  = $this->_to_sys_name($resource->get_name());
+    //$this->gacl->_debug = 1; $this->gacl->db->debug = 1;
+    $res = $this->gacl->edit_object($resource->get_axo(),
+                                    $sect_name,
+                                    $resource->get_name(),
+                                    $sys_name,
+                                    10,
+                                    FALSE,
+                                    'AXO');
+    if (!$res)
+      die("save_resource(): Ugh");
+
+    // Save attributes.
+    $attrib_table = $this->_db_table_prefix . 'axo_attribs';
+    $query        = new SqlQuery();
+    foreach ($resource->get_attribute_list() as $key => $val) {
+      //echo "Resource attrib pair: $key: $val<br>";
+      if (!isset($attrib_sql))
+        $attrib_sql = "SET $key=\{$key}";
+      else
+        $attrib_sql .= ", $key=\{$key}";
+      $query->set_var($key, $val);
+    }
+    $query->set_sql(
+      "UPDATE {t_axo_attribs} at
+       $attrib_sql
+       WHERE at.axo_id=\{id}");
+    $query->set_int('id', $resource->get_axo());
+    $rs = &$this->db->Execute($query->get_sql());
+    return $rs;
+  }
+
+
   function get_resource($id) {
     $group_table   = $this->_db_table_prefix . 'axo';
     $section_table = $this->_db_table_prefix . 'axo_sections';
@@ -521,6 +591,7 @@ class GaclDB {
     $resource->set_axo($id);
     unset($row['NAME']);
     unset($row['SECTION_NAME']);
+    unset($row['AXO_ID']);
     foreach ($row as $key => $var)
       $resource->set_attribute(strtolower($key), $var);
     
@@ -590,6 +661,17 @@ class GaclDB {
   }
 
 
+  function save_actor_group($group) {
+    $sys_name = $this->_to_sys_name($group->get_name());
+    $res = $this->gacl->edit_group($group->get_aro(),
+                                   $sys_name,
+                                   $group->get_name(),
+                                   NULL,
+                                   'ARO');
+    return $res;
+  }
+
+
   function get_actor_group($aro) {
     $group_table  = $this->_db_table_prefix . 'aro_groups';
     $attrib_table = $this->_db_table_prefix . 'aro_groups_attribs';
@@ -606,6 +688,7 @@ class GaclDB {
     $aro_section_name = $row->VALUE;
     unset($row['NAME']);
     unset($row['VALUE']);
+    unset($row['ARO_GROUP_ID']);
 
     $section        = new GaclResourceSection($aro_section_name);
     $axo            = $this->get_resource_group_id_from_name($aro_name, $section);
@@ -643,6 +726,45 @@ class GaclDB {
   }
 
 
+  function save_actor($actor) {
+    //FIXME: This should be one transaction.
+    //$this->gacl->_debug = 1; $this->gacl->db->debug = 1;
+    $res = $this->save_resource($actor->get_resource());
+    if (!$res)
+      die("save_actor(): Ugh.\n");
+    $sect      = $actor->get_section();
+    $sect_name = $this->_to_sys_name($sect->get_name());
+    $sys_name  = $this->_to_sys_name($actor->get_name());
+    $res = $this->gacl->edit_object($actor->get_aro(),
+                                     $sect_name,
+                                    $actor->get_name(),
+                                    $sys_name,
+                                    10,
+                                    FALSE,
+                                    'ARO');
+    if (!$res)
+      die("save_actor(): Ugh");
+
+    // Save attributes.
+    $query = new SqlQuery();
+    foreach ($actor->get_attribute_list() as $key => $val) {
+      //echo "Actor attrib pair: $key: $val<br>";
+      if (!isset($attrib_sql))
+        $attrib_sql = "SET $key=\{$key}";
+      else
+        $attrib_sql .= ", $key=\{$key}";
+      $query->set_var($key, $val);
+    }
+    $query->set_sql(
+      "UPDATE {t_aro_attribs} at
+       $attrib_sql
+       WHERE at.aro_id=\{id}");
+    $query->set_int('id', $actor->get_aro());
+    $rs = &$this->db->Execute($query->get_sql());
+    return $rs;
+  }
+
+
   function get_actor($aro) {
     $group_table   = $this->_db_table_prefix . 'aro';
     $section_table = $this->_db_table_prefix . 'aro_sections';
@@ -668,10 +790,11 @@ class GaclDB {
     $actor->set_aro($aro);
     unset($row['NAME']);
     unset($row['SECTION_NAME']);
+    unset($row['ARO_ID']);
     foreach ($row as $key => $var)
       $actor->set_attribute(strtolower($key), $var);
     
-    return $resource;
+    return $actor;
   }
 
 

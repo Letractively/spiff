@@ -20,17 +20,20 @@
 <?php
   class UserManagerPrinter extends PrinterBase {
     function submit_group($gid) {
-      print "Saving group $gid<br>";
-      $group->id               = $gid;
-      $group->name             = $_POST['name'];
-      $group->description      = $_POST['description'];
-      $group->use_group_rights = $_POST['use_group_rights'] ? TRUE : FALSE;
-      phpgacl_save_group($this->gacl, $group);
+      $group = $this->gacl->get_actor_group($gid);
+      $group->set_name($_POST['name']);
+      $group->set_attribute('description',      $_POST['description']);
+      $group->set_attribute('use_group_rights', $_POST['use_group_rights'] ? TRUE : FALSE);
+      $this->gacl->save_actor_group($group);
     }
 
 
     function submit_user($uid) {
-      print "Saving user $uid<br>";
+      $user = $this->gacl->get_actor($uid);
+      $user->set_name($_POST['name']);
+      $user->set_attribute('description',      $_POST['description']);
+      $user->set_attribute('use_group_rights', $_POST['use_group_rights'] ? TRUE : FALSE);
+      $this->gacl->save_actor($user);
     }
 
 

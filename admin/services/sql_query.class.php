@@ -57,10 +57,10 @@ class SqlQuery
     
     foreach( $this->data as $name=>$data )
     {
-      if ( $data['type']=='string' ) $this->set_string($name,$data['value'] );
-      if ( $data['type']=='hex'    ) $this->set_hex   ($name,$data['value'] );
-      if ( $data['type']=='int'    ) $this->set_int   ($name,$data['value'] );
-      if ( $data['type']=='null'   ) $this->set_null  ($name                );
+      if ( $data['type']=='string' )  $this->set_string($name,$data['value'] );
+      if ( $data['type']=='hex'    )  $this->set_hex   ($name,$data['value'] );
+      if ( $data['type']=='int'    )  $this->set_int   ($name,$data['value'] );
+      if ( $data['type']=='null'   )  $this->set_null  ($name                );
     }
   }
   
@@ -73,6 +73,9 @@ class SqlQuery
     if   ( is_null($value) )
          $this->set_null( $name );
     
+    if   ( is_bool($value) )
+         $this->set_boolean( $name,$value );
+
     if   ( is_int($value) )
          $this->set_int( $name,$value );
   }
@@ -107,7 +110,7 @@ class SqlQuery
   {
     if        ( $value )
          $this->set_int( $name,1 );
-    else        $this->setInt( $name,0 );
+    else        $this->set_int( $name,0 );
   }
   
   
