@@ -21,9 +21,9 @@
   function table_names() {
     $tables = array (
       't_axo_attribs' => cfg("db_table_prefix") . 'axo_attribs',
-      't_axo_group_attribs' => cfg("db_table_prefix") . 'axo_group_attribs',
+      't_axo_group_attribs' => cfg("db_table_prefix") . 'axo_groups_attribs',
       't_aro_attribs' => cfg("db_table_prefix") . 'aro_attribs',
-      't_aro_group_attribs' => cfg("db_table_prefix") . 'aro_group_attribs',
+      't_aro_group_attribs' => cfg("db_table_prefix") . 'aro_groups_attribs',
     );
     return $tables;
   }
