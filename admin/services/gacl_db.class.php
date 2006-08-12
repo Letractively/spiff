@@ -498,7 +498,7 @@ class GaclDB {
       $attrib_values_sql .= ",\{$key}";
       $query->set_var($key, $val);
     }
-    $query->set_sql("INSERT INTO {t_axo_group_attribs}
+    $query->set_sql("INSERT INTO {t_axo_groups_attribs}
                     ($attrib_fields_sql)
                     VALUES ($attrib_values_sql)");
     $rs = &$this->db->Execute($query->get_sql());
@@ -529,7 +529,7 @@ class GaclDB {
       $query->set_var($key, $val);
     }
     $query->set_sql(
-      "UPDATE {t_axo_group_attribs} at
+      "UPDATE {t_axo_groups_attribs} at
        $attrib_sql
        WHERE at.axo_group_id={id}");
     $query->set_int('id', $resource->get_axo());
@@ -732,7 +732,7 @@ class GaclDB {
       $attrib_values_sql .= ",\{$key}";
       $query->set_var($key, $val);
     }
-    $query->set_sql("INSERT INTO {t_aro_group_attribs}
+    $query->set_sql("INSERT INTO {t_aro_groups_attribs}
                     ($attrib_fields_sql)
                     VALUES ($attrib_values_sql)");
     $rs = &$this->db->Execute($query->get_sql());
@@ -763,7 +763,7 @@ class GaclDB {
       $query->set_var($key, $val);
     }
     $query->set_sql(
-      "UPDATE {t_aro_group_attribs}
+      "UPDATE {t_aro_groups_attribs}
        $attrib_sql
        WHERE aro_group_id={id}");
     $query->set_int('id', $group->get_aro());
