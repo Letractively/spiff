@@ -147,13 +147,3 @@ function phpgacl_get_user_permission_list($gacl, $user_id, $section, $action)
   //print_r($user_data);echo "<br>";
   return $user_data;
 }
-
-function phpgacl_save_group($gacl, $group)
-{
-  $sys_name = preg_replace("/[^a-z0-9]/", "", strtolower($group->name));
-  //FIXME: This should be one transaction.
-  print "$group->id, $sys_name, $group->name<br/>";
-  $rs1 = $gacl->edit_group($group->id, $sys_name, $group->name, NULL, 'AXO');
-  $rs2 = $gacl->edit_group($group->id, $sys_name, $group->name, NULL, 'ARO');
-  return $rs1 && $rs2;
-}

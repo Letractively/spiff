@@ -20,13 +20,10 @@
 <?php
   function table_names() {
     $tables = array (
-      t_group            => cfg("db_tablebase") . 'group',
-      t_user             => cfg("db_tablebase") . 'user',
-      t_permission       => cfg("db_tablebase") . 'permission',
-      t_group_permission => cfg("db_tablebase") . 'group_permission',
-      t_group_user       => cfg("db_tablebase") . 'group_user',
-      t_forum            => cfg("db_tablebase") . 'forum',
-      t_message          => cfg("db_tablebase") . 'message'
+      't_axo_attribs' => cfg("db_table_prefix") . 'axo_attribs',
+      't_axo_group_attribs' => cfg("db_table_prefix") . 'axo_group_attribs',
+      't_aro_attribs' => cfg("db_table_prefix") . 'aro_attribs',
+      't_aro_group_attribs' => cfg("db_table_prefix") . 'aro_group_attribs',
     );
     return $tables;
   }

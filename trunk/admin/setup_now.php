@@ -137,7 +137,7 @@ $fields   = 'axo_group_id I(11),
              description C(255)';
 $opts     = array('constraints' => ', FOREIGN KEY (axo_group_id) REFERENCES axo_groups (id) ON DELETE CASCADE');
 $dict     = NewDataDictionary($gacl->db);
-$sqlarray = $dict->ChangeTableSQL('axo_groups_attribs', $fields, $opts);
+$sqlarray = $dict->ChangeTableSQL($gacl->_db_table_prefix.'axo_groups_attribs', $fields, $opts);
 test($dict->ExecuteSQLArray($sqlarray));
 
 // Add axo attribute support to phpgacl.
@@ -146,7 +146,7 @@ $fields   = 'axo_id I(11),
              description C(255)';
 $opts     = array('constraints' => ', FOREIGN KEY (axo_id) REFERENCES axo (id) ON DELETE CASCADE');
 $dict     = NewDataDictionary($gacl->db);
-$sqlarray = $dict->ChangeTableSQL('axo_attribs', $fields, $opts);
+$sqlarray = $dict->ChangeTableSQL($gacl->_db_table_prefix.'axo_attribs', $fields, $opts);
 test($dict->ExecuteSQLArray($sqlarray));
 
 // Add aro group attribute support to phpgacl.
@@ -156,7 +156,7 @@ $fields   = 'aro_group_id I(11),
              description C(255)';
 $opts     = array('constraints' => ', FOREIGN KEY (aro_group_id) REFERENCES aro_groups (id) ON DELETE CASCADE');
 $dict     = NewDataDictionary($gacl->db);
-$sqlarray = $dict->ChangeTableSQL('aro_groups_attribs', $fields, $opts);
+$sqlarray = $dict->ChangeTableSQL($gacl->_db_table_prefix.'aro_groups_attribs', $fields, $opts);
 test($dict->ExecuteSQLArray($sqlarray));
 
 // Add aro attribute support to phpgacl.
@@ -167,7 +167,7 @@ $fields   = 'aro_id I(11),
              description C(255)';
 $opts     = array('constraints' => ', FOREIGN KEY (aro_id) REFERENCES aro (id) ON DELETE CASCADE');
 $dict     = NewDataDictionary($gacl->db);
-$sqlarray = $dict->ChangeTableSQL('aro_attribs', $fields, $opts);
+$sqlarray = $dict->ChangeTableSQL($gacl->_db_table_prefix.'aro_attribs', $fields, $opts);
 test($dict->ExecuteSQLArray($sqlarray));
 
 category('Initializing ACO List');

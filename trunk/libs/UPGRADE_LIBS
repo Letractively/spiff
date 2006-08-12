@@ -12,11 +12,12 @@ phpgacl
 
 unset($options);
 include(dirname(__FILE__).'/../../admin/config.inc.php');
-$options['db_type']     = $cfg['db_type'];
-$options['db_host']     = $cfg['db_host'];
-$options['db_user']     = $cfg['db_usr'];
-$options['db_name']     = $cfg['db_name'];
-$options['db_password'] = $cfg['db_pass'];
+$options['db_type']         = $cfg['db_type'];
+$options['db_host']         = $cfg['db_host'];
+$options['db_user']         = $cfg['db_usr'];
+$options['db_name']         = $cfg['db_name'];
+$options['db_password']     = $cfg['db_pass'];
+$options['db_table_prefix'] = $cfg['db_table_prefix'];
 $gacl_options['smarty_dir'] = dirname(__FILE__).'/../smarty';
 $gacl_options['smarty_template_dir'] = 'templates';
 $gacl_options['smarty_compile_dir'] = dirname(__FILE__).'/../smarty/templates_c';
