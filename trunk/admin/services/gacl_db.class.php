@@ -18,6 +18,9 @@
   */
 ?>
 <?php
+include_once dirname(__FILE__).'/sql_query.class.php';
+include_once dirname(__FILE__).'/../functions/table_names.inc.php';
+include_once dirname(__FILE__).'/../functions/config.inc.php';
 
 class GaclActionSection {
   var $name;
@@ -481,7 +484,27 @@ class GaclDB {
                                            $name,
                                            $parent_axo,
                                            'AXO'));
-    return $group->get_axo() ? $group : FALSE;
+    if (!$group->get_axo())
+      die("add_resource_group(): Ugh");
+
+    // Save attributes.
+    $query = new SqlQuery();
+    $query->set_int('id', $group->get_axo());
+    $attrib_fields_sql = 'axo_group_id';
+    $attrib_values_sql = '{id}';
+    foreach ($group->get_attribute_list() as $key => $val) {
+      //echo "Resource group attrib pair: $key: $val<br>";
+      $attrib_fields_sql .= ",$key";
+      $attrib_values_sql .= ",\{$key}";
+      $query->set_var($key, $val);
+    }
+    $query->set_sql("INSERT INTO {t_axo_group_attribs}
+                    ($attrib_fields_sql)
+                    VALUES ($attrib_values_sql)");
+    $rs = &$this->db->Execute($query->get_sql());
+    if (!$rs)
+      die("add_resource_group(): Ugh2");
+    return $group;
   }
 
 
@@ -492,7 +515,27 @@ class GaclDB {
                              $group->get_name(),
                              NULL,
                              'AXO');
-    return $res;
+    if (!$res)
+      die("save_resource_group(): Ugh");
+
+    // Save attributes.
+    $query = new SqlQuery();
+    foreach ($group->get_attribute_list() as $key => $val) {
+      //echo "Resource group attrib pair: $key: $val<br>";
+      if (!isset($attrib_sql))
+        $attrib_sql = "SET $key=\{$key}";
+      else
+        $attrib_sql .= ", $key=\{$key}";
+      $query->set_var($key, $val);
+    }
+    $query->set_sql(
+      "UPDATE {t_axo_group_attribs} at
+       $attrib_sql
+       WHERE at.axo_group_id={id}");
+    $query->set_int('id', $resource->get_axo());
+    //$this->gacl->_debug = 1; $this->gacl->db->debug = 1;
+    $rs = &$this->db->Execute($query->get_sql());
+    return $rs;
   }
 
 
@@ -532,7 +575,25 @@ class GaclDB {
                                                10,
                                                FALSE,
                                                'AXO'));
-    return $resource->get_axo() ? $resource : FALSE;
+    if (!$resource->get_axo())
+      die("add_resource(): Ugh");
+
+    // Save attributes.
+    $query = new SqlQuery();
+    $query->set_int('id', $resource->get_axo());
+    $attrib_fields_sql = 'axo_id';
+    $attrib_values_sql = '{id}';
+    foreach ($resource->get_attribute_list() as $key => $val) {
+      //echo "Resource attrib pair: $key: $val<br>";
+      $attrib_fields_sql .= ",$key";
+      $attrib_values_sql .= ",\{$key}";
+      $query->set_var($key, $val);
+    }
+    $query->set_sql("INSERT INTO {t_axo_attribs}
+                    ($attrib_fields_sql)
+                    VALUES ($attrib_values_sql)");
+    $rs = &$this->db->Execute($query->get_sql());
+    return $resource;
   }
 
 
@@ -552,7 +613,6 @@ class GaclDB {
       die("save_resource(): Ugh");
 
     // Save attributes.
-    $attrib_table = $this->_db_table_prefix . 'axo_attribs';
     $query        = new SqlQuery();
     foreach ($resource->get_attribute_list() as $key => $val) {
       //echo "Resource attrib pair: $key: $val<br>";
@@ -565,8 +625,9 @@ class GaclDB {
     $query->set_sql(
       "UPDATE {t_axo_attribs} at
        $attrib_sql
-       WHERE at.axo_id=\{id}");
+       WHERE at.axo_id={id}");
     $query->set_int('id', $resource->get_axo());
+    //$this->gacl->_debug = 1; $this->gacl->db->debug = 1;
     $rs = &$this->db->Execute($query->get_sql());
     return $rs;
   }
@@ -657,7 +718,27 @@ class GaclDB {
                                            $name,
                                            $parent_aro,
                                            'ARO'));
-    return $group->get_aro() ? $group : FALSE;
+    if (!$group->get_aro())
+      die("add_actor_group(): Ugh");
+
+    // Save attributes.
+    $query = new SqlQuery();
+    $query->set_int('id', $group->get_aro());
+    $attrib_fields_sql = 'aro_group_id';
+    $attrib_values_sql = '{id}';
+    foreach ($group->get_attribute_list() as $key => $val) {
+      //echo "Resource group attrib pair: $key: $val<br>";
+      $attrib_fields_sql .= ",$key";
+      $attrib_values_sql .= ",\{$key}";
+      $query->set_var($key, $val);
+    }
+    $query->set_sql("INSERT INTO {t_aro_group_attribs}
+                    ($attrib_fields_sql)
+                    VALUES ($attrib_values_sql)");
+    $rs = &$this->db->Execute($query->get_sql());
+    if (!$rs)
+      die("add_actor_group(): Ugh2");
+    return $group;
   }
 
 
@@ -668,7 +749,27 @@ class GaclDB {
                                    $group->get_name(),
                                    NULL,
                                    'ARO');
-    return $res;
+    if (!$res)
+      die("save_actor_group(): Ugh");
+
+    // Save attributes.
+    $query = new SqlQuery();
+    foreach ($group->get_attribute_list() as $key => $val) {
+      //echo "Actor group attrib pair: $key: $val<br>";
+      if (!isset($attrib_sql))
+        $attrib_sql = "SET $key=\{$key}";
+      else
+        $attrib_sql .= ", $key=\{$key}";
+      $query->set_var($key, $val);
+    }
+    $query->set_sql(
+      "UPDATE {t_aro_group_attribs}
+       $attrib_sql
+       WHERE aro_group_id={id}");
+    $query->set_int('id', $group->get_aro());
+    //$this->gacl->_debug = 1; $this->gacl->db->debug = 1;
+    $rs = &$this->db->Execute($query->get_sql());
+    return $rs;
   }
 
 
@@ -722,7 +823,25 @@ class GaclDB {
                                             10,
                                             FALSE,
                                             'ARO'));
-    return $actor->get_aro() ? $actor : FALSE;
+    if (!$actor->get_aro())
+      die("add_actor(): Ugh");
+
+    // Save attributes.
+    $query = new SqlQuery();
+    $query->set_int('id', $actor->get_aro());
+    $attrib_fields_sql = 'aro_id';
+    $attrib_values_sql = '{id}';
+    foreach ($actor->get_attribute_list() as $key => $val) {
+      //echo "Actor attrib pair: $key: $val<br>";
+      $attrib_fields_sql .= ",$key";
+      $attrib_values_sql .= ",\{$key}";
+      $query->set_var($key, $val);
+    }
+    $query->set_sql("INSERT INTO {t_aro_attribs}
+                    ($attrib_fields_sql)
+                    VALUES ($attrib_values_sql)");
+    $rs = &$this->db->Execute($query->get_sql());
+    return $actor;
   }
 
 
@@ -736,7 +855,7 @@ class GaclDB {
     $sect_name = $this->_to_sys_name($sect->get_name());
     $sys_name  = $this->_to_sys_name($actor->get_name());
     $res = $this->gacl->edit_object($actor->get_aro(),
-                                     $sect_name,
+                                    $sect_name,
                                     $actor->get_name(),
                                     $sys_name,
                                     10,
@@ -756,9 +875,9 @@ class GaclDB {
       $query->set_var($key, $val);
     }
     $query->set_sql(
-      "UPDATE {t_aro_attribs} at
+      "UPDATE {t_aro_attribs}
        $attrib_sql
-       WHERE at.aro_id=\{id}");
+       WHERE aro_id=\{id}");
     $query->set_int('id', $actor->get_aro());
     $rs = &$this->db->Execute($query->get_sql());
     return $rs;
