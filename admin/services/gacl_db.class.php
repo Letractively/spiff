@@ -224,6 +224,16 @@ class GaclActorSection {
   function get_name() {
     return $this->name;
   }
+
+
+  function set_resource_section($resource_section) {
+    $this->resource_section = $resource_section;
+  }
+
+
+  function get_resource_section() {
+    return $this->resource_section;
+  }
 }
 
 
@@ -236,6 +246,7 @@ class GaclActorGroup {
   function GaclActorGroup($name, $resource_group) {
     $this->name           = $name;
     $this->resource_group = $resource_group;
+    $this->aro            = 0;
   }
 
 
@@ -292,6 +303,7 @@ class GaclActor {
   var $attributes = array();
 
   function GaclActor($name, $section, $resource) {
+    $this->aro      = 0;
     $this->name     = $name;
     $this->section  = $section;
     $this->resource = $resource;
@@ -613,7 +625,7 @@ class GaclDB {
       die("save_resource(): Ugh");
 
     // Save attributes.
-    $query        = new SqlQuery();
+    $query = new SqlQuery();
     foreach ($resource->get_attribute_list() as $key => $val) {
       //echo "Resource attrib pair: $key: $val<br>";
       if (!isset($attrib_sql))
@@ -622,6 +634,8 @@ class GaclDB {
         $attrib_sql .= ", $key=\{$key}";
       $query->set_var($key, $val);
     }
+    if (!isset($attrib_sql))
+      return TRUE;
     $query->set_sql(
       "UPDATE {t_axo_attribs} at
        $attrib_sql
@@ -777,25 +791,22 @@ class GaclDB {
     $group_table  = $this->_db_table_prefix . 'aro_groups';
     $attrib_table = $this->_db_table_prefix . 'aro_groups_attribs';
     $query = '
-      SELECT a.name, a.value, at.*
+      SELECT a.name, a.parent_id, at.*
       FROM      '. $group_table     .' a
       LEFT JOIN '. $attrib_table    .' at ON a.id=at.aro_group_id
       WHERE     a.id='. $aro*1 .'
       ORDER BY  a.name
       LIMIT     1';
-    $rs               = &$this->db->Execute($query);
-    $row              = $rs->FetchObject();
-    $aro_name         = $row->NAME;
-    $aro_section_name = $row->VALUE;
+    $rs       = &$this->db->Execute($query);
+    $row      = $rs->FetchObject();
+    $aro_name = $row->NAME;
+    $axo      = $row->PARENT_ID;
     unset($row['NAME']);
-    unset($row['VALUE']);
+    unset($row['PARENT_ID']);
     unset($row['ARO_GROUP_ID']);
 
-    $section        = new GaclResourceSection($aro_section_name);
-    $axo            = $this->get_resource_group_id_from_name($aro_name, $section);
     $resource_group = $this->get_resource_group($axo);
-
-    $actor_group = new GaclActorGroup($aro_name, $resource_group);
+    $actor_group    = new GaclActorGroup($aro_name, $resource_group);
     $actor_group->set_aro($aro);
     foreach ($row as $key => $var)
       $actor_group->set_attribute(strtolower($key), $var);
@@ -814,9 +825,14 @@ class GaclDB {
    */
   function add_actor($name, $section) {
     //FIXME: This should be one transaction.
-    $resource  = $this->add_resource($name, $section);
+    $resource_section = new GaclResourceSection($section->get_name());
+    $section->set_resource_section($resource_section);
+    $resource = &$this->add_resource($name, $resource_section);
+    if (!$resource)
+      die("add_actor(): Ugh");
     $actor     = new GaclActor($name, $section, $resource);
     $sect_name = $this->_to_sys_name($section->get_name());
+    //$this->gacl->_debug = 1; $this->gacl->db->debug = 1;
     $actor->set_aro($this->gacl->add_object($sect_name,
                                             $name,
                                             $this->_to_sys_name($name),
@@ -824,7 +840,7 @@ class GaclDB {
                                             FALSE,
                                             'ARO'));
     if (!$actor->get_aro())
-      die("add_actor(): Ugh");
+      die("add_actor(): Ugh2");
 
     // Save attributes.
     $query = new SqlQuery();
