@@ -15,7 +15,7 @@
     <table class="menu" width="100%" cellpadding="0">
       <tr><td align='center'><i>Members</i></td></tr>
 {foreach from=$groups item=current key=gid}
-      <tr><td><a href="?manage_users=1&parent_gid={$parent_gid}&amp;gid={$gid}"><img src="img/group.png" alt="Group:" /> {$current.name}</a> ({$current.count})</td></tr>
+      <tr><td><a href="?manage_users=1&parent_gid={$group->get_aro()}&amp;gid={$gid}"><img src="img/group.png" alt="Group:" /> {$current.name}</a> ({$current.count})</td></tr>
 {/foreach}
 {if $groups and $users}
       <tr><td height="3"></td></tr>
@@ -23,7 +23,7 @@
       <tr><td height="3"></td></tr>
 {/if}
 {foreach from=$users item=current key=uid}
-      <tr><td><a href="?manage_users=1&parent_gid={$parent_gid}&amp;uid={$uid}"><img src="img/user.png" alt="User:" /> {$current.name}</a></td></tr>
+      <tr><td><a href="?manage_users=1&parent_gid={$group->get_aro()}&amp;uid={$uid}"><img src="img/user.png" alt="User:" /> {$current.name}</a></td></tr>
 {/foreach}
     </table>
     </td>

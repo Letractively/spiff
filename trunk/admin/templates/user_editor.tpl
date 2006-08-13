@@ -1,4 +1,4 @@
-<form action="?manage_users=1&amp;{if $parent_gid != $user->get_aro()}parent_gid={$parent_gid}&amp;{/if}uid={$user->get_aro()}" method="POST">
+<form action="?manage_users=1&amp;parent_gid={$parent_gid}&amp;uid={$user->get_aro()}" method="POST">
 <table class="container" width="100%" border="0" cellpadding="0" cellspacing="0">
   <tr>
     <td width="14"><img src="img/corner_top_left.png" alt="" height="14" width="14" /></td>

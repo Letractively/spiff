@@ -1,8 +1,6 @@
-* Add the possibility to delete an existing group.
-
-* Add the possibility to delete an existing user.
-
 * Make permissions editable.
+
+* Create use cases for plugins.
 
 * Implement missing methods in admin/services/gacl_db.class.php and get
   rid of admin/functions/phpgacl.inc.php.
@@ -11,7 +9,7 @@
   - Create layout containers? (Straight forward, but how can we hide
     complexity in simple cases?)
   - Define fixed locations depending on the plugin? (Unflexible)
-  - Let plugins configure this (Non-intuitive? Complex und complex
+  - Let plugins configure this (Non-intuitive? Too complex in complex
     cases?)
 
 * Define the plugin API. Stuff that should be easy to do for plugins:
@@ -28,8 +26,6 @@
 * I18Nize the admin interface.
 
 * Add a navigation bar ("breadcrumbs") to the admin GUI.
-
-* Create use cases for plugins.
 
 * Create a bus over which plugins are able to communicate. Investigate
   open standard protocols, maybe there is even an implementation
