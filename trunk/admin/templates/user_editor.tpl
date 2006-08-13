@@ -1,4 +1,4 @@
-<form action="?manage_users=1&amp;uid={$user->get_aro()}" method="POST">
+<form action="?manage_users=1&amp;{if $parent_gid != $user->get_aro()}parent_gid={$parent_gid}&amp;{/if}uid={$user->get_aro()}" method="POST">
 <table class="container" width="100%" border="0" cellpadding="0" cellspacing="0">
   <tr>
     <td width="14"><img src="img/corner_top_left.png" alt="" height="14" width="14" /></td>
@@ -13,8 +13,9 @@
     <td><img src="img/line_left.png" alt="" height="100%" width="14" /></td>
     <td valign="top">
     <table class="menu" width="100%" cellpadding="0">
-{foreach from=$users item=current key=uid}
-      <tr><td><a href="?manage_users=1&uid={$uid}"><img src="img/user.png" alt="User:" /> {$current.name}</a></td></tr>
+      <tr><td align='center'><i>Member Of:</i></td></tr>
+{foreach from=$groups item=current key=gid}
+      <tr><td><a href="?manage_users=1&gid={$gid}"><img src="img/group.png" alt="User:" /> {$current.name}</a></td></tr>
 {/foreach}
     </table>
     </td>
@@ -22,7 +23,11 @@
     <td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
     <td><img src="img/line_left.png" alt="" height="100%" width="14" /></td>
     <td>
+{if $user->get_aro() == 0}
+    <h2>Create A New User</h2>
+{else}
     <h2>{$user->get_name()}</h2>
+{/if}
     <table width='100%' cellpadding="0" cellspacing="0"><tr><td height="1" bgcolor="#000000"></td></tr></table>
     <h3>Public User Information</h3>
     <table class="indent" width="100%" cellpadding="0" cellspacing="5">
@@ -237,9 +242,9 @@
     <td colspan="3">
     <table width="100%">
       <tr>
-        <td><input type="submit" class="button" name="group_add" value="Add New Group" /></td>
+        <td><input type="submit" class="button" name="cancel_membership" value="Cancel Membership" /></td>
         <td>&nbsp;</td>
-        <td><input type="submit" class="button" name="user_add" value="Add New User" /></td>
+        <td><input type="submit" class="button" name="add_membership" value="Add Membership" /></td>
       </tr>
     </table>
     </td>
@@ -247,7 +252,7 @@
     <td colspan="3" align="right">
     <table>
       <tr>
-        <td><input type="submit" class="button" name="delete" value="Delete Group" /></td>
+        <td><input type="submit" class="button" name="delete" value="Delete User" /></td>
         <td>&nbsp;</td>
         <td><input type="submit" class="button" name="save" value="Apply Changes" /></td>
       </tr>

@@ -1,4 +1,4 @@
-<form action="?manage_users=1&amp;gid={$group->get_aro()}" method="POST">
+<form action="?manage_users=1&amp;{if $parent_gid != $group->get_aro()}parent_gid={$parent_gid}&amp;{/if}gid={$group->get_aro()}" method="POST">
 <table class="container" width="100%" border="0" cellpadding="0" cellspacing="0">
   <tr>
     <td width="14"><img src="img/corner_top_left.png" alt="" height="14" width="14" /></td>
@@ -13,14 +13,17 @@
     <td><img src="img/line_left.png" alt="" height="100%" width="14" /></td>
     <td valign="top">
     <table class="menu" width="100%" cellpadding="0">
+      <tr><td align='center'><i>Members</i></td></tr>
 {foreach from=$groups item=current key=gid}
-      <tr><td><a href="?manage_users=1&gid={$gid}"><img src="img/group.png" alt="Group:" /> {$current.name}</a> ({$current.count})</td></tr>
+      <tr><td><a href="?manage_users=1&parent_gid={$parent_gid}&amp;gid={$gid}"><img src="img/group.png" alt="Group:" /> {$current.name}</a> ({$current.count})</td></tr>
 {/foreach}
 {if $groups and $users}
+      <tr><td height="3"></td></tr>
       <tr><td height="1" bgcolor="#aaaaaa"></td></tr>
+      <tr><td height="3"></td></tr>
 {/if}
 {foreach from=$users item=current key=uid}
-      <tr><td><a href="?manage_users=1&uid={$uid}"><img src="img/user.png" alt="User:" /> {$current.name}</a></td></tr>
+      <tr><td><a href="?manage_users=1&parent_gid={$parent_gid}&amp;uid={$uid}"><img src="img/user.png" alt="User:" /> {$current.name}</a></td></tr>
 {/foreach}
     </table>
     </td>
@@ -28,7 +31,11 @@
     <td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
     <td><img src="img/line_left.png" alt="" height="100%" width="14" /></td>
     <td>
+{if $group->get_aro() == 0}
+    <h2>Create A New Group</h2>
+{else}
     <h2>{$group->get_name()}</h2>
+{/if}
     <table width='100%' cellpadding="0" cellspacing="0"><tr><td height="1" bgcolor="#000000"></td></tr></table>
     <h3>Public Group Information</h3>
     <table class="indent" width="100%" cellpadding="0" cellspacing="5">
