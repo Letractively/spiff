@@ -93,6 +93,13 @@
     }
 
 
+    function delete_group($gid, $parent_gid) {
+      $group = $this->gacl->get_actor_group($gid);
+      $this->gacl->delete_actor_group($group);
+      $this->show_group($parent_gid, $parent_gid);
+    }
+
+
     function show_user($uid, $parent_gid) {
       if ($uid != 0)
         $user = $this->gacl->get_actor($uid);
@@ -130,6 +137,13 @@
     }
 
 
+    function delete_user($uid, $parent_gid) {
+      $user = $this->gacl->get_actor($uid);
+      $this->gacl->delete_actor($user);
+      $this->show_group($parent_gid, $parent_gid);
+    }
+
+
     function show() {
       if (isset($_GET['parent_gid']))
         $parent_gid = $_GET['parent_gid'] * 1;
@@ -151,7 +165,9 @@
         $this->show_user($uid, $parent_gid);
       }
       elseif (isset($_POST['delete']) && isset($gid))
-        $this->delete_group($gid);
+        $this->delete_group($gid, $parent_gid);
+      elseif (isset($_POST['delete']) && isset($uid))
+        $this->delete_user($uid, $parent_gid);
       elseif (isset($_POST['group_add']) && isset($gid))
         $this->add_group($gid);
       elseif (isset($_POST['user_add']) && isset($gid))
@@ -160,7 +176,6 @@
         $this->show_group($gid, $parent_gid);
       elseif (isset($uid))
         $this->show_user($uid, $parent_gid);
-
     }
   }
 ?>

@@ -389,10 +389,9 @@ class GaclDB {
   }
 
 
-  function get_resource_group_id_from_name($name, $section) {
-    $sys_name      = $this->_to_sys_name($name);
-    $sect_sys_name = $this->_to_sys_name($section->get_name());
-    return $this->gacl->get_group_id($name, $sect_sys_name, 'AXO');
+  function get_resource_group_id_from_name($name) {
+    $sys_name = $this->_to_sys_name($name);
+    return $this->gacl->get_group_id($sys_name, $name, 'AXO');
   }
 
 
@@ -403,10 +402,9 @@ class GaclDB {
   }
 
 
-  function get_actor_group_id_from_name($name, $section) {
-    $sys_name      = $this->_to_sys_name($name);
-    $sect_sys_name = $this->_to_sys_name($section->get_name());
-    return $this->gacl->get_group_id($name, $sect_sys_name, 'ARO');
+  function get_actor_group_id_from_name($name) {
+    $sys_name = $this->_to_sys_name($name);
+    return $this->gacl->get_group_id($sys_name, $name, 'ARO');
   }
 
 
@@ -520,6 +518,17 @@ class GaclDB {
   }
 
 
+  /// Delete an existing resource group.
+  /**
+   * This function removes a resource group from the database.
+   * \return TRUE on success, or FALSE on failure.
+   */
+  function delete_resource_group($resource_group) {
+    $res = $this->gacl->del_group($resource_group->get_axo(), FALSE, 'AXO');
+    return $res;
+  }
+
+
   function save_resource_group($group) {
     $sys_name = $this->_to_sys_name($group->get_name());
     $res = $gacl->edit_group($group->get_axo(),
@@ -606,6 +615,18 @@ class GaclDB {
                     VALUES ($attrib_values_sql)");
     $rs = &$this->db->Execute($query->get_sql());
     return $resource;
+  }
+
+
+  /// Delete an existing resource.
+  /**
+   * Resources are the objects that are accessed by actors.
+   * This function removes a resource from the database.
+   * \return TRUE on success, or FALSE on failure.
+   */
+  function delete_resource($resource) {
+    $res = $this->gacl->del_object($resource->get_axo(), 'AXO', TRUE);
+    return $res;
   }
 
 
@@ -756,6 +777,21 @@ class GaclDB {
   }
 
 
+  /// Delete an existing actor group.
+  /**
+   * This function removes aa actor group from the database.
+   * \return TRUE on success, or FALSE on failure.
+   */
+  function delete_actor_group($actor_group) {
+    //$this->gacl->_debug = 1; $this->gacl->db->debug = 1;
+    $resource_group = $actor_group->get_resource_group();
+    if (!$this->delete_resource_group($resource_group))
+      die("delete_actor_group(): Ugh");
+    $res = $this->gacl->del_group($actor_group->get_aro(), FALSE, 'ARO');
+    return $res;
+  }
+
+
   function save_actor_group($group) {
     $sys_name = $this->_to_sys_name($group->get_name());
     $res = $this->gacl->edit_group($group->get_aro(),
@@ -791,7 +827,7 @@ class GaclDB {
     $group_table  = $this->_db_table_prefix . 'aro_groups';
     $attrib_table = $this->_db_table_prefix . 'aro_groups_attribs';
     $query = '
-      SELECT a.name, a.parent_id, at.*
+      SELECT a.name, at.*
       FROM      '. $group_table     .' a
       LEFT JOIN '. $attrib_table    .' at ON a.id=at.aro_group_id
       WHERE     a.id='. $aro*1 .'
@@ -800,11 +836,10 @@ class GaclDB {
     $rs       = &$this->db->Execute($query);
     $row      = $rs->FetchObject();
     $aro_name = $row->NAME;
-    $axo      = $row->PARENT_ID;
     unset($row['NAME']);
-    unset($row['PARENT_ID']);
     unset($row['ARO_GROUP_ID']);
 
+    $axo            = $this->get_resource_group_id_from_name($aro_name);
     $resource_group = $this->get_resource_group($axo);
     $actor_group    = new GaclActorGroup($aro_name, $resource_group);
     $actor_group->set_aro($aro);
@@ -858,6 +893,20 @@ class GaclDB {
                     VALUES ($attrib_values_sql)");
     $rs = &$this->db->Execute($query->get_sql());
     return $actor;
+  }
+
+
+  /// Delete an existing actor.
+  /**
+   * This function removes the given actor from the database.
+   * \return TRUE on success, or FALSE on failure.
+   */
+  function delete_actor($actor) {
+    $resource = $actor->get_resource();
+    if (!$this->delete_resource($resource))
+      die("delete_actor(): Ugh");
+    $res = $this->gacl->del_object($actor->get_aro(), 'ARO', TRUE);
+    return $res;
   }
 
 
