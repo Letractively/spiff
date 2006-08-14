@@ -4,11 +4,6 @@
 
 * Handle invalid/duplicate user/group names.
 
-* Show a group member list in the user's page.
-
-* Fix the "New Group" dialog so that it no longer shows the "Everyone"
-  group as member.
-
 * Create use cases for plugins.
 
 * Implement missing methods in admin/services/gacl_db.class.php and get

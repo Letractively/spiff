@@ -14,8 +14,8 @@
     <td valign="top">
     <table class="menu" width="100%" cellpadding="0">
       <tr><td align='center'><i>Member Of:</i></td></tr>
-{foreach from=$groups item=current key=gid}
-      <tr><td><a href="?manage_users=1&gid={$gid}"><img src="img/group.png" alt="User:" /> {$current.name}</a></td></tr>
+{foreach from=$groups item=current}
+      <tr><td><a href="?manage_users=1&gid={$current->get_aro()}"><img src="img/group.png" alt="User:" /> {$current->get_name()}</a></td></tr>
 {/foreach}
     </table>
     </td>

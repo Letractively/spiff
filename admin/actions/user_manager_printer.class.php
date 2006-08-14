@@ -53,11 +53,12 @@
 
 
     function show_group($gid, $parent_gid) {
-      if ($gid != 0)
-        $group = $this->gacl->get_actor_group($gid);
+      if ($gid != 0) {
+        $group  = $this->gacl->get_actor_group($gid);
+        $groups = $this->gacl->get_actor_group_list($group);
+      }
       else
-        $group = new GaclActorGroup('', NULL);
-      $groups     = $this->gacl->get_actor_group_list($group);
+        $group  = new GaclActorGroup('', NULL);
       $users      = $this->gacl->get_actor_list($group);
       $may_admin  = phpgacl_get_group_permission_list($this->gacl->gacl,
                                                       $gid,
@@ -105,6 +106,7 @@
         $user = $this->gacl->get_actor($uid);
       else
         $user = new GaclActor('', new GaclActorSection('users', NULL), NULL);
+      $groups     = $this->gacl->get_actor_group_member_list($user);
       $may_admin  = phpgacl_get_user_permission_list($this->gacl->gacl,
                                                      $uid,
                                                      'users',
@@ -123,6 +125,7 @@
                                                      'delete');
       $this->smarty->clear_all_assign();
       $this->smarty->assign_by_ref('user',       $user);
+      $this->smarty->assign_by_ref('groups',     $groups);
       $this->smarty->assign_by_ref('parent_gid', $parent_gid);
       $this->smarty->assign_by_ref('may_admin',  $may_admin);
       $this->smarty->assign_by_ref('may_create', $may_create);

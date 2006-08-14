@@ -1103,7 +1103,7 @@ class GaclDB {
   }
 
 
-  function &get_actor_group_list($parent_group, $offset = 0, $limit = 0) {
+  function &get_actor_group_list($parent_group, $offset = 0, $limit = 100) {
     assert('is_object($parent_group)');
     $query = new SqlQuery('
       SELECT		a.id, a.name, b.id, count(m.aro_id)
@@ -1112,8 +1112,11 @@ class GaclDB {
       LEFT JOIN {t_groups_aro_map} m ON m.group_id=a.id
       WHERE     a.parent_id={group_id}
       GROUP BY  a.id,a.name
-      ORDER BY  a.name');
+      ORDER BY  a.name
+      LIMIT     {offset},{limit}');
     $query->set_int('group_id', $parent_group->get_aro());
+    $query->set_int('offset',   $offset);
+    $query->set_int('limit',    $limit);
     //echo $query->get_sql() . "<br>";
     //$this->gacl->_debug = 1; $this->gacl->db->debug = 1;
     $rs = &$this->gacl->db->Execute($query->get_sql());
@@ -1135,7 +1138,7 @@ class GaclDB {
   }
 
 
-  function &get_actor_list($parent_group, $offset = 0, $limit = 0) {
+  function &get_actor_list($parent_group, $offset = 0, $limit = 100) {
     assert('is_object($parent_group)');
     $query = new SqlQuery('
       SELECT		a.id, a.name, s.name section_name, x.id
@@ -1145,8 +1148,11 @@ class GaclDB {
       LEFT JOIN {t_axo}            x ON x.value=a.value
       WHERE     b.group_id={group_id}
       GROUP BY	a.id,a.name
-      ORDER BY  a.name');
+      ORDER BY  a.name
+      LIMIT     {offset},{limit}');
     $query->set_int('group_id', $parent_group->get_aro());
+    $query->set_int('offset',   $offset);
+    $query->set_int('limit',    $limit);
     //echo $query->get_sql() . "<br>";
     //$this->gacl->_debug = 1; $this->gacl->db->debug = 1;
     $rs = &$this->gacl->db->Execute($query->get_sql());
@@ -1164,6 +1170,40 @@ class GaclDB {
     }
     
     return $actor_list;
+  }
+
+
+  /// Returns a list of all groups of which the given actor is a member.
+  function &get_actor_group_member_list($actor, $offset = 0, $limit = 100) {
+    assert('is_object($actor)');
+    $query = new SqlQuery('
+      SELECT		g.id, g.name, x.id
+      FROM		  {t_aro_groups}     g
+      LEFT JOIN {t_axo_groups}     x ON g.value=x.value
+      LEFT JOIN {t_groups_aro_map} m ON m.group_id=g.id
+      WHERE     m.aro_id={id}
+      GROUP BY  g.id,g.name
+      ORDER BY  g.name
+      LIMIT     {offset},{limit}');
+    $query->set_int('id',     $actor->get_aro());
+    $query->set_int('offset', $offset);
+    $query->set_int('limit',  $limit);
+    //echo $query->get_sql() . "<br>";
+    //$this->gacl->_debug = 1; $this->gacl->db->debug = 1;
+    $rs = &$this->gacl->db->Execute($query->get_sql());
+    assert('isset($rs)');
+
+    $group_list = array();
+    if(is_object($rs)) {
+      while($row = $rs->FetchRow()) {
+        $group = new GaclActorGroup($row[1]);
+        $group->set_aro($row[0]);
+        $resource_group = &$group->get_resource_group();
+        $resource_group->set_axo($row[2]);
+        array_push($group_list, $group);
+      }
+    }
+    return $group_list;
   }
 }
 ?>
