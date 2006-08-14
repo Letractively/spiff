@@ -87,11 +87,13 @@ class GaclResourceSection {
   var $name;
 
   function GaclResourceSection($name) {
-    $this->name    = $name;
+    assert('isset($name)');
+    $this->name = $name;
   }
 
 
   function set_name($name) {
+    assert('isset($name)');
     $this->name = $name;
   }
 
@@ -108,11 +110,14 @@ class GaclResourceGroup {
   var $attributes = array();
 
   function GaclResourceGroup($name) {
+    assert('isset($name)');
     $this->name = $name;
+    $this->axo  = 0;
   }
 
 
   function set_name($name) {
+    assert('isset($name)');
     $this->name = $name;
   }
 
@@ -123,6 +128,7 @@ class GaclResourceGroup {
 
 
   function set_axo($axo) {
+    assert('isset($axo)');
     $this->axo = $axo;
   }
 
@@ -133,16 +139,18 @@ class GaclResourceGroup {
 
 
   function set_attribute($name, $value) {
+    assert('isset($name)');
     $this->attributes[$name] = $value;
   }
 
 
   function get_attribute($name) {
+    assert('isset($name)');
     return $this->attributes[$name];
   }
 
 
-  function get_attribute_list() {
+  function &get_attribute_list() {
     return $this->attributes;
   }
 }
@@ -155,12 +163,16 @@ class GaclResource {
   var $attributes = array();
 
   function GaclResource($name, $section) {
+    assert('isset($name)');
+    assert('is_object($section)');
     $this->name    = $name;
     $this->section = $section;
+    $this->axo     = 0;
   }
 
 
   function set_name($name) {
+    assert('isset($name)');
     $this->name = $name;
   }
 
@@ -171,16 +183,18 @@ class GaclResource {
 
 
   function set_section($section) {
+    assert('is_object($section)');
     $this->section = $section;
   }
 
 
-  function get_section() {
+  function &get_section() {
     return $this->section;
   }
 
 
   function set_axo($axo) {
+    assert('isset($axo)');
     $this->axo = $axo;
   }
 
@@ -191,16 +205,18 @@ class GaclResource {
 
 
   function set_attribute($name, $value) {
+    assert('isset($name)');
     $this->attributes[$name] = $value;
   }
 
 
   function get_attribute($name) {
+    assert('isset($name)');
     return $this->attributes[$name];
   }
 
 
-  function get_attribute_list() {
+  function &get_attribute_list() {
     return $this->attributes;
   }
 }
@@ -210,14 +226,17 @@ class GaclActorSection {
   var $name;
   var $resource_section;
 
-  function GaclActorSection($name, $resource_section) {
+  function GaclActorSection($name) {
+    assert('isset($name)');
     $this->name             = $name;
-    $this->resource_section = $resource_section;
+    $this->resource_section = new GaclResourceSection($name);
   }
 
 
   function set_name($name) {
+    assert('isset($name)');
     $this->name = $name;
+    $this->resource_section->set_name($name);
   }
 
 
@@ -227,11 +246,13 @@ class GaclActorSection {
 
 
   function set_resource_section($resource_section) {
+    assert('is_object($resource_section)');
+    assert('$resource_section->get_name() === $this->name');
     $this->resource_section = $resource_section;
   }
 
 
-  function get_resource_section() {
+  function &get_resource_section() {
     return $this->resource_section;
   }
 }
@@ -243,34 +264,40 @@ class GaclActorGroup {
   var $aro;
   var $attributes = array();
 
-  function GaclActorGroup($name, $resource_group) {
+  function GaclActorGroup($name) {
+    assert(isset($name));
     $this->name           = $name;
-    $this->resource_group = $resource_group;
+    $this->resource_group = new GaclResourceGroup($name);
     $this->aro            = 0;
   }
 
 
   function set_name($name) {
+    assert('isset($name)');
     $this->name = $name;
+    $this->resource_group->set_name($name);
   }
 
 
   function get_name() {
-    return $this->name;
+    return $this->resource_group->get_name();
   }
 
 
   function set_resource_group($resource_group) {
+    assert(is_object($resource_group));
+    assert($resource_group->get_name() === $this->name);
     $this->resource_group = $resource_group;
   }
 
 
-  function get_resource_group() {
+  function &get_resource_group() {
     return $this->resource_group;
   }
 
 
   function set_aro($aro) {
+    assert('isset($aro)');
     $this->aro = $aro;
   }
 
@@ -281,16 +308,18 @@ class GaclActorGroup {
 
 
   function set_attribute($name, $value) {
+    assert('isset($name)');
     $this->attributes[$name] = $value;
   }
 
 
   function get_attribute($name) {
+    assert('isset($name)');
     return $this->attributes[$name];
   }
 
 
-  function get_attribute_list() {
+  function &get_attribute_list() {
     return $this->attributes;
   }
 }
@@ -302,15 +331,19 @@ class GaclActor {
   var $aro;
   var $attributes = array();
 
-  function GaclActor($name, $section, $resource) {
-    $this->aro      = 0;
-    $this->name     = $name;
-    $this->section  = $section;
-    $this->resource = $resource;
+  function GaclActor($name, $section) {
+    assert('isset($name)');
+    assert('is_object($section)');
+    $this->name       = $name;
+    $resource_section = new GaclResourceSection($section->get_name());
+    $this->section    = $section;
+    $this->resource   = new GaclResource($name, $resource_section);
+    $this->aro        = 0;
   }
 
 
   function set_name($name) {
+    assert('isset($name)');
     $this->name = $name;
     $this->resource->set_name($name);
   }
@@ -322,27 +355,32 @@ class GaclActor {
 
 
   function set_section($section) {
-    $this->section = $section;
-    $this->resource->set_section($section);
+    assert('is_object($section)');
+    $resource_section = new GaclResourceSection($section->get_name());
+    $this->section    = $section;
+    $this->resource->set_section($resource_section);
   }
 
 
-  function get_section() {
+  function &get_section() {
     return $this->section;
   }
 
 
   function set_resource($resource) {
+    assert('is_object($resource)');
+    assert($resource->get_name() === $this->name);
     $this->resource = $resource;
   }
 
 
-  function get_resource() {
+  function &get_resource() {
     return $this->resource;
   }
 
 
   function set_aro($aro) {
+    assert('isset($aro)');
     $this->aro = $aro;
   }
 
@@ -353,16 +391,18 @@ class GaclActor {
 
 
   function set_attribute($name, $value) {
+    assert('isset($name)');
     $this->attributes[$name] = $value;
   }
 
 
   function get_attribute($name) {
+    assert('isset($name)');
     return $this->attributes[$name];
   }
 
 
-  function get_attribute_list() {
+  function &get_attribute_list() {
     return $this->attributes;
   }
 }
@@ -715,8 +755,8 @@ class GaclDB {
    */
   function add_actor_section($name) {
     //FIXME: This should be one transaction.
-    $resource_section = $this->add_resource_section($name);
-    $section = new GaclActorSection($name, $resource_section);
+    $section = new GaclActorSection($name);
+    $section->set_resource_section($this->add_resource_section($name));
     $res     = $this->gacl->add_object_section($name,
                                                $this->_to_sys_name($name),
                                                10,
@@ -745,8 +785,8 @@ class GaclDB {
     }
     else
       $root = $parent_group->get_resource_group();
-    $resource_group = $this->add_resource_group($root, $name);
-    $group          = new GaclActorGroup($name, $resource_group);
+    $group          = new GaclActorGroup($name);
+    $group->set_resource_group($this->add_resource_group($root, $name));
     $sys_name       = $this->_to_sys_name($name);
     $parent_aro     = $parent_group ? $parent_group->get_aro() : 0;
     $group->set_aro($this->gacl->add_group($sys_name,
@@ -840,8 +880,8 @@ class GaclDB {
     unset($row['ARO_GROUP_ID']);
 
     $axo            = $this->get_resource_group_id_from_name($aro_name);
-    $resource_group = $this->get_resource_group($axo);
-    $actor_group    = new GaclActorGroup($aro_name, $resource_group);
+    $actor_group    = new GaclActorGroup($aro_name);
+    $actor_group->set_resource_group($this->get_resource_group($axo));
     $actor_group->set_aro($aro);
     foreach ($row as $key => $var)
       $actor_group->set_attribute(strtolower($key), $var);
@@ -860,13 +900,15 @@ class GaclDB {
    */
   function add_actor($name, $section) {
     //FIXME: This should be one transaction.
-    $resource_section = new GaclResourceSection($section->get_name());
-    $section->set_resource_section($resource_section);
-    $resource = &$this->add_resource($name, $resource_section);
-    if (!$resource)
-      die("add_actor(): Ugh");
-    $actor     = new GaclActor($name, $section, $resource);
-    $sect_name = $this->_to_sys_name($section->get_name());
+    //$resource_section = new GaclResourceSection($section->get_name());
+    //$section->set_resource_section($resource_section);
+    //$resource = &$this->add_resource($name, $resource_section);
+    //if (!$resource)
+    //  die("add_actor(): Ugh");
+    $actor            = new GaclActor($name, $section);
+    $resource_section = $section->get_resource_section();
+    $actor->set_resource($this->add_resource($name, $resource_section));
+    $sect_name        = $this->_to_sys_name($section->get_name());
     //$this->gacl->_debug = 1; $this->gacl->db->debug = 1;
     $actor->set_aro($this->gacl->add_object($sect_name,
                                             $name,
@@ -903,8 +945,8 @@ class GaclDB {
    */
   function delete_actor($actor) {
     $resource = $actor->get_resource();
-    if (!$this->delete_resource($resource))
-      die("delete_actor(): Ugh");
+    $res = $this->delete_resource($resource);
+    assert('$res == TRUE');
     $res = $this->gacl->del_object($actor->get_aro(), 'ARO', TRUE);
     return $res;
   }
@@ -914,8 +956,7 @@ class GaclDB {
     //FIXME: This should be one transaction.
     //$this->gacl->_debug = 1; $this->gacl->db->debug = 1;
     $res = $this->save_resource($actor->get_resource());
-    if (!$res)
-      die("save_actor(): Ugh.\n");
+    assert('isset($res)');
     $sect      = $actor->get_section();
     $sect_name = $this->_to_sys_name($sect->get_name());
     $sys_name  = $this->_to_sys_name($actor->get_name());
@@ -969,8 +1010,8 @@ class GaclDB {
     $axo_section      = new GaclResourceSection($aro_section_name);
     $aro_section      = new GaclActorSection($aro_section_name, $axo_section);
     $axo              = $this->get_resource_id_from_name($aro_name, $axo_section);
-    $resource         = $this->get_resource($axo);
-    $actor            = new GaclActor($aro_name, $aro_section, $resource);
+    $actor            = new GaclActor($aro_name, $aro_section);
+    $actor->set_resource($this->get_resource($axo));
     $actor->set_aro($aro);
     unset($row['NAME']);
     unset($row['SECTION_NAME']);
@@ -1043,7 +1084,37 @@ class GaclDB {
                                   'user');
     return $aclid;
   }
-}
 
-new GaclDB(NULL);
+
+  function &get_actor_list($parent_group, $offset = 0, $limit = 0) {
+    assert('is_object($parent_group)');
+    $query = new SqlQuery('
+      SELECT		a.id, a.name, s.name section_name, x.id
+      FROM		  {t_aro}            a
+      LEFT JOIN	{t_groups_aro_map} b ON b.aro_id=a.id
+      LEFT JOIN {t_aro_sections}   s ON s.value=a.section_value
+      LEFT JOIN {t_axo}            x ON x.value=a.value
+      WHERE     b.group_id={group_id}
+      GROUP BY	a.id,a.name
+      ORDER BY  a.name');
+    $query->set_int('group_id', $parent_group->get_aro());
+    //echo $query->get_sql() . "<br>";
+    //$this->gacl->_debug = 1; $this->gacl->db->debug = 1;
+    $rs = &$this->gacl->db->Execute($query->get_sql());
+    assert('isset($rs)');
+
+    $actor_list = array();
+    if(is_object($rs)) {
+      while($row = $rs->FetchRow()) {
+        $actor = new GaclActor($row[1], new GaclActorSection($row[2]));
+        $actor->set_aro($row[0]);
+        $resource = &$actor->get_resource();
+        $resource->set_axo($row[3]);
+        array_push($actor_list, $actor);
+      }
+    }
+    
+    return $actor_list;
+  }
+}
 ?>

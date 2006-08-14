@@ -1,4 +1,4 @@
-<form action="?manage_users=1&amp;{if $parent_gid != $group->get_aro()}parent_gid={$parent_gid}&amp;{/if}gid={$group->get_aro()}" method="POST">
+<form action="?manage_users=1&amp;{if $parent_gid != $group->get_aro()}parent_gid={$parent_gid}&amp;{/if}gid={$group->get_aro()}" method="post">
 <table class="container" width="100%" border="0" cellpadding="0" cellspacing="0">
   <tr>
     <td width="14"><img src="img/corner_top_left.png" alt="" height="14" width="14" /></td>
@@ -15,15 +15,15 @@
     <table class="menu" width="100%" cellpadding="0">
       <tr><td align='center'><i>Members</i></td></tr>
 {foreach from=$groups item=current key=gid}
-      <tr><td><a href="?manage_users=1&parent_gid={$group->get_aro()}&amp;gid={$gid}"><img src="img/group.png" alt="Group:" /> {$current.name}</a> ({$current.count})</td></tr>
+      <tr><td><a href="?manage_users=1&amp;parent_gid={$group->get_aro()}&amp;gid={$gid}"><img src="img/group.png" alt="Group:" /> {$current.name}</a> ({$current.count})</td></tr>
 {/foreach}
 {if $groups and $users}
       <tr><td height="3"></td></tr>
       <tr><td height="1" bgcolor="#aaaaaa"></td></tr>
       <tr><td height="3"></td></tr>
 {/if}
-{foreach from=$users item=current key=uid}
-      <tr><td><a href="?manage_users=1&parent_gid={$group->get_aro()}&amp;uid={$uid}"><img src="img/user.png" alt="User:" /> {$current.name}</a></td></tr>
+{foreach from=$users item=current}
+      <tr><td><a href="?manage_users=1&amp;parent_gid={$group->get_aro()}&amp;uid={$current->get_aro()}"><img src="img/user.png" alt="User:" /> {$current->get_name()}</a></td></tr>
 {/foreach}
     </table>
     </td>
@@ -56,8 +56,8 @@
       </tr>
     </table>
 
-{assign var=gid value=$group.id}
-{assign var=perm_url value="?edit_permissions=1&amp;gid=$gid&amp;section=users"}
+{assign var=gid value=$group->get_aro()}
+{assign var=perm_url value="?edit_permissions=1&amp;gid=$gid"}
 
     <h3>Things This Group May Do</h3>
     <table class="indent" cellpadding="0">
@@ -248,6 +248,7 @@
   </tr>
   <tr>
     <td colspan="3">
+{if $group->get_aro() != 0}
     <table width="100%">
       <tr>
         <td><input type="submit" class="button" name="group_add" value="Add New Group" /></td>
@@ -255,6 +256,7 @@
         <td><input type="submit" class="button" name="user_add" value="Add New User" /></td>
       </tr>
     </table>
+{/if}
     </td>
     <td></td>
     <td colspan="3" align="right">

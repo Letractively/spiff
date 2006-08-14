@@ -45,34 +45,6 @@ function phpgacl_get_group_list($gacl_api, $parentid)
   return $group_data;
 }
 
-function phpgacl_get_user_list($gacl_api, $group_id)
-{
-  $aro_table       = $gacl_api->_db_table_prefix . 'aro';
-  $group_map_table = $gacl_api->_db_table_prefix . 'groups_aro_map';
-  $query = '
-    SELECT		a.id, a.name, a.value
-    FROM		  '. $aro_table       .' a
-    LEFT JOIN	'. $group_map_table .' b ON b.aro_id=a.id
-    WHERE     b.group_id='. $group_id*1 .'
-    AND       a.section_value="users"
-    GROUP BY	a.id,a.name,a.value
-    ORDER BY  a.name';
-  $rs = &$gacl_api->db->Execute($query);
-  //echo $query;
-  $user_data = array();
-  
-  if(is_object($rs)) {
-    while($row = $rs->FetchRow()) {
-      $user_data[$row[0]] = array(
-        'name' => $row[1],
-        'value' => $row[2]
-      );
-    }
-  }
-  
-  return $user_data;
-}
-
 function phpgacl_get_group_permission_list($gacl, $group_id, $section, $action)
 {
   //echo "Group ID: $group_id, Section: $section, Action: $action<br>";
