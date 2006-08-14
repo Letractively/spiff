@@ -10,7 +10,7 @@
     <td><img src="img/corner_top_right.png" alt="" height="14" width="14" /></td>
   </tr>
   <tr>
-    <td><img src="img/line_left.png" alt="" height="100%" width="14" /></td>
+    <td width='14' style='background: url(img/line_left.png);'></td>
     <td valign="top">
     <table class="menu" width="100%" cellpadding="0">
       <tr><td align='center'><i>Member Of:</i></td></tr>
@@ -19,9 +19,9 @@
 {/foreach}
     </table>
     </td>
-    <td><img src="img/line_right.png" alt="" height="100%" width="14" /></td>
+    <td width='14' style='background: url(img/line_right.png)'></td>
     <td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
-    <td><img src="img/line_left.png" alt="" height="100%" width="14" /></td>
+    <td width='14' style='background: url(img/line_left.png);'></td>
     <td>
 {if $user->get_aro() == 0}
     <h2>Create A New User</h2>
@@ -227,7 +227,7 @@
       </tr>
     </table>
     </td>
-    <td><img src="img/line_right.png" alt="" height="100%" width="14" /></td>
+    <td width='14' style='background: url(img/line_right.png)'></td>
   </tr>
   <tr>
     <td><img src="img/corner_bottom_left.png" alt="" height="14" width="14" /></td>

@@ -57,7 +57,7 @@
         $group = $this->gacl->get_actor_group($gid);
       else
         $group = new GaclActorGroup('', NULL);
-      $groups     = phpgacl_get_group_list($this->gacl->gacl, $gid);
+      $groups     = $this->gacl->get_actor_group_list($group);
       $users      = $this->gacl->get_actor_list($group);
       $may_admin  = phpgacl_get_group_permission_list($this->gacl->gacl,
                                                       $gid,

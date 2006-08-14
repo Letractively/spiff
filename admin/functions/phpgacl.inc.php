@@ -18,33 +18,6 @@
   */
 ?>
 <?php
-function phpgacl_get_group_list($gacl_api, $parentid)
-{
-  $group_table     = $gacl_api->_db_table_prefix . 'aro_groups';
-  $group_map_table = $gacl_api->_db_table_prefix . 'groups_aro_map';
-  $query = '
-    SELECT		a.id, a.name, a.value, count(b.aro_id)
-    FROM		  '. $group_table     .' a
-    LEFT JOIN	'. $group_map_table .' b ON b.group_id=a.id
-    WHERE     a.parent_id='. $parentid*1 .'
-    GROUP BY	a.id,a.name,a.value';
-  $rs = &$gacl_api->db->Execute($query);
-  //echo $query;
-  $group_data = array();
-  
-  if(is_object($rs)) {
-    while($row = $rs->FetchRow()) {
-      $group_data[$row[0]] = array(
-        'name' => $row[1],
-        'value' => $row[2],
-        'count' => $row[3]
-      );
-    }
-  }
-  
-  return $group_data;
-}
-
 function phpgacl_get_group_permission_list($gacl, $group_id, $section, $action)
 {
   //echo "Group ID: $group_id, Section: $section, Action: $action<br>";
