@@ -10,12 +10,12 @@
     <td><img src="img/corner_top_right.png" alt="" height="14" width="14" /></td>
   </tr>
   <tr>
-    <td><img src="img/line_left.png" alt="" height="100%" width="14" /></td>
+    <td width='14' style='background: url(img/line_left.png);'></td>
     <td valign="top">
     <table class="menu" width="100%" cellpadding="0">
       <tr><td align='center'><i>Members</i></td></tr>
-{foreach from=$groups item=current key=gid}
-      <tr><td><a href="?manage_users=1&amp;parent_gid={$group->get_aro()}&amp;gid={$gid}"><img src="img/group.png" alt="Group:" /> {$current.name}</a> ({$current.count})</td></tr>
+{foreach from=$groups item=current}
+      <tr><td><a href="?manage_users=1&amp;parent_gid={$group->get_aro()}&amp;gid={$current->get_aro()}"><img src="img/group.png" alt="Group:" /> {$current->get_name()}</a> ({$current->get_n_children()})</td></tr>
 {/foreach}
 {if $groups and $users}
       <tr><td height="3"></td></tr>
@@ -27,9 +27,9 @@
 {/foreach}
     </table>
     </td>
-    <td><img src="img/line_right.png" alt="" height="100%" width="14" /></td>
+    <td width='14' style='background: url(img/line_right.png)'></td>
     <td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
-    <td><img src="img/line_left.png" alt="" height="100%" width="14" /></td>
+    <td width='14' style='background: url(img/line_left.png)'></td>
     <td>
 {if $group->get_aro() == 0}
     <h2>Create A New Group</h2>
@@ -40,7 +40,7 @@
     <h3>Public Group Information</h3>
     <table class="indent" width="100%" cellpadding="0" cellspacing="5">
       <tr><td class="nowrap">Group Name:</td><td width="100%"><input type="text" class="field" name="name" value="{$group->get_name()}" /></td></tr>
-      <tr><td class="nowrap" valign="top">Description:</td><td width="100%"><textarea name="description">{$group->get_attribute('description')}</textarea></td></tr>
+      <tr><td class="nowrap" valign="top">Description:</td><td width="100%"><textarea name="description" rows="3" cols="80">{$group->get_attribute('description')}</textarea></td></tr>
     </table>
 
     <h3>Defaults</h3>
@@ -49,8 +49,8 @@
         <td>Content created by users in this group is by default owned by:</td>
         <td>
         <select name="use_group_rights">
-          <option value=1{if $group->get_attribute('use_group_rights')} selected{/if}>Group</option>
-          <option value=0{if !$group->get_attribute('use_group_rights')} selected{/if}>User</option>
+          <option value="1"{if $group->get_attribute('use_group_rights')} selected="selected"{/if}>Group</option>
+          <option value="0"{if !$group->get_attribute('use_group_rights')} selected="selected"{/if}>User</option>
         </select>
         </td>
       </tr>
@@ -235,7 +235,7 @@
       </tr>
     </table>
     </td>
-    <td><img src="img/line_right.png" alt="" height="100%" width="14" /></td>
+    <td width='14' style='background: url(img/line_right.png)'></td>
   </tr>
   <tr>
     <td><img src="img/corner_bottom_left.png" alt="" height="14" width="14" /></td>

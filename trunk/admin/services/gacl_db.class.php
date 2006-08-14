@@ -262,6 +262,7 @@ class GaclActorGroup {
   var $name;
   var $resource_group;
   var $aro;
+  var $n_children;
   var $attributes = array();
 
   function GaclActorGroup($name) {
@@ -269,6 +270,7 @@ class GaclActorGroup {
     $this->name           = $name;
     $this->resource_group = new GaclResourceGroup($name);
     $this->aro            = 0;
+    $this->n_children     = -1;
   }
 
 
@@ -304,6 +306,21 @@ class GaclActorGroup {
 
   function get_aro() {
     return $this->aro;
+  }
+
+
+  function set_n_children($n) {
+    assert('isset($n)');
+    $this->n_children = $n;
+  }
+
+
+  /// Returns the number of Actors in this group.
+  /**
+   * \return The number of actors, or -1 if undetermineable.
+   */
+  function get_n_children() {
+    return $this->n_children;
   }
 
 
@@ -1083,6 +1100,38 @@ class GaclDB {
                                   NULL,
                                   'user');
     return $aclid;
+  }
+
+
+  function &get_actor_group_list($parent_group, $offset = 0, $limit = 0) {
+    assert('is_object($parent_group)');
+    $query = new SqlQuery('
+      SELECT		a.id, a.name, b.id, count(m.aro_id)
+      FROM		  {t_aro_groups}     a
+      LEFT JOIN {t_axo_groups}     b ON a.value=b.value
+      LEFT JOIN {t_groups_aro_map} m ON m.group_id=a.id
+      WHERE     a.parent_id={group_id}
+      GROUP BY  a.id,a.name
+      ORDER BY  a.name');
+    $query->set_int('group_id', $parent_group->get_aro());
+    //echo $query->get_sql() . "<br>";
+    //$this->gacl->_debug = 1; $this->gacl->db->debug = 1;
+    $rs = &$this->gacl->db->Execute($query->get_sql());
+    assert('isset($rs)');
+
+    $group_list = array();
+    if(is_object($rs)) {
+      while($row = $rs->FetchRow()) {
+        $group = new GaclActorGroup($row[1]);
+        $group->set_aro($row[0]);
+        $group->set_n_children($row[3]);
+        $resource_group = &$group->get_resource_group();
+        $resource_group->set_axo($row[2]);
+        array_push($group_list, $group);
+      }
+    }
+    
+    return $group_list;
   }
 
 
