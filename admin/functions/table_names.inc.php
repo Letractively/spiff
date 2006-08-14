@@ -20,10 +20,17 @@
 <?php
   function table_names() {
     $tables = array (
+      't_axo'                => cfg("db_table_prefix") . 'axo',
       't_axo_attribs'        => cfg("db_table_prefix") . 'axo_attribs',
+      't_axo_groups'         => cfg("db_table_prefix") . 'axo_groups',
       't_axo_groups_attribs' => cfg("db_table_prefix") . 'axo_groups_attribs',
+      't_aro'                => cfg("db_table_prefix") . 'aro',
       't_aro_attribs'        => cfg("db_table_prefix") . 'aro_attribs',
+      't_aro_groups'         => cfg("db_table_prefix") . 'aro_groups',
       't_aro_groups_attribs' => cfg("db_table_prefix") . 'aro_groups_attribs',
+      't_aro_sections'       => cfg("db_table_prefix") . 'aro_sections',
+      't_groups_axo_map'     => cfg("db_table_prefix") . 'groups_axo_map',
+      't_groups_aro_map'     => cfg("db_table_prefix") . 'groups_aro_map',
     );
     return $tables;
   }

@@ -28,6 +28,7 @@
   require_once PHPGACL_DIR.'gacl_api.class.php';
   
   include_once 'functions/config.inc.php';
+  include_once 'functions/assert.inc.php';
   include_once 'functions/language.inc.php';
   include_once 'functions/table_names.inc.php';
   include_once 'functions/string.inc.php';
@@ -303,6 +304,27 @@
       $this->eventbus->emit("on_destroy");
     }
   }
+
+
+  function dieDebug($sError)
+  {
+     echo "<hr /><div>".$sError."<br /><table border='1'>";
+     $sOut=""; $aCallstack=debug_backtrace();
+    
+     echo "<thead><tr><th>file</th><th>line</th><th>function</th>".
+         "</tr></thead>";
+     foreach($aCallstack as $aCall)
+     {
+         if (!isset($aCall['file'])) $aCall['file'] = '[PHP Kernel]';
+         if (!isset($aCall['line'])) $aCall['line'] = '';
+
+         echo "<tr><td>{$aCall["file"]}</td><td>{$aCall["line"]}</td>".
+             "<td>{$aCall["function"]}</td></tr>";
+     }
+     echo "</table></div><hr /></p>";
+     die();
+  }
+
 
   $spiff = new Spiff();
   $spiff->print_header();

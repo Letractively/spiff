@@ -1,4 +1,4 @@
-<form action="?manage_users=1&amp;parent_gid={$parent_gid}&amp;uid={$user->get_aro()}" method="POST">
+<form action="?manage_users=1&amp;parent_gid={$parent_gid}&amp;uid={$user->get_aro()}" method="post">
 <table class="container" width="100%" border="0" cellpadding="0" cellspacing="0">
   <tr>
     <td width="14"><img src="img/corner_top_left.png" alt="" height="14" width="14" /></td>
@@ -48,8 +48,8 @@
       </tr>
     </table>
 
-{assign var=uid value=$user.id}
-{assign var=perm_url value="?edit_permissions=1&amp;uid=$uid&amp;section=users"}
+{assign var=uid value=$user->get_aro()}
+{assign var=perm_url value="?edit_permissions=1&amp;uid=$uid"}
 
     <h3>Things This User May Do</h3>
     <table class="indent" cellpadding="0">
@@ -240,6 +240,7 @@
   </tr>
   <tr>
     <td colspan="3">
+{if $user->get_aro() != 0}
     <table width="100%">
       <tr>
         <td><input type="submit" class="button" name="cancel_membership" value="Cancel Membership" /></td>
@@ -247,6 +248,7 @@
         <td><input type="submit" class="button" name="add_membership" value="Add Membership" /></td>
       </tr>
     </table>
+{/if}
     </td>
     <td></td>
     <td colspan="3" align="right">
