@@ -30,7 +30,7 @@
       $group->set_attribute('description',      $_POST['description']);
       $group->set_attribute('use_group_rights', $_POST['use_group_rights'] ? TRUE : FALSE);
       $this->gacl->save_actor_group($group);
-      return $group->get_aro();
+      return $group->get_id();
     }
 
 
@@ -48,7 +48,7 @@
       $user->set_attribute('description',      $_POST['description']);
       $user->set_attribute('use_group_rights', $_POST['use_group_rights'] ? TRUE : FALSE);
       $this->gacl->save_actor($user);
-      return $user->get_aro();
+      return $user->get_id();
     }
 
 
@@ -59,32 +59,12 @@
       }
       else
         $group  = new GaclActorGroup('', NULL);
-      $users      = $this->gacl->get_actor_list($group);
-      $may_admin  = phpgacl_get_group_permission_list($this->gacl->gacl,
-                                                      $gid,
-                                                      'users',
-                                                      'administer');
-      $may_create = phpgacl_get_group_permission_list($this->gacl->gacl,
-                                                      $gid,
-                                                      'users',
-                                                      'create');
-      $may_edit   = phpgacl_get_group_permission_list($this->gacl->gacl,
-                                                      $gid,
-                                                      'users',
-                                                      'edit');
-      $may_delete = phpgacl_get_group_permission_list($this->gacl->gacl,
-                                                      $gid,
-                                                      'users',
-                                                      'delete');
+      $users = $this->gacl->get_actor_list($group);
       $this->smarty->clear_all_assign();
       $this->smarty->assign_by_ref('groups',     $groups);
       $this->smarty->assign_by_ref('users',      $users);
       $this->smarty->assign_by_ref('group',      $group);
       $this->smarty->assign_by_ref('parent_gid', $parent_gid);
-      $this->smarty->assign_by_ref('may_admin',  $may_admin);
-      $this->smarty->assign_by_ref('may_create', $may_create);
-      $this->smarty->assign_by_ref('may_edit',   $may_edit);
-      $this->smarty->assign_by_ref('may_delete', $may_delete);
       $this->parent->append_content($this->smarty->fetch('group_editor.tpl'));
     }
 
@@ -106,31 +86,11 @@
         $user = $this->gacl->get_actor($uid);
       else
         $user = new GaclActor('', new GaclActorSection('users', NULL), NULL);
-      $groups     = $this->gacl->get_actor_group_member_list($user);
-      $may_admin  = phpgacl_get_user_permission_list($this->gacl->gacl,
-                                                     $uid,
-                                                     'users',
-                                                     'administer');
-      $may_create = phpgacl_get_user_permission_list($this->gacl->gacl,
-                                                     $uid,
-                                                     'users',
-                                                     'create');
-      $may_edit   = phpgacl_get_user_permission_list($this->gacl->gacl,
-                                                     $uid,
-                                                     'users',
-                                                     'edit');
-      $may_delete = phpgacl_get_user_permission_list($this->gacl->gacl,
-                                                     $uid,
-                                                     'users',
-                                                     'delete');
+      $groups = $this->gacl->get_actor_group_member_list($user);
       $this->smarty->clear_all_assign();
       $this->smarty->assign_by_ref('user',       $user);
       $this->smarty->assign_by_ref('groups',     $groups);
       $this->smarty->assign_by_ref('parent_gid', $parent_gid);
-      $this->smarty->assign_by_ref('may_admin',  $may_admin);
-      $this->smarty->assign_by_ref('may_create', $may_create);
-      $this->smarty->assign_by_ref('may_edit',   $may_edit);
-      $this->smarty->assign_by_ref('may_delete', $may_delete);
       $this->parent->append_content($this->smarty->fetch('user_editor.tpl'));
     }
 
@@ -151,7 +111,7 @@
       if (isset($_GET['parent_gid']))
         $parent_gid = $_GET['parent_gid'] * 1;
       if (!isset($_GET['gid']) && !isset($_GET['uid'])) {
-        $gid        = $this->gacl->gacl->get_group_id('everybody');
+        $gid        = $this->gacl->get_actor_group_id_from_name('everybody');
         $parent_gid = $gid;
       }
       elseif (isset($_GET['gid']))

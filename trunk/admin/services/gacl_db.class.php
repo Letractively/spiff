@@ -72,12 +72,12 @@ class GaclAction {
   }
 
 
-  function set_aco($aco) {
+  function set_id($aco) {
     $this->aco = $aco;
   }
 
 
-  function get_aco() {
+  function get_id() {
     return $this->aco;
   }
 }
@@ -107,12 +107,14 @@ class GaclResourceSection {
 class GaclResourceGroup {
   var $name;
   var $axo;
+  var $n_children;
   var $attributes = array();
 
   function GaclResourceGroup($name) {
     assert('isset($name)');
-    $this->name = $name;
-    $this->axo  = 0;
+    $this->name       = $name;
+    $this->axo        = 0;
+    $this->n_children = -1;
   }
 
 
@@ -127,14 +129,29 @@ class GaclResourceGroup {
   }
 
 
-  function set_axo($axo) {
+  function set_id($axo) {
     assert('isset($axo)');
     $this->axo = $axo;
   }
 
 
-  function get_axo() {
+  function get_id() {
     return $this->axo;
+  }
+
+
+  function set_n_children($n) {
+    assert('isset($n)');
+    $this->n_children = $n;
+  }
+
+
+  /// Returns the number of Actors in this group.
+  /**
+   * \return The number of actors, or -1 if undetermineable.
+   */
+  function get_n_children() {
+    return $this->n_children;
   }
 
 
@@ -193,13 +210,13 @@ class GaclResource {
   }
 
 
-  function set_axo($axo) {
+  function set_id($axo) {
     assert('isset($axo)');
     $this->axo = $axo;
   }
 
 
-  function get_axo() {
+  function get_id() {
     return $this->axo;
   }
 
@@ -298,13 +315,13 @@ class GaclActorGroup {
   }
 
 
-  function set_aro($aro) {
+  function set_id($aro) {
     assert('isset($aro)');
     $this->aro = $aro;
   }
 
 
-  function get_aro() {
+  function get_id() {
     return $this->aro;
   }
 
@@ -396,13 +413,13 @@ class GaclActor {
   }
 
 
-  function set_aro($aro) {
+  function set_id($aro) {
     assert('isset($aro)');
     $this->aro = $aro;
   }
 
 
-  function get_aro() {
+  function get_id() {
     return $this->aro;
   }
 
@@ -509,13 +526,13 @@ class GaclDB {
   function add_action($name, $section) {
     $action           = new GaclAction($name, $section);
     $section_sys_name = $this->_to_sys_name($section->get_name());
-    $action->set_aco($this->gacl->add_object($section_sys_name,
+    $action->set_id($this->gacl->add_object($section_sys_name,
                                              $name,
                                              $this->_to_sys_name($name),
                                              10,
                                              FALSE,
                                              'ACO'));
-    return $action->get_aco() ? $action : FALSE;
+    return $action->get_id() ? $action : FALSE;
   }
 
 
@@ -545,18 +562,18 @@ class GaclDB {
   function add_resource_group($parent_group, $name) {
     $group      = new GaclResourceGroup($name);
     $sys_name   = $this->_to_sys_name($name);
-    $parent_axo = $parent_group ? $parent_group->get_axo() : 0;
+    $parent_axo = $parent_group ? $parent_group->get_id() : 0;
     //$this->gacl->_debug = 1; $this->gacl->db->debug = 1;
-    $group->set_axo($this->gacl->add_group($sys_name,
+    $group->set_id($this->gacl->add_group($sys_name,
                                            $name,
                                            $parent_axo,
                                            'AXO'));
-    if (!$group->get_axo())
+    if (!$group->get_id())
       die("add_resource_group(): Ugh");
 
     // Save attributes.
     $query = new SqlQuery();
-    $query->set_int('id', $group->get_axo());
+    $query->set_int('id', $group->get_id());
     $attrib_fields_sql = 'axo_group_id';
     $attrib_values_sql = '{id}';
     foreach ($group->get_attribute_list() as $key => $val) {
@@ -581,14 +598,14 @@ class GaclDB {
    * \return TRUE on success, or FALSE on failure.
    */
   function delete_resource_group($resource_group) {
-    $res = $this->gacl->del_group($resource_group->get_axo(), FALSE, 'AXO');
+    $res = $this->gacl->del_group($resource_group->get_id(), FALSE, 'AXO');
     return $res;
   }
 
 
   function save_resource_group($group) {
     $sys_name = $this->_to_sys_name($group->get_name());
-    $res = $gacl->edit_group($group->get_axo(),
+    $res = $gacl->edit_group($group->get_id(),
                              $sys_name,
                              $group->get_name(),
                              NULL,
@@ -610,7 +627,7 @@ class GaclDB {
       "UPDATE {t_axo_groups_attribs} at
        $attrib_sql
        WHERE at.axo_group_id={id}");
-    $query->set_int('id', $resource->get_axo());
+    $query->set_int('id', $resource->get_id());
     //$this->gacl->_debug = 1; $this->gacl->db->debug = 1;
     $rs = &$this->db->Execute($query->get_sql());
     return $rs;
@@ -630,7 +647,7 @@ class GaclDB {
     $rs             = &$this->db->Execute($query);
     $row            = $rs->FetchObject();
     $resource_group = new GaclResourceGroup($row->NAME);
-    $resource_group->set_axo($id);
+    $resource_group->set_id($id);
     unset($row['NAME']);
     unset($row['AXO_GROUP_ID']);
     foreach ($row as $key => $var)
@@ -647,18 +664,18 @@ class GaclDB {
    */
   function add_resource($name, $section) {
     $resource = new GaclResource($name, $section);
-    $resource->set_axo($this->gacl->add_object($this->_to_sys_name($section->get_name()),
+    $resource->set_id($this->gacl->add_object($this->_to_sys_name($section->get_name()),
                                                $name,
                                                $this->_to_sys_name($name),
                                                10,
                                                FALSE,
                                                'AXO'));
-    if (!$resource->get_axo())
+    if (!$resource->get_id())
       die("add_resource(): Ugh");
 
     // Save attributes.
     $query = new SqlQuery();
-    $query->set_int('id', $resource->get_axo());
+    $query->set_int('id', $resource->get_id());
     $attrib_fields_sql = 'axo_id';
     $attrib_values_sql = '{id}';
     foreach ($resource->get_attribute_list() as $key => $val) {
@@ -682,7 +699,7 @@ class GaclDB {
    * \return TRUE on success, or FALSE on failure.
    */
   function delete_resource($resource) {
-    $res = $this->gacl->del_object($resource->get_axo(), 'AXO', TRUE);
+    $res = $this->gacl->del_object($resource->get_id(), 'AXO', TRUE);
     return $res;
   }
 
@@ -692,7 +709,7 @@ class GaclDB {
     $sect_name = $this->_to_sys_name($sect->get_name());
     $sys_name  = $this->_to_sys_name($resource->get_name());
     //$this->gacl->_debug = 1; $this->gacl->db->debug = 1;
-    $res = $this->gacl->edit_object($resource->get_axo(),
+    $res = $this->gacl->edit_object($resource->get_id(),
                                     $sect_name,
                                     $resource->get_name(),
                                     $sys_name,
@@ -718,7 +735,7 @@ class GaclDB {
       "UPDATE {t_axo_attribs} at
        $attrib_sql
        WHERE at.axo_id={id}");
-    $query->set_int('id', $resource->get_axo());
+    $query->set_int('id', $resource->get_id());
     //$this->gacl->_debug = 1; $this->gacl->db->debug = 1;
     $rs = &$this->db->Execute($query->get_sql());
     return $rs;
@@ -741,7 +758,7 @@ class GaclDB {
     $row      = $rs->FetchObject();
     $section  = new GaclResourceSection($row->SECTION_NAME);
     $resource = new GaclResource($row->NAME, $section);
-    $resource->set_axo($id);
+    $resource->set_id($id);
     unset($row['NAME']);
     unset($row['SECTION_NAME']);
     unset($row['AXO_ID']);
@@ -756,7 +773,7 @@ class GaclDB {
     $sect      = $resource->get_section();
     $sect_name = $this->_to_sys_name($sect->get_name());
     $sys_name  = $this->_to_sys_name($resource->get_name());
-    $axo       = $group->get_axo();
+    $axo       = $group->get_id();
     return $this->gacl->add_group_object($axo, $sect_name, $sys_name, 'AXO');
   }
 
@@ -798,24 +815,24 @@ class GaclDB {
       $root    = new GaclResourceGroup('Root');
       $section = new GaclResourceSection($name);
       $axo     = $this->get_resource_group_id_from_name('Root', $section);
-      $root->set_axo($axo);
+      $root->set_id($axo);
     }
     else
       $root = $parent_group->get_resource_group();
     $group          = new GaclActorGroup($name);
     $group->set_resource_group($this->add_resource_group($root, $name));
     $sys_name       = $this->_to_sys_name($name);
-    $parent_aro     = $parent_group ? $parent_group->get_aro() : 0;
-    $group->set_aro($this->gacl->add_group($sys_name,
+    $parent_aro     = $parent_group ? $parent_group->get_id() : 0;
+    $group->set_id($this->gacl->add_group($sys_name,
                                            $name,
                                            $parent_aro,
                                            'ARO'));
-    if (!$group->get_aro())
+    if (!$group->get_id())
       die("add_actor_group(): Ugh");
 
     // Save attributes.
     $query = new SqlQuery();
-    $query->set_int('id', $group->get_aro());
+    $query->set_int('id', $group->get_id());
     $attrib_fields_sql = 'aro_group_id';
     $attrib_values_sql = '{id}';
     foreach ($group->get_attribute_list() as $key => $val) {
@@ -844,14 +861,14 @@ class GaclDB {
     $resource_group = $actor_group->get_resource_group();
     if (!$this->delete_resource_group($resource_group))
       die("delete_actor_group(): Ugh");
-    $res = $this->gacl->del_group($actor_group->get_aro(), FALSE, 'ARO');
+    $res = $this->gacl->del_group($actor_group->get_id(), FALSE, 'ARO');
     return $res;
   }
 
 
   function save_actor_group($group) {
     $sys_name = $this->_to_sys_name($group->get_name());
-    $res = $this->gacl->edit_group($group->get_aro(),
+    $res = $this->gacl->edit_group($group->get_id(),
                                    $sys_name,
                                    $group->get_name(),
                                    NULL,
@@ -873,7 +890,7 @@ class GaclDB {
       "UPDATE {t_aro_groups_attribs}
        $attrib_sql
        WHERE aro_group_id={id}");
-    $query->set_int('id', $group->get_aro());
+    $query->set_int('id', $group->get_id());
     //$this->gacl->_debug = 1; $this->gacl->db->debug = 1;
     $rs = &$this->db->Execute($query->get_sql());
     return $rs;
@@ -899,7 +916,7 @@ class GaclDB {
     $axo            = $this->get_resource_group_id_from_name($aro_name);
     $actor_group    = new GaclActorGroup($aro_name);
     $actor_group->set_resource_group($this->get_resource_group($axo));
-    $actor_group->set_aro($aro);
+    $actor_group->set_id($aro);
     foreach ($row as $key => $var)
       $actor_group->set_attribute(strtolower($key), $var);
     
@@ -927,18 +944,18 @@ class GaclDB {
     $actor->set_resource($this->add_resource($name, $resource_section));
     $sect_name        = $this->_to_sys_name($section->get_name());
     //$this->gacl->_debug = 1; $this->gacl->db->debug = 1;
-    $actor->set_aro($this->gacl->add_object($sect_name,
+    $actor->set_id($this->gacl->add_object($sect_name,
                                             $name,
                                             $this->_to_sys_name($name),
                                             10,
                                             FALSE,
                                             'ARO'));
-    if (!$actor->get_aro())
+    if (!$actor->get_id())
       die("add_actor(): Ugh2");
 
     // Save attributes.
     $query = new SqlQuery();
-    $query->set_int('id', $actor->get_aro());
+    $query->set_int('id', $actor->get_id());
     $attrib_fields_sql = 'aro_id';
     $attrib_values_sql = '{id}';
     foreach ($actor->get_attribute_list() as $key => $val) {
@@ -964,7 +981,7 @@ class GaclDB {
     $resource = $actor->get_resource();
     $res = $this->delete_resource($resource);
     assert('$res == TRUE');
-    $res = $this->gacl->del_object($actor->get_aro(), 'ARO', TRUE);
+    $res = $this->gacl->del_object($actor->get_id(), 'ARO', TRUE);
     return $res;
   }
 
@@ -977,7 +994,7 @@ class GaclDB {
     $sect      = $actor->get_section();
     $sect_name = $this->_to_sys_name($sect->get_name());
     $sys_name  = $this->_to_sys_name($actor->get_name());
-    $res = $this->gacl->edit_object($actor->get_aro(),
+    $res = $this->gacl->edit_object($actor->get_id(),
                                     $sect_name,
                                     $actor->get_name(),
                                     $sys_name,
@@ -1001,7 +1018,7 @@ class GaclDB {
       "UPDATE {t_aro_attribs}
        $attrib_sql
        WHERE aro_id=\{id}");
-    $query->set_int('id', $actor->get_aro());
+    $query->set_int('id', $actor->get_id());
     $rs = &$this->db->Execute($query->get_sql());
     return $rs;
   }
@@ -1029,7 +1046,7 @@ class GaclDB {
     $axo              = $this->get_resource_id_from_name($aro_name, $axo_section);
     $actor            = new GaclActor($aro_name, $aro_section);
     $actor->set_resource($this->get_resource($axo));
-    $actor->set_aro($aro);
+    $actor->set_id($aro);
     unset($row['NAME']);
     unset($row['SECTION_NAME']);
     unset($row['ARO_ID']);
@@ -1046,7 +1063,7 @@ class GaclDB {
     $sect      = $actor->get_section();
     $sect_name = $this->_to_sys_name($sect->get_name());
     $sys_name  = $this->_to_sys_name($actor->get_name());
-    $aro       = $group->get_aro();
+    $aro       = $group->get_id();
     return $this->gacl->add_group_object($aro, $sect_name, $sys_name, 'ARO');
   }
 
@@ -1075,13 +1092,13 @@ class GaclDB {
 
     $aro_array = array();
     foreach ($actors as $actor) {
-      $aro = $actor->get_aro();
+      $aro = $actor->get_id();
       array_push($aro_array, $aro);
     }
 
     $axo_array = array();
     foreach ($resources as $resource) {
-      $axo = $resource->get_axo();
+      $axo = $resource->get_id();
       array_push($axo_array, $axo);
     }
 
@@ -1103,6 +1120,46 @@ class GaclDB {
   }
 
 
+  function &get_resource_group_parent($group) {
+    assert('is_object($group)');
+    //$this->gacl->_debug = 1; $this->gacl->db->debug = 1;
+    $gid = $this->gacl->get_group_parent_id($group->get_id(), 'AXO');
+    return $this->get_resource_group($gid);
+  }
+
+
+  function &get_resource_group_list($parent_group, $offset = 0, $limit = 100) {
+    assert('is_object($parent_group)');
+    $query = new SqlQuery('
+      SELECT		a.id, a.name, count(m.axo_id)
+      FROM		  {t_axo_groups}     a
+      LEFT JOIN {t_groups_axo_map} m ON m.group_id=a.id
+      WHERE     a.parent_id={group_id}
+      GROUP BY  a.id,a.name
+      ORDER BY  a.name
+      LIMIT     {offset},{limit}');
+    $query->set_int('group_id', $parent_group->get_id());
+    $query->set_int('offset',   $offset);
+    $query->set_int('limit',    $limit);
+    //echo $query->get_sql() . "<br>";
+    //$this->gacl->_debug = 1; $this->gacl->db->debug = 1;
+    $rs = &$this->db->Execute($query->get_sql());
+    assert('isset($rs)');
+
+    $group_list = array();
+    if(is_object($rs)) {
+      while($row = $rs->FetchRow()) {
+        $group = new GaclResourceGroup($row[1]);
+        $group->set_id($row[0]);
+        $group->set_n_children($row[2]);
+        array_push($group_list, $group);
+      }
+    }
+    
+    return $group_list;
+  }
+
+
   function &get_actor_group_list($parent_group, $offset = 0, $limit = 100) {
     assert('is_object($parent_group)');
     $query = new SqlQuery('
@@ -1114,9 +1171,77 @@ class GaclDB {
       GROUP BY  a.id,a.name
       ORDER BY  a.name
       LIMIT     {offset},{limit}');
-    $query->set_int('group_id', $parent_group->get_aro());
+    $query->set_int('group_id', $parent_group->get_id());
     $query->set_int('offset',   $offset);
     $query->set_int('limit',    $limit);
+    //echo $query->get_sql() . "<br>";
+    //$this->gacl->_debug = 1; $this->gacl->db->debug = 1;
+    $rs = &$this->db->Execute($query->get_sql());
+    assert('isset($rs)');
+
+    $group_list = array();
+    if(is_object($rs)) {
+      while($row = $rs->FetchRow()) {
+        $group = new GaclActorGroup($row[1]);
+        $group->set_id($row[0]);
+        $group->set_n_children($row[3]);
+        $resource_group = &$group->get_resource_group();
+        $resource_group->set_id($row[2]);
+        array_push($group_list, $group);
+      }
+    }
+    
+    return $group_list;
+  }
+
+
+  function &get_resource_list($parent_group, $offset = 0, $limit = 100) {
+    assert('is_object($parent_group)');
+    $query = new SqlQuery('
+      SELECT		a.id, a.name, s.name section_name
+      FROM		  {t_axo}            a
+      LEFT JOIN	{t_groups_axo_map} b ON b.axo_id=a.id
+      LEFT JOIN {t_axo_sections}   s ON s.value=a.section_value
+      WHERE     b.group_id={group_id}
+      GROUP BY	a.id,a.name
+      ORDER BY  a.name
+      LIMIT     {offset},{limit}');
+    $query->set_int('group_id', $parent_group->get_id());
+    $query->set_int('offset',   $offset);
+    $query->set_int('limit',    $limit);
+    //echo $query->get_sql() . "<br>";
+    //$this->gacl->_debug = 1; $this->gacl->db->debug = 1;
+    $rs = &$this->gacl->db->Execute($query->get_sql());
+    assert('isset($rs)');
+
+    $resource_list = array();
+    if(is_object($rs)) {
+      while($row = $rs->FetchRow()) {
+        $resource = new GaclResource($row[1], new GaclResourceSection($row[2]));
+        $resource->set_id($row[0]);
+        array_push($resource_list, $resource);
+      }
+    }
+    
+    return $resource_list;
+  }
+
+
+  /// Returns a list of all groups of which the given actor is a member.
+  function &get_actor_group_member_list($actor, $offset = 0, $limit = 100) {
+    assert('is_object($actor)');
+    $query = new SqlQuery('
+      SELECT		g.id, g.name, x.id
+      FROM		  {t_aro_groups}     g
+      LEFT JOIN {t_axo_groups}     x ON g.value=x.value
+      LEFT JOIN {t_groups_aro_map} m ON m.group_id=g.id
+      WHERE     m.aro_id={id}
+      GROUP BY  g.id,g.name
+      ORDER BY  g.name
+      LIMIT     {offset},{limit}');
+    $query->set_int('id',     $actor->get_id());
+    $query->set_int('offset', $offset);
+    $query->set_int('limit',  $limit);
     //echo $query->get_sql() . "<br>";
     //$this->gacl->_debug = 1; $this->gacl->db->debug = 1;
     $rs = &$this->gacl->db->Execute($query->get_sql());
@@ -1126,14 +1251,12 @@ class GaclDB {
     if(is_object($rs)) {
       while($row = $rs->FetchRow()) {
         $group = new GaclActorGroup($row[1]);
-        $group->set_aro($row[0]);
-        $group->set_n_children($row[3]);
+        $group->set_id($row[0]);
         $resource_group = &$group->get_resource_group();
-        $resource_group->set_axo($row[2]);
+        $resource_group->set_id($row[2]);
         array_push($group_list, $group);
       }
     }
-    
     return $group_list;
   }
 
@@ -1150,7 +1273,7 @@ class GaclDB {
       GROUP BY	a.id,a.name
       ORDER BY  a.name
       LIMIT     {offset},{limit}');
-    $query->set_int('group_id', $parent_group->get_aro());
+    $query->set_int('group_id', $parent_group->get_id());
     $query->set_int('offset',   $offset);
     $query->set_int('limit',    $limit);
     //echo $query->get_sql() . "<br>";
@@ -1162,9 +1285,9 @@ class GaclDB {
     if(is_object($rs)) {
       while($row = $rs->FetchRow()) {
         $actor = new GaclActor($row[1], new GaclActorSection($row[2]));
-        $actor->set_aro($row[0]);
+        $actor->set_id($row[0]);
         $resource = &$actor->get_resource();
-        $resource->set_axo($row[3]);
+        $resource->set_id($row[3]);
         array_push($actor_list, $actor);
       }
     }
@@ -1173,37 +1296,47 @@ class GaclDB {
   }
 
 
-  /// Returns a list of all groups of which the given actor is a member.
-  function &get_actor_group_member_list($actor, $offset = 0, $limit = 100) {
-    assert('is_object($actor)');
+  function get_actor_group_permissions($actor_group,
+                                       $resource_group,
+                                       $offset = 0,
+                                       $limit = 100) {
     $query = new SqlQuery('
-      SELECT		g.id, g.name, x.id
-      FROM		  {t_aro_groups}     g
-      LEFT JOIN {t_axo_groups}     x ON g.value=x.value
-      LEFT JOIN {t_groups_aro_map} m ON m.group_id=g.id
-      WHERE     m.aro_id={id}
-      GROUP BY  g.id,g.name
-      ORDER BY  g.name
-      LIMIT     {offset},{limit}');
-    $query->set_int('id',     $actor->get_aro());
-    $query->set_int('offset', $offset);
-    $query->set_int('limit',  $limit);
-    //echo $query->get_sql() . "<br>";
-    //$this->gacl->_debug = 1; $this->gacl->db->debug = 1;
-    $rs = &$this->gacl->db->Execute($query->get_sql());
-    assert('isset($rs)');
-
-    $group_list = array();
-    if(is_object($rs)) {
+      SELECT    ac.name, ac.section_value, a.allow, ac.id, ac.value
+      FROM      {t_acl}            a
+      LEFT JOIN {t_aro_groups_map} argm ON  a.id=argm.acl_id
+      LEFT JOIN {t_axo_groups_map} axgm ON  a.id=axgm.acl_id
+      LEFT JOIN {t_aco_map}        acm  ON  a.id=acm.acl_id
+      LEFT JOIN {t_aco}            ac   ON  ac.value=acm.value
+                                        AND ac.section_value=acm.section_value
+      WHERE     a.enabled=1
+      AND       argm.group_id={actor_group_id}
+      AND       axgm.group_id={resource_group_id}
+      ORDER BY  a.updated_DATE DESC');
+    //$this->gacl->_debug = 1; $this->db->debug = 1;
+    $query->set_int('actor_group_id',    $actor_group->get_id());
+    $query->set_int('resource_group_id', $resource_group->get_id());
+    $rs = &$this->db->Execute($query->get_sql());
+    
+    $perms = array();
+    if (is_object($rs)) {
       while($row = $rs->FetchRow()) {
-        $group = new GaclActorGroup($row[1]);
-        $group->set_aro($row[0]);
-        $resource_group = &$group->get_resource_group();
-        $resource_group->set_axo($row[2]);
-        array_push($group_list, $group);
+        $action = new GaclAction($row[0], $row[1]);
+        $action->set_id($row[3]);
+        $perm->action = $action;
+        $perm->allow  = $row[2];
+        $perms[$row[4]] = $perm;
       }
     }
-    return $group_list;
+    //print_r($perms);echo "<br>";
+    return $perms;
+  }
+
+
+  function get_actor_permissions($actor_group,
+                                 $resource_group,
+                                 $offset = 0,
+                                 $limit = 100) {
+    //FIXME
   }
 }
 ?>
