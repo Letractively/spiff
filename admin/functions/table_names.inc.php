@@ -20,13 +20,20 @@
 <?php
   function table_names() {
     $tables = array (
+      't_acl'                => cfg("db_table_prefix") . 'acl',
+      't_aco'                => cfg("db_table_prefix") . 'aco',
+      't_aco_map'            => cfg("db_table_prefix") . 'aco_map',
       't_axo'                => cfg("db_table_prefix") . 'axo',
+      't_axo_map'            => cfg("db_table_prefix") . 'axo_map',
       't_axo_attribs'        => cfg("db_table_prefix") . 'axo_attribs',
       't_axo_groups'         => cfg("db_table_prefix") . 'axo_groups',
+      't_axo_groups_map'     => cfg("db_table_prefix") . 'axo_groups_map',
       't_axo_groups_attribs' => cfg("db_table_prefix") . 'axo_groups_attribs',
+      't_axo_sections'       => cfg("db_table_prefix") . 'axo_sections',
       't_aro'                => cfg("db_table_prefix") . 'aro',
       't_aro_attribs'        => cfg("db_table_prefix") . 'aro_attribs',
       't_aro_groups'         => cfg("db_table_prefix") . 'aro_groups',
+      't_aro_groups_map'     => cfg("db_table_prefix") . 'aro_groups_map',
       't_aro_groups_attribs' => cfg("db_table_prefix") . 'aro_groups_attribs',
       't_aro_sections'       => cfg("db_table_prefix") . 'aro_sections',
       't_groups_axo_map'     => cfg("db_table_prefix") . 'groups_axo_map',

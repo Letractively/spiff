@@ -1,4 +1,4 @@
-<form action="?manage_users=1&amp;parent_gid={$parent_gid}&amp;uid={$user->get_aro()}" method="post">
+<form action="?manage_users=1&amp;parent_gid={$parent_gid}&amp;uid={$user->get_id()}" method="post">
 <table class="container" width="100%" border="0" cellpadding="0" cellspacing="0">
   <tr>
     <td width="14"><img src="img/corner_top_left.png" alt="" height="14" width="14" /></td>
@@ -15,7 +15,7 @@
     <table class="menu" width="100%" cellpadding="0">
       <tr><td align='center'><i>Member Of:</i></td></tr>
 {foreach from=$groups item=current}
-      <tr><td><a href="?manage_users=1&gid={$current->get_aro()}"><img src="img/group.png" alt="User:" /> {$current->get_name()}</a></td></tr>
+      <tr><td><a href="?manage_users=1&gid={$current->get_id()}"><img src="img/group.png" alt="Group:" /> {$current->get_name()}</a></td></tr>
 {/foreach}
     </table>
     </td>
@@ -23,7 +23,7 @@
     <td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
     <td width='14' style='background: url(img/line_left.png);'></td>
     <td>
-{if $user->get_aro() == 0}
+{if $user->get_id() == 0}
     <h2>Create A New User</h2>
 {else}
     <h2>{$user->get_name()}</h2>
@@ -48,184 +48,12 @@
       </tr>
     </table>
 
-{assign var=uid value=$user->get_aro()}
+{assign var=uid value=$user->get_id()}
 {assign var=perm_url value="?edit_permissions=1&amp;uid=$uid"}
 
     <h3>Things This User May Do</h3>
-    <table class="indent" cellpadding="0">
-      <tr>
-        <td><b>Administer users</b> in the following groups:</td>
-        <td>&nbsp;</td>
-        <td>
-        {if count($may_admin.allow) == 0}
-          <i>(None specified)</i>
-        {else}
-          {foreach from=$may_admin.allow item=current key=current_id}
-          {$current}
-          {/foreach}
-        {/if}
-        </td>
-        <td>&nbsp;</td>
-        <td>
-        <a target="_blank" onclick="window.open('{$perm_url}&amp;action=administer&amp;allow=1',
-                                                '_blank',
-                                                'width=350,height=640,top=300,left='+(screen.width-300)/2)">
-        <input type="button" name="change" value="Change..." />
-        </a>
-        </td>
-      </tr>
-      <tr>
-        <td><b>Create new users</b> in the following groups:</td>
-        <td>&nbsp;</td>
-        <td>
-        {if count($may_create.allow) == 0}
-          <i>(None specified)</i>
-        {else}
-          {foreach from=$may_create.allow item=current key=current_id}
-          {$current}
-          {/foreach}
-        {/if}
-        </td>
-        <td>&nbsp;</td>
-        <td>
-        <a target="_blank" onclick="window.open('{$perm_url}&amp;action=create&amp;allow=1',
-                                                '_blank',
-                                                'width=350,height=640,top=300,left='+(screen.width-300)/2)">
-        <input type="button" name="change" value="Change..." />
-        </a>
-        </td>
-      </tr>
-      <tr>
-        <td><b>Modify existing users</b> in the following groups:</td>
-        <td>&nbsp;</td>
-        <td>
-        {if count($may_edit.allow) == 0}
-          <i>(None specified)</i>
-        {else}
-          {foreach from=$may_edit.allow item=current key=current_id}
-          {$current}
-          {/foreach}
-        {/if}
-        </td>
-        <td>&nbsp;</td>
-        <td>
-        <a target="_blank" onclick="window.open('{$perm_url}&amp;action=edit&amp;allow=1',
-                                                '_blank',
-                                                'width=350,height=640,top=300,left='+(screen.width-300)/2)">
-        <input type="button" name="change" value="Change..." />
-        </a>
-        </td>
-      </tr>
-      <tr>
-        <td><b>Delete existing users</b> in the following groups:</td>
-        <td>&nbsp;</td>
-        <td>
-        {if count($may_delete.allow) == 0}
-          <i>(None specified)</i>
-        {else}
-          {foreach from=$may_delete.allow item=current key=current_id}
-          {$current}
-          {/foreach}
-        {/if}
-        </td>
-        <td>&nbsp;</td>
-        <td>
-        <a target="_blank" onclick="window.open('{$perm_url}&amp;action=delete&amp;allow=1',
-                                                '_blank',
-                                                'width=350,height=640,top=300,left='+(screen.width-300)/2)">
-        <input type="button" name="change" value="Change..." />
-        </a>
-        </td>
-      </tr>
-    </table>
-
-    <h3>Things This User Is Not Allowed To Do</h3>
-    <table class="indent" cellpadding="0">
-      <tr>
-        <td><b>Administer users</b> in the following groups:</td>
-        <td>&nbsp;</td>
-        <td>
-        {if count($may_admin.deny) == 0}
-          <i>(None specified)</i>
-        {else}
-          {foreach from=$may_admin.deny item=current key=current_id}
-          {$current}
-          {/foreach}
-        {/if}
-        </td>
-        <td>&nbsp;</td>
-        <td>
-        <a target="_blank" onclick="window.open('{$perm_url}&amp;action=administer&amp;allow=0',
-                                                '_blank',
-                                                'width=350,height=640,top=300,left='+(screen.width-300)/2)">
-        <input type="button" name="change" value="Change..." />
-        </a>
-        </td>
-      </tr>
-      <tr>
-        <td><b>Create new users</b> in the following groups:</td>
-        <td>&nbsp;</td>
-        <td>
-        {if count($may_create.deny) == 0}
-          <i>(None specified)</i>
-        {else}
-          {foreach from=$may_create.deny item=current key=current_id}
-          {$current}
-          {/foreach}
-        {/if}
-        </td>
-        <td>&nbsp;</td>
-        <td>
-        <a target="_blank" onclick="window.open('{$perm_url}&amp;action=create&amp;allow=0',
-                                                '_blank',
-                                                'width=350,height=640,top=300,left='+(screen.width-300)/2)">
-        <input type="button" name="change" value="Change..." />
-        </a>
-        </td>
-      </tr>
-      <tr>
-        <td><b>Modify existing users</b> in the following groups:</td>
-        <td>&nbsp;</td>
-        <td>
-        {if count($may_edit.deny) == 0}
-          <i>(None specified)</i>
-        {else}
-          {foreach from=$may_edit.deny item=current key=current_id}
-          {$current}
-          {/foreach}
-        {/if}
-        </td>
-        <td>&nbsp;</td>
-        <td>
-        <a target="_blank" onclick="window.open('{$perm_url}&amp;action=edit&amp;allow=0',
-                                                '_blank',
-                                                'width=350,height=640,top=300,left='+(screen.width-300)/2)">
-        <input type="button" name="change" value="Change..." />
-        </a>
-        </td>
-      </tr>
-      <tr>
-        <td><b>Delete existing users</b> in the following groups:</td>
-        <td>&nbsp;</td>
-        <td>
-        {if count($may_delete.deny) == 0}
-          <i>(None specified)</i>
-        {else}
-          {foreach from=$may_delete.deny item=current key=current_id}
-          {$current}
-          {/foreach}
-        {/if}
-        </td>
-        <td>&nbsp;</td>
-        <td>
-        <a target="_blank" onclick="window.open('{$perm_url}&amp;action=delete&amp;allow=0',
-                                                '_blank',
-                                                'width=350,height=640,top=300,left='+(screen.width-300)/2)">
-        <input type="button" name="change" value="Change..." />
-        </a>
-        </td>
-      </tr>
-    </table>
+    <iframe src="index_noheader.php?permission_tree=1&amp;actor_id={$user->get_id()}" border="0" width="100%" height="200">
+    </iframe>
     </td>
     <td width='14' style='background: url(img/line_right.png)'></td>
   </tr>
@@ -240,7 +68,7 @@
   </tr>
   <tr>
     <td colspan="3">
-{if $user->get_aro() != 0}
+{if $user->get_id() != 0}
     <table width="100%">
       <tr>
         <td><input type="submit" class="button" name="cancel_membership" value="Cancel Membership" /></td>
