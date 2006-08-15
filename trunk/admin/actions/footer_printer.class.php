@@ -21,7 +21,7 @@
   class FooterPrinter extends PrinterBase {
     function show() {
       $version['url']  = 'http://debain.org/software/spiff/';
-      $version['text'] = 'powered by spiff v0.9.8';
+      $version['text'] = 'powered by spiff v0.1';
       $this->smarty->clear_all_assign();
       $this->smarty->assign_by_ref('version',         $version);
       $this->parent->append_content($this->smarty->fetch('footer.tpl'));
