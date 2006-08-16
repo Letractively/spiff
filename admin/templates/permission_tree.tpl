@@ -12,27 +12,75 @@ function getChangeLogDiv()
   return parent.document.getElementById('changelog');
 }
 
+
+function getLogEntry(actionName, resourceName, value)
+{
+  if (value == -1)
+    return 'Give the same <i>' + actionName + '</i> permissions'
+         + ' on ' + resourceName + ' as the parent group.';
+  else if (value == 1)
+    return 'Grant <i>' + actionName + '</i> permissions on ' + resourceName + '.';
+  else
+    return 'Deny <i>' + actionName + '</i> permissions on ' + resourceName + '.';
+}
+
+function incrementItemCount()
+{
+  var changelog = getChangeLogDiv();
+  var input     = parent.document.getElementById('changelog_length');
+  if (!input) {
+    input = parent.document.createElement('input');
+    input.setAttribute('type',  'hidden');
+    input.setAttribute('id',    'changelog_length');
+    input.setAttribute('value', 1);
+    changelog.appendChild(input);
+    return 1;
+  }
+  var count = parseInt(input.getAttribute('value'), 10);
+  input.setAttribute('value', count + 1);
+  return count + 1;
+}
+
+/**
+ * Stores the given permission of the given resourceId/action in an
+ * input field in the parent document. Will re-use existing input
+ * fields if they already exist.
+ */
 function changePerm(element,
                     actorId,
                     actionName,
-                    actionSysname,
+                    actionSysName,
                     resourceId,
                     resourceName)
 {
-  var value     = element.value;
-  var changelog = getChangeLogDiv();
-  var item      = parent.document.createElement('li');
-  //FIXME: Also append using hidden form values, so that we can retrieve it later.
-  if (value == -1)
-    item.innerHTML += 'Give the same <i>' + actionName + '</i> permissions'
-                   +  ' on ' + resourceName + ' as the parent group.';
-  else if (value == 1)
-    item.innerHTML += 'Grant <i>' + actionName + '</i> permissions'
-                   +  ' on ' + resourceName + '.';
-  else
-    item.innerHTML += 'Deny <i>' + actionName + '</i> permissions'
-                   +  ' on ' + resourceName + '.';
-  changelog.appendChild(item);
+  var value      = element.value;
+  var changelog  = getChangeLogDiv();
+  var input_name = 'changelog_input_' + resourceId + '_' + actionSysName;
+  var li_name    = 'changelog_li_'    + resourceId + '_' + actionSysName;
+  var input_item = parent.document.getElementById(input_name);
+  var li_item    = parent.document.getElementById(li_name);
+  if (!input_item) {
+    // Create one element containing an array of all changed properties.
+    var count = incrementItemCount().toString();
+    input_item = parent.document.createElement('input');
+    input_item.setAttribute('type', 'hidden');
+    input_item.setAttribute('name',  'changelog_entries[' + count + ']');
+    input_item.setAttribute('id',    'changelog_entries_' + count);
+    input_item.setAttribute('value', input_name);
+    changelog.appendChild(input_item);
+    
+    input_item = parent.document.createElement('input');
+    input_item.setAttribute('type', 'hidden');
+    input_item.setAttribute('id',   input_name);
+    changelog.appendChild(input_item);
+  }
+  if (!li_item) {
+    li_item = parent.document.createElement('li');
+    li_item.setAttribute('id', li_name);
+    changelog.appendChild(li_item);
+  }
+  input_item.setAttribute('value', value);
+  li_item.innerHTML = getLogEntry(actionName, resourceName, value);
 }
 // -->
 </script>

@@ -32,7 +32,7 @@ global $options;
 
 * mkdir libs/smarty/templates_c && chmod 777 libs/smarty/templates_c/
 
-* Hopfully libs/phpgacl/setup.php was not changed, otherwise you have to
+* Hopefully libs/phpgacl/setup.php was not changed, otherwise you have to
   implement the same changes in admin/setup.php.
 
 * Edit admin/setup_now.php so that PHPGACL_DIR points to the new version of phpgacl.
