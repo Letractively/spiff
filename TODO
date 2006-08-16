@@ -1,5 +1,7 @@
 * When a permission drop down field is changed, use JS to write a
-  "changelog" into the editor page.
+  "changelog" into the editor page form using "input type='hidden'".
+  
+* Remove duplicate/conflicting entries from the editor page changelog.
   
 * When the apply button in the editor page is pressed, submit the
   log to the server and execute the actions.
