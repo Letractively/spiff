@@ -71,7 +71,7 @@ function change_members() {
 {assign var=perm_url value="?edit_permissions=1&amp;gid=$gid"}
 
     <h3>Things That The Users In This Group May Do</h3>
-    <iframe id='permission_tree' src="index_noheader.php?permission_tree=1&amp;actor_gid={$group->get_id()}" border="1" width="100%" height="1">
+    <iframe id='permission_tree' src="index_noheader.php?permission_tree=1&amp;actor_gid={$group->get_id()}" border="0" width="100%" height="30">
     </iframe>
 
     <h3>Unconfirmed Permission Changes</h3>
