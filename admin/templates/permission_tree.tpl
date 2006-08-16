@@ -7,11 +7,12 @@
 {literal}
 <script language="javascript" type="text/javascript">
 <!--
-function getChangeLogDiv()
+function setHeight()
 {
-  return parent.document.getElementById('changelog');
+  var iframe = parent.document.getElementById('permission_tree');
+  var height = document.body.scrollHeight;
+  iframe.setAttribute('height', height);
 }
-
 
 function getLogEntry(actionName, resourceName, value)
 {
@@ -26,14 +27,20 @@ function getLogEntry(actionName, resourceName, value)
 
 function incrementItemCount()
 {
-  var changelog = getChangeLogDiv();
+  var changelog = parent.document.getElementById('changelog');
   var input     = parent.document.getElementById('changelog_length');
   if (!input) {
+    changelog.innerHTML = '';
+
     input = parent.document.createElement('input');
     input.setAttribute('type',  'hidden');
     input.setAttribute('id',    'changelog_length');
     input.setAttribute('value', 1);
     changelog.appendChild(input);
+    
+    ol = parent.document.createElement('ol');
+    ol.setAttribute('id', 'changelog_list');
+    changelog.appendChild(ol);
     return 1;
   }
   var count = parseInt(input.getAttribute('value'), 10);
@@ -54,14 +61,15 @@ function changePerm(element,
                     resourceName)
 {
   var value      = element.value;
-  var changelog  = getChangeLogDiv();
   var input_name = 'changelog_input_' + resourceId + '_' + actionSysName;
   var li_name    = 'changelog_li_'    + resourceId + '_' + actionSysName;
   var input_item = parent.document.getElementById(input_name);
   var li_item    = parent.document.getElementById(li_name);
   if (!input_item) {
     // Create one element containing an array of all changed properties.
-    var count = incrementItemCount().toString();
+    var count     = incrementItemCount().toString();
+    var changelog = parent.document.getElementById('changelog_list');
+
     input_item = parent.document.createElement('input');
     input_item.setAttribute('type', 'hidden');
     input_item.setAttribute('name',  'changelog_entries[' + count + ']');
@@ -75,6 +83,7 @@ function changePerm(element,
     changelog.appendChild(input_item);
   }
   if (!li_item) {
+    var changelog = parent.document.getElementById('changelog_list');
     li_item = parent.document.createElement('li');
     li_item.setAttribute('id', li_name);
     changelog.appendChild(li_item);
@@ -87,7 +96,7 @@ function changePerm(element,
 {/literal}
 </head>
 
-<body>
+<body onload='setHeight()'>
 <table class="permissions" border="0" cellpadding="0" cellspacing="3">
   <tr>
     <th></th>
