@@ -35,9 +35,9 @@ global $options;
 * Hopfully libs/phpgacl/setup.php was not changed, otherwise you have to
   implement the same changes in admin/setup.php.
 
-* Edit admin/setup.php so that PHPGACL_DIR points to the new version of phpgacl.
+* Edit admin/setup_now.php so that PHPGACL_DIR points to the new version of phpgacl.
 
-* Edit admin/index.php so that PHPGACL_DIR points to the new version of phpgacl.
+* Edit admin/spiff.class.php so that PHPGACL_DIR points to the new version of phpgacl.
 
 * Drop all database tables.
 
