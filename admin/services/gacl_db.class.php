@@ -1296,10 +1296,10 @@ class GaclDB {
   }
 
 
-  function get_actor_group_permissions($actor_group,
-                                       $resource_group,
-                                       $offset = 0,
-                                       $limit = 100) {
+  function get_actor_group_resource_group_permissions($actor_group,
+                                                      $resource_group,
+                                                      $offset = 0,
+                                                      $limit = 100) {
     $query = new SqlQuery('
       SELECT    ac.name, ac.section_value, a.allow, ac.id, ac.value
       FROM      {t_acl}            a
@@ -1332,11 +1332,131 @@ class GaclDB {
   }
 
 
-  function get_actor_permissions($actor_group,
-                                 $resource_group,
-                                 $offset = 0,
-                                 $limit = 100) {
-    //FIXME
+  function get_actor_group_resource_permissions($actor_group,
+                                                $resource,
+                                                $offset = 0,
+                                                $limit = 100) {
+    $query = new SqlQuery('
+      SELECT    ac.name, ac.section_value, a.allow, ac.id, ac.value
+      FROM      {t_acl}            a
+      LEFT JOIN {t_aro_groups_map} argm ON  a.id=argm.acl_id
+      LEFT JOIN {t_axo_map}        axm  ON  a.id=axm.acl_id
+      LEFT JOIN {t_aco_map}        acm  ON  a.id=acm.acl_id
+      LEFT JOIN {t_aco}            ac   ON  ac.value=acm.value
+                                        AND ac.section_value=acm.section_value
+      WHERE     a.enabled=1
+      AND       argm.group_id={actor_group_id}
+      AND       axm.section_value={section}
+      AND       axm.value={value}
+      ORDER BY  a.updated_DATE DESC');
+    //$this->gacl->_debug = 1; $this->db->debug = 1;
+    $section       = $resource->get_section();
+    $sect_sys_name = $this->_to_sys_name($section->get_name());
+    $sys_name      = $this->_to_sys_name($resource->get_name());
+    $query->set_int('actor_group_id', $actor_group->get_id());
+    $query->set_int('section',        $sect_sys_name);
+    $query->set_int('value',          $sys_name);
+    $rs = &$this->db->Execute($query->get_sql());
+    
+    $perms = array();
+    if (is_object($rs)) {
+      while($row = $rs->FetchRow()) {
+        $action = new GaclAction($row[0], $row[1]);
+        $action->set_id($row[3]);
+        $perm->action = $action;
+        $perm->allow  = $row[2];
+        $perms[$row[4]] = $perm;
+      }
+    }
+
+    return $perms;
+  }
+
+
+  function get_actor_resource_group_permissions($actor,
+                                                $resource_group,
+                                                $offset = 0,
+                                                $limit = 100) {
+    $query = new SqlQuery('
+      SELECT    ac.name, ac.section_value, a.allow, ac.id, ac.value
+      FROM      {t_acl}            a
+      LEFT JOIN {t_aro_map}        arm  ON  a.id=arm.acl_id
+      LEFT JOIN {t_axo_groups_map} axgm ON  a.id=axgm.acl_id
+      LEFT JOIN {t_aco_map}        acm  ON  a.id=acm.acl_id
+      LEFT JOIN {t_aco}            ac   ON  ac.value=acm.value
+                                        AND ac.section_value=acm.section_value
+      WHERE     a.enabled=1
+      AND       arm.section_value={section}
+      AND       arm.value={value}
+      AND       axgm.group_id={resource_group_id}
+      ORDER BY  a.updated_DATE DESC');
+    //$this->gacl->_debug = 1; $this->db->debug = 1;
+    $section       = $actor->get_section();
+    $sect_sys_name = $this->_to_sys_name($section->get_name());
+    $sys_name      = $this->_to_sys_name($actor->get_name());
+    $query->set_int('section',           $sect_sys_name);
+    $query->set_int('value',             $sys_name);
+    $query->set_int('resource_group_id', $resource_group->get_id());
+    $rs = &$this->db->Execute($query->get_sql());
+    
+    $perms = array();
+    if (is_object($rs)) {
+      while($row = $rs->FetchRow()) {
+        $action = new GaclAction($row[0], $row[1]);
+        $action->set_id($row[3]);
+        $perm->action = $action;
+        $perm->allow  = $row[2];
+        $perms[$row[4]] = $perm;
+      }
+    }
+    //print_r($perms);echo "<br>";
+    return $perms;
+  }
+
+
+  function get_actor_resource_permissions($actor,
+                                          $resource,
+                                          $offset = 0,
+                                          $limit = 100) {
+    $query = new SqlQuery('
+      SELECT    ac.name, ac.section_value, a.allow, ac.id, ac.value
+      FROM      {t_acl}      a
+      LEFT JOIN {t_aro__map} argm ON  a.id=arm.acl_id
+      LEFT JOIN {t_axo_map}  axm  ON  a.id=axm.acl_id
+      LEFT JOIN {t_aco_map}  acm  ON  a.id=acm.acl_id
+      LEFT JOIN {t_aco}      ac   ON  ac.value=acm.value
+                                  AND ac.section_value=acm.section_value
+      WHERE     a.enabled=1
+      AND       arm.section_value={actor_section}
+      AND       arm.value={actor_value}
+      AND       axm.section_value={resource_section}
+      AND       axm.value={resource_value}
+      ORDER BY  a.updated_DATE DESC');
+    //$this->gacl->_debug = 1; $this->db->debug = 1;
+    $actor_section          = $actor->get_section();
+    $actor_sect_sys_name    = $this->_to_sys_name($actor_section->get_name());
+    $actor_sys_name         = $this->_to_sys_name($actor->get_name());
+    $resource_section       = $resource->get_section();
+    $resource_sect_sys_name = $this->_to_sys_name($resource_section->get_name());
+    $resource_sys_name      = $this->_to_sys_name($resource->get_name());
+    $query->set_int('actor_section',    $actor_sect_sys_name);
+    $query->set_int('actor_value',      $actor_sys_name);
+    $query->set_int('resource_section', $resource_sect_sys_name);
+    $query->set_int('resource_value',   $resource_sys_name);
+    $rs = &$this->db->Execute($query->get_sql());
+    
+    $perms = array();
+    if (is_object($rs)) {
+      while($row = $rs->FetchRow()) {
+        $action = new GaclAction($row[0], $row[1]);
+        $action->set_id($row[3]);
+        $perm->action = $action;
+        $perm->allow  = $row[2];
+        $perms[$row[4]] = $perm;
+      }
+    }
+
+    return $perms;
   }
 }
 ?>
