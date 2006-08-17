@@ -19,10 +19,10 @@
 ?>
 <?php
   class PermissionTreePrinter extends PrinterBase {
-    function show_tree($actor_gid, $resource_gid) {
-      // Get the actor information.
-      $actor_group = $this->gacl->get_actor_group($actor_gid);
-      
+    function show_tree($actor_id, $actor_gid, $resource_gid) {
+      assert('$actor_id || $actor_gid');
+
+      // Get resource information.
       if ($resource_gid)
         $resource_group = $this->gacl->get_resource_group($resource_gid);
 
@@ -40,26 +40,59 @@
         $resource_list       = array();
       }
 
-      // Receive a list of permissions of each of the groups found.
-      $groups = array();
-      foreach ($resource_group_list as $current) {
-        $perms = $this->gacl->get_actor_group_permissions($actor_group, $current);
-        $current->permission = $perms;
-        array_push($groups, $current);
+      // Because phpgacl sucks, we need to handle groups and users (actors)
+      // separately.
+      // Get the permission list if the currently edited item is an actor.
+      if ($actor_id) {
+        $actor = $this->gacl->get_actor($actor_id);
+
+        // Receive a list of permissions of each of the groups found.
+        $groups = array();
+        foreach ($resource_group_list as $current) {
+          $perms = $this->gacl->get_actor_resource_group_permissions($actor,
+                                                                     $current);
+          $current->permission = $perms;
+          array_push($groups, $current);
+        }
+
+        // Receive a list of permissions of each of the users found.
+        $users = array();
+        foreach ($resource_list as $current) {
+          $perms = $this->gacl->get_actor_resource_permissions($actor,
+                                                               $current);
+          $current->permission = $perms;
+          array_push($users, $current);
+        }
       }
 
-      // Receive a list of permissions of each of the users found.
-      $users = array();
-      foreach ($resource_list as $current) {
-        $perms = $this->gacl->get_actor_permissions($actor_group, $current);
-        $current->permission = $perms;
-        array_push($users, $current);
+      // Get the permission list if the currently edited item is a group.
+      if ($actor_gid) {
+        $actor_group = $this->gacl->get_actor_group($actor_gid);
+
+        // Receive a list of permissions of each of the groups found.
+        $groups = array();
+        foreach ($resource_group_list as $current) {
+          $perms = $this->gacl->get_actor_group_resource_group_permissions(
+                                                       $actor_group, $current);
+          $current->permission = $perms;
+          array_push($groups, $current);
+        }
+
+        // Receive a list of permissions of each of the users found.
+        $users = array();
+        foreach ($resource_list as $current) {
+          $perms = $this->gacl->get_actor_group_resource_permissions(
+                                                       $actor_group, $current);
+          $current->permission = $perms;
+          array_push($users, $current);
+        }
       }
 
       // Fire smarty.
       $this->smarty->clear_all_assign();
       if (isset($parent_group))
-        $this->smarty->assign('parent',  $parent_group);
+        $this->smarty->assign('parent', $parent_group);
+      $this->smarty->assign('actor_id',  $actor_id);
       $this->smarty->assign('actor_gid', $actor_gid);
       $this->smarty->assign_by_ref('groups', $groups);
       $this->smarty->assign_by_ref('users',  $users);
@@ -68,15 +101,19 @@
 
 
     function show() {
-      if (!isset($_GET['actor_gid']))
+      $actor_id  = '';
+      $actor_gid = '';
+      if (isset($_GET['actor_id']))
+        $actor_id = $_GET['actor_id'] * 1;
+      else if (isset($_GET['actor_gid']))
+        $actor_gid = $_GET['actor_gid'] * 1;
+      else
         die("PermissionTreePrinter::show(): Actor id missing");
-      if (isset($_GET['actor_gid']))
-        $actor_gid    = $_GET['actor_gid']    * 1;
       if (isset($_GET['resource_gid']))
         $resource_gid = $_GET['resource_gid'] * 1;
       else
         $resource_gid = '';
-      $this->show_tree($actor_gid, $resource_gid);
+      $this->show_tree($actor_id, $actor_gid, $resource_gid);
     }
   }
 ?>
