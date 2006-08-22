@@ -56,21 +56,18 @@ function incrementItemCount()
  * fields if they already exist.
  */
 function changePerm(element,
+                    actionId,
                     actionName,
-                    actionSysName,
                     resourceId,
-                    resourceGid,
                     resourceName)
 {
   var permit       = element.value;
   var li_name      = 'changelog_li_'
                    + resourceId
-                   + '_' + resourceGid
-                   + '_' + actionSysName;
+                   + '_' + actionId;
   var input_prefix = 'changelog_input_'
                    + resourceId
-                   + '_' + resourceGid
-                   + '_' + actionSysName;
+                   + '_' + actionId;
   var editor            = parent.document;
   var li_item           = editor.getElementById(li_name);
   var input_item_action = editor.getElementById(input_prefix + '_action');
@@ -105,7 +102,7 @@ function changePerm(element,
     changelog.appendChild(input_item_permit);
   }
 
-  input_item_action.setAttribute('value', actionName);
+  input_item_action.setAttribute('value', actionId);
   input_item_permit.setAttribute('value', permit);
   li_item.innerHTML = getLogEntry(actionName, resourceName, permit);
 }
@@ -140,78 +137,98 @@ function changePerm(element,
     <td>
     <a href="?permission_tree=1&amp;actor_id={$actor_id}&amp;{if $resource}parent_id={$resource->get_id()}&amp;{/if}resource_id={$current_group->get_id()}"><img src="img/group.png" alt="Group:" /> {$current_group->get_name()}</a>
     </td>
-    {if $current_group->get_id() == $actor_id}
+    {assign var=actions value=$current_group->permission}
+    {assign var=perm value=$actions.users_administer}
+    {if $current_group->get_id() == $actor_id && !$perm->permit}
     <td colspan='5'></td>
     {else}
-    {assign var=perms value=$current_group->permission}
     <td align='center'>
-    {assign var=perm value=$perms.view}
-    {assign var=action value=$perm->action}
+    {assign var=perm value=$actions.users_view}
+    {if $perm}
+      {assign var=action    value=$perm->action}
+      {assign var=action_id value=$action->get_id()}
+      {assign var=permit    value=$perm->permit}
+    {/if}
     <select name='view' onchange="changePerm(this,
+                                             {$action_id},
                                              'View',
-                                             'view',
-                                             '',
                                              {$current_group->get_id()},
                                              '{$current_group->get_name()}');">
       <option value="-1">Default</option>
-      <option value="1"{if $perm->allow == "1"} selected="selected"{/if}>Allow</option>
-      <option value="0"{if $perm->allow == "0"} selected="selected"{/if}>Deny</option>
+      <option value="1"{if $permit == "1"} selected="selected"{/if}>Allow</option>
+      <option value="0"{if $permit == "0"} selected="selected"{/if}>Deny</option>
     </select>
     </td>
     <td align='center'>
-    {assign var=perm value=$perms.edit}
-    {assign var=action value=$perm->action}
+    {assign var=actions value=$current_group->permission}
+    {assign var=perm value=$actions.users_edit}
+    {if $perm}
+      {assign var=action    value=$perm->action}
+      {assign var=action_id value=$action->get_id()}
+      {assign var=permit    value=$perm->permit}
+    {/if}
     <select name='edit' onchange="changePerm(this,
+                                             {$action_id},
                                              'Edit',
-                                             'edit',
-                                             '',
                                              {$current_group->get_id()},
                                              '{$current_group->get_name()}');">
       <option value="-1">Default</option>
-      <option value="1"{if $perm->allow == "1"} selected="selected"{/if}>Allow</option>
-      <option value="0"{if $perm->allow == "0"} selected="selected"{/if}>Deny</option>
+      <option value="1"{if $permit == "1"} selected="selected"{/if}>Allow</option>
+      <option value="0"{if $permit == "0"} selected="selected"{/if}>Deny</option>
     </select>
     </td>
     <td align='center'>
-    {assign var=perm value=$perms.delete}
-    {assign var=action value=$perm->action}
+    {assign var=actions value=$current_group->permission}
+    {assign var=perm value=$actions.users_delete}
+    {if $perm}
+      {assign var=action    value=$perm->action}
+      {assign var=action_id value=$action->get_id()}
+      {assign var=permit    value=$perm->permit}
+    {/if}
     <select name='delete' onchange="changePerm(this,
+                                               {$action_id},
                                                'Delete',
-                                               'delete',
-                                               '',
                                                {$current_group->get_id()},
                                                '{$current_group->get_name()}');">
       <option value="-1">Default</option>
-      <option value="1"{if $perm->allow == "1"} selected="selected"{/if}>Allow</option>
-      <option value="0"{if $perm->allow == "0"} selected="selected"{/if}>Deny</option>
+      <option value="1"{if $permit == "1"} selected="selected"{/if}>Allow</option>
+      <option value="0"{if $permit == "0"} selected="selected"{/if}>Deny</option>
     </select>
     </td>
     <td align='center'>
-    {assign var=perm value=$perms.create}
-    {assign var=action value=$perm->action}
+    {assign var=actions value=$current_group->permission}
+    {assign var=perm value=$actions.users_create}
+    {if $perm}
+      {assign var=action    value=$perm->action}
+      {assign var=action_id value=$action->get_id()}
+      {assign var=permit    value=$perm->permit}
+    {/if}
     <select name='create' onchange="changePerm(this,
+                                               {$action_id},
                                                'Create',
-                                               'create',
-                                               '',
                                                {$current_group->get_id()},
                                                '{$current_group->get_name()}');">
       <option value="-1">Default</option>
-      <option value="1"{if $perm->allow == "1"} selected="selected"{/if}>Allow</option>
-      <option value="0"{if $perm->allow == "0"} selected="selected"{/if}>Deny</option>
+      <option value="1"{if $permit == "1"} selected="selected"{/if}>Allow</option>
+      <option value="0"{if $permit == "0"} selected="selected"{/if}>Deny</option>
     </select>
     </td>
     <td align='center'>
-    {assign var=perm value=$perms.administer}
-    {assign var=action value=$perm->action}
+    {assign var=actions value=$current_group->permission}
+    {assign var=perm value=$actions.users_administer}
+    {if $perm}
+      {assign var=action    value=$perm->action}
+      {assign var=action_id value=$action->get_id()}
+      {assign var=permit    value=$perm->permit}
+    {/if}
     <select name='administer' onchange="changePerm(this,
+                                                   {$action_id},
                                                    'Administer',
-                                                   'administer',
-                                                   '',
                                                    {$current_group->get_id()},
                                                    '{$current_group->get_name()}');">
       <option value="-1">Default</option>
-      <option value="1"{if $perm->allow == "1"} selected="selected"{/if}>Allow</option>
-      <option value="0"{if $perm->allow == "0"} selected="selected"{/if}>Deny</option>
+      <option value="1"{if $permit == "1"} selected="selected"{/if}>Allow</option>
+      <option value="0"{if $permit == "0"} selected="selected"{/if}>Deny</option>
     </select>
     </td>
     {/if}
@@ -223,63 +240,78 @@ function changePerm(element,
     <td>
       <img src="img/user.png" alt="User:" /> {$current->get_name()}
     </td>
-    {assign var=perms value=$current->permission}
     <td align='center'>
-    {assign var=perm value=$perms.view}
-    {assign var=action value=$perm->action}
+    {assign var=actions value=$current->permission}
+    {assign var=perm value=$actions.users_view}
+    {if $perm}
+      {assign var=action    value=$perm->action}
+      {assign var=action_id value=$action->get_id()}
+      {assign var=permit    value=$perm->permit}
+    {/if}
     <select name='view' onchange="changePerm(this,
-                                             'view',
+                                             {$action_id},
                                              'view',
                                              {$current->get_id()},
-                                             '',
                                              '{$current->get_name()}');">
       <option value="-1">Default</option>
-      <option value="1"{if $perm->allow == "1"} selected="selected"{/if}>Allow</option>
-      <option value="0"{if $perm->allow == "0"} selected="selected"{/if}>Deny</option>
+      <option value="1"{if $permit == "1"} selected="selected"{/if}>Allow</option>
+      <option value="0"{if $permit == "0"} selected="selected"{/if}>Deny</option>
     </select>
     </td>
     <td align='center'>
-    {assign var=perm value=$perms.edit}
-    {assign var=action value=$perm->action}
+    {assign var=actions value=$current_group->permission}
+    {assign var=perm value=$actions.users_edit}
+    {if $perm}
+      {assign var=action    value=$perm->action}
+      {assign var=action_id value=$action->get_id()}
+      {assign var=permit    value=$perm->permit}
+    {/if}
     <select name='edit' onchange="changePerm(this,
-                                             'edit',
+                                             {$action_id},
                                              'edit',
                                              {$current->get_id()},
-                                             '',
                                              '{$current->get_name()}');">
       <option value="-1">Default</option>
-      <option value="1"{if $perm->allow == "1"} selected="selected"{/if}>Allow</option>
-      <option value="0"{if $perm->allow == "0"} selected="selected"{/if}>Deny</option>
+      <option value="1"{if $permit == "1"} selected="selected"{/if}>Allow</option>
+      <option value="0"{if $permit == "0"} selected="selected"{/if}>Deny</option>
     </select>
     </td>
     <td align='center'>
-    {assign var=perm value=$perms.delete}
-    {assign var=action value=$perm->action}
+    {assign var=actions value=$current_group->permission}
+    {assign var=perm value=$actions.users_delete}
+    {if $perm}
+      {assign var=action    value=$perm->action}
+      {assign var=action_id value=$action->get_id()}
+      {assign var=permit    value=$perm->permit}
+    {/if}
     <select name='delete' onchange="changePerm(this,
-                                               'delete',
+                                               {$action_id},
                                                'delete',
                                                {$current->get_id()},
-                                               '',
                                                '{$current->get_name()}');">
       <option value="-1">Default</option>
-      <option value="1"{if $perm->allow == "1"} selected="selected"{/if}>Allow</option>
-      <option value="0"{if $perm->allow == "0"} selected="selected"{/if}>Deny</option>
+      <option value="1"{if $permit == "1"} selected="selected"{/if}>Allow</option>
+      <option value="0"{if $permit == "0"} selected="selected"{/if}>Deny</option>
     </select>
     </td>
     <td align='center'>
     </td>
     <td align='center'>
-    {assign var=perm value=$perms.administer}
-    {assign var=action value=$perm->action}
+    {assign var=actions value=$current_group->permission}
+    {assign var=perm value=$actions.users_administer}
+    {if $perm}
+      {assign var=action    value=$perm->action}
+      {assign var=action_id value=$action->get_id()}
+      {assign var=permit    value=$perm->permit}
+    {/if}
     <select name='administer' onchange="changePerm(this,
-                                                   'administration',
+                                                   {$action_id},
                                                    'administer',
                                                    {$current->get_id()},
-                                                   '',
                                                    '{$current->get_name()}');">
       <option value="-1">Default</option>
-      <option value="1"{if $perm->allow == "1"} selected="selected"{/if}>Allow</option>
-      <option value="0"{if $perm->allow == "0"} selected="selected"{/if}>Deny</option>
+      <option value="1"{if $permit == "1"} selected="selected"{/if}>Allow</option>
+      <option value="0"{if $permit == "0"} selected="selected"{/if}>Deny</option>
     </select>
     </td>
   </tr>

@@ -124,37 +124,35 @@ test($acldb->clear_database());
 
 category('Initializing User Actions');
 start('Creating action section "User Permissions"');
-$ac_user_section = new AclActionSection('user_permission', 'User Permissions');
+$ac_user_section = new AclActionSection('users', 'User Permissions');
 test($ac_user_section = $acldb->add_action_section($ac_user_section));
 
+start('Creating action "Administer User"');
+$action = new AclAction('administer', 'Administer User', $ac_user_section);
+test($ac_user_administer = $acldb->add_action($action));
+
 start('Creating action "View User"');
-test($ac_user_view = $acldb->add_action(new AclAction('view',
-                                                      'View User',
-                                                      $ac_user_section)));
+$action = new AclAction('view', 'View User', $ac_user_section);
+test($ac_user_view = $acldb->add_action($action));
 
 start('Creating action "Create User"');
-test($ac_user_create = $acldb->add_action(new AclAction('create',
-                                                        'Create User',
-                                                         $ac_user_section)));
+$action = new AclAction('create', 'Create User', $ac_user_section);
+test($ac_user_create = $acldb->add_action($action));
 
 start('Creating action "Edit User"');
-test($ac_user_edit = $acldb->add_action(new AclAction('edit',
-                                                      'Edit User',
-                                                      $ac_user_section)));
+$action = new AclAction('edit', 'Edit User', $ac_user_section);
+test($ac_user_edit = $acldb->add_action($action));
 
 start('Creating action "Delete User"');
-test($ac_user_delete = $acldb->add_action(new AclAction('delete',
-                                                        'Delete User',
-                                                        $ac_user_section)));
-
+$action = new AclAction('delete', 'Delete User', $ac_user_section);
+test($ac_user_delete = $acldb->add_action($action));
 
 
 category('Initializing Content Actions');
 start('Creating action section "Content Permissions"');
-$ac_cont_section = new AclActionSection('content_permission',
+$ac_cont_section = new AclActionSection('content',
                                         'Content Permissions');
 test($ac_cont_section = $acldb->add_action_section($ac_cont_section));
-
 start('Creating action "View Content"');
 test($ac_cont_view = $acldb->add_action(new AclAction('view',
                                                       'View Content',
@@ -232,6 +230,7 @@ test($homepage = $acldb->add_resource(NULL, $resource));
 category('Assigning Permissions To Groups');
 start('Defining permissions of group "Administrators"');
 $action_array = array(
+  $ac_user_administer->get_id(),
   $ac_user_view->get_id(),
   $ac_user_create->get_id(),
   $ac_user_edit->get_id(),

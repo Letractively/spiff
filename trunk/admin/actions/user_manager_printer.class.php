@@ -109,12 +109,11 @@
       foreach ($_POST['changelog_entries'] as $entry_name) {
         // Extract group id, user id and action name from the name.
         echo "NAME: $entry_name<br>";
-        if (!preg_match('/^changelog_input_(\d*)_(\d*)_\w+$/',
+        if (!preg_match('/^changelog_input_(\d*)_(\d+)$/',
                         $entry_name,
                         $matches))
           die("UserManagerPrinter::submit_group(): invalid variable");
-        $resource_id  = $matches[1];
-        $resource_gid = $matches[2];
+        $resource_id = $matches[1];
 
         // Fetch the log entry details.
         if (!isset($_POST[$entry_name . '_action']))
