@@ -53,14 +53,14 @@ class Trackable {
    * Triggers the event with the given name.
    * If $args is given, the value is passed to the event handler.
    */
-  function emit($event, $args = '') {
+  function emit($event, &$args = '') {
     if (!$event || !preg_match("/^[a-z_]+$/", $event)) 
       die("Trackable::emit(): Invalid event.");
     $registered = &$this->callbacks[$event];
     if (!$registered)
       return;
     foreach ($registered as $id => $func)
-      call_user_func($func, &$args);
+      call_user_func($func, $args);
   }
 }
 ?>
