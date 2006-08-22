@@ -1,5 +1,3 @@
-* Fix the link to the parent in the permission editor.
-
 * Fix the "number of children" counter behind group names.
 
 * Fix permission editor error message in the "new user" page.
