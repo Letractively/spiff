@@ -29,7 +29,7 @@ function getLogEntry(actionName, resourceName, value)
 
 function incrementItemCount()
 {
-  var input     = parent.document.getElementById('changelog_length');
+  var input = parent.document.getElementById('changelog_length');
   if (!input) {
     var changelog = parent.document.getElementById('changelog');
     changelog.innerHTML = '';
@@ -59,38 +59,55 @@ function changePerm(element,
                     actionName,
                     actionSysName,
                     resourceId,
+                    resourceGid,
                     resourceName)
 {
-  var value      = element.value;
-  var input_name = 'changelog_input_' + resourceId + '_' + actionSysName;
-  var li_name    = 'changelog_li_'    + resourceId + '_' + actionSysName;
-  var input_item = parent.document.getElementById(input_name);
-  var li_item    = parent.document.getElementById(li_name);
-  if (!input_item) {
+  var permit       = element.value;
+  var li_name      = 'changelog_li_'
+                   + resourceId
+                   + '_' + resourceGid
+                   + '_' + actionSysName;
+  var input_prefix = 'changelog_input_'
+                   + resourceId
+                   + '_' + resourceGid
+                   + '_' + actionSysName;
+  var editor            = parent.document;
+  var li_item           = editor.getElementById(li_name);
+  var input_item_action = editor.getElementById(input_prefix + '_action');
+  var input_item_permit = editor.getElementById(input_prefix + '_permit');
+
+  if (!li_item) {
     // Create one element containing an array of all changed properties.
     var count     = incrementItemCount().toString();
     var changelog = parent.document.getElementById('changelog_list');
+
+    li_item = parent.document.createElement('li');
+    li_item.setAttribute('id', li_name);
+    changelog.appendChild(li_item);
 
     input_item = parent.document.createElement('input');
     input_item.setAttribute('type', 'hidden');
     input_item.setAttribute('name', 'changelog_entries[' + count + ']');
     input_item.setAttribute('id',   'changelog_entries_' + count);
-    input_item.setAttribute('value', input_name);
+    input_item.setAttribute('value', input_prefix);
     changelog.appendChild(input_item);
 
-    input_item = parent.document.createElement('input');
-    input_item.setAttribute('type', 'hidden');
-    input_item.setAttribute('id',   input_name);
-    changelog.appendChild(input_item);
+    input_item_action = parent.document.createElement('input');
+    input_item_action.setAttribute('name', input_prefix + '_action');
+    input_item_action.setAttribute('id',   input_prefix + '_action');
+    input_item_action.setAttribute('type', 'hidden');
+    changelog.appendChild(input_item_action);
+
+    input_item_permit = parent.document.createElement('input');
+    input_item_permit.setAttribute('name', input_prefix + '_permit');
+    input_item_permit.setAttribute('id',   input_prefix + '_permit');
+    input_item_permit.setAttribute('type', 'hidden');
+    changelog.appendChild(input_item_permit);
   }
-  if (!li_item) {
-    var changelog = parent.document.getElementById('changelog_list');
-    li_item = parent.document.createElement('li');
-    li_item.setAttribute('id', li_name);
-    changelog.appendChild(li_item);
-  }
-  input_item.setAttribute('value', value);
-  li_item.innerHTML = getLogEntry(actionName, resourceName, value);
+
+  input_item_action.setAttribute('value', actionName);
+  input_item_permit.setAttribute('value', permit);
+  li_item.innerHTML = getLogEntry(actionName, resourceName, permit);
 }
 // -->
 </script>
@@ -114,9 +131,9 @@ function changePerm(element,
   <tr>
     <td>
     {if $actor_id}
-    <a href="?permission_tree=1&amp;actor_id={$actor_id}&amp;resource_gid={$parent->get_id()}">&lt;- Parent Group</a>
+    <a href="?permission_tree=1&amp;actor_id={$actor_id}&amp;resource_id={$parent->get_id()}">&lt;- Parent Group</a>
     {else}
-    <a href="?permission_tree=1&amp;actor_gid={$actor_gid}&amp;resource_gid={$parent->get_id()}">&lt;- Parent Group</a>
+    <a href="?permission_tree=1&amp;actor_id={$actor_id}&amp;resource_id={$parent->get_id()}">&lt;- Parent Group</a>
     {/if}
     </td>
     <td colspan="5"></td>
@@ -126,12 +143,12 @@ function changePerm(element,
   <tr>
     <td>
     {if $actor_id}
-    <a href="?permission_tree=1&amp;actor_id={$actor_id}&amp;resource_gid={$current_group->get_id()}"><img src="img/group.png" alt="Group:" /> {$current_group->get_name()}</a>
+    <a href="?permission_tree=1&amp;actor_id={$actor_id}&amp;resource_id={$current_group->get_id()}"><img src="img/group.png" alt="Group:" /> {$current_group->get_name()}</a>
     {else}
-    <a href="?permission_tree=1&amp;actor_gid={$actor_gid}&amp;resource_gid={$current_group->get_id()}"><img src="img/group.png" alt="Group:" /> {$current_group->get_name()}</a>
+    <a href="?permission_tree=1&amp;actor_id={$actor_id}&amp;resource_id={$current_group->get_id()}"><img src="img/group.png" alt="Group:" /> {$current_group->get_name()}</a>
     {/if}
     </td>
-    {if $current_group->get_id() == $actor_gid}
+    {if $current_group->get_id() == $actor_id}
     <td colspan='5'></td>
     {else}
     {assign var=perms value=$current_group->permission}
@@ -139,8 +156,9 @@ function changePerm(element,
     {assign var=perm value=$perms.view}
     {assign var=action value=$perm->action}
     <select name='view' onchange="changePerm(this,
+                                             'View',
                                              'view',
-                                             'view',
+                                             '',
                                              {$current_group->get_id()},
                                              '{$current_group->get_name()}');">
       <option value="-1">Default</option>
@@ -152,8 +170,9 @@ function changePerm(element,
     {assign var=perm value=$perms.edit}
     {assign var=action value=$perm->action}
     <select name='edit' onchange="changePerm(this,
+                                             'Edit',
                                              'edit',
-                                             'edit',
+                                             '',
                                              {$current_group->get_id()},
                                              '{$current_group->get_name()}');">
       <option value="-1">Default</option>
@@ -165,8 +184,9 @@ function changePerm(element,
     {assign var=perm value=$perms.delete}
     {assign var=action value=$perm->action}
     <select name='delete' onchange="changePerm(this,
+                                               'Delete',
                                                'delete',
-                                               'delete',
+                                               '',
                                                {$current_group->get_id()},
                                                '{$current_group->get_name()}');">
       <option value="-1">Default</option>
@@ -178,8 +198,9 @@ function changePerm(element,
     {assign var=perm value=$perms.create}
     {assign var=action value=$perm->action}
     <select name='create' onchange="changePerm(this,
+                                               'Create',
                                                'create',
-                                               'create',
+                                               '',
                                                {$current_group->get_id()},
                                                '{$current_group->get_name()}');">
       <option value="-1">Default</option>
@@ -191,8 +212,9 @@ function changePerm(element,
     {assign var=perm value=$perms.administer}
     {assign var=action value=$perm->action}
     <select name='administer' onchange="changePerm(this,
-                                                   'administration',
+                                                   'Administer',
                                                    'administer',
+                                                   '',
                                                    {$current_group->get_id()},
                                                    '{$current_group->get_name()}');">
       <option value="-1">Default</option>
@@ -204,7 +226,7 @@ function changePerm(element,
   </tr>
 {/foreach}
 
-{foreach from=$users item=current}
+{foreach from=$items item=current}
   <tr>
     <td>
       <img src="img/user.png" alt="User:" /> {$current->get_name()}
@@ -217,6 +239,7 @@ function changePerm(element,
                                              'view',
                                              'view',
                                              {$current->get_id()},
+                                             '',
                                              '{$current->get_name()}');">
       <option value="-1">Default</option>
       <option value="1"{if $perm->allow == "1"} selected="selected"{/if}>Allow</option>
@@ -230,6 +253,7 @@ function changePerm(element,
                                              'edit',
                                              'edit',
                                              {$current->get_id()},
+                                             '',
                                              '{$current->get_name()}');">
       <option value="-1">Default</option>
       <option value="1"{if $perm->allow == "1"} selected="selected"{/if}>Allow</option>
@@ -243,6 +267,7 @@ function changePerm(element,
                                                'delete',
                                                'delete',
                                                {$current->get_id()},
+                                               '',
                                                '{$current->get_name()}');">
       <option value="-1">Default</option>
       <option value="1"{if $perm->allow == "1"} selected="selected"{/if}>Allow</option>
@@ -258,6 +283,7 @@ function changePerm(element,
                                                    'administration',
                                                    'administer',
                                                    {$current->get_id()},
+                                                   '',
                                                    '{$current->get_name()}');">
       <option value="-1">Default</option>
       <option value="1"{if $perm->allow == "1"} selected="selected"{/if}>Allow</option>

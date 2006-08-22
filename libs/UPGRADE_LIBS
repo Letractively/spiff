@@ -1,46 +1,16 @@
-phpgacl
--------
+Smarty
+------
 
-* Unpack phpgacl-vx.x.x into the libs/ directory.
+* Unpack smarty into the libs/ directory.
 
-* Move libs/phpgacl/adodb/ to libs/
-
-* Edit libs/phpgacl/gacl.class.php and set ADODB_DIR correctly to
-  the new path.
-
-* In the same file, insert the following code near the top of the file: 
-
-unset($options);
-include(dirname(__FILE__).'/../../admin/config.inc.php');
-$options['db_type']         = $cfg['db_type'];
-$options['db_host']         = $cfg['db_host'];
-$options['db_user']         = $cfg['db_usr'];
-$options['db_name']         = $cfg['db_name'];
-$options['db_password']     = $cfg['db_pass'];
-$options['db_table_prefix'] = $cfg['db_table_prefix'];
-$gacl_options['smarty_dir'] = dirname(__FILE__).'/../smarty';
-$gacl_options['smarty_template_dir'] = 'templates';
-$gacl_options['smarty_compile_dir'] = dirname(__FILE__).'/../smarty/templates_c';
-
-* In the same file, declare $options global by inserting this line:
-
-global $options;
-
-  into the function gacl().
-
-* Move libs/phpgacl/admin/smarty/ to libs/
+* Move libs/smarty-x.x.x to libs/smarty
 
 * mkdir libs/smarty/templates_c && chmod 777 libs/smarty/templates_c/
 
-* Hopefully libs/phpgacl/setup.php was not changed, otherwise you have to
-  implement the same changes in admin/setup.php.
 
-* Edit admin/setup_now.php so that PHPGACL_DIR points to the new version of phpgacl.
+AdoDB
+-----
 
-* Edit admin/spiff.class.php so that PHPGACL_DIR points to the new version of phpgacl.
+* Unpack adodb into the libs/ directory.
 
-* Drop all database tables.
-
-* Reinitialize spiff using admin/setup.php.
-
-* Make sure that libs/phpgacl/admin/acl_admin.php works in your browser.
+* Move libs/adodb-x.x.x to libs/adodb

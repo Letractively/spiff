@@ -1,3 +1,15 @@
+* Fix the link to the parent in the permission editor.
+
+* Fix the "number of children" counter behind group names.
+
+* Fix permission editor error message in the "new user" page.
+
+* Fix permission editor error message in the "new group" page.
+
+* Fix: Make users and groups saveable.
+
+* Add resource attribute support to phpacl.
+
 * When the apply button in the editor page is pressed, submit the
   log to the server and execute the actions.
 
@@ -36,11 +48,3 @@
 * Create an admin GUI for content management. Essentially, this GUI
   is our "Plugin Central", where the user can add different plugins
   into his website.
-
-
-Long Term TODO:
----------------
-* Create a PHP5/PDO(with SQLlite?) based replacement for phpGACL, that uses
-  materialized path tables to be more scalable.
-
-* Port everything to PHP >= 5.1 and get rid of ADOdb.

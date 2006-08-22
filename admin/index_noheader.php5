@@ -1,7 +1,7 @@
 <?php
   /*
   Copyright (C) 2006 Samuel Abels, <spam debain org>
-
+  
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation; either version 2 of the License, or
@@ -18,24 +18,8 @@
   */
 ?>
 <?php
-  class BreadCrumbsPrinter extends PrinterBase {
-    var $breadcrumbs;
-    
-    function BreadCrumbsPrinter(&$_forum) {
-      $this->PrinterBase($_forum);
-      $this->breadcrumbs = array();
-    }
-    
-    
-    function add_item($_text, $_url = '') {
-      $this->breadcrumbs[$_text] = $_url;
-    }
-    
-    
-    function show() {
-      $this->smarty->clear_all_assign();
-      $this->smarty->assign_by_ref('breadcrumbs', $this->breadcrumbs);
-      $this->parent->append_content($this->smarty->fetch('breadcrumbs.tmpl'));
-    }
-  }
+  require_once 'Spiff.class.php5';
+  
+  $spiff = new Spiff();
+  $spiff->show();
 ?>

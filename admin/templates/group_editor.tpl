@@ -9,7 +9,7 @@ function change_members() {
 // End Hide-->
 </script>
 {/literal}
-<form action="?manage_users=1&amp;{if $parent_gid != $group->get_id()}parent_gid={$parent_gid}&amp;{/if}gid={$group->get_id()}" method="post">
+<form action="?manage_users=1&amp;{if $parent_id != $group->get_id()}parent_id={$parent_id}&amp;{/if}id={$group->get_id()}" method="post">
 <table class="container" width="100%" border="0" cellpadding="0" cellspacing="0">
   <tr>
     <td width="14"><img src="img/corner_top_left.png" alt="" height="14" width="14" /></td>
@@ -26,7 +26,7 @@ function change_members() {
     <table class="menu" width="100%" cellpadding="0">
       <tr><td align='center'><i>Members</i></td></tr>
 {foreach from=$groups item=current}
-      <tr><td><a href="?manage_users=1&amp;parent_gid={$group->get_id()}&amp;gid={$current->get_id()}"><img src="img/group.png" alt="Group:" /> {$current->get_name()}</a> ({$current->get_n_children()})</td></tr>
+      <tr><td><a href="?manage_users=1&amp;parent_id={$group->get_id()}&amp;id={$current->get_id()}"><img src="img/group.png" alt="Group:" /> {$current->get_name()}</a> ({$current->get_n_children()})</td></tr>
 {/foreach}
 {if $groups and $users}
       <tr><td height="3"></td></tr>
@@ -34,7 +34,7 @@ function change_members() {
       <tr><td height="3"></td></tr>
 {/if}
 {foreach from=$users item=current}
-      <tr><td><a href="?manage_users=1&amp;parent_gid={$group->get_id()}&amp;uid={$current->get_id()}"><img src="img/user.png" alt="User:" /> {$current->get_name()}</a></td></tr>
+      <tr><td><a href="?manage_users=1&amp;parent_id={$group->get_id()}&amp;id={$current->get_id()}"><img src="img/user.png" alt="User:" /> {$current->get_name()}</a></td></tr>
 {/foreach}
     </table>
     </td>
@@ -42,7 +42,7 @@ function change_members() {
     <td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
     <td width='14' style='background: url(img/line_left.png)'></td>
     <td>
-{if $group->get_id() == 0}
+{if $group->get_id() <= 0}
     <h2>Create A New Group</h2>
 {else}
     <h2>{$group->get_name()}</h2>
@@ -67,11 +67,11 @@ function change_members() {
       </tr>
     </table>
 
-{assign var=gid value=$group->get_id()}
-{assign var=perm_url value="?edit_permissions=1&amp;gid=$gid"}
+{assign var=id value=$group->get_id()}
+{assign var=perm_url value="?edit_permissions=1&amp;id=$id"}
 
     <h3>Things That The Users In This Group May Do</h3>
-    <iframe id='permission_tree' src="index_noheader.php?permission_tree=1&amp;actor_gid={$group->get_id()}" border="0" width="100%" height="30">
+    <iframe id='permission_tree' src="index_noheader.php5?permission_tree=1&amp;actor_id={$group->get_id()}" border="0" width="100%" height="30">
     </iframe>
 
     <h3>Unconfirmed Permission Changes</h3>

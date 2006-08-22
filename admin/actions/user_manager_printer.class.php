@@ -19,126 +19,180 @@
 ?>
 <?php
   class UserManagerPrinter extends PrinterBase {
-    function submit_group($gid, $parent_gid) {
-      if ($gid != 0)
-        $group = $this->gacl->get_actor_group($gid);
-      else {
-        $parent = $this->gacl->get_actor_group($parent_gid);
-        $group  = $this->gacl->add_actor_group($parent, $_POST['name']);
+    public function show_resource($id, $parent_id) {
+      switch ($id) {
+      case -1:
+        // New group.
+        $section  = new AclResourceSection('users', '');
+        $resource = new AclActorGroup('', '', $section);
+        break;
+
+      case -2:
+        // New user.
+        $section  = new AclResourceSection('users', '');
+        $resource = new AclActor('', '', $section);
+        break;
+
+      default:
+        // Existing user or group.
+        $resource = $this->acldb->get_resource_from_id($id);
+        $groups   = $this->acldb->get_resource_children($resource,
+                                                        ACLDB_FETCH_GROUPS);
+        $users    = $this->acldb->get_resource_children($resource,
+                                                        ACLDB_FETCH_ITEMS);
+        break;
       }
-      $group->set_name($_POST['name']);
-      $group->set_attribute('description',      $_POST['description']);
-      $group->set_attribute('use_group_rights', $_POST['use_group_rights'] ? TRUE : FALSE);
-      $this->gacl->save_actor_group($group);
+
+      $this->smarty->clear_all_assign();
+      $this->smarty->assign_by_ref('groups',    $groups);
+      $this->smarty->assign_by_ref('users',     $users);
+      $this->smarty->assign_by_ref('parent_id', $parent_id);
+      if ($resource->is_group()) {
+        $this->smarty->assign_by_ref('group', $resource);
+        $content = $this->smarty->fetch('group_editor.tpl');
+      }
+      else {
+        $this->smarty->assign_by_ref('user', $resource);
+        $content = $this->smarty->fetch('user_editor.tpl');
+      }
+      $this->parent->append_content($content);
+    }
+
+
+    function delete_resource($id, $parent_id) {
+      $this->acldb->delete_resource_from_id($id);
+      $this->show_resource($parent_id, $parent_id);
+    }
+
+
+    function add_group($parent_id) {
+      $this->show_resource(-1, $parent_id);
+    }
+
+
+    function add_user($parent_id) {
+      $this->show_resource(-2, $parent_id);
+    }
+
+
+    function submit_resource($id, $parent_id) {
+      switch ($id) {
+      case -1:
+        // New group.
+        $section  = new AclResourceSection('users', '');
+        $resource = new AclActorGroup('', '', $section);
+        $parent   = $this->acldb->get_resource_from_id($parent_id);
+        break;
+
+      case -2:
+        // New user.
+        $section  = new AclResourceSection('users', '');
+        $resource = new AclActor('', '', $section);
+        $parent   = $this->acldb->get_resource_from_id($parent_id);
+        break;
+
+      default:
+        // Existing user or group.
+        $resource = $this->acldb->get_resource_from_id($id);
+      }
+
+      $resource->set_name($_POST['name']);
+      $resource->set_attribute('description',      $_POST['description']);
+      $resource->set_attribute('use_group_rights', $_POST['use_group_rights'] ? TRUE : FALSE);
+
+      if ($id == -1 || $id == -2)
+        $resource = $this->acldb->add_resource($parent, $resource);
+      else
+        $this->acldb->save_resource($resource);
+
+      // Save permissions.
+      foreach ($_POST['changelog_entries'] as $entry_name) {
+        // Extract group id, user id and action name from the name.
+        echo "NAME: $entry_name<br>";
+        if (!preg_match('/^changelog_input_(\d*)_(\d*)_\w+$/',
+                        $entry_name,
+                        $matches))
+          die("UserManagerPrinter::submit_group(): invalid variable");
+        $resource_id  = $matches[1];
+        $resource_gid = $matches[2];
+
+        // Fetch the log entry details.
+        if (!isset($_POST[$entry_name . '_action']))
+          die("UserManagerPrinter::submit_group(): missing changelog entry 1");
+        $action_name = $_POST[$entry_name . '_action'];
+        if (!isset($_POST[$entry_name . '_permit']))
+          die("UserManagerPrinter::submit_group(): missing changelog entry 2");
+        $permit = $_POST[$entry_name . '_permit'] * 1;
+
+        // Build our objects.
+        $section   = new GaclActionSection("Users");
+        $action_id = $this->acldb->get_action_id_from_name($action_name,
+                                                          $section);
+        $action    = $this->acldb->get_action($action_id);
+        if ($resource_id)
+          $resource = $this->acldb->get_resource($resource_id);
+        if ($resource_gid)
+          $resource_group = $this->acldb->get_resource_group($resource_gid);
+
+        // Push the new rule into the database.
+        switch ($permit) {
+        case -1:
+          $this->acldb->kill(array($action),
+                            array($group),
+                            array($resource_group));
+          break;
+
+        case 1:
+          $this->acldb->grant(array($action),
+                             array($group),
+                             array($resource_group));
+          break;
+
+        default:
+          $this->acldb->deny(array($action),
+                            array($group),
+                            array($resource_group));
+          break;
+        }
+      }
+      print_r($_POST); //FIXME
+
       return $group->get_id();
     }
 
 
-    function submit_user($uid, $parent_gid) {
-      if ($uid != 0) {
-        $user = $this->gacl->get_actor($uid);
-        $user->set_name($_POST['name']);
-      }
-      else {
-        $section = new GaclActorSection('Users', NULL);
-        $user    = $this->gacl->add_actor($_POST['name'], $section);
-        $parent  = $this->gacl->get_actor_group($parent_gid);
-        $group   = $this->gacl->assign_actor_to_group($user, $parent);
-      }
-      $user->set_attribute('description',      $_POST['description']);
-      $user->set_attribute('use_group_rights', $_POST['use_group_rights'] ? TRUE : FALSE);
-      $this->gacl->save_actor($user);
-      return $user->get_id();
-    }
-
-
-    function show_group($gid, $parent_gid) {
-      if ($gid != 0) {
-        $group  = $this->gacl->get_actor_group($gid);
-        $groups = $this->gacl->get_actor_group_list($group);
-      }
-      else
-        $group  = new GaclActorGroup('', NULL);
-      $users = $this->gacl->get_actor_list($group);
-      $this->smarty->clear_all_assign();
-      $this->smarty->assign_by_ref('groups',     $groups);
-      $this->smarty->assign_by_ref('users',      $users);
-      $this->smarty->assign_by_ref('group',      $group);
-      $this->smarty->assign_by_ref('parent_gid', $parent_gid);
-      $this->parent->append_content($this->smarty->fetch('group_editor.tpl'));
-    }
-
-
-    function add_group($parent_gid) {
-      $this->show_group(0, $parent_gid);
-    }
-
-
-    function delete_group($gid, $parent_gid) {
-      $group = $this->gacl->get_actor_group($gid);
-      $this->gacl->delete_actor_group($group);
-      $this->show_group($parent_gid, $parent_gid);
-    }
-
-
-    function show_user($uid, $parent_gid) {
-      if ($uid != 0)
-        $user = $this->gacl->get_actor($uid);
-      else
-        $user = new GaclActor('', new GaclActorSection('users', NULL), NULL);
-      $groups = $this->gacl->get_actor_group_member_list($user);
-      $this->smarty->clear_all_assign();
-      $this->smarty->assign_by_ref('user',       $user);
-      $this->smarty->assign_by_ref('groups',     $groups);
-      $this->smarty->assign_by_ref('parent_gid', $parent_gid);
-      $this->parent->append_content($this->smarty->fetch('user_editor.tpl'));
-    }
-
-
-    function add_user($parent_gid) {
-      $this->show_user(0, $parent_gid);
-    }
-
-
-    function delete_user($uid, $parent_gid) {
-      $user = $this->gacl->get_actor($uid);
-      $this->gacl->delete_actor($user);
-      $this->show_group($parent_gid, $parent_gid);
-    }
-
-
     function show() {
-      if (isset($_GET['parent_gid']))
-        $parent_gid = $_GET['parent_gid'] * 1;
-      if (!isset($_GET['gid']) && !isset($_GET['uid'])) {
-        $gid        = $this->gacl->get_actor_group_id_from_name('everybody');
-        $parent_gid = $gid;
-      }
-      elseif (isset($_GET['gid']))
-        $gid = $_GET['gid'] * 1;
-      elseif (isset($_GET['uid']))
-        $uid = $_GET['uid'] * 1;
+      // Get the parent id, if any.
+      if (isset($_GET['parent_id']))
+        $parent_id = (int)$_GET['parent_id'];
+      else
+        $parent_id = NULL;
 
-      if (isset($_POST['save']) && isset($gid)) {
-        $gid = $this->submit_group($gid, $parent_gid);
-        $this->show_group($gid, $parent_gid);
+      // Get the resource id. If none is given, fetch the "Everybody" group.
+      if (isset($_GET['id']))
+        $id = (int)$_GET['id'];
+      else {
+        $section   = new AclResourceSection('users', '');
+        $resource  = $this->acldb->get_resource_from_handle('everybody',
+                                                             $section);
+        $id        = $resource->get_id();
+        $parent_id = $id;
       }
-      elseif (isset($_POST['save']) && isset($uid)) {
-        $uid = $this->submit_user($uid, $parent_gid);
-        $this->show_user($uid, $parent_gid);
+
+      assert('isset($id)');
+
+      if (isset($_POST['save'])) {
+        $gid = $this->submit_resource($id, $parent_id);
+        $this->show_resource($id, $parent_id);
       }
-      elseif (isset($_POST['delete']) && isset($gid))
-        $this->delete_group($gid, $parent_gid);
-      elseif (isset($_POST['delete']) && isset($uid))
-        $this->delete_user($uid, $parent_gid);
-      elseif (isset($_POST['group_add']) && isset($gid))
-        $this->add_group($gid);
-      elseif (isset($_POST['user_add']) && isset($gid))
-        $this->add_user($gid);
-      elseif (isset($gid))
-        $this->show_group($gid, $parent_gid);
-      elseif (isset($uid))
-        $this->show_user($uid, $parent_gid);
+      elseif (isset($_POST['delete']))
+        $this->delete_resource($id, $parent_id);
+      elseif (isset($_POST['group_add']))
+        $this->add_group($id);
+      elseif (isset($_POST['user_add']))
+        $this->add_user($id);
+      else
+        $this->show_resource($id, $parent_id);
     }
   }
 ?>

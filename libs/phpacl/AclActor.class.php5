@@ -18,24 +18,9 @@
   */
 ?>
 <?php
-  class BreadCrumbsPrinter extends PrinterBase {
-    var $breadcrumbs;
-    
-    function BreadCrumbsPrinter(&$_forum) {
-      $this->PrinterBase($_forum);
-      $this->breadcrumbs = array();
-    }
-    
-    
-    function add_item($_text, $_url = '') {
-      $this->breadcrumbs[$_text] = $_url;
-    }
-    
-    
-    function show() {
-      $this->smarty->clear_all_assign();
-      $this->smarty->assign_by_ref('breadcrumbs', $this->breadcrumbs);
-      $this->parent->append_content($this->smarty->fetch('breadcrumbs.tmpl'));
-    }
+class AclActor extends AclResource {
+  public function is_actor() {
+    return TRUE;
   }
+}
 ?>
