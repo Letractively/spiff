@@ -19,7 +19,7 @@
 ?>
 <?php
   class PermissionTreePrinter extends PrinterBase {
-    function show_tree($actor_id, $resource_id) {
+    function show_tree($actor_id, $resource_id, $parent_id) {
       assert('$actor_id');
 
       // Get resource information.
@@ -33,12 +33,13 @@
         $parents  = $this->acldb->get_resource_parents($resource);
       }
       else {
-        $section  = new AclResourceSection('users', '');
-        $resource = $this->acldb->get_resource_from_handle('everybody',
+        $resource  = NULL;
+        $section   = new AclResourceSection('users', '');
+        $everybody = $this->acldb->get_resource_from_handle('everybody',
                                                            $section);
-        $groups   = array($resource);
-        $items    = array();
-        $parent   = NULL;
+        $groups    = array($everybody);
+        $items     = array();
+        $parent    = NULL;
       }
 
       // Get the permission list if the currently edited item is an actor.
@@ -64,10 +65,12 @@
 
       // Fire smarty.
       $this->smarty->clear_all_assign();
-      $this->smarty->assign('actor_id', $actor_id);
-      $this->smarty->assign_by_ref('parents', $parents);
-      $this->smarty->assign_by_ref('groups',  $group_list);
-      $this->smarty->assign_by_ref('items',   $item_list);
+      $this->smarty->assign('actor_id',    $actor_id);
+      $this->smarty->assign('parent_id',   $parent_id);
+      $this->smarty->assign_by_ref('resource', $resource);
+      $this->smarty->assign_by_ref('parents',  $parents);
+      $this->smarty->assign_by_ref('groups',   $group_list);
+      $this->smarty->assign_by_ref('items',    $item_list);
       $this->parent->append_content($this->smarty->fetch('permission_tree.tpl'));
     }
 
@@ -77,11 +80,17 @@
         $actor_id = $_GET['actor_id'] * 1;
       else
         die("PermissionTreePrinter::show(): Actor id missing");
+
       if (isset($_GET['resource_id']))
         $resource_id = $_GET['resource_id'] * 1;
       else
         $resource_id = NULL;
-      $this->show_tree($actor_id, $resource_id);
+
+      if (isset($_GET['parent_id']))
+        $parent_id = $_GET['parent_id'] * 1;
+      else
+        $parent_id = NULL;
+      $this->show_tree($actor_id, $resource_id, $parent_id);
     }
   }
 ?>

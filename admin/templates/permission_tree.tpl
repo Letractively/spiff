@@ -127,14 +127,10 @@ function changePerm(element,
       <th align='left'>{$title}</th>
     {/foreach}
   </tr>
-{if $parent}
+{if $resource}
   <tr>
     <td>
-    {if $actor_id}
-    <a href="?permission_tree=1&amp;actor_id={$actor_id}&amp;resource_id={$parent->get_id()}">&lt;- Parent Group</a>
-    {else}
-    <a href="?permission_tree=1&amp;actor_id={$actor_id}&amp;resource_id={$parent->get_id()}">&lt;- Parent Group</a>
-    {/if}
+    <a href="?permission_tree=1&amp;actor_id={$actor_id}{if $parent_id}&amp;resource_id={$parent_id}{/if}">&lt;- Parent Group</a>
     </td>
     <td colspan="5"></td>
   </tr>
@@ -142,11 +138,7 @@ function changePerm(element,
 {foreach from=$groups item=current_group}
   <tr>
     <td>
-    {if $actor_id}
-    <a href="?permission_tree=1&amp;actor_id={$actor_id}&amp;resource_id={$current_group->get_id()}"><img src="img/group.png" alt="Group:" /> {$current_group->get_name()}</a>
-    {else}
-    <a href="?permission_tree=1&amp;actor_id={$actor_id}&amp;resource_id={$current_group->get_id()}"><img src="img/group.png" alt="Group:" /> {$current_group->get_name()}</a>
-    {/if}
+    <a href="?permission_tree=1&amp;actor_id={$actor_id}&amp;{if $resource}parent_id={$resource->get_id()}&amp;{/if}resource_id={$current_group->get_id()}"><img src="img/group.png" alt="Group:" /> {$current_group->get_name()}</a>
     </td>
     {if $current_group->get_id() == $actor_id}
     <td colspan='5'></td>
