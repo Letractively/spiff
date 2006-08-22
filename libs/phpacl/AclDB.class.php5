@@ -423,6 +423,20 @@ class AclDB {
   /*******************************************************************
    * Resource manipulation.
    *******************************************************************/
+  private function resource_add_n_children(AclResource &$resource, $n)
+  {
+    assert('$resource->is_group()');
+    $query = new SqlQuery('
+      UPDATE {t_resource_path}
+      SET n_children=n_children + ({n_children})
+      WHERE resource_id={resource_id}');
+    $query->set_table_names($this->table_names);
+    $query->set_int('resource_id', $resource->get_id());
+    $query->set_int('n_children',  $n);
+    return $this->db->Execute($query->sql());
+  }
+
+  
   public function add_resource($parent_id, AclResource &$resource)
   {
     assert('is_numeric($parent_id) || is_null($parent_id)');
@@ -439,6 +453,7 @@ class AclDB {
     else {
       $parent_path = $this->_get_resource_path_from_id($parent_id);
       $parent      = $this->get_resource_from_id($parent_id);
+      $this->resource_add_n_children($parent, 1);
       assert('$parent->is_group()');
     }
     //print "ID: $parent_id/$parent_path<br>";
@@ -657,7 +672,7 @@ class AclDB {
     }
 
     $query = new SqlQuery('
-      SELECT r.*,s.id section_id, s.name section_name
+      SELECT r.*,t1.n_children,s.id section_id, s.name section_name
       FROM      {t_resource}          r
       LEFT JOIN {t_resource_path}     t1 ON t1.resource_id=r.id
       LEFT JOIN {t_path_ancestor_map} p  ON t1.path=p.resource_path
@@ -678,6 +693,7 @@ class AclDB {
       $section->set_id($row['section_id']);
       $child = new AclResource($row['handle'], $row['name'], $section);
       $child->set_id($row['id']);
+      $child->set_n_children($row['n_children']);
       array_push($children, $child);
     }
     //print_r($children);
@@ -975,7 +991,7 @@ class AclDB {
     assert('is_int($actor_id)');
     assert('is_int($resource_id)');
     $query = new SqlQuery('
-      SELECT    a.*, s.id as section_id, s.name as section_name
+      SELECT    a.*, ac.permit, s.id as section_id, s.name as section_name
       FROM      {t_resource_path}     t1
       LEFT JOIN {t_path_ancestor_map} p1 ON t1.path=p1.resource_path
       LEFT JOIN {t_resource_path}     t2 ON t1.id=t2.id
@@ -1004,7 +1020,10 @@ class AclDB {
       $action  = new AclAction($row['handle'], $row['name'], $section);
       $section->set_id($row['section_id']);
       $action->set_id($row['id']);
-      array_push($permissions, $action);
+      unset($perm);
+      $perm->action = $action;
+      $perm->permit = $row['permit'];
+      $permissions[$row['section_handle'] . '_' . $row['handle']] = $perm;
     }
     //print_r($permissions);
     return $permissions;

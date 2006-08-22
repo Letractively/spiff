@@ -178,8 +178,11 @@
       <DEFAULT value="0"/>
       <NOTNULL/>
     </field>
-    <field name="refcount" type="I">
+    <field name="n_children" type="I">
       <DEFAULT value="0"/>
+    </field>
+    <field name="refcount" type="I">
+      <DEFAULT value="1"/>
     </field>
     
     <index name="resource_path_path">

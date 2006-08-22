@@ -43,25 +43,31 @@
       }
 
       // Get the permission list if the currently edited item is an actor.
-      $actor = $this->acldb->get_resource_from_id($actor_id);
-
-      // Receive a list of permissions of each of the groups found.
-      $group_list = array();
-      foreach ($groups as $current) {
-        $perms = $this->acldb->get_permission_list($actor, $current);
-        $current->permission = $perms;
-        array_push($group_list, $current);
+      if ($actor_id <= 0) {
+        $group_list = $groups;
+        $item_list  = $items;
       }
+      else {
+        $actor = $this->acldb->get_resource_from_id($actor_id);
 
-      // Receive a list of permissions of each of the users found.
-      $item_list = array();
-      foreach ($items as $current) {
-        $perms = $this->acldb->get_permission_list($actor, $current);
-        $current->permission = $perms;
-        array_push($item_list, $current);
+        // Receive a list of permissions of each of the groups found.
+        $group_list = array();
+        foreach ($groups as $current) {
+          $perms = $this->acldb->get_permission_list($actor, $current);
+          $current->permission = $perms;
+          array_push($group_list, $current);
+        }
+
+        // Receive a list of permissions of each of the users found.
+        $item_list = array();
+        foreach ($items as $current) {
+          $perms = $this->acldb->get_permission_list($actor, $current);
+          $current->permission = $perms;
+          array_push($item_list, $current);
+        }
+        //print_r($group_list);
+        //print_r($item_list);
       }
-      //print_r($group_list);
-      //print_r($item_list);
 
       // Fire smarty.
       $this->smarty->clear_all_assign();
