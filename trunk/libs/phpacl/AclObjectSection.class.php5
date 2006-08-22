@@ -18,24 +18,51 @@
   */
 ?>
 <?php
-  class BreadCrumbsPrinter extends PrinterBase {
-    var $breadcrumbs;
-    
-    function BreadCrumbsPrinter(&$_forum) {
-      $this->PrinterBase($_forum);
-      $this->breadcrumbs = array();
-    }
-    
-    
-    function add_item($_text, $_url = '') {
-      $this->breadcrumbs[$_text] = $_url;
-    }
-    
-    
-    function show() {
-      $this->smarty->clear_all_assign();
-      $this->smarty->assign_by_ref('breadcrumbs', $this->breadcrumbs);
-      $this->parent->append_content($this->smarty->fetch('breadcrumbs.tmpl'));
-    }
+/// Base type for any object sections.
+class AclObjectSection {
+  private $id;
+  private $handle;
+  private $name;
+
+  function __construct($handle, $name) {
+    assert('isset($handle)');
+    assert('isset($name)');
+    $this->id     = -1;
+    $this->handle = $handle;
+    $this->name   = $name;
   }
+
+
+  function set_id($id) {
+    assert('isset($id)');
+    $this->id = (int)$id;
+  }
+
+
+  function get_id() {
+    return $this->id;
+  }
+
+
+  function set_handle($handle) {
+    assert('isset($handle)');
+    $this->handle = $handle;
+  }
+
+
+  function get_handle() {
+    return $this->handle;
+  }
+
+
+  function set_name($name) {
+    assert('isset($name)');
+    $this->name = $name;
+  }
+
+
+  function get_name() {
+    return $this->name;
+  }
+}
 ?>

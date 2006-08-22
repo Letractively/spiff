@@ -23,14 +23,14 @@
     var $registry;
     var $eventbus;
     var $smarty;
-    var $gacl;
+    var $acldb;
     
     function PrinterBase(&$_parent) {
       $this->parent   = &$_parent;
       $this->registry = $_parent->get_registry();
       $this->eventbus = $_parent->get_eventbus();
       $this->smarty   = $_parent->get_smarty();
-      $this->gacl     = $_parent->get_gacl();
+      $this->acldb    = $_parent->get_acldb();
     }
 
     function show() {

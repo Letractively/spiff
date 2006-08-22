@@ -1,4 +1,4 @@
-<form action="?manage_users=1&amp;parent_gid={$parent_gid}&amp;uid={$user->get_id()}" method="post">
+<form action="?manage_users=1&amp;parent_id={$parent_id}&amp;id={$user->get_id()}" method="post">
 <table class="container" width="100%" border="0" cellpadding="0" cellspacing="0">
   <tr>
     <td width="14"><img src="img/corner_top_left.png" alt="" height="14" width="14" /></td>
@@ -15,7 +15,7 @@
     <table class="menu" width="100%" cellpadding="0">
       <tr><td align='center'><i>Member Of:</i></td></tr>
 {foreach from=$groups item=current}
-      <tr><td><a href="?manage_users=1&gid={$current->get_id()}"><img src="img/group.png" alt="Group:" /> {$current->get_name()}</a></td></tr>
+      <tr><td><a href="?manage_users=1&id={$current->get_id()}"><img src="img/group.png" alt="Group:" /> {$current->get_name()}</a></td></tr>
 {/foreach}
     </table>
     </td>
@@ -23,7 +23,7 @@
     <td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
     <td width='14' style='background: url(img/line_left.png);'></td>
     <td>
-{if $user->get_id() == 0}
+{if $user->get_id() <= 0}
     <h2>Create A New User</h2>
 {else}
     <h2>{$user->get_name()}</h2>
@@ -52,7 +52,7 @@
 {assign var=perm_url value="?edit_permissions=1&amp;uid=$uid"}
 
     <h3>Things This User May Do</h3>
-    <iframe id='permission_tree' src="index_noheader.php?permission_tree=1&amp;actor_id={$user->get_id()}" border="0" width="100%" height="30">
+    <iframe id='permission_tree' src="index_noheader.php5?permission_tree=1&amp;actor_id={$user->get_id()}" border="0" width="100%" height="30">
     </iframe>
 
     <h3>Unconfirmed Permission Changes</h3>
