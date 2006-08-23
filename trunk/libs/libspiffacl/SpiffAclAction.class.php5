@@ -18,13 +18,13 @@
   */
 ?>
 <?php
-class AclAction {
+class SpiffAclAction {
   private $id;
   private $handle;
   private $name;
   private $section;
 
-  function __construct($handle, $name, AclActionSection &$section) {
+  function __construct($handle, $name, SpiffAclActionSection &$section) {
     assert('isset($handle)');
     assert('isset($name)');
     assert('is_object($section)');

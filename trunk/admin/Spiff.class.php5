@@ -24,7 +24,7 @@
   // Load libs.
   require_once '../libs/smarty/Smarty.class.php';
   require_once '../libs/adodb/adodb.inc.php';
-  require_once '../libs/phpacl/AclDB.class.php5';
+  require_once '../libs/libspiffacl/SpiffAclDB.class.php5';
   include_once '../libs/libuseful/SqlQuery.class.php5';
   include_once '../libs/libuseful/assert.inc.php';
   include_once '../libs/libuseful/string.inc.php';
@@ -109,7 +109,7 @@
       $this->smarty->config_dir   = "../libs/smarty/configs";
       $this->smarty->register_function('lang', 'smarty_lang');
       
-      $this->acldb = new AclDB($this->db);
+      $this->acldb = new SpiffAclDB($this->db);
       
       $this->_handle_cookies();
     }
