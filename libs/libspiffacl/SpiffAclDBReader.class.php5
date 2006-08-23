@@ -92,6 +92,14 @@ class SpiffAclDBReader {
   /*******************************************************************
    * Requesting ACLs.
    *******************************************************************/
+  /// Returns TRUE if the given actor has the requested permission.
+  /**
+   * Returns TRUE if the actor with the given id is allowed to perform the
+   * action with the given id on the resourcewith the given id.
+   * Returns FALSE otherwise.
+   * This method is recursive, so even ACLs that are defined for parents
+   * of the given resources are considered if they apply.
+   */
   public function has_permission_from_id($actor_id,
                                          $action_id,
                                          $resource_id)
@@ -128,6 +136,13 @@ class SpiffAclDBReader {
   }
 
 
+  /// Returns TRUE if the given actor has the requested permission.
+  /**
+   * Returns TRUE if the given actor is allowed to perform the given action
+   * on the given resource. Returns FALSE otherwise.
+   * This method is recursive, so even ACLs that are defined for parents
+   * of the given resources are considered if they apply.
+   */
   public function has_permission(SpiffAclActor &$actor,
                                  SpiffAclAction &$action,
                                  SpiffAclResource &$resource)
