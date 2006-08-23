@@ -30,7 +30,7 @@ class SpiffAclDB extends SpiffAclDBReader {
    */
   private function _int2hex($n)
   {
-    assert('is_numeric($n)');
+    assert('is_int($n)');
     return substr("00000000" . dechex($n), -8);
   }
 
@@ -42,7 +42,7 @@ class SpiffAclDB extends SpiffAclDBReader {
    */
   private function _get_resource_path_from_id($id)
   {
-    assert('is_numeric($id)');
+    assert('is_int($id)');
     $query = new SqlQuery('
       SELECT HEX(path) path
       FROM   {t_resource_path}
@@ -327,7 +327,7 @@ class SpiffAclDB extends SpiffAclDBReader {
 
   public function &get_action_from_id($id)
   {
-    assert('is_numeric($id)');
+    assert('is_int($id)');
     assert('$id != -1');
     $query = new SqlQuery('
       SELECT s.id section_id,s.name section_name,a.*
@@ -354,19 +354,22 @@ class SpiffAclDB extends SpiffAclDBReader {
     assert('isset($handle)');
     assert('$handle !== ""');
     $query = new SqlQuery('
-      SELECT s.id section_id,s.name section_name,a.*
+      SELECT s.id section_id, s.handle section_handle, s.name section_name,
+             a.*
       FROM      {t_action}         a
       LEFT JOIN {t_action_section} s ON a.section_handle=s.handle
       WHERE a.handle={handle}
       AND   a.section_handle={section_handle}');
     $query->set_table_names($this->table_names);
     $query->set_string('handle',         $handle);
-    $query->set_string('section_handle', $section_handle);
+    $query->set_string('section_handle', $section->get_handle());
+    //$this->debug();
     $rs = $this->db->Execute($query->sql());
     assert('is_object($rs)');
     $row = $rs->FetchRow();
+    //print_r($row);
     $section = new SpiffAclActionSection($row['section_handle'],
-                                    $row['section_name']);
+                                         $row['section_name']);
     $action  = new SpiffAclAction($row['handle'], $row['name'], $section);
     $section->set_id($row['section_id']);
     $action->set_id($row['id']);
@@ -393,7 +396,7 @@ class SpiffAclDB extends SpiffAclDBReader {
   
   public function &add_resource($parent_id, SpiffAclResource &$resource)
   {
-    assert('is_numeric($parent_id) || is_null($parent_id)');
+    assert('is_int($parent_id) || is_null($parent_id)');
     assert('is_object($resource)');
     $section = $resource->get_section();
     assert('is_object($section)');
@@ -440,7 +443,7 @@ class SpiffAclDB extends SpiffAclDBReader {
     $query->set_int('resource_id', $resource_id);
     $rs = $this->db->Execute($query->sql());
     assert('is_object($rs)');
-    $path_id = $this->db->Insert_Id();
+    $path_id = (int)$this->db->Insert_Id();
 
     // Assign the correct path to the new node.
     $query = new SqlQuery('
@@ -493,9 +496,10 @@ class SpiffAclDB extends SpiffAclDBReader {
       SET section_handle={section_handle},
           handle={handle},
           name={name},
-          is_actor={is_actor}
+          is_actor={is_actor},
           is_group={is_group}
       WHERE id={id}');
+    //$this->debug();
     $query->set_table_names($this->table_names);
     $query->set_int('id',                $resource->get_id());
     $query->set_string('section_handle', $section->get_handle());
@@ -542,7 +546,7 @@ class SpiffAclDB extends SpiffAclDBReader {
 
   public function &get_resource_from_id($id)
   {
-    assert('is_numeric($id)');
+    assert('is_int($id)');
     assert('$id != -1');
     $query = new SqlQuery('
       SELECT s.id section_id,s.name section_name,r.*
@@ -731,9 +735,9 @@ class SpiffAclDB extends SpiffAclDBReader {
                                    $resource_id,
                                    $permit)
   {
-    assert('is_numeric($actor_id)');
-    assert('is_numeric($action_id)');
-    assert('is_numeric($resource_id)');
+    assert('is_int($actor_id)');
+    assert('is_int($action_id)');
+    assert('is_int($resource_id)');
     assert('is_bool($permit)');
     $query = new SqlQuery('
       INSERT INTO {t_acl}
@@ -756,9 +760,9 @@ class SpiffAclDB extends SpiffAclDBReader {
                                       $resource_id,
                                       $permit)
   {
-    assert('is_numeric($actor_id)');
-    assert('is_numeric($action_id)');
-    assert('is_numeric($resource_id)');
+    assert('is_int($actor_id)');
+    assert('is_int($action_id)');
+    assert('is_int($resource_id)');
     assert('is_bool($permit)');
     $query = new SqlQuery('
       UPDATE {t_acl}
@@ -779,9 +783,9 @@ class SpiffAclDB extends SpiffAclDBReader {
                                    $action_id,
                                    $resource_id)
   {
-    assert('is_numeric($actor_id)');
-    assert('is_numeric($action_id)');
-    assert('is_numeric($resource_id)');
+    assert('is_int($actor_id)');
+    assert('is_int($action_id)');
+    assert('is_int($resource_id)');
     $query = new SqlQuery('
       SELECT id
       FROM {t_acl}

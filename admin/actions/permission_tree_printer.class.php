@@ -53,7 +53,9 @@
         // Receive a list of permissions of each of the groups found.
         $group_list = array();
         foreach ($groups as $current) {
+          //print "Getting List: $actor_id/" . $current->get_id() . "<br>\n";
           $acl_list = $this->acldb->get_permission_list($actor, $current);
+          //print_r($acl_list);
           $current->permission = $acl_list;
           array_push($group_list, $current);
         }
@@ -62,6 +64,7 @@
         $item_list = array();
         foreach ($items as $current) {
           $acl_list = $this->acldb->get_permission_list($actor, $current);
+          //print_r($acl_list);
           $current->permission = $acl_list;
           array_push($item_list, $current);
         }

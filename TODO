@@ -1,9 +1,4 @@
-* Fix: Make users and groups saveable.
-
-* Add resource attribute support to phpacl.
-
-* When the apply button in the editor page is pressed, submit the
-  log to the server and execute the actions.
+* Add resource attribute support to libspiffacl.
 
 * Delete orphaned users.
 

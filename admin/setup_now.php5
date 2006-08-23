@@ -30,7 +30,7 @@ define('ADODB_DIR',        '../libs/adodb/');
 define('SMARTY_TEMP_DIR',  '../libs/smarty/templates_c/');
 define('SPIFF_PLUGIN_DIR', 'plugins/');
 
-require_once LIBSPIFFACL_DIR  . 'AclDB.class.php5';
+require_once LIBSPIFFACL_DIR  . 'SpiffAclDB.class.php5';
 require_once ADODB_DIR        . '/adodb-xmlschema03.inc.php';
 require_once dirname(__FILE__).'/config.inc.php';
 
@@ -67,7 +67,7 @@ function test($result) {
 
 $success = TRUE;
 $db      = &ADONewConnection($cfg['db_dbn']);
-$acldb   = new AclDB($db);
+$acldb   = new SpiffAclDB($db);
 
 /*******************************************************************
  * Tests.
@@ -124,52 +124,52 @@ test($acldb->clear_database());
 
 category('Initializing User Actions');
 start('Creating action section "User Permissions"');
-$ac_user_section = new AclActionSection('users', 'User Permissions');
+$ac_user_section = new SpiffAclActionSection('users', 'User Permissions');
 test($ac_user_section = $acldb->add_action_section($ac_user_section));
 
 start('Creating action "Administer User"');
-$action = new AclAction('administer', 'Administer User', $ac_user_section);
+$action = new SpiffAclAction('administer', 'Administer User', $ac_user_section);
 test($ac_user_administer = $acldb->add_action($action));
 
 start('Creating action "View User"');
-$action = new AclAction('view', 'View User', $ac_user_section);
+$action = new SpiffAclAction('view', 'View User', $ac_user_section);
 test($ac_user_view = $acldb->add_action($action));
 
 start('Creating action "Create User"');
-$action = new AclAction('create', 'Create User', $ac_user_section);
+$action = new SpiffAclAction('create', 'Create User', $ac_user_section);
 test($ac_user_create = $acldb->add_action($action));
 
 start('Creating action "Edit User"');
-$action = new AclAction('edit', 'Edit User', $ac_user_section);
+$action = new SpiffAclAction('edit', 'Edit User', $ac_user_section);
 test($ac_user_edit = $acldb->add_action($action));
 
 start('Creating action "Delete User"');
-$action = new AclAction('delete', 'Delete User', $ac_user_section);
+$action = new SpiffAclAction('delete', 'Delete User', $ac_user_section);
 test($ac_user_delete = $acldb->add_action($action));
 
 
 category('Initializing Content Actions');
 start('Creating action section "Content Permissions"');
-$ac_cont_section = new AclActionSection('content',
+$ac_cont_section = new SpiffAclActionSection('content',
                                         'Content Permissions');
 test($ac_cont_section = $acldb->add_action_section($ac_cont_section));
 start('Creating action "View Content"');
-test($ac_cont_view = $acldb->add_action(new AclAction('view',
+test($ac_cont_view = $acldb->add_action(new SpiffAclAction('view',
                                                       'View Content',
                                                       $ac_cont_section)));
 
 start('Creating action "Create Content"');
-test($ac_cont_create = $acldb->add_action(new AclAction('create',
+test($ac_cont_create = $acldb->add_action(new SpiffAclAction('create',
                                                         'Create Content',
                                                          $ac_cont_section)));
 
 start('Creating action "Edit Content"');
-test($ac_cont_edit = $acldb->add_action(new AclAction('edit',
+test($ac_cont_edit = $acldb->add_action(new SpiffAclAction('edit',
                                                       'Edit Content',
                                                       $ac_cont_section)));
 
 start('Creating action "Delete Content"');
-test($ac_cont_delete = $acldb->add_action(new AclAction('delete',
+test($ac_cont_delete = $acldb->add_action(new SpiffAclAction('delete',
                                                         'Delete Content',
                                                         $ac_cont_section)));
 
@@ -184,27 +184,27 @@ test($ac_cont_delete = $acldb->add_action(new AclAction('delete',
  *******************************************************************/
 category('Initializing Users And Groups');
 start('Creating resource section "Users"');
-$users_section = new AclResourceSection('users', 'Users');
+$users_section = new SpiffAclResourceSection('users', 'Users');
 test($users_section = $acldb->add_resource_section($users_section));
 
 start('Creating group "Everybody"');
-$actor = new AclActorGroup('everybody', 'Everybody', $users_section);
+$actor = new SpiffAclActorGroup('everybody', 'Everybody', $users_section);
 test($everybody = $acldb->add_resource(NULL, $actor));
 
 start('Creating group "Administrators"');
-$actor = new AclActorGroup('administrators', 'Administrators', $users_section);
+$actor = new SpiffAclActorGroup('administrators', 'Administrators', $users_section);
 test($admin = $acldb->add_resource($everybody->get_id(), $actor));
 
 start('Creating user "Administrator"');
-$actor = new AclActor('administrator', 'Administrator', $users_section);
+$actor = new SpiffAclActor('administrator', 'Administrator', $users_section);
 test($usr_admin = $acldb->add_resource($admin->get_id(), $actor));
 
 start('Creating group "Users"');
-$actor = new AclActorGroup('users', 'Users', $users_section);
+$actor = new SpiffAclActorGroup('users', 'Users', $users_section);
 test($users = $acldb->add_resource($everybody->get_id(), $actor));
 
 start('Creating user "Anonymous George"');
-$actor = new AclActor('anonymous', 'Anonymous George', $users_section);
+$actor = new SpiffAclActor('anonymous', 'Anonymous George', $users_section);
 test($usr_anon = $acldb->add_resource($users->get_id(), $actor));
 
 
@@ -215,11 +215,11 @@ test($usr_anon = $acldb->add_resource($users->get_id(), $actor));
  *******************************************************************/
 category('Initializing Content');
 start('Creating resource section "Content"');
-$cont_sect = new AclResourceSection('content', 'Content');
+$cont_sect = new SpiffAclResourceSection('content', 'Content');
 test($cont_sect = $acldb->add_resource_section($cont_sect));
 
 start('Creating resource "Homepage" in "Content"');
-$resource = new AclResourceGroup('homepage', 'Homepage', $cont_sect);
+$resource = new SpiffAclResourceGroup('homepage', 'Homepage', $cont_sect);
 test($homepage = $acldb->add_resource(NULL, $resource));
 
 

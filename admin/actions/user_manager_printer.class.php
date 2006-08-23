@@ -106,57 +106,63 @@
         $this->acldb->save_resource($resource);
 
       // Save permissions.
+      if (!isset($_POST['changelog_entries']))
+        $_POST['changelog_entries'] = array();
+
+      //print_r($_POST);
       foreach ($_POST['changelog_entries'] as $entry_name) {
         // Extract group id, user id and action name from the name.
-        echo "NAME: $entry_name<br>";
-        if (!preg_match('/^changelog_input_(\d*)_(\w+)_(\d+)$/',
+        //echo "NAME: $entry_name<br>";
+        if (!preg_match('/^changelog_input_(\d*)_users_([\w]+)_(\d*)$/',
                         $entry_name,
                         $matches))
-          die("UserManagerPrinter::submit_group(): invalid variable");
-        $resource_id = $matches[1];
+          die("UserManagerPrinter::submit_resource(): invalid variable");
+        $resource_id   = (int)$matches[1];
+        $action_handle = $matches[2];
+        $action_id     = (int)$matches[3];
 
         // Fetch the log entry details.
-        if (!isset($_POST[$entry_name . '_action']))
-          die("UserManagerPrinter::submit_group(): missing changelog entry 1");
-        $action_name = $_POST[$entry_name . '_action'];
+        //if (!isset($_POST[$entry_name . '_action']))
+        //  die("UserManagerPrinter::submit_resource(): missing changelog e 1");
+        //$action_name = $_POST[$entry_name . '_action'];
         if (!isset($_POST[$entry_name . '_permit']))
-          die("UserManagerPrinter::submit_group(): missing changelog entry 2");
+          die("UserManagerPrinter::submit_group(): missing changelog e 1");
         $permit = $_POST[$entry_name . '_permit'] * 1;
 
         // Build our objects.
-        $section   = new GaclActionSection("Users");
-        $action_id = $this->acldb->get_action_id_from_name($action_name,
+        if ($action_id > 0)
+          $action = $this->acldb->get_action_from_id($action_id);
+        else {
+          $section = new SpiffAclActionSection('users', '');
+          $action  = $this->acldb->get_action_from_handle($action_handle,
                                                           $section);
-        $action    = $this->acldb->get_action($action_id);
+        }
         if ($resource_id)
-          $resource = $this->acldb->get_resource($resource_id);
-        if ($resource_gid)
-          $resource_group = $this->acldb->get_resource_group($resource_gid);
+          $resource = $this->acldb->get_resource_from_id($resource_id);
 
         // Push the new rule into the database.
         switch ($permit) {
         case -1:
-          $this->acldb->kill(array($action),
-                            array($group),
-                            array($resource_group));
+          $this->acldb->unset_from_id((int)$id,
+                                      $action->get_id(),
+                                      $resource_id);
           break;
 
         case 1:
-          $this->acldb->grant(array($action),
-                             array($group),
-                             array($resource_group));
+          $this->acldb->grant_from_id((int)$id,
+                                      $action->get_id(),
+                                      $resource_id);
           break;
 
         default:
-          $this->acldb->deny(array($action),
-                            array($group),
-                            array($resource_group));
+          $this->acldb->deny_from_id((int)$id,
+                                     $action->get_id(),
+                                     $resource_id);
           break;
         }
       }
-      print_r($_POST); //FIXME
 
-      return $group->get_id();
+      return $resource->get_id();
     }
 
 
@@ -178,7 +184,7 @@
         $parent_id = $id;
       }
 
-      assert('isset($id)');
+      assert('is_int($id)');
 
       if (isset($_POST['save'])) {
         $gid = $this->submit_resource($id, $parent_id);

@@ -166,24 +166,124 @@ class SpiffAclDBReader {
     assert('is_int($actor_id)');
     assert('is_int($resource_id)');
     $query = new SqlQuery('
-      SELECT    ac.actor_id, ac.resource_id, ac.permit,
+      SELECT    ac1.actor_id, ac1.resource_id, ac1.permit,
                 a.*,
-                s.id section_id, s.name section_name
-      FROM      {t_resource_path}     t1
-      LEFT JOIN {t_path_ancestor_map} p1 ON t1.path=p1.resource_path
-      LEFT JOIN {t_resource_path}     t2 ON t1.id=t2.id
-                                         OR t2.path=p1.ancestor_path
-      LEFT JOIN {t_acl}               ac ON t2.resource_id=ac.resource_id
-      LEFT JOIN {t_resource_path}     t3 ON t3.id=ac.actor_id
-      LEFT JOIN {t_path_ancestor_map} p2 ON t3.path=p2.ancestor_path
-      LEFT JOIN {t_resource_path}     t4 ON t4.id=t3.id
-                                         OR t4.path=p2.resource_path
-      LEFT JOIN {t_action}            a  ON a.id=ac.action_id
-      LEFT JOIN {t_action_section}    s  ON a.section_handle=s.handle
+                s.id section_id, s.name section_name,
+                t2.depth, t3.depth,
+                max(t2.depth) t2_maxdepth, max(t3.depth) t3_maxdepth
+
+      -- **************************************************************
+      -- * 1. Get all ACLs that match the given resource.
+      -- **************************************************************
+      -- All paths that match directly.
+      FROM resource_path t1
+
+      -- All paths that are a parent of the direct match.
+      LEFT JOIN path_ancestor_map p1 ON t1.path = p1.resource_path
+
+      -- Still all paths that are a parent of the direct match, and also the
+      -- direct match itself.
+      LEFT JOIN resource_path t2 ON t1.id = t2.id OR t2.path = p1.ancestor_path
+
+      -- All ACLs that reference the given resource or any of its parents.
+      LEFT JOIN acl ac1 ON t2.resource_id = ac1.resource_id
+
+      -- Path of the actor that is referenced by the ACL.
+      LEFT JOIN resource_path t3 ON t3.id = ac1.actor_id
+
+      -- Paths of all children of the actor.
+      LEFT JOIN path_ancestor_map p2 ON t3.path = p2.ancestor_path
+
+      -- Paths of all children of the actor, and also the actor itself.
+      LEFT JOIN resource_path t4 ON t4.id = t3.id OR t4.path = p2.resource_path
+
+      -- Informative only.
+      LEFT JOIN action a ON a.id = ac1.action_id
+      LEFT JOIN action_section s ON a.section_handle = s.handle
+      
+      -- **************************************************************
+      -- * 2. We want to filter out any ACL that is defined for the
+      -- * same action but has a shorter actor path.
+      -- * A side effect of this way of doing it is that ACLs are 
+      -- * added even if they were not defined for the right actor,
+      -- * so we need to filter them out in the next step (see 3.).
+      -- **************************************************************
+      -- Get all ACLs that control the same action as the ACL above.
+      LEFT JOIN acl ac2 ON ac1.action_id=ac2.action_id
+
+      -- Get a list of all ACLs that perform the same action, but only
+      -- if their actor path is longer.
+      LEFT JOIN resource_path t5 ON ac2.actor_id=t5.resource_id AND t5.depth>t3.depth
+
+
+
+      -- **************************************************************
+      -- * 3. Filter out any ACL that is irrelevant because it does
+      -- * not have the correct path.
+      -- **************************************************************
+      -- Get a list of all actors that are pointed to by the ACL joined
+      -- above.
+      LEFT JOIN resource_path t6 ON t6.resource_id=ac2.actor_id
+
+      -- Get their children.
+      LEFT JOIN path_ancestor_map p3 ON t6.path = p3.ancestor_path
+
+      -- Keep only those that are inherited by the wanted actor.
+      LEFT JOIN resource_path t7 ON p3.resource_path=t7.path OR t6.id=t7.id
+
+
+
+      -- **************************************************************
+      -- * 4. We want to filter out any ACL that is defined for the
+      -- * same action but has a shorter resource path.
+      -- * A side effect of this way of doing it is that ACLs are
+      -- * added even if they were not defined for the right resource,
+      -- * so we need to filter them out in the next step (see 3.).
+      -- **************************************************************
+      -- Get all ACLs that control the same action as the ACL above.
+      LEFT JOIN acl ac3 ON ac1.action_id=ac3.action_id
+
+      -- Get a list of all ACLs that perform the same action, but only
+      -- if their resource path is longer.
+      LEFT JOIN resource_path t8 ON ac3.resource_id=t8.resource_id AND t8.depth>t3.depth
+
+
+
+      -- **************************************************************
+      -- * 5. Filter out any ACL that is irrelevant because it does
+      -- * not have the correct path.
+      -- **************************************************************
+      -- Get a list of all resources that are pointed to by the ACL
+      -- joined above.
+      LEFT JOIN resource_path t9 ON t9.resource_id=ac3.resource_id
+
+      -- Get their children.
+      LEFT JOIN path_ancestor_map p4 ON t9.path = p4.ancestor_path
+
+      -- Keep only those that are inherited by the wanted resource.
+      LEFT JOIN resource_path t10 ON p4.resource_path=t10.path OR t9.id=t10.id
+
+
+      -- See 1.
       WHERE t1.resource_id={resource_id}
       AND   t4.resource_id={actor_id}
-      GROUP BY ac.action_id
-      ORDER BY t1.path, t2.path, t3.path, t4.path');
+
+      -- See 2.
+      AND t5.id IS NULL
+
+      -- See 3.
+      AND t7.resource_id={actor_id}
+
+      -- See 4.
+      AND t8.id IS NULL
+
+      -- See 5.
+      AND t10.resource_id={resource_id}
+
+      -- Magic.
+      GROUP BY t2.path, t3.path, ac1.action_id
+      HAVING t2.depth = t2_maxdepth
+      AND t3.depth = t3_maxdepth');
     $query->set_table_names($this->table_names);
     $query->set_int('actor_id',    $actor_id);
     $query->set_int('resource_id', $resource_id);

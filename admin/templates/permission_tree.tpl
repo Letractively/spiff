@@ -65,11 +65,11 @@ function changePerm(element,
   var permit       = element.value;
   var li_name      = 'changelog_li_'
                    + resourceId
-                   + '_' + actionHandle;
+                   + '_' + actionHandle
                    + '_' + actionId;
   var input_prefix = 'changelog_input_'
                    + resourceId
-                   + '_' + actionHandle;
+                   + '_' + actionHandle
                    + '_' + actionId;
   var editor            = parent.document;
   var li_item           = editor.getElementById(li_name);
@@ -143,10 +143,12 @@ function changePerm(element,
       {foreach from=$defined_actions item=action_name key=action_handle}
       <td align='center'>
       {assign var=acl value=$actions.$action_handle}
-      {if $acl}
-        {assign var=action        value=$acl->get_action()}
-        {assign var=action_id     value=$action->get_id()}
-        {assign var=action_name   value=$action->get_name()}
+      {if !$acl}
+        {assign var=permit    value=0}
+        {assign var=action_id value=0}
+      {else}
+        {assign var=action    value=$acl->get_action()}
+        {assign var=action_id value=$action->get_id()}
         {if      $acl->get_permit() && $acl->get_resource_id() != $current_group->get_id()}
           {assign var=permit value=1}
         {elseif !$acl->get_permit() && $acl->get_resource_id() != $current_group->get_id()}
@@ -158,7 +160,7 @@ function changePerm(element,
         {/if}
       {/if}
       <select name='view' onchange="changePerm(this,
-                                               '{$action_id}',
+                                               {$action_id},
                                                '{$action_handle}',
                                                '{$action_name}',
                                                {$current_group->get_id()},
@@ -189,10 +191,12 @@ function changePerm(element,
     {foreach from=$defined_actions item=action_name key=action_handle}
     <td align='center'>
     {assign var=acl value=$actions.$action_handle}
-    {if $acl}
-      {assign var=action        value=$acl->get_action()}
-      {assign var=action_id     value=$action->get_id()}
-      {assign var=action_name   value=$action->get_name()}
+    {if !$acl}
+      {assign var=permit    value=0}
+      {assign var=action_id value=0}
+    {else}
+      {assign var=action    value=$acl->get_action()}
+      {assign var=action_id value=$action->get_id()}
       {if      $acl->get_permit() && $acl->get_resource_id() != $current->get_id()}
         {assign var=permit value=1}
       {elseif !$acl->get_permit() && $acl->get_resource_id() != $current->get_id()}
@@ -205,7 +209,7 @@ function changePerm(element,
     {/if}
     {if $action_handle != 'users_create'}
     <select name='view' onchange="changePerm(this,
-                                             '{$action_id}',
+                                             {$action_id},
                                              '{$action_handle}',
                                              '{$action_name}',
                                              {$current->get_id()},
