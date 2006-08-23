@@ -18,6 +18,6 @@
   */
 ?>
 <?php
-class AclActionSection extends AclObjectSection {
+class SpiffAclResourceSection extends SpiffAclObjectSection {
 }
 ?>

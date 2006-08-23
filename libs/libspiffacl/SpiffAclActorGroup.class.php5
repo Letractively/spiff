@@ -18,7 +18,7 @@
   */
 ?>
 <?php
-class AclActorGroup extends AclActor {
+class SpiffAclActorGroup extends SpiffAclActor {
   public function is_group() {
     return TRUE;
   }

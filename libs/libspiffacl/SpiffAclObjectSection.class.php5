@@ -18,9 +18,51 @@
   */
 ?>
 <?php
-class AclResourceGroup extends AclResource {
-  public function is_group() {
-    return TRUE;
+/// Base type for any object sections.
+class SpiffAclObjectSection {
+  private $id;
+  private $handle;
+  private $name;
+
+  function __construct($handle, $name) {
+    assert('isset($handle)');
+    assert('isset($name)');
+    $this->id     = -1;
+    $this->handle = $handle;
+    $this->name   = $name;
+  }
+
+
+  function set_id($id) {
+    assert('isset($id)');
+    $this->id = (int)$id;
+  }
+
+
+  function get_id() {
+    return $this->id;
+  }
+
+
+  function set_handle($handle) {
+    assert('isset($handle)');
+    $this->handle = $handle;
+  }
+
+
+  function get_handle() {
+    return $this->handle;
+  }
+
+
+  function set_name($name) {
+    assert('isset($name)');
+    $this->name = $name;
+  }
+
+
+  function get_name() {
+    return $this->name;
   }
 }
 ?>

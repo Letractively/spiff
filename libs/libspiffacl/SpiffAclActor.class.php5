@@ -18,7 +18,7 @@
   */
 ?>
 <?php
-class AclActor extends AclResource {
+class SpiffAclActor extends SpiffAclResource {
   public function is_actor() {
     return TRUE;
   }

@@ -18,7 +18,7 @@
   */
 ?>
 <?php
-class AclResource {
+class SpiffAclResource {
   private $id;
   private $handle;
   private $name;
@@ -26,7 +26,7 @@ class AclResource {
   private $n_children;
   private $attributes = array();
 
-  public function __construct($handle, $name, AclObjectSection &$section) {
+  public function __construct($handle, $name, SpiffAclObjectSection &$section) {
     assert('isset($handle)');
     assert('isset($name)');
     assert('is_object($section)');

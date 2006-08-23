@@ -150,7 +150,7 @@ function changePerm(element,
       {assign var=permit    value=$perm->permit}
     {/if}
     <select name='view' onchange="changePerm(this,
-                                             {$action_id},
+                                             0{$action_id},
                                              'View',
                                              {$current_group->get_id()},
                                              '{$current_group->get_name()}');">
@@ -160,7 +160,6 @@ function changePerm(element,
     </select>
     </td>
     <td align='center'>
-    {assign var=actions value=$current_group->permission}
     {assign var=perm value=$actions.users_edit}
     {if $perm}
       {assign var=action    value=$perm->action}
@@ -168,7 +167,7 @@ function changePerm(element,
       {assign var=permit    value=$perm->permit}
     {/if}
     <select name='edit' onchange="changePerm(this,
-                                             {$action_id},
+                                             0{$action_id},
                                              'Edit',
                                              {$current_group->get_id()},
                                              '{$current_group->get_name()}');">
@@ -178,7 +177,6 @@ function changePerm(element,
     </select>
     </td>
     <td align='center'>
-    {assign var=actions value=$current_group->permission}
     {assign var=perm value=$actions.users_delete}
     {if $perm}
       {assign var=action    value=$perm->action}
@@ -186,7 +184,7 @@ function changePerm(element,
       {assign var=permit    value=$perm->permit}
     {/if}
     <select name='delete' onchange="changePerm(this,
-                                               {$action_id},
+                                               0{$action_id},
                                                'Delete',
                                                {$current_group->get_id()},
                                                '{$current_group->get_name()}');">
@@ -196,7 +194,6 @@ function changePerm(element,
     </select>
     </td>
     <td align='center'>
-    {assign var=actions value=$current_group->permission}
     {assign var=perm value=$actions.users_create}
     {if $perm}
       {assign var=action    value=$perm->action}
@@ -204,7 +201,7 @@ function changePerm(element,
       {assign var=permit    value=$perm->permit}
     {/if}
     <select name='create' onchange="changePerm(this,
-                                               {$action_id},
+                                               0{$action_id},
                                                'Create',
                                                {$current_group->get_id()},
                                                '{$current_group->get_name()}');">
@@ -214,7 +211,6 @@ function changePerm(element,
     </select>
     </td>
     <td align='center'>
-    {assign var=actions value=$current_group->permission}
     {assign var=perm value=$actions.users_administer}
     {if $perm}
       {assign var=action    value=$perm->action}
@@ -222,7 +218,7 @@ function changePerm(element,
       {assign var=permit    value=$perm->permit}
     {/if}
     <select name='administer' onchange="changePerm(this,
-                                                   {$action_id},
+                                                   0{$action_id},
                                                    'Administer',
                                                    {$current_group->get_id()},
                                                    '{$current_group->get_name()}');">
@@ -249,7 +245,7 @@ function changePerm(element,
       {assign var=permit    value=$perm->permit}
     {/if}
     <select name='view' onchange="changePerm(this,
-                                             {$action_id},
+                                             0{$action_id},
                                              'view',
                                              {$current->get_id()},
                                              '{$current->get_name()}');">
@@ -259,7 +255,6 @@ function changePerm(element,
     </select>
     </td>
     <td align='center'>
-    {assign var=actions value=$current_group->permission}
     {assign var=perm value=$actions.users_edit}
     {if $perm}
       {assign var=action    value=$perm->action}
@@ -267,7 +262,7 @@ function changePerm(element,
       {assign var=permit    value=$perm->permit}
     {/if}
     <select name='edit' onchange="changePerm(this,
-                                             {$action_id},
+                                             0{$action_id},
                                              'edit',
                                              {$current->get_id()},
                                              '{$current->get_name()}');">
@@ -277,7 +272,6 @@ function changePerm(element,
     </select>
     </td>
     <td align='center'>
-    {assign var=actions value=$current_group->permission}
     {assign var=perm value=$actions.users_delete}
     {if $perm}
       {assign var=action    value=$perm->action}
@@ -285,7 +279,7 @@ function changePerm(element,
       {assign var=permit    value=$perm->permit}
     {/if}
     <select name='delete' onchange="changePerm(this,
-                                               {$action_id},
+                                               0{$action_id},
                                                'delete',
                                                {$current->get_id()},
                                                '{$current->get_name()}');">
@@ -297,7 +291,6 @@ function changePerm(element,
     <td align='center'>
     </td>
     <td align='center'>
-    {assign var=actions value=$current_group->permission}
     {assign var=perm value=$actions.users_administer}
     {if $perm}
       {assign var=action    value=$perm->action}
@@ -305,7 +298,7 @@ function changePerm(element,
       {assign var=permit    value=$perm->permit}
     {/if}
     <select name='administer' onchange="changePerm(this,
-                                                   {$action_id},
+                                                   0{$action_id},
                                                    'administer',
                                                    {$current->get_id()},
                                                    '{$current->get_name()}');">

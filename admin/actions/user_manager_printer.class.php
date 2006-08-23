@@ -23,23 +23,23 @@
       switch ($id) {
       case -1:
         // New group.
-        $section  = new AclResourceSection('users', '');
-        $resource = new AclActorGroup('', '', $section);
+        $section  = new SpiffAclResourceSection('users', '');
+        $resource = new SpiffAclActorGroup('', '', $section);
         break;
 
       case -2:
         // New user.
-        $section  = new AclResourceSection('users', '');
-        $resource = new AclActor('', '', $section);
+        $section  = new SpiffAclResourceSection('users', '');
+        $resource = new SpiffAclActor('', '', $section);
         break;
 
       default:
         // Existing user or group.
         $resource = $this->acldb->get_resource_from_id($id);
         $groups   = $this->acldb->get_resource_children($resource,
-                                                        ACLDB_FETCH_GROUPS);
+                                                        SPIFF_ACLDB_FETCH_GROUPS);
         $users    = $this->acldb->get_resource_children($resource,
-                                                        ACLDB_FETCH_ITEMS);
+                                                        SPIFF_ACLDB_FETCH_ITEMS);
         break;
       }
 
@@ -79,15 +79,15 @@
       switch ($id) {
       case -1:
         // New group.
-        $section  = new AclResourceSection('users', '');
-        $resource = new AclActorGroup('', '', $section);
+        $section  = new SpiffAclResourceSection('users', '');
+        $resource = new SpiffAclActorGroup('', '', $section);
         $parent   = $this->acldb->get_resource_from_id($parent_id);
         break;
 
       case -2:
         // New user.
-        $section  = new AclResourceSection('users', '');
-        $resource = new AclActor('', '', $section);
+        $section  = new SpiffAclResourceSection('users', '');
+        $resource = new SpiffAclActor('', '', $section);
         $parent   = $this->acldb->get_resource_from_id($parent_id);
         break;
 
@@ -171,7 +171,7 @@
       if (isset($_GET['id']))
         $id = (int)$_GET['id'];
       else {
-        $section   = new AclResourceSection('users', '');
+        $section   = new SpiffAclResourceSection('users', '');
         $resource  = $this->acldb->get_resource_from_handle('everybody',
                                                              $section);
         $id        = $resource->get_id();

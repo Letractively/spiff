@@ -18,6 +18,9 @@
   */
 ?>
 <?php
-class AclResourceSection extends AclObjectSection {
+class SpiffAclResourceGroup extends SpiffAclResource {
+  public function is_group() {
+    return TRUE;
+  }
 }
 ?>

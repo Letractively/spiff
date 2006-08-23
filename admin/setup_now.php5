@@ -25,13 +25,13 @@
     <small><i>Dear user, please ignore the technical hogwash below.<br/>
     You can just scroll down to the bottom of this page. Thank you.</i></small>
 <?php
-define('PHPACL_DIR',       '../libs/phpacl/');
+define('LIBSPIFFACL_DIR',  '../libs/libspiffacl/');
 define('ADODB_DIR',        '../libs/adodb/');
 define('SMARTY_TEMP_DIR',  '../libs/smarty/templates_c/');
 define('SPIFF_PLUGIN_DIR', 'plugins/');
 
-require_once PHPACL_DIR . 'AclDB.class.php5';
-require_once ADODB_DIR  . '/adodb-xmlschema03.inc.php';
+require_once LIBSPIFFACL_DIR  . 'AclDB.class.php5';
+require_once ADODB_DIR        . '/adodb-xmlschema03.inc.php';
 require_once dirname(__FILE__).'/config.inc.php';
 
 
@@ -105,7 +105,7 @@ test(substr(sprintf('%o', fileperms(SPIFF_PLUGIN_DIR)), -4) === "0775");
  * Set up phpGACL.
  *******************************************************************/
 // If necessary, create tables.
-category('Setting Up phpACL');
+category('Setting Up libspiffacl');
 start('Creating database tables');
 $tables = $db->MetaTables();
 //echo "Tables: " . count($tables) . "<br/>";
@@ -118,7 +118,7 @@ else {
   test($acldb->install());
 }
 
-start('Clearing phpacldb database tables');
+start('Clearing libspiffacl database tables');
 test($acldb->clear_database());
 
 
