@@ -53,30 +53,37 @@
         // Receive a list of permissions of each of the groups found.
         $group_list = array();
         foreach ($groups as $current) {
-          $perms = $this->acldb->get_permission_list($actor, $current);
-          $current->permission = $perms;
+          $acl_list = $this->acldb->get_permission_list($actor, $current);
+          $current->permission = $acl_list;
           array_push($group_list, $current);
         }
 
         // Receive a list of permissions of each of the users found.
         $item_list = array();
         foreach ($items as $current) {
-          $perms = $this->acldb->get_permission_list($actor, $current);
-          $current->permission = $perms;
+          $acl_list = $this->acldb->get_permission_list($actor, $current);
+          $current->permission = $acl_list;
           array_push($item_list, $current);
         }
         //print_r($group_list);
         //print_r($item_list);
       }
 
+      $defined_actions = array('users_view'       => 'View',
+                               'users_edit'       => 'Edit',
+                               'users_delete'     => 'Delete',
+                               'users_create'     => 'Create',
+                               'users_administer' => 'Administer');
+
       // Fire smarty.
       $this->smarty->clear_all_assign();
-      $this->smarty->assign('actor_id',    $actor_id);
-      $this->smarty->assign('parent_id',   $parent_id);
-      $this->smarty->assign_by_ref('resource', $resource);
-      $this->smarty->assign_by_ref('parents',  $parents);
-      $this->smarty->assign_by_ref('groups',   $group_list);
-      $this->smarty->assign_by_ref('items',    $item_list);
+      $this->smarty->assign('actor_id',  $actor_id);
+      $this->smarty->assign('parent_id', $parent_id);
+      $this->smarty->assign_by_ref('resource',        $resource);
+      $this->smarty->assign_by_ref('parents',         $parents);
+      $this->smarty->assign_by_ref('groups',          $group_list);
+      $this->smarty->assign_by_ref('items',           $item_list);
+      $this->smarty->assign_by_ref('defined_actions', $defined_actions);
       $this->parent->append_content($this->smarty->fetch('permission_tree.tpl'));
     }
 

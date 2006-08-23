@@ -286,6 +286,22 @@ class SpiffAclDB extends SpiffAclDBReader {
   }
 
 
+  /// Deletes the SpiffAclAction with the given id from the database.
+  /**
+   * All ACLs associated with the SpiffAclAction are removed.
+   */
+  public function delete_action_from_id($action_id)
+  {
+    assert('is_int($action_id)');
+    $query = new SqlQuery('
+      DELETE FROM {t_action}
+      WHERE id={action_id}');
+    $query->set_table_names($this->table_names);
+    $query->set_string('action_id', $action_id);
+    return $this->db->Execute($query->sql());
+  }
+
+
   /// Deletes the given SpiffAclAction from the database.
   /**
    * All ACLs associated with the SpiffAclAction are removed.
@@ -375,7 +391,7 @@ class SpiffAclDB extends SpiffAclDBReader {
   }
 
   
-  public function add_resource($parent_id, SpiffAclResource &$resource)
+  public function &add_resource($parent_id, SpiffAclResource &$resource)
   {
     assert('is_numeric($parent_id) || is_null($parent_id)');
     assert('is_object($resource)');
@@ -493,7 +509,7 @@ class SpiffAclDB extends SpiffAclDBReader {
   }
 
   
-  public function &delete_resource_from_id($resource_id)
+  public function delete_resource_from_id($resource_id)
   {
     assert('is_int($resource_id)');
     $query = new SqlQuery('
@@ -505,7 +521,7 @@ class SpiffAclDB extends SpiffAclDBReader {
   }
 
 
-  public function &delete_resource(SpiffAclResource &$resource)
+  public function delete_resource(SpiffAclResource &$resource)
   {
     assert('is_object($resource)');
     $section = $resource->get_section();

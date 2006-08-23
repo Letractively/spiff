@@ -141,12 +141,19 @@ class SpiffAclDBReader {
   }
 
   
+  /// Returns a list of all ACLs that apply between the given resources.
+  /**
+   * This method is recursive, so even ACLs that are defined for parents
+   * of the given resources are returned if they apply.
+   */
   public function get_permission_list_from_id($actor_id, $resource_id)
   {
     assert('is_int($actor_id)');
     assert('is_int($resource_id)');
     $query = new SqlQuery('
-      SELECT    a.*, ac.permit, s.id as section_id, s.name as section_name
+      SELECT    ac.actor_id, ac.resource_id, ac.permit,
+                a.*,
+                s.id section_id, s.name section_name
       FROM      {t_resource_path}     t1
       LEFT JOIN {t_path_ancestor_map} p1 ON t1.path=p1.resource_path
       LEFT JOIN {t_resource_path}     t2 ON t1.id=t2.id
@@ -168,23 +175,30 @@ class SpiffAclDBReader {
     //$this->debug();
     $rs = $this->db->Execute($query->sql());
     assert('is_object($rs)');
-    $permissions = array();
+    $acl_list = array();
     while ($row = $rs->FetchRow()) {
+      //print_r($row); print("<br>\n");
       $section = new SpiffAclActionSection($row['section_handle'],
                                       $row['section_name']);
       $action  = new SpiffAclAction($row['handle'], $row['name'], $section);
       $section->set_id($row['section_id']);
       $action->set_id($row['id']);
-      unset($perm);
-      $perm->action = $action;
-      $perm->permit = $row['permit'];
-      $permissions[$row['section_handle'] . '_' . $row['handle']] = $perm;
+      $acl = new SpiffAcl((int)$row['actor_id'],
+                          $action,
+                          (int)$row['resource_id'],
+                          (bool)$row['permit']);
+      $acl_list[$row['section_handle'] . '_' . $row['handle']] = $acl;
     }
-    //print_r($permissions);
-    return $permissions;
+    //print_r($acl_list);
+    return $acl_list;
   }
 
 
+  /// Returns a list of all ACLs that apply between the given resources.
+  /**
+   * This method is recursive, so even ACLs that are defined for parents
+   * of the given resources are returned if they apply.
+   */
   public function get_permission_list(SpiffAclActor &$actor,
                                       SpiffAclResource &$resource)
   {
