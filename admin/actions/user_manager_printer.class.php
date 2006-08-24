@@ -36,6 +36,7 @@
       default:
         // Existing user or group.
         $resource = $this->acldb->get_resource_from_id($id);
+        $this->acldb->resource_load_attributes($resource);
         $groups   = $this->acldb->get_resource_children($resource,
                                                         SPIFF_ACLDB_FETCH_GROUPS);
         $users    = $this->acldb->get_resource_children($resource,
@@ -94,6 +95,7 @@
       default:
         // Existing user or group.
         $resource = $this->acldb->get_resource_from_id($id);
+        $this->acldb->resource_load_attributes($resource);
       }
 
       $resource->set_name($_POST['name']);

@@ -29,6 +29,9 @@ include_once dirname(__FILE__).'/SpiffAclResourceGroup.class.php5';
 include_once dirname(__FILE__).'/SpiffAclActor.class.php5';
 include_once dirname(__FILE__).'/SpiffAclActorGroup.class.php5';
 
+define('SPIFF_ACLDB_ATTRIB_TYPE_STRING', 1);
+define('SPIFF_ACLDB_ATTRIB_TYPE_INT',    2);
+
 define('SPIFF_ACLDB_FETCH_GROUPS', 1);
 define('SPIFF_ACLDB_FETCH_ITEMS',  2);
 define('SPIFF_ACLDB_FETCH_ALL',    3);
@@ -59,6 +62,7 @@ class SpiffAclDBReader {
       't_resource_section'   => $this->db_table_prefix . 'resource_section',
       't_action'             => $this->db_table_prefix . 'action',
       't_resource'           => $this->db_table_prefix . 'resource',
+      't_resource_attribute' => $this->db_table_prefix . 'resource_attribute',
       't_resource_path'      => $this->db_table_prefix . 'resource_path',
       't_path_ancestor_map'  => $this->db_table_prefix . 'path_ancestor_map',
       't_acl'                => $this->db_table_prefix . 'acl',

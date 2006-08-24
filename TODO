@@ -1,4 +1,4 @@
-* Add resource attribute support to libspiffacl.
+* Fix parent group list in the user editor page.
 
 * Delete orphaned users.
 

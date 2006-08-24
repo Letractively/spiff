@@ -110,7 +110,7 @@ start('Creating database tables');
 $tables = $db->MetaTables();
 //echo "Tables: " . count($tables) . "<br/>";
 //FIXME: Compare the count with the number of tables in the schema file.
-if (count($tables) >= 7)
+if (count($tables) >= 8)
   unnecessary();
 else {
   $acldb->set_table_prefix($cfg['db_table_prefix']);

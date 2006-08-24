@@ -158,6 +158,47 @@
     </query>
   </sql>
 
+  <!-- This table adds optional attributes to each resource. Supported types
+       are VARCHAR(200) and integer. -->
+  <table name="resource_attribute">
+    <opt platform="mysql">TYPE=INNODB</opt>
+    <field name="id" type="I">
+      <NOTNULL/>
+      <KEY/>
+      <AUTOINCREMENT/>
+    </field>
+    <field name="resource_id" type="I">
+      <DEFAULT value="0"/>
+      <NOTNULL/>
+    </field>
+    <field name="name" type="C" size="50">
+      <NOTNULL/>
+    </field>
+    <field name="type" type="I">
+      <DEFAULT value="0"/>
+    </field>
+    <field name="attr_string" type="C" size="200"/>
+    <field name="attr_int" type="I"/>
+
+    <index name="resource_attribute_resource_id">
+      <col>resource_id</col>
+    </index>
+    <index name="resource_attribute_name">
+      <col>name</col>
+    </index>
+  </table>
+  <sql>
+    <query>
+    ALTER TABLE resource_attribute TYPE = innodb
+    </query>
+    <query>
+    ALTER TABLE resource_attribute
+    ADD FOREIGN KEY(id)
+    REFERENCES resource(id)
+    ON DELETE CASCADE
+    </query>
+  </sql>
+
   <!-- The resource path organizes objects into a tree.
        Every object can be placed under an arbitrary number of parent
        objects. -->
