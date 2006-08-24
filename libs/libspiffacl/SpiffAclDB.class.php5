@@ -812,7 +812,8 @@ class SpiffAclDB extends SpiffAclDBReader {
       LEFT JOIN {t_path_ancestor_map} p  ON t1.path=p.ancestor_path
       LEFT JOIN {t_resource_path}     t2 ON t2.path=p.resource_path
       LEFT JOIN {t_resource_section}  s  ON s.handle=r.section_handle
-      WHERE t2.resource_id={id}');
+      WHERE t2.resource_id={id}
+      AND   t2.depth=t1.depth + 1');
     $query->set_table_names($this->table_names);
     $query->set_int('id', $id);
     $rs = $this->db->Execute($query->sql());
