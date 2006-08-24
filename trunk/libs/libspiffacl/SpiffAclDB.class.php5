@@ -378,6 +378,107 @@ class SpiffAclDB extends SpiffAclDBReader {
 
 
   /*******************************************************************
+   * Resource attributes.
+   *******************************************************************/
+  private function resource_has_attribute($resource_id, $name)
+  {
+    $query = new SqlQuery('
+     SELECT id
+     FROM {t_resource_attribute}
+     WHERE resource_id={resource_id} AND name={name}');
+    $query->set_table_names($this->table_names);
+    $query->set_int('resource_id', $resource_id);
+    $query->set_string('name', $name);
+    $rs = $this->db->Execute($query->sql());
+    assert('is_object($rs)');
+    $row = $rs->FetchRow();
+    return $row ? TRUE : FALSE;
+  }
+
+
+  private function resource_add_attribute($resource_id, $name, $value)
+  {
+    $query = new SqlQuery('
+     INSERT INTO {t_resource_attribute}
+       (resource_id, name, type, attr_string, attr_int)
+     VALUES
+       ({resource_id}, {name}, {type}, {attr_string}, {attr_int})');
+    $query->set_table_names($this->table_names);
+    $query->set_int('resource_id', $resource_id);
+    $query->set_string('name', $name);
+    if (is_numeric($value) || is_bool($value)) {
+      $query->set_int('type',     SPIFF_ACLDB_ATTRIB_TYPE_INT);
+      $query->set_int('attr_int', $value);
+      $query->set_null('attr_string');
+    }
+    else {
+      $query->set_int('type',           SPIFF_ACLDB_ATTRIB_TYPE_STRING);
+      $query->set_string('attr_string', $value);
+      $query->set_null('attr_int');
+    }
+    $rs = $this->db->Execute($query->sql());
+    assert('is_object($rs)');
+    return $this->db->Insert_Id();
+  }
+
+
+  private function resource_update_attribute($resource_id, $name, $value)
+  {
+    $query = new SqlQuery('
+     UPDATE {t_resource_attribute}
+     SET type={type},
+         attr_string={attr_string},
+         attr_int={attr_int}
+     WHERE resource_id={resource_id}
+     AND   name={name}');
+    $query->set_table_names($this->table_names);
+    $query->set_int('resource_id', $resource_id);
+    $query->set_string('name', $name);
+    if (is_numeric($value) || is_bool($value)) {
+      $query->set_int('type',     SPIFF_ACLDB_ATTRIB_TYPE_INT);
+      $query->set_int('attr_int', $value);
+      $query->set_null('attr_string');
+    }
+    else {
+      $query->set_int('type',           SPIFF_ACLDB_ATTRIB_TYPE_STRING);
+      $query->set_string('attr_string', $value);
+      $query->set_null('attr_int');
+    }
+    $rs = $this->db->Execute($query->sql());
+    assert('is_object($rs)');
+    return TRUE;
+  }
+
+  
+  public function resource_load_attributes(&$resource)
+  {
+    $query = new SqlQuery('
+     SELECT r.name, r.type, r.attr_string, r.attr_int
+     FROM {t_resource_attribute} r
+     WHERE r.resource_id={resource_id}');
+    $query->set_table_names($this->table_names);
+    $query->set_int('resource_id', $resource->get_id());
+    $rs = $this->db->Execute($query->sql());
+    assert('is_object($rs)');
+    while ($row = $rs->FetchRow()) {
+      switch ($row['type']) {
+      case SPIFF_ACLDB_ATTRIB_TYPE_STRING:
+        $resource->set_attribute($row['name'], $row['attr_string']);
+        break;
+
+      case SPIFF_ACLDB_ATTRIB_TYPE_INT:
+        $resource->set_attribute($row['name'], (int)$row['attr_int']);
+        break;
+      
+      default:
+        assert('FALSE; //should not be reached!');
+      }
+    }
+    return TRUE;
+  }
+
+
+  /*******************************************************************
    * Resource manipulation.
    *******************************************************************/
   private function resource_add_n_children(SpiffAclResource &$resource, $n)
@@ -479,6 +580,13 @@ class SpiffAclDB extends SpiffAclDBReader {
       $parent_path = substr($parent_path, 0, $path_length - 8);
     }
 
+    // Save the attributes.
+    foreach ($resource->get_attribute_list() as $attrib_name => $attrib_value) {
+      $this->resource_add_attribute($resource_id,
+                                    $attrib_name,
+                                    $attrib_value);
+    }
+
     // So good being home!
     $this->db->CompleteTrans();
     $resource->set_id($resource_id);
@@ -491,6 +599,9 @@ class SpiffAclDB extends SpiffAclDBReader {
     assert('is_object($resource)');
     $section = $resource->get_section();
     assert('is_object($section)');
+
+    $this->db->StartTrans();
+    
     $query = new SqlQuery('
       UPDATE {t_resource}
       SET section_handle={section_handle},
@@ -509,6 +620,20 @@ class SpiffAclDB extends SpiffAclDBReader {
     $query->set_bool('is_group',         $resource->is_group());
     $rs = $this->db->Execute($query->sql());
     assert('is_object($rs)');
+
+    // Save the attributes.
+    foreach ($resource->get_attribute_list() as $attrib_name => $attrib_value) {
+      if ($this->resource_has_attribute($resource->get_id(), $attrib_name))
+        $this->resource_update_attribute($resource->get_id(),
+                                         $attrib_name,
+                                         $attrib_value);
+      else
+        $this->resource_add_attribute($resource->get_id(),
+                                      $attrib_name,
+                                      $attrib_value);
+    }
+
+    $this->db->CompleteTrans();
     return $resource;
   }
 
