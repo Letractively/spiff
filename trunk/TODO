@@ -1,5 +1,3 @@
-* Fix parent group list in the user editor page.
-
 * Delete orphaned users.
 
 * Handle invalid/duplicate user/group names.

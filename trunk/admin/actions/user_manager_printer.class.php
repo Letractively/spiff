@@ -37,10 +37,14 @@
         // Existing user or group.
         $resource = $this->acldb->get_resource_from_id($id);
         $this->acldb->resource_load_attributes($resource);
-        $groups   = $this->acldb->get_resource_children($resource,
+        if (!$resource->is_group())
+          $groups = $this->acldb->get_resource_parents($resource);
+        else {
+          $groups = $this->acldb->get_resource_children($resource,
                                                         SPIFF_ACLDB_FETCH_GROUPS);
-        $users    = $this->acldb->get_resource_children($resource,
+          $users  = $this->acldb->get_resource_children($resource,
                                                         SPIFF_ACLDB_FETCH_ITEMS);
+        }
         break;
       }
 
