@@ -25,20 +25,14 @@
  */
 class SqlQuery
 {
-  var $query = '';
-  var $data  = array();
+  var $query       = '';
+  var $data        = array();
   var $table_names = array();
   
   // Constructor.
   function SqlQuery($query = '')
   {
     $this->query = $query;
-    $this->data  = array();
-    
-    foreach( $this->table_names as $t=>$name )
-    {
-      $this->query = str_replace( '{'.$t.'}',$name,$this->query );
-    }
   }
   
   
@@ -46,28 +40,17 @@ class SqlQuery
   function set_sql($query = '')
   {
     $this->query = $query;
-    
-    foreach( $this->table_names as $t=>$name )
-    {
-      $this->query = str_replace( '{'.$t.'}',$name,$this->query );
-    }
-    
-    foreach( $this->data as $name=>$data )
-    {
-      if ( $data['type']=='string' )  $this->set_string($name,$data['value'] );
-      if ( $data['type']=='hex'    )  $this->set_hex   ($name,$data['value'] );
-      if ( $data['type']=='int'    )  $this->set_int   ($name,$data['value'] );
-      if ( $data['type']=='null'   )  $this->set_null  ($name                );
+    foreach ($this->table_names as $t=>$name) {
+      $this->query = str_replace( '{'.$t.'}', $name, $this->query);
     }
   }
-  
+
   
   function set_table_names(&$tables)
   {
     $this->table_names = $tables;
-    foreach( $this->table_names as $t=>$name )
-    {
-      $this->query = str_replace( '{'.$t.'}',$name,$this->query );
+    foreach ($this->table_names as $t=>$name) {
+      $this->query = str_replace( '{'.$t.'}', $name, $this->query);
     }
   }
   
@@ -90,41 +73,38 @@ class SqlQuery
   
   function set_int($name, $value)
   {
-    $this->data[ $name ] = array( 'type'=>'int','value'=>$value );
-    $this->query = str_replace( '{'.$name.'}',intval($value),$this->query );
+    $this->data[$name] = array('type'=>'int', 'value'=>(int)$value);
   }
   
   
   function set_string($name, $value)
   {
-    $this->data[ $name ] = array( 'type'=>'string','value'=>$value );
     $value = addslashes($value);
     $value = "'".$value."'";
-    $this->query = str_replace( '{'.$name.'}',$value,$this->query );
+    $this->data[$name] = array('type'=>'string', 'value'=>$value);
   }
   
   
   function set_hex($name, $value)
   {
-    $this->data[ $name ] = array( 'type'=>'hex','value'=>$value );
     $value = addslashes($value);
-    $value = "0x".$value;
-    $this->query = str_replace( '{'.$name.'}',$value,$this->query );
+    $value = '0x'.$value;
+    $this->data[$name] = array('type'=>'hex', 'value'=>$value);
   }
   
   
   function set_bool($name, $value)
   {
-    if        ( $value )
-         $this->set_int( $name,1 );
-    else        $this->set_int( $name,0 );
+    if ($value)
+      $this->set_int($name, 1);
+    else
+      $this->set_int($name, 0);
   }
   
   
   function set_null($name)
   {
-    $this->data[ $name ] = array( 'type'=>'null' );
-    $this->query = str_replace( '{'.$name.'}','NULL',$this->query );
+    $this->data[$name] = array('type'=>'null', 'value'=>'NULL');
   }
   
   
@@ -136,7 +116,13 @@ class SqlQuery
   
   function &get_sql()
   {
-    return $this->query;
+    $query = $this->query;
+    foreach ($this->data as $name=>$data) {
+      $value = str_replace('}', '\}', $data['value']);
+      $query = str_replace( '{'.$name.'}', $value, $query);
+    }
+    $query = str_replace('\}', '}', $query);
+    return $query;
   }
 }
 ?>
