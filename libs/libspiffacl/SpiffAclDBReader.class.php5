@@ -125,7 +125,7 @@ class SpiffAclDBReader {
       WHERE t1.resource_id={resource_id}
       AND   ac.action_id={action_id}
       AND   t4.resource_id={actor_id}
-      ORDER BY t1.path, t2.path, t3.path, t4.path
+      ORDER BY t2.path, t3.path
       LIMIT    1');
     $query->set_table_names($this->table_names);
     $query->set_int('actor_id',    $actor_id);
@@ -205,6 +205,7 @@ class SpiffAclDBReader {
       LEFT JOIN action a ON a.id = ac1.action_id
       LEFT JOIN action_section s ON a.section_handle = s.handle
       
+
       -- **************************************************************
       -- * 2. We want to filter out any ACL that is defined for the
       -- * same action but has a shorter actor path.
@@ -218,7 +219,6 @@ class SpiffAclDBReader {
       -- Get a list of all ACLs that perform the same action, but only
       -- if their actor path is longer.
       LEFT JOIN resource_path t5 ON ac2.actor_id=t5.resource_id AND t5.depth>t3.depth
-
 
 
       -- **************************************************************
@@ -236,7 +236,6 @@ class SpiffAclDBReader {
       LEFT JOIN resource_path t7 ON p3.resource_path=t7.path OR t6.id=t7.id
 
 
-
       -- **************************************************************
       -- * 4. We want to filter out any ACL that is defined for the
       -- * same action but has a shorter resource path.
@@ -250,7 +249,6 @@ class SpiffAclDBReader {
       -- Get a list of all ACLs that perform the same action, but only
       -- if their resource path is longer.
       LEFT JOIN resource_path t8 ON ac3.resource_id=t8.resource_id AND t8.depth>t3.depth
-
 
 
       -- **************************************************************

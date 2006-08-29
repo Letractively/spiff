@@ -1,0 +1,132 @@
+Use case: Installing a plugin.
+-----------------------------
+- The user uploads the new plugin through the web interface.
+- Spiff installs the plugin into a temporary directory.
+- Spiff reads the header of the plugin. The header includes the
+  name, system name, version, description, and dependencies.
+- Spiff checks the header information and makes sure the dependencies
+  are installed.
+- If everything is ok, Spiff moves the plugin into the plugin directory.
+- Spiff assigns a priority to the plugin, by comparing the dependency
+  list with the list of installed plugins.
+- Spiff registers the plugin in the database, with the priority appended.
+
+
+Use case: Login Plugin
+----------------------
+- The homepage is opened.
+- Spiff finds a request in the database to embed a login
+  window in the homepage.
+- Spiff constructs the dependencies of the Login plugin.
+
+- Spiff constructs the Login plugin.
+- The plugin constructor registers a CHECK function that is
+  called before any other content is drawn to the web site
+  by any plugin.
+- The plugin constructor registers a RENDERER function that
+  is called when the login form has to be written to the
+  page.
+
+- Spiff calls the CHECK function.
+- The plugin checks the SESSION variable for the currently
+  logged in user.
+- If no user is logged in, the plugin just shows an error and
+  ends the page rendering process.
+- When the content must be rendered, Spiff calls the RENDERER
+  function.
+- If no user is logged in, the plugin renders the login form
+  into the page.
+- Spiff proceeds the rendering process as usual.
+
+- A user fills in his username and password, and presses the
+  login button.
+- The plugin reloads the page with the username and password
+  posted, and with the login=1 flag set.
+- The CHECK function is called and tries to process the login
+  request.
+- On success, the plugin sets the SESSION variable and the 
+  page rendering process proceeds as usual.
+
+
+
+class SpiffPlugin {
+  private $spiff;
+  protected $name;
+  protected $sys_name;
+  protected $version;
+  protected $description;
+  private $dependencies;
+  
+  private function __constructor(Spiff &$spiff) {
+    $this->spiff        = $spiff;
+    $this->dependencies = array();
+  }
+
+  public function set_name($name) {
+    assert('isset($name) && $name != ""');
+    $this->name = $name;
+  }
+
+  public function get_name() {
+    return $this->name;
+  }
+
+  public function set_sys_name($sys_name) {
+    assert('isset($sys_name) && $sys_name != ""');
+    $this->sys_name = $sys_name;
+  }
+
+  public function get_sys_name() {
+    return $this->sys_name;
+  }
+
+  public function set_version($version) {
+    assert('isset($version) && $version != ""');
+    $this->version = $version;
+  }
+
+  public function get_version() {
+    return $this->version;
+  }
+
+  public function set_description($description) {
+    assert('isset($description) && $description != ""');
+    $this->description = $description;
+  }
+
+  public function get_description() {
+    return $this->description;
+  }
+
+  public function add_dependency($dependency) {
+    assert('isset($dependency) && $dependency != ""');
+    array_push($this->dependencies, $dependency);
+  }
+
+  public function get_dependency_list() {
+    return $this->dependencies;
+  }
+
+  public function register_callback($name, $function) {
+    assert('isset($name) && $name != ""');
+    assert('isset($function));
+    $this->spiff->get_bus->register($name, $function); //FIXME
+  }
+}
+
+
+
+class SpiffPlugin_Login extends SpiffPlugin {
+  function initialize() {
+    $this->register_callback('on_plugin_page_open',      '$this->on_plugin_page_open');
+    $this->register_callback('on_plugin_render_request', '$this->on_plugin_render_request');
+  }
+
+  public function on_plugin_page_open() {
+    echo "SpiffPluginLogin::on_plugin_page_open()<br>\n";
+  }
+
+  public function on_plugin_render_request() {
+    echo "SpiffPluginLogin::on_plugin_render_request()<br>\n";
+  }
+}

@@ -23,7 +23,7 @@ class SpiffAclDB extends SpiffAclDBReader {
   /*******************************************************************
    * Private helper functions.
    *******************************************************************/
-  /// Convert an integer to a char wide hexadecimal string.
+  /// Convert an integer to a 8 char wide hexadecimal string.
   /**
    * Given a decimal number, this function returns an 8 character wide
    * hexadecimal string representation.
@@ -261,7 +261,7 @@ class SpiffAclDB extends SpiffAclDBReader {
   }
 
 
-  /// Saves the given SpiffAclAction in the database.
+  /// Saves the given SpiffAclAction to the database.
   /**
    */
   public function &save_action(SpiffAclAction &$action)
