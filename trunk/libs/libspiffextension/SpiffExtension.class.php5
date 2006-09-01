@@ -18,35 +18,18 @@
   */
 ?>
 <?php
-class SpiffPlugin {
-  private $spiff;
-  protected $name;
-  protected $sys_name;
+class SpiffExtension extends SpiffAclResource {
   protected $version;
   protected $description;
   private $dependencies;
   
-  private function __constructor(Spiff &$spiff) {
-    $this->spiff        = $spiff;
+  private function __constructor($handle, $name, $version, $section) {
+    assert('isset($handle)');
+    assert('isset($name)');
+    assert('isset($version)');
+    assert('is_object($section)');
+    parent::__constructor($handle, $name, $section);
     $this->dependencies = array();
-  }
-
-  public function set_name($name) {
-    assert('isset($name) && $name != ""');
-    $this->name = $name;
-  }
-
-  public function get_name() {
-    return $this->name;
-  }
-
-  public function set_sys_name($sys_name) {
-    assert('isset($sys_name) && $sys_name != ""');
-    $this->sys_name = $sys_name;
-  }
-
-  public function get_sys_name() {
-    return $this->sys_name;
   }
 
   public function set_version($version) {
@@ -74,12 +57,6 @@ class SpiffPlugin {
 
   public function get_dependency_list() {
     return $this->dependencies;
-  }
-
-  public function register_callback($name, $function) {
-    assert('isset($name) && $name != ""');
-    assert('isset($function));
-    $this->spiff->get_bus->register($name, $function); //FIXME
   }
 }
 ?>

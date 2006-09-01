@@ -1,0 +1,113 @@
+Simple signalling system for PHP5
+
+For the needs of a IRC mate, which needed a simple way of providing a plug-in system, I wrote a simple PHP5 implementation of a signalling system, similar to the ones you can find in glib or sigc++.
+
+Signalling systems are similar to the observer design pattern. It allows an object to tell other objects that something happened, allowing them to react to events.
+
+It supports the main features of glib signalling system:
+
+    * Creating a default handler for a signal;
+    * Connecting handlers before or after the default handler;
+    * Blocking a signal (to avoid it to be ran);
+    * Passing extra arguments to a signal handler while connecting.
+
+It is available there.
+
+sig.php contains two classes: Signal and Trackable. The first one handles the actual signalling stuff, while the second one is meant as a base class providing control access and ease of use.
+
+Trackable's main purpose is to manage access to signals. In particular, it makes it impossible to override a signal object outside the class. Using this class is fully optional and you can just forget it if you want to add signals to objects inheriting from something else.
+
+Let's have an introduction on how to create and use signals.
+Registering signals
+
+First thing to do is to create signals for the target object. The easiest way to do so is to derive your new class from Trackable. If you do so, you can just add signal registration in your __construct method.
+
+set_signal($name, $expected_args = -1, $run_last = true)
+
+The $name argument is the name of your signal. It's a property name and so it is subject to naming conventions of PHP variables. $expected_args allows you to set a number of arguments that has to be provided when emit() is called. If its value is -1, then no test will be performed. $run_last means that the default handler will be ran after your connected handlers by default. If you set it to false, then it won't be possible anymore to connect a handler before the default one.
+
+What the above method does is similar to this:
+
+$this->$name = new Signal($name, $this,
+                          $expected_args, $run_last);
+
+Emitting a signal
+
+Now that a signal has been registered, it's possible to emit it. Usually, only objects emit their own signals. This can be done using the emit() method from the Signal object:
+
+$this->my_signal->emit($arg1, $arg2);
+
+The amount of arguments you pass to the emit() method must be equal to $expected_args (unless the latter has been set to -1). There is no other sanity check (type checking is not obvious in PHP), but usually the expected arguments are of a given type, with a given semantic. For instance you can imagine than a store object could have a value_changed signal, which would expect one argument, being the value object.
+Listening to a signal
+
+If you want to react to some signal, what you have to do is to connect a handler to it:
+
+$o->my_signal->connect($handler, $harg1, $harg2);
+$o->my_signal->connect_after($handler, $harg1, $harg2);
+
+The former will connect the handler before or after the default handler depending on the value of $run_last. The latter will always connect the handler after the default handler. $handler is a PHP callback. You can provide any additional arguments you want, they will be passed to the handler when it gets called.
+
+The handler prototype looks like that:
+
+function signal_handler($object, $arg1, $arg2, $harg1, $harg2)
+
+The $object parameter is the object the emitted signal belongs to. The other ones are the sames as before: the emit() arguments, followed by the connect() arguments.
+The default handler
+
+The default handler is a special handler that belongs to the object emitting the signal. It's the one that gets called .in the middle. and is meant to do the default action of the signal. For instance, for a insert_value signal, the default handler will do the actual value insertion.
+
+There is no need to connect explicitly a default handler. If the object owning the signal has a method named do_$name (where $name is the name of the signal), then it will be used as the default handler.
+
+Its prototype is slightly different from the other handlers, because it only accepts the emit() arguments as parameters. This is because there is no connect() arguments, and the owner object is just $this.
+Breaking the signal chain.
+
+It is possible for a handler to break the signal chain. In other words, a handler may avoid the following handlers to be ran. This is useful for events where each handlers react to one value.
+
+For instance, if you have a url_requested signal, which gives the opportunity for any handler to process the URL and build the corresponding page. You certainly don't want several pages to be created for one URL, do you?
+
+To break the chain, a function just has to return something that gets evaluated to true. Then the emit() function will return the value the handler returned.
+
+In the above example, that translates to the fact that the handler will create the page and return it if it recognises the URL. Otherwise it will just return false. If no handler generate a page, then the default one will create a 404 page and return it. In turn the object will display it, cache it and whatnot.
+Blocking a signal
+
+Blocking a signal might be useful to avoid it to be ran recursively, for instance. It's possible using these methods, whose name are explicit enough not to require further explanations:
+
+$o->my_signal->block();
+$o->my_signal->unblock()
+
+Small example
+
+Here is a small example showing the main features of sig.php:
+
+<?php
+require_once "sig.php";
+
+class Test extends Trackable
+{
+    public function __construct()
+    {
+        # hello Signal, with a name as the argument.
+        $this->set_signal("hello", 1);
+    }
+  
+    public function say_hello()
+    {
+        $this->hello->emit("world");
+    }
+  
+    public function do_hello($name)
+    {
+        echo "Hello $name!\n";
+    }
+}
+
+function hello_handler($object, $name, $when)
+{
+    echo "$when saying hello to $name\n";
+}
+
+$o = new Test();
+$o->hello->connect('hello_handler', 'Before');
+$o->hello->connect_after('hello_handler', 'After');
+$o->say_hello();
+?>

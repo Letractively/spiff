@@ -12,8 +12,8 @@ class PluginRegistry {
    * Returns: The extracted fields in an object.
    */
   function &_parse_plugin($filename) {
-    if (!preg_match("/^[a-z0-9\-_\/]+\.php$/i", $filename))
-      die("PluginRegistry::_parse_plugin(): Invalid file or path.");
+    //if (!preg_match("/^[a-z0-9\-_\/]+\.php$/i", $filename))
+      //FIXME:die("PluginRegistry::_parse_plugin(): Invalid file or path.");
     $fp  = fopen($filename, "r");
     $tag = '';
     fgets($fp);
@@ -68,8 +68,8 @@ class PluginRegistry {
    * Reads all plugins from the given directory and parses their headers.
    */
   function read_plugins($dirname) {
-    if (!preg_match("/^[a-z\-_0-9]+$/i", $dirname))
-      die("PluginRegistry::read_plugins(): Invalid path.");
+    //if (!preg_match("/^[a-z\-_0-9]+$/i", $dirname))
+      //FIXME:die("PluginRegistry::read_plugins(): Invalid path.");
     $list = scandir($dirname);
     foreach ($list as $path) {
       $path = "$dirname/$path";
