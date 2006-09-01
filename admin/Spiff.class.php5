@@ -20,16 +20,23 @@
 ?>
 <?php
   error_reporting(E_ALL);
+  define('SMARTY_DIR',            '../libs/smarty');
+  define('ADODB_DIR',             '../libs/adodb');
+  define('LIBSPIFFACL_DIR',       '../libs/libspiffacl');
+  define('LIBSPIFFEXTENSION_DIR', '../libs/libspiffextension');
+  define('LIBUSEFUL_DIR',         '../libs/libuseful');
+  define('SPIFF_PLUGIN_DIR',      '../plugins');
   
   // Load libs.
-  require_once '../libs/smarty/Smarty.class.php';
-  require_once '../libs/adodb/adodb.inc.php';
-  require_once '../libs/libspiffacl/SpiffAclDB.class.php5';
-  include_once '../libs/libuseful/SqlQuery.class.php5';
-  include_once '../libs/libuseful/assert.inc.php';
-  include_once '../libs/libuseful/string.inc.php';
-  include_once '../libs/libuseful/httpquery.inc.php';
-  include_once '../libs/libuseful/files.inc.php';
+  require_once SMARTY_DIR .            '/Smarty.class.php';
+  require_once ADODB_DIR .             '/adodb.inc.php';
+  require_once LIBSPIFFACL_DIR .       '/SpiffAclDB.class.php5';
+  //require_once LIBSPIFFEXTENSION_DIR . '/SpiffExtensionDB.class.php5';
+  include_once LIBUSEFUL_DIR .         '/SqlQuery.class.php5';
+  include_once LIBUSEFUL_DIR .         '/assert.inc.php';
+  include_once LIBUSEFUL_DIR .         '/string.inc.php';
+  include_once LIBUSEFUL_DIR .         '/httpquery.inc.php';
+  include_once LIBUSEFUL_DIR .         '/files.inc.php';
 
   // Load internal stuff.
   include_once 'functions/config.inc.php';
@@ -90,7 +97,7 @@
              . ' Please check username, password and hostname.');
 
       $this->registry = &new PluginRegistry();
-      $this->registry->read_plugins('plugins');
+      $this->registry->read_plugins(SPIFF_PLUGIN_DIR);
       $this->registry->activate_plugins($this); //FIXME: Make activation configurable.
 
       /* Plugin hook: on_construct

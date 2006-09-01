@@ -18,7 +18,7 @@
   */
 ?>
 <?php
-class SpiffPlugin_Login extends SpiffPlugin {
+class SpiffExtension_Login extends SpiffExtension {
   function initialize() {
     $this->register_callback('on_plugin_page_open',
                              '$this->on_plugin_page_open');
@@ -27,11 +27,11 @@ class SpiffPlugin_Login extends SpiffPlugin {
   }
 
   public function on_plugin_page_open() {
-    echo "SpiffPluginLogin::on_plugin_page_open()<br>\n";
+    echo "SpiffExtensionLogin::on_plugin_page_open()<br>\n";
   }
 
   public function on_plugin_render_request() {
-    echo "SpiffPluginLogin::on_plugin_render_request()<br>\n";
+    echo "SpiffExtensionLogin::on_plugin_render_request()<br>\n";
   }
 }
 ?>
