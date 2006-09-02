@@ -214,7 +214,7 @@ abstract class Trackable
      * @param  integer  $expected_args  The amount of expected args on emit()
      * @param  boolean  $run_last       Does the default handler run last?
      */
-    protected function set_signal($name, $expected_args = -1, $run_last = true)
+    protected function add_signal($name, $expected_args = -1, $run_last = true)
     {
         if (!preg_match('/[a-z_][a-z0-9_]/i', $name))
             throw new Exception("Bad name for signal: $name");
