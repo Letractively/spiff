@@ -33,6 +33,7 @@
   require_once LIBSPIFFACL_DIR .       '/SpiffAclDB.class.php5';
   //require_once LIBSPIFFEXTENSION_DIR . '/SpiffExtensionDB.class.php5';
   include_once LIBUSEFUL_DIR .         '/SqlQuery.class.php5';
+  include_once LIBUSEFUL_DIR .         '/EventBus.class.php5';
   include_once LIBUSEFUL_DIR .         '/assert.inc.php';
   include_once LIBUSEFUL_DIR .         '/string.inc.php';
   include_once LIBUSEFUL_DIR .         '/httpquery.inc.php';
@@ -59,7 +60,6 @@
   include_once 'actions/user_manager_printer.class.php';
   include_once 'actions/permission_tree_printer.class.php';
   
-  include_once 'services/trackable.class.php';
   include_once 'services/plugin_registry.class.php';
   
   
@@ -88,8 +88,7 @@
       textdomain($domain);
       bind_textdomain_codeset($domain, 'UTF-8');
       
-      // (Ab)use a Trackable as an eventbus.
-      $this->eventbus = &new Trackable;
+      $this->eventbus = &new EventBus;
 
       // Connect to the DB.
       $this->db = &ADONewConnection(cfg('db_dbn'))
@@ -106,7 +105,7 @@
        *   The return value of the callback is ignored.
        *   Args: None.
        */
-      $this->eventbus->emit("on_construct");
+      $this->eventbus->emit('on_construct');
       
       // Init Smarty.
       $this->smarty = &new Smarty();

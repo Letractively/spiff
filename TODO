@@ -1,3 +1,8 @@
+* Finish libspiffextension, a generic library that makes adding
+  plugin support easy.
+
+* Add a plugin parser into libspiffextension.
+
 * Delete orphaned users.
 
 * Handle invalid/duplicate user/group names.
