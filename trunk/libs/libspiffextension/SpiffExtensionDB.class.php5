@@ -45,7 +45,8 @@ class SpiffExtensionDB {
   private function update_table_names()
   {
     $this->table_names = array (
-      't_extension' => $this->db_table_prefix . 'extension',
+      't_extension'            => $this->db_table_prefix . 'extension',
+      't_extension_dependency' => $this->db_table_prefix . 'extension_dependency'
     );
   }
 
@@ -74,8 +75,67 @@ class SpiffExtensionDB {
 
 
   /*******************************************************************
+   * Handling dependencies.
+   *******************************************************************/
+  /// Links the given extension with the given dependency.
+  /**
+   * Links the extension with the given id with the dependency with
+   * the given id.
+   * \return TRUE  on success, FALSE otherwise.
+   */
+  private function add_dependency_from_id($extension_id, $dependency_id)
+  {
+    //FIXME.
+    return TRUE;
+  }
+
+
+  /// Checks whether the required dependencies are installed.
+  /**
+   * Returns TRUE if all dependencies needed to install the given
+   * extension are installed, FALSE otherwise.
+   * \return Boolean.
+   */
+  public function check_dependencies(SpiffExtension &$extension)
+  {
+    // Walk through the dependency list.
+    foreach ($extension->get_dependency_list() as $dependency) {
+      // Find all installed versions of the dependency.
+      $versions = $this->get_extension_version_list_from_handle($dependency);
+
+      // Select the dependency with the highest version number that
+      // matches the version requirement.
+      unset($best_dependency);
+      foreach ($versions as $dependency_version) {
+        //FIXME
+      }
+
+      // If no matching dependency exists, return FALSE.
+      if (!isset($best_dependency))
+        return FALSE.
+    }
+    // Cool, all dependencies are installed!
+    return TRUE;
+  }
+
+
+  /*******************************************************************
    * Handling extensions.
    *******************************************************************/
+  /// Checks whether the extension is installed.
+  /**
+   * Returns TRUE if the given extension is installed with
+   * the same version.
+   * \return Boolean.
+   */
+  public function has_extension(SpiffExtension &$extension)
+  {
+    // Check whether the given extension is installed.
+    //FIXME
+    return TRUE;
+  }
+
+
   /// Register an extension.
   /**
    * Inserts the given SpiffExtension into the database. If the extension is
@@ -84,6 +144,47 @@ class SpiffExtensionDB {
    */
   public function &install_extension(SpiffExtension &$extension)
   {
+    // Check whether the extension is already installed.
+    if ($this->has_extension($extension))
+      return $extension;
+    
+    // Start transaction.
+    $this->db->StartTrans();
+
+    // Make sure that all dependencies are installed.
+    if (!$this->check_dependencies($extension))
+      die('SpiffExtensionDB:install_extension(): Attempt to install'
+          ' an extension with unmatched dependencies.');
+
+    // Insert the extension into the extension table.
+    //FIXME.
+
+    // Walk through all dependencies.
+    foreach ($extension->get_dependency_list() as $dependency) {
+      // Find all installed versions of the dependency.
+      $versions = $this->get_extension_version_list_from_handle($dependency);
+      
+      // Select the dependency with the highest version number that
+      // matches the version requirement.
+      unset($best_dependency);
+      foreach ($version as $dependency_version) {
+        //FIXME
+      }
+      
+      // If no matching dependency exists, something was really
+      // broken.
+      if (!isset($best_dependency))
+        die('SpiffExtensionDB:install_extension(): Argh! No matching'
+            ' dependency found - something must be really broken.');
+
+      // Link the extension with the best dependency in the tree.
+      $this->add_dependency_from_id($extension_id,
+                                    $best_dependency_id);
+    }
+
+    // End transaction.
+    $this->db->CompleteTrans();
+    return $extension;
   }
 
 
@@ -96,6 +197,7 @@ class SpiffExtensionDB {
   public function uninstall_extension_from_id($id)
   {
     assert('is_int($id)');
+    //FIXME.
   }
 
 
@@ -167,6 +269,20 @@ class SpiffExtensionDB {
       $extension->add_dependency($row['dep_handle']);
     }
     return $extension;
+  }
+
+
+  /// Returns a list of all installed versions of an extension.
+  /**
+   * Returns a list of all installed versions of the extension
+   * with the given handle.
+   * \return An array of SpiffExtensions.
+   */
+  private function get_extension_version_list_from_handle($handle)
+  {
+    assert('isset($handle) && $handle != ""');
+    //FIXME.
+    return $version_list;
   }
 }
 ?>
