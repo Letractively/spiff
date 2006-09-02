@@ -81,9 +81,9 @@ class SpiffExtensionDB {
   /**
    * Links the extension with the given id with the dependency with
    * the given id.
-   * \return TRUE  on success, FALSE otherwise.
+   * \return TRUE on success, FALSE otherwise.
    */
-  private function add_dependency_from_id($extension_id, $dependency_id)
+  private function add_dependency_link_from_id($extension_id, $dependency_id)
   {
     //FIXME.
     return TRUE;
@@ -131,8 +131,18 @@ class SpiffExtensionDB {
   public function has_extension(SpiffExtension &$extension)
   {
     // Check whether the given extension is installed.
-    //FIXME
-    return TRUE;
+    $query = new SqlQuery('
+      SELECT    e.id
+      FROM      {t_extension} e
+      WHERE e.handle={handle}
+      AND   e.version={version}');
+    $query->set_table_names($this->table_names);
+    $query->set_string('handle',  $extension->get_handle());
+    $query->set_string('version', $extension->get_version());
+    $rs = $this->db->Execute($query->sql());
+    assert('is_object($rs)');
+    $row = $rs->FetchRow();
+    return $row ? TRUE : FALSE;
   }
 
 
@@ -178,8 +188,8 @@ class SpiffExtensionDB {
             ' dependency found - something must be really broken.');
 
       // Link the extension with the best dependency in the tree.
-      $this->add_dependency_from_id($extension_id,
-                                    $best_dependency_id);
+      $this->add_dependency_link_from_id($extension_id,
+                                         $best_dependency_id);
     }
 
     // End transaction.
