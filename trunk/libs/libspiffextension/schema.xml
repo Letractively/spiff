@@ -37,9 +37,55 @@
     </query>
   </sql>
 
+  <!-- Contains a list of all dependencies between extensions. -->
+  <table name="extension_dependency">
+    <opt platform="mysql">TYPE=INNODB</opt>
+    <field name="id" type="I">
+      <NOTNULL/>
+      <KEY/>
+      <AUTOINCREMENT/>
+    </field>
+    <field name="extension_id" type="I">
+      <NOTNULL/>
+    </field>
+    <field name="dependency_handle" type="C" size="20">
+      <NOTNULL/>
+    </field>
+    <field name="dependency_operator" type="I">
+      <NOTNULL/>
+    </field>
+    <field name="dependency_version" type="C" size="20">
+      <NOTNULL/>
+    </field>
+
+    <index name="extension_dependency_extension_id">
+      <col>extension_id</col>
+    </index>
+    <index name="extension_dependency_dependency_handle">
+      <col>dependency_handle</col>
+    </index>
+    <index name="extension_dependency_dependency_operator">
+      <col>dependency_operator</col>
+    </index>
+    <index name="extension_dependency_dependency_version">
+      <col>dependency_version</col>
+    </index>
+  </table>
+  <sql>
+    <query>
+    ALTER TABLE resource TYPE = innodb
+    </query>
+    <query>
+    ALTER TABLE extension_dependency
+    ADD FOREIGN KEY(extension_dependency_extension_id)
+    REFERENCES extension(id)
+    ON DELETE CASCADE
+    </query>
+  </sql>
+
   <!-- Contains a tree that reflects the dependencies between
        extensions. -->
-  <table name="extension_dependency">
+  <table name="extension_tree">
     <opt platform="mysql">TYPE=INNODB</opt>
     <field name="id" type="I">
       <NOTNULL/>
@@ -56,13 +102,13 @@
       <NOTNULL/>
     </field>
 
-    <index name="extension_dependency_lft">
+    <index name="extension_tree_lft">
       <col>lft</col>
     </index>
-    <index name="extension_dependency_rgt">
+    <index name="extension_tree_rgt">
       <col>rgt</col>
     </index>
-    <index name="extension_dependency_extension_id">
+    <index name="extension_tree_extension_id">
       <col>extension_id</col>
     </index>
   </table>
@@ -71,8 +117,8 @@
     ALTER TABLE resource TYPE = innodb
     </query>
     <query>
-    ALTER TABLE extension_dependency
-    ADD FOREIGN KEY(extension_dependency_extension_id)
+    ALTER TABLE extension_tree
+    ADD FOREIGN KEY(extension_tree_extension_id)
     REFERENCES extension(id)
     ON DELETE CASCADE
     </query>

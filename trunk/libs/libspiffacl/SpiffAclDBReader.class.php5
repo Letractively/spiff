@@ -99,7 +99,7 @@ class SpiffAclDBReader {
   /// Returns TRUE if the given actor has the requested permission.
   /**
    * Returns TRUE if the actor with the given id is allowed to perform the
-   * action with the given id on the resourcewith the given id.
+   * action with the given id on the resource with the given id.
    * Returns FALSE otherwise.
    * This method is recursive, so even ACLs that are defined for parents
    * of the given resources are considered if they apply.
