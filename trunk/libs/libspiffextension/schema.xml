@@ -37,7 +37,8 @@
     </query>
   </sql>
 
-  <!-- Contains a list of all dependencies between extensions. -->
+  <!-- Contains a list of the dependencies that each extension has
+       specified. -->
   <table name="extension_dependency">
     <opt platform="mysql">TYPE=INNODB</opt>
     <field name="id" type="I">
@@ -83,8 +84,8 @@
     </query>
   </sql>
 
-  <!-- Contains a tree that reflects the dependencies between
-       extensions. -->
+  <!-- Contains a list that reflects the actual chosen dependencies
+       between extensions. -->
   <table name="extension_dependency_map">
     <opt platform="mysql">TYPE=INNODB</opt>
     <field name="extension_id" type="I">
