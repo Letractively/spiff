@@ -85,40 +85,35 @@
 
   <!-- Contains a tree that reflects the dependencies between
        extensions. -->
-  <table name="extension_tree">
+  <table name="extension_dependency_map">
     <opt platform="mysql">TYPE=INNODB</opt>
-    <field name="id" type="I">
-      <NOTNULL/>
-      <KEY/>
-      <AUTOINCREMENT/>
-    </field>
-    <field name="lft" type="I">
-      <NOTNULL/>
-    </field>
-    <field name="rgt" type="I">
-      <NOTNULL/>
-    </field>
     <field name="extension_id" type="I">
       <NOTNULL/>
     </field>
+    <field name="dependency_id" type="I">
+      <NOTNULL/>
+    </field>
 
-    <index name="extension_tree_lft">
-      <col>lft</col>
-    </index>
-    <index name="extension_tree_rgt">
-      <col>rgt</col>
-    </index>
-    <index name="extension_tree_extension_id">
+    <index name="extension_dependency_map_extension_id">
       <col>extension_id</col>
+    </index>
+    <index name="extension_dependency_map_dependency_id">
+      <col>dependency_id</col>
     </index>
   </table>
   <sql>
     <query>
-    ALTER TABLE extension_tree TYPE = innodb
+    ALTER TABLE extension_dependency_map TYPE = innodb
     </query>
     <query>
-    ALTER TABLE extension_tree
-    ADD FOREIGN KEY(extension_tree_extension_id)
+    ALTER TABLE extension_dependency_map
+    ADD FOREIGN KEY(extension_dependency_map_extension_id)
+    REFERENCES extension(id)
+    ON DELETE CASCADE
+    </query>
+    <query>
+    ALTER TABLE extension_dependency_map
+    ADD FOREIGN KEY(extension_dependency_map_dependency_id)
     REFERENCES extension(id)
     ON DELETE CASCADE
     </query>
