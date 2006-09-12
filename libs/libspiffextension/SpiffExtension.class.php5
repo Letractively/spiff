@@ -18,6 +18,18 @@
   */
 ?>
 <?php
+// Define allowed dependency patterns.
+define('SPIFF_EXTENSION_HANDLE_RE',       '\w+');
+define('SPIFF_EXTENSION_VERSION_RE',      '\d+(?:\.\d+)+');
+define('SPIFF_EXTENSION_VERSION_OPER_RE', '(?:=|>=)');
+define('SPIFF_EXTENSION_DEPENDENCY_RE',   SPIFF_EXTENSION_HANDLE_RE
+                                        . '(?:'
+                                        .    ' ?'
+                                        .    SPIFF_EXTENSION_VERSION_OPER_RE
+                                        .    ' ?'
+                                        .    SPIFF_EXTENSION_VERSION_RE
+                                        . ')?');
+
 class SpiffExtension extends SpiffAclResource {
   protected $version;
   protected $description;
@@ -52,6 +64,10 @@ class SpiffExtension extends SpiffAclResource {
 
   public function add_dependency($dependency) {
     assert('isset($dependency) && $dependency != ""');
+    $valid_dependency_format = FALSE;
+    if (preg_match('/'.SPIFF_EXTENSION_DEPENDENCY_RE.'/', $dependency))
+      $valid_dependency_format = TRUE;
+    assert('$valid_dependency_format; // $dependency');
     array_push($this->dependencies, $dependency);
   }
 
