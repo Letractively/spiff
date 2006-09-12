@@ -76,7 +76,7 @@ class SpiffExtensionDB {
 
 
   /*******************************************************************
-   * Handling dependencies.
+   * Dependency tree functions.
    *******************************************************************/
   /// Links the given extension with the given dependency.
   /**
@@ -137,12 +137,39 @@ class SpiffExtensionDB {
   }
 
 
-  /// Updates the dependency tree from the dependency table.
+  /*******************************************************************
+   * Dependency table functions.
+   *******************************************************************/
+  /// Returns TRUE if $version_a is greater than $version_b.
   /**
+   * \return Boolean.
    */
-  private function update_dependency_tree()
+  private function version_is_greater($version_a, $version_b)
   {
-    //FIXME
+    // Split the version string into the components separated by dots.
+    $a_numbers = explode('.', $version);
+    $b_numbers = explode('.', $installed_version);
+
+    // Walk through all the numbers of the version string.
+    for ($i = 0;
+         isset($a_numbers[$i]) || isset($b_numbers[$i]);
+         $i++) {
+      // Postfix shorter versions with zeros to make comparison possible.
+      if (!isset($a_numbers[$i]))
+        $a_numbers[$i] = 0;
+      if (!isset($b_numbers[$i]))
+        $b_numbers[$i]  = 0;
+
+      // Convert to int, so that strings like "2.1.build123" will also work.
+      settype($a_numbers[$i], 'integer');
+      settype($b_numbers[$i], 'integer');
+
+      // The current installed version number has to be greater or equal.
+      if ($a_numbers[$i] < $b_numbers[$i])
+        return FALSE;
+    }
+
+    return TRUE;
   }
 
 
@@ -173,60 +200,10 @@ class SpiffExtensionDB {
       $dependency_operator = $matches[2];
       $dependency_version  = $matches[3];
 
-      // Find all installed versions of the dependency.
-      // FIXME: The version list must be ordered with the highest version number
-      // coming last!
-      $installed_versions = $this->get_extension_version_list_from_handle(
-                                                             $dependency_handle);
-
-      // Select the dependency with the version number that
-      // matches the version requirement.
-      unset($best_dependency);
-      foreach ($installed_versions as $installed_version) {
-        switch ($dependency_operator) {
-        case '=':
-          if ($dependency_version == $installed_version)
-            $best_dependency = $installed_version;
-          break;
-
-        case '>=':
-          // Split the version string into the components separated by dots.
-          $dependency_numbers = explode('.', $dependency_version);
-          $installed_numbers  = explode('.', $installed_version);
-          $good_dependency    = TRUE;
-
-          // Walk through all the numbers of the version string.
-          for ($i = 0;
-               isset($dependency_numbers[$i]) || isset($installed_numbers[$i]);
-               $i++) {
-            // Postfix shorter versions with zeros to make comparison possible.
-            if (!isset($dependency_numbers[$i]))
-              settype($dependency_numbers[$i], "integer");
-            else
-              $dependency_numbers[$i] = 0;
-            if (!isset($installed_numbers[$i]))
-              settype($installed_numbers[$i], "integer");
-            else
-              $installed_numbers[$i]  = 0;
-
-            // The current installed version number has to be greater or equal.
-            if ($installed_numbers[$i] < $dependency_numbers[$i]) {
-              $good_dependency = FALSE;
-              break;
-            }
-          }
-          if ($good_dependency)
-            $best_dependency = $installed_version;
-          break;
-
-        default:
-          break;
-        }
-      }
-
-      // If no matching dependency exists, return FALSE.
-      if (!isset($best_dependency))
-        return FALSE.
+      if (!$this->get_extension_from_operator($dependency_handle,
+                                                   $dependency_operator,
+                                                   $dependency_version))
+        return FALSE;
     }
     // Cool, all dependencies are installed!
     return TRUE;
@@ -236,30 +213,6 @@ class SpiffExtensionDB {
   /*******************************************************************
    * Handling extensions.
    *******************************************************************/
-  /// Checks whether the extension is installed.
-  /**
-   * Returns TRUE if the given extension is installed with
-   * the same version.
-   * \return Boolean.
-   */
-  public function has_extension(SpiffExtension &$extension)
-  {
-    // Check whether the given extension is installed.
-    $query = new SqlQuery('
-      SELECT    e.id
-      FROM      {t_extension} e
-      WHERE e.handle={handle}
-      AND   e.version={version}');
-    $query->set_table_names($this->table_names);
-    $query->set_string('handle',  $extension->get_handle());
-    $query->set_string('version', $extension->get_version());
-    $rs = $this->db->Execute($query->sql());
-    assert('is_object($rs)');
-    $row = $rs->FetchRow();
-    return $row ? TRUE : FALSE;
-  }
-
-
   /// Register an extension.
   /**
    * Inserts the given SpiffExtension into the database. If the extension is
@@ -301,12 +254,12 @@ class SpiffExtensionDB {
       if (!preg_match('/' . $dependency_re . '/',
                       $dependency,
                       $matches))
-        continue;
+        assert('FALSE; // Invalid dependency specifier');
       $dependency_handle   = $matches[1];
       $dependency_operator = $matches[2];
       $dependency_version  = $matches[3];
-
-      // Insert an entry in the dependency table.
+      
+      // Add the requested dependency into the table.
       $query = new SqlQuery('
         INSERT INTO {t_extension_dependency}
           (extension_id,
@@ -325,11 +278,43 @@ class SpiffExtensionDB {
       $query->set_string('dependency_version',  $dependency_version);
       $rs = $this->db->Execute($query->sql());
       assert('is_object($rs)');
+
+      // And add the best matching dependency into the tree.
+      $dependency = $this->get_extension_from_operator($dependency_handle,
+                                                       $dependency_operator,
+                                                       $dependency_version);
+      $this->add_dependency_link_from_id($extension->get_id(),
+                                         $dependency->get_id());
+    }
+
+    // Walk through all extensions that currently depend on another
+    // version of the recently installed extension.
+    // 1. Alles aus dem dependency-tree entfernen, das zwischen dem lft und rgt
+    //    der alten abhängigkeit liegt.
+    // 2. Unter der neuen abhängigkeit rekursiv wieder einfügen.
+    $query = new SqlQuery('
+      SELECT e.*,count(t1.id) depth
+      FROM      {t_extension}      e
+      LEFT JOIN {t_extension_tree} t1 ON e.id=t2.extension_id
+      LEFT JOIN {t_extension_tree} t2 ON t2.lft BETWEEN t1.lft AND t1.rgt
+      WHERE e.handle={handle}
+      AND   e.version!={version}
+      GROUP BY t1.id
+      ORDER BY lft
+      HAVING depth=1');
+    $query->set_table_names($this->table_names);
+    $query->set_string('handle',  $extension->get_handle());
+    $query->set_string('version', $extension->get_version());
+    $rs = $this->db->Execute($query->sql());
+    assert('is_object($rs)');
+    while ($row = $rs->FetchRow()) {
+      $dependency = $this->get_extension_from_operator($row['handle'],
+                                                       $row['operator'],
+                                                       $row['version']);
     }
 
     // End transaction.
     $this->db->CompleteTrans();
-    $this->update_dependency_tree();
     return $extension;
   }
 
@@ -359,6 +344,33 @@ class SpiffExtensionDB {
   }
 
 
+  /// Checks whether the extension is installed.
+  /**
+   * Returns TRUE if the given extension is installed with
+   * the same version.
+   * \return Boolean.
+   */
+  public function has_extension(SpiffExtension &$extension)
+  {
+    // Check whether the given extension is installed.
+    $query = new SqlQuery('
+      SELECT    e.id
+      FROM      {t_extension} e
+      WHERE e.handle={handle}
+      AND   e.version={version}');
+    $query->set_table_names($this->table_names);
+    $query->set_string('handle',  $extension->get_handle());
+    $query->set_string('version', $extension->get_version());
+    $rs = $this->db->Execute($query->sql());
+    assert('is_object($rs)');
+    $row = $rs->FetchRow();
+    return $row ? TRUE : FALSE;
+  }
+
+
+  /// Returns the extension with the given id.
+  /**
+   */
   public function &get_extension_from_id($id)
   {
     assert('is_int($id)');
@@ -388,6 +400,9 @@ class SpiffExtensionDB {
   }
 
 
+  /// Returns the extension with the given handle and version.
+  /**
+   */
   public function &get_extension_from_handle($handle, $version)
   {
     assert('isset($handle)');
@@ -420,13 +435,49 @@ class SpiffExtensionDB {
   }
 
 
+  /// Returns the extension that best matches the given criteria.
+  /**
+   * Returns the extension with the highest version number that matches the
+   * given criteria.
+   * \param $operator One of '=' or '>='.
+   */
+  public function &get_extension_from_operator($handle, $operator, $version)
+  {
+    $installed_versions = $this->get_extension_version_list_from_handle(
+                                                                    $handle);
+
+    // Operator '=' is easy...
+    if ($operator == '=') {
+      $extension = $this->get_extension_from_handle($handle, $version);
+      return $extension;
+    }
+
+    // Ending up here, the operator is '>='.
+    // Select the dependency with the version number that
+    // matches the version requirement.
+    $best_version = NULL;
+    foreach ($installed_versions as $installed_version) {
+      if ($this->version_is_greater($installed_version, $version)
+        && $this->version_is_greater($installed_version, $best_version))
+        $best_version = $installed_version;
+    }
+
+    if ($best_version == NULL)
+      return FALSE;
+
+    return $this->get_extension_from_handle($handle, $best_version);
+  }
+
+
+
+
   /// Returns a list of all installed versions of an extension.
   /**
    * Returns a list of all installed versions of the extension
    * with the given handle.
    * \return An array of SpiffExtensions.
    */
-  private function get_extension_version_list_from_handle($handle)
+  public function &get_extension_version_list_from_handle($handle)
   {
     assert('isset($handle) && $handle != ""');
     //FIXME.

@@ -51,7 +51,7 @@
     <field name="dependency_handle" type="C" size="20">
       <NOTNULL/>
     </field>
-    <field name="dependency_operator" type="I">
+    <field name="dependency_operator" type="C" size="3">
       <NOTNULL/>
     </field>
     <field name="dependency_version" type="C" size="20">
@@ -73,7 +73,7 @@
   </table>
   <sql>
     <query>
-    ALTER TABLE resource TYPE = innodb
+    ALTER TABLE extension_dependency TYPE = innodb
     </query>
     <query>
     ALTER TABLE extension_dependency
@@ -114,7 +114,7 @@
   </table>
   <sql>
     <query>
-    ALTER TABLE resource TYPE = innodb
+    ALTER TABLE extension_tree TYPE = innodb
     </query>
     <query>
     ALTER TABLE extension_tree
