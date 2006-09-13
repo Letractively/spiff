@@ -24,14 +24,13 @@ include_once dirname(__FILE__).'/../libspiffacl/SpiffAclDB.class.php5';
 include_once dirname(__FILE__).'/SpiffExtension.class.php5';
 
 class SpiffExtensionDB {
-  private $acldb;
   private $db;
   private $db_table_prefix;
   
-  function __construct(SpiffAclDB &$acldb)
+  function __construct(&$db)
   {
-    $this->acldb           = $acldb;
-    $this->db              = $acldb->db;
+    assert('is_object($db)');
+    $this->db              = $db;
     $this->db_table_prefix = '';
     $this->update_table_names();
   }
@@ -369,8 +368,15 @@ class SpiffExtensionDB {
   public function uninstall_extension_from_id($id)
   {
     assert('is_int($id)');
-    //FIXME: Uninstall.
-    $this->update_dependency_tree();
+
+    //FIXME: Uninstall all extensions that require this extension.
+
+    // Uninstall the requested extension.
+    $query = new SqlQuery('DELETE FROM {t_extension} WHERE id={id}');
+    $query->set_table_names($this->table_names);
+    $query->set_int('id', $id);
+    $rs = $this->db->Execute($query->sql());
+    assert('is_object($rs)');
     return TRUE;
   }
 

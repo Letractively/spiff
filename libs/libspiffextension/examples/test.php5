@@ -4,8 +4,7 @@ include_once '../SpiffExtensionDB.class.php5';
 require_once '../../adodb/adodb-xmlschema03.inc.php';
 
 $adodb = &ADONewConnection($cfg['db_dbn']);
-$acldb = new SpiffAclDB($adodb);
-$extdb = new SpiffExtensionDB($acldb);
+$extdb = new SpiffExtensionDB($adodb);
 
 class TestExtension1 extends SpiffExtension {
   function __construct()
