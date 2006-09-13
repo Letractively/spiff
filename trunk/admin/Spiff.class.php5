@@ -48,12 +48,12 @@
   include_once SPIFF_DIR . '/objects/group.class.php';
   include_once SPIFF_DIR . '/actions/printer_base.class.php';
   include_once SPIFF_DIR . '/actions/content_printer.class.php';
-  include_once SPIFF_DIR . '/actions/header_printer.class.php';
-  include_once SPIFF_DIR . '/actions/footer_printer.class.php';
   include_once SPIFF_DIR . '/services/plugin_registry.class.php';
 
   // Load admin UI specific internal stuff.
   include_once 'error.inc.php';
+  include_once 'actions/header_printer.class.php';
+  include_once 'actions/footer_printer.class.php';
   include_once 'actions/breadcrumbs_printer.class.php';
   include_once 'actions/login_printer.class.php';
   include_once 'actions/registration_printer.class.php';

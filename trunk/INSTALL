@@ -12,9 +12,9 @@ Installation Instructions
 
    chmod 777 spiff/libs/smarty/templates_c/
   
-4. Copy spiff/admin/config.inc.php.tmpl to spiff/admin/config.inc.php.
+4. Copy spiff/config.inc.php.tmpl to spiff/config.inc.php.
 
-5. Edit spiff/admin/config.inc.php according to your webserver configuration.
+5. Edit spiff/config.inc.php according to your webserver configuration.
    The file should be self explaining.
 
 6. Open spiff/admin/setup.php in your web browser and follow the instructions.
