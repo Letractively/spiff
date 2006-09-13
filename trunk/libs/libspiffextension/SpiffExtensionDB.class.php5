@@ -248,13 +248,14 @@ class SpiffExtensionDB {
     // Insert the extension into the extension table.
     $query = new SqlQuery('
       INSERT INTO {t_extension}
-        (handle, name, version, description)
+        (handle, name, version, author, description)
       VALUES
-        ({handle}, {name}, {version}, {description})');
+        ({handle}, {name}, {version}, {author}, {description})');
     $query->set_table_names($this->table_names);
     $query->set_string('handle',      $extension->get_handle());
     $query->set_string('name',        $extension->get_name());
     $query->set_string('version',     $extension->get_version());
+    $query->set_string('author',      $extension->get_author());
     $query->set_string('description', $extension->get_description());
     $rs = $this->db->Execute($query->sql());
     assert('is_object($rs)');

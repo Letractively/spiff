@@ -20,7 +20,7 @@
 ?>
 <?php
   error_reporting(E_ALL);
-  define('SMARTY_DIR',            '../libs/smarty');
+  define('MY_SMARTY_DIR',         '../libs/smarty');
   define('ADODB_DIR',             '../libs/adodb');
   define('LIBSPIFFACL_DIR',       '../libs/libspiffacl');
   define('LIBSPIFFEXTENSION_DIR', '../libs/libspiffextension');
@@ -29,16 +29,16 @@
   define('SPIFF_DIR',             '..');
   
   // Load libs.
-  require_once SMARTY_DIR .            '/Smarty.class.php';
-  require_once ADODB_DIR .             '/adodb.inc.php';
-  require_once LIBSPIFFACL_DIR .       '/SpiffAclDB.class.php5';
-  require_once LIBSPIFFEXTENSION_DIR . '/SpiffExtensionDB.class.php5';
+  include_once LIBUSEFUL_DIR .         '/assert.inc.php';
   include_once LIBUSEFUL_DIR .         '/SqlQuery.class.php5';
   include_once LIBUSEFUL_DIR .         '/EventBus.class.php5';
-  include_once LIBUSEFUL_DIR .         '/assert.inc.php';
   include_once LIBUSEFUL_DIR .         '/string.inc.php';
   include_once LIBUSEFUL_DIR .         '/httpquery.inc.php';
   include_once LIBUSEFUL_DIR .         '/files.inc.php';
+  require_once MY_SMARTY_DIR .         '/Smarty.class.php';
+  require_once ADODB_DIR .             '/adodb.inc.php';
+  require_once LIBSPIFFACL_DIR .       '/SpiffAclDB.class.php5';
+  require_once LIBSPIFFEXTENSION_DIR . '/SpiffExtensionStore.class.php5';
 
   // Load shared internal stuff.
   include_once SPIFF_DIR . '/functions/config.inc.php';
@@ -48,7 +48,6 @@
   include_once SPIFF_DIR . '/objects/group.class.php';
   include_once SPIFF_DIR . '/actions/printer_base.class.php';
   include_once SPIFF_DIR . '/actions/content_printer.class.php';
-  include_once SPIFF_DIR . '/services/plugin_registry.class.php';
 
   // Load admin UI specific internal stuff.
   include_once 'error.inc.php';
@@ -62,8 +61,8 @@
   
   class Spiff {
     var $db;
-    var $registry;
-    var $eventbus;
+    var $event_bus;
+    var $extension_store;
     var $smarty;
     var $acldb;
     
@@ -85,16 +84,14 @@
       textdomain($domain);
       bind_textdomain_codeset($domain, 'UTF-8');
       
-      $this->eventbus = &new EventBus;
-
       // Connect to the DB.
       $this->db = &ADONewConnection(cfg('db_dbn'))
         or die('Spiff::Spiff(): Error: Can\'t connect.'
              . ' Please check username, password and hostname.');
 
-      $this->registry = &new PluginRegistry();
-      $this->registry->read_plugins(SPIFF_PLUGIN_DIR);
-      $this->registry->activate_plugins($this); //FIXME: Make activation configurable.
+
+      $this->event_bus       = &new EventBus;
+      $this->extension_store = &new SpiffExtensionStore($this->db);
 
       /* Plugin hook: on_construct
        *   Called from within the Spiff() constructor before any
@@ -102,7 +99,7 @@
        *   The return value of the callback is ignored.
        *   Args: None.
        */
-      $this->eventbus->emit('on_construct');
+      $this->event_bus->emit('on_construct');
       
       // Init Smarty.
       $this->smarty = &new Smarty();
@@ -185,13 +182,13 @@
     }
 
 
-    function &get_registry() {
-      return $this->registry;
+    function &get_extension_store() {
+      return $this->extension_store;
     }
 
 
-    function &get_eventbus() {
-      return $this->eventbus;
+    function &get_event_bus() {
+      return $this->event_bus;
     }
 
 
@@ -221,14 +218,14 @@
        *   Called before the HTML header is sent.
        *   Args: $html: A reference to the HTML header.
        */
-      $this->eventbus->emit("on_header_print_before", $this->content);
+      $this->event_bus->emit("on_header_print_before", $this->content);
       print($this->content);
       
       /* Plugin hook: on_header_print_after
        *   Called after the HTML header was sent.
        *   Args: none
        */
-      $this->eventbus->emit("on_header_print_after");
+      $this->event_bus->emit("on_header_print_after");
     }
     
     
@@ -243,14 +240,14 @@
        *   Called before the footer of the page is sent.
        *   Args: $html: A reference to the footer html.
        */
-      $this->eventbus->emit("on_footer_print_before", $this->content);
+      $this->event_bus->emit("on_footer_print_before", $this->content);
       print($this->content);
       
       /* Plugin hook: on_footer_print_after
        *   Called after the footer of the page is sent.
        *   Args: none
        */
-      $this->eventbus->emit("on_footer_print_after");
+      $this->event_bus->emit("on_footer_print_after");
     }
     
     
@@ -268,14 +265,14 @@
        *   Called before the HTML content is sent.
        *   Args: $html: A reference to the content.
        */
-      $this->eventbus->emit("on_content_print_before", $this->content);
+      $this->event_bus->emit("on_content_print_before", $this->content);
       print($this->content);
 
       /* Plugin hook: on_content_print_after
        *   Called after the HTML content was sent.
        *   Args: none.
        */
-      $this->eventbus->emit("on_content_print_after");
+      $this->event_bus->emit("on_content_print_after");
     }
     
     
@@ -304,7 +301,7 @@
        *   The return value of the callback is ignored.
        *   Args: None.
        */
-      $this->eventbus->emit("on_destroy");
+      $this->event_bus->emit("on_destroy");
     }
   }
 

@@ -17,6 +17,9 @@
     <field name="version" type="C" size="20">
       <NOTNULL/>
     </field>
+    <field name="author" type="C" size="20">
+      <NOTNULL/>
+    </field>
     <field name="description" type="C" size="255">
       <NOTNULL/>
     </field>

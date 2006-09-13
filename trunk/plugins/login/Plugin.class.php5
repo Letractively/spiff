@@ -1,4 +1,12 @@
 <?php
+/*
+Extension:   Login Form
+Handle:      login
+Version:     0.1
+Author:      Samuel Abels
+Description: Demo plugin to shows how it works.
+Depends:     spiff
+*/
   /*
   Copyright (C) 2006 Samuel Abels, <spam debain org>
   
@@ -18,7 +26,7 @@
   */
 ?>
 <?php
-class SpiffExtension_Login extends SpiffExtension {
+class SpiffExtension_login extends SpiffExtension {
   function initialize() {
     $this->register_callback('on_plugin_page_open',
                              '$this->on_plugin_page_open');
@@ -27,11 +35,11 @@ class SpiffExtension_Login extends SpiffExtension {
   }
 
   public function on_plugin_page_open() {
-    echo "SpiffExtensionLogin::on_plugin_page_open()<br>\n";
+    echo "SpiffExtension_Login::on_plugin_page_open()<br>\n";
   }
 
   public function on_plugin_render_request() {
-    echo "SpiffExtensionLogin::on_plugin_render_request()<br>\n";
+    echo "SpiffExtension_Login::on_plugin_render_request()<br>\n";
   }
 }
 ?>
