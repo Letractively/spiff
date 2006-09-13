@@ -1,5 +1,5 @@
 <?
-include_once '../../../admin/config.inc.php';
+include_once '../../../config.inc.php';
 include_once '../SpiffExtensionDB.class.php5';
 require_once '../../adodb/adodb-xmlschema03.inc.php';
 
@@ -31,16 +31,15 @@ class TestExtension3 extends SpiffExtension {
     parent::__construct('my_test_extension3',
                         'Third Extension',
                         '0.1');
-    $this->add_dependency('my_test_extension1>=0.1');
     $this->add_dependency('my_test_extension2>=0.1');
   }
 }
 
 $extdb->clear_database();
 $extension = new TestExtension1();
-$extdb->install_extension($extension);
+$extdb->register_extension($extension);
 $extension = new TestExtension2();
-$extdb->install_extension($extension);
+$extdb->register_extension($extension);
 $extension = new TestExtension3();
-$extdb->install_extension($extension);
+$extdb->register_extension($extension);
 ?>

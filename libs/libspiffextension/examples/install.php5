@@ -1,5 +1,5 @@
 <?
-include_once '../../../admin/config.inc.php';
+include_once '../../../config.inc.php';
 include_once '../SpiffExtensionDB.class.php5';
 require_once '../../adodb/adodb-xmlschema03.inc.php';
 

@@ -25,14 +25,16 @@
     <small><i>Dear user, please ignore the technical hogwash below.<br/>
     You can just scroll down to the bottom of this page. Thank you.</i></small>
 <?php
-define('LIBSPIFFACL_DIR',  '../libs/libspiffacl/');
-define('ADODB_DIR',        '../libs/adodb/');
-define('SMARTY_TEMP_DIR',  '../libs/smarty/templates_c/');
-define('SPIFF_PLUGIN_DIR', 'plugins/');
+define('LIBSPIFFACL_DIR',       '../libs/libspiffacl/');
+define('LIBSPIFFEXTENSION_DIR', '../libs/libspiffextension/');
+define('ADODB_DIR',             '../libs/adodb/');
+define('SMARTY_TEMP_DIR',       '../libs/smarty/templates_c/');
+define('SPIFF_PLUGIN_DIR',      '../plugins/');
 
-require_once LIBSPIFFACL_DIR  . 'SpiffAclDB.class.php5';
-require_once ADODB_DIR        . '/adodb-xmlschema03.inc.php';
-require_once dirname(__FILE__).'/config.inc.php';
+require_once LIBSPIFFACL_DIR       . 'SpiffAclDB.class.php5';
+require_once LIBSPIFFEXTENSION_DIR . 'SpiffExtensionStore.class.php5';
+require_once ADODB_DIR             . '/adodb-xmlschema03.inc.php';
+require_once dirname(__FILE__)     . '/config.inc.php';
 
 
 function category($title) {
@@ -247,6 +249,15 @@ $resource_array = array(
 test($acldb->grant_from_id($admin->get_id(),
                            $action_array,
                            $resource_array));
+
+/*******************************************************************
+ * Install core plugins.
+ *******************************************************************/
+category('Installing Core Extensions');
+$extstore = new SpiffExtensionStore($db);
+start('Installing login extension')
+test($extstore->add_extension(SPIFF_PLUGIN_DIR . '/login'));
+
 ?>
     </td>
   </tr>
