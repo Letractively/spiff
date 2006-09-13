@@ -18,7 +18,7 @@
   */
 ?>
 <?php
-include_once dirname(__FILE__).'/../libspiffacl/SpiffExtensionDB.class.php5';
+include_once dirname(__FILE__).'/SpiffExtensionDB.class.php5';
 
 class SpiffExtensionStore {
   private $extension_db;
@@ -57,10 +57,10 @@ class SpiffExtensionStore {
    */
   private function parse_file($filename)
   {
-    $tags   = '(?:Extension|Version|Author|Constructor|Description)';
+    $tags   = '(?:Extension|Handle|Version|Author|Description|Depends)';
     $tag    = '';
     $fp     = fopen($filename, 'r');
-    $extension = array();
+    $header = array();
     fgets($fp);
     fgets($fp);
     while ($line = fgets($fp)) {
@@ -70,24 +70,27 @@ class SpiffExtensionStore {
 
       // Followup value.
       if (isset($tag) && preg_match('/^\s+(.*)$/', $line, $matches))
-        $extension[$tag] .= ' ' . $matches[1];
+        $header[$tag] .= ' ' . $matches[1];
 
       // New tag.
       if (!preg_match("/^($tags):\s+(.*)$/", $line, $matches))
         continue;
-      $tag             = strtolower($matches[1]);
-      $extension[$tag] = $matches[2];
+      $tag          = strtolower($matches[1]);
+      $header[$tag] = $matches[2];
     }
 
-    if (isset($extension['extension'])
-      || !isset($extension['version'])
-      || !isset($extension['author'])
-      || !isset($extension['constructor'])
-      || !isset($extension['description'])) {
+    if (isset($header['extension'])
+      || !isset($header['handle'])
+      || !isset($header['version'])
+      || !isset($header['author'])
+      || !isset($header['description'])
+      || !isset($header['depends'])) {
       echo "Incomplete extension header in '$filename'.";
       return NULL;
     }
-    return $extension;
+
+    $header['depends'] = split(' *, *', $header['depends']);
+    return $header;
   }
 
 
@@ -96,9 +99,22 @@ class SpiffExtensionStore {
    *******************************************************************/
   public function add_extension($filename)
   {
-    $extension = $this->parse_file($filename);
+    $header = $this->parse_file($filename);
     assert('$extension != NULL');
-    $extension = new $extension['constructor']();
+
+    // Instantiate the extension.
+    $classname = 'SpiffExtension_' . $header['handle'];
+    $extension = new $classname($header['handle'],
+                                $header['extension'],
+                                $header['version']);
+    $extension->set_author($header['author']);
+    $extension->set_description($header['description']);
+    foreach ($header['depends'] as $depend)
+      $extension->add_dependency($depend);
+
+    // Check & install.
+    if (!$this->extension_db->check_dependencies($extension))
+      return NULL;
     $this->extension_db->register_extension($extension);
     return $extension;
   }

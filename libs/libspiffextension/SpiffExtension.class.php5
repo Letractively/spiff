@@ -32,6 +32,7 @@ define('SPIFF_EXTENSION_DEPENDENCY_RE',   SPIFF_EXTENSION_HANDLE_RE
 
 class SpiffExtension extends SpiffAclResource {
   protected $version;
+  protected $author;
   protected $description;
   private   $dependencies;
   
@@ -52,6 +53,15 @@ class SpiffExtension extends SpiffAclResource {
 
   public function get_version() {
     return $this->version;
+  }
+
+  public function set_author($author) {
+    assert('isset($author) && $author != ""');
+    $this->author = $author;
+  }
+
+  public function get_author() {
+    return $this->author;
   }
 
   public function set_description($description) {

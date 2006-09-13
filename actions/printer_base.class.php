@@ -20,17 +20,17 @@
 <?php
   class PrinterBase {
     var $parent;
-    var $registry;
-    var $eventbus;
+    var $extension_store;
+    var $event_bus;
     var $smarty;
     var $acldb;
     
     function PrinterBase(&$_parent) {
-      $this->parent   = &$_parent;
-      $this->registry = $_parent->get_registry();
-      $this->eventbus = $_parent->get_eventbus();
-      $this->smarty   = $_parent->get_smarty();
-      $this->acldb    = $_parent->get_acldb();
+      $this->parent          = &$_parent;
+      $this->extension_store = $_parent->get_extension_store();
+      $this->event_bus       = $_parent->get_event_bus();
+      $this->smarty          = $_parent->get_smarty();
+      $this->acldb           = $_parent->get_acldb();
     }
 
     function show() {
