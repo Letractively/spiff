@@ -25,14 +25,12 @@ include_once dirname(__FILE__).'/SpiffExtension.class.php5';
 
 class SpiffExtensionDB {
   private $acldb;
-  private $acl_section;
   private $db;
   private $db_table_prefix;
   
-  function __constructor(SpiffAclDB &$acldb)
+  function __construct(SpiffAclDB &$acldb)
   {
     $this->acldb           = $acldb;
-    $this->acl_section     = new SpiffAclResourceSection('extensions');
     $this->db              = $acldb->db;
     $this->db_table_prefix = '';
     $this->update_table_names();
@@ -88,6 +86,36 @@ class SpiffExtensionDB {
   /*******************************************************************
    * General behavior.
    *******************************************************************/
+  /// Installs all database tables that are required by libspiffextension.
+  /**
+   * Returns TRUE on success, FALSE otherwise.
+   */
+  public function install()
+  {
+    $schema = new adoSchema($this->db);
+    $schema->SetPrefix($this->db_table_prefix);
+    $sql = $schema->ParseSchema(dirname(__FILE__) . '/schema.xml');
+    //print_r($sql);
+    if ($schema->ExecuteSchema() != 2)
+      return FALSE;
+    return TRUE;
+  }
+
+
+  /// Clears out the entire database. Use with care.
+  /**
+   * Wipes out everything, including sections, actions, resources and acls.
+   */
+  public function clear_database()
+  {
+    $query = new SqlQuery('DELETE FROM {t_extension}');
+    $query->set_table_names($this->table_names);
+    $rs = $this->db->Execute($query->sql());
+    assert('is_object($rs)');
+    return TRUE;
+  }
+
+
   /// Turns debugging messages on/off.
   /**
    * Turns debugging on if TRUE is given, or off if FALSE is given.
@@ -139,6 +167,8 @@ class SpiffExtensionDB {
    */
   private function add_dependency_link_from_id($extension_id, $dependency_id)
   {
+    assert('isset($extension_id)');
+    assert('isset($dependency_id)');
     if ($this->has_dependency_link($extension_id, $dependency_id))
       return TRUE;
     $query = new SqlQuery('
@@ -149,6 +179,7 @@ class SpiffExtensionDB {
     $query->set_table_names($this->table_names);
     $query->set_int('extension_id',  $extension_id);
     $query->set_int('dependency_id', $dependency_id);
+    //$this->debug();
     $rs = $this->db->Execute($query->sql());
     assert('is_object($rs)');
     return TRUE;
@@ -213,7 +244,7 @@ class SpiffExtensionDB {
     // Make sure that all dependencies are installed.
     if (!$this->check_dependencies($extension))
       die('SpiffExtensionDB:install_extension(): Attempt to install'
-          ' an extension with unmatched dependencies.');
+         .' an extension with unmatched dependencies.');
 
     // Insert the extension into the extension table.
     $query = new SqlQuery('
@@ -229,6 +260,14 @@ class SpiffExtensionDB {
     $rs = $this->db->Execute($query->sql());
     assert('is_object($rs)');
     $extension->set_id($this->db->Insert_Id());
+
+    $dependency_re = '(' . SPIFF_EXTENSION_HANDLE_RE . ')'
+                   . '(?:'
+                   .    ' ?'
+                   .    '(' . SPIFF_EXTENSION_VERSION_OPER_RE . ')'
+                   .    ' ?'
+                   .    '(' . SPIFF_EXTENSION_VERSION_RE      . ')'
+                   . ')?';
 
     // Walk through all dependencies.
     foreach ($extension->get_dependency_list() as $dependency) {
@@ -269,7 +308,7 @@ class SpiffExtensionDB {
       // Retrieve a list of all dependencies of that dependency.
       $dependency_id   = $dependency->get_id();
       $dependency_list = $this->get_dependency_id_list_from_id($dependency_id);
-      array_push($dependeny_list, $dependency_id);
+      array_push($dependency_list, $dependency_id);
 
       // Add a link to all of the dependencies.
       foreach ($dependency_list as $dependency_id) {
@@ -281,11 +320,11 @@ class SpiffExtensionDB {
     // Walk through all extensions that currently depend on another
     // version of the recently installed extension.
     $query = new SqlQuery('
-      SELECT d.*,m.id
+      SELECT d.*
       FROM      {t_extension}            e
       LEFT JOIN {t_extension_dependency} d ON e.id=d.extension_id
-      WHERE d.handle={handle}
-      AND   d.version!={version}');
+      WHERE d.dependency_handle={handle}
+      AND   d.dependency_version!={version}');
     $query->set_table_names($this->table_names);
     $query->set_string('handle',  $extension->get_handle());
     $query->set_string('version', $extension->get_version());
@@ -297,7 +336,7 @@ class SpiffExtensionDB {
                                                        $row['version']);
 
       // No need to do anything if the installed link is already the best one.
-      if ($this->has_dependency_link($extension->get_id(), $dependency->get_id())
+      if ($this->has_dependency_link($extension->get_id(), $dependency->get_id()))
         continue;
 
       // Delete the old dependency links.
@@ -306,7 +345,7 @@ class SpiffExtensionDB {
       // Retrieve a list of all dependencies of that dependency.
       $dependency_id   = $dependency->get_id();
       $dependency_list = $this->get_dependency_id_list_from_id($dependency_id);
-      array_push($dependeny_list, $dependency_id);
+      array_push($dependency_list, $dependency_id);
 
       // Add a link to all of the dependencies.
       foreach ($dependency_list as $dependency_id) {
@@ -392,8 +431,7 @@ class SpiffExtensionDB {
       if (!isset($extension)) {
         $extension = new SpiffExtension($row['handle'],
                                         $row['name'],
-                                        $row['version'],
-                                        $this->acl_section);
+                                        $row['version']);
         $extension->set_description($row['description']);
       }
       $extension->add_dependency($row['dep_handle']);
@@ -410,28 +448,31 @@ class SpiffExtensionDB {
     assert('isset($handle)');
     assert('isset($version)');
     $query = new SqlQuery('
-      SELECT    e1.*,e2.handle dep_handle
-      FROM      {t_extension}            e1
-      LEFT JOIN {t_extension_dependency} d1 ON e1.id=d1.extension_id
-      LEFT JOIN {t_extension_dependency} d2 ON d2.lft>d1.lft AND d2.rgt<d1.rgt
-      LEFT JOIN {t_extension}            e2 ON e2.id=d2.extension_id
-      WHERE e1.handle={handle}
-      AND   e1.version={version}
-      ORDER BY d2.lft');
+      SELECT    e.*
+           ,    d.dependency_handle
+           ,    d.dependency_operator
+           ,    d.dependency_version
+      FROM      {t_extension}            e
+      LEFT JOIN {t_extension_dependency} d ON e.id=d.extension_id
+      WHERE e.handle={handle}
+      AND   e.version={version}');
     $query->set_table_names($this->table_names);
     $query->set_string('handle',  $handle);
     $query->set_string('version', $version);
     $rs = $this->db->Execute($query->sql());
     assert('is_object($rs)');
-    while($row = $rs->FetchRow()) {
+    while ($row = $rs->FetchRow()) {
       if (!isset($extension)) {
         $extension = new SpiffExtension($row['handle'],
                                         $row['name'],
-                                        $row['version'],
-                                        $this->acl_section);
+                                        $row['version']);
+        $extension->set_id($row['id']);
         $extension->set_description($row['description']);
       }
-      $extension->add_dependency($row['dep_handle']);
+      if (isset($row['dependency_handle']))
+        $extension->add_dependency($row['dependency_handle']
+                                  .$row['dependency_operator']
+                                  .$row['dependency_version']);
     }
     return $extension;
   }
@@ -445,6 +486,9 @@ class SpiffExtensionDB {
    */
   public function &get_extension_from_operator($handle, $operator, $version)
   {
+    assert('isset($handle)');
+    assert('isset($operator)');
+    assert('isset($version)');
     $installed_versions = $this->get_extension_version_list_from_handle(
                                                                     $handle);
 
@@ -471,8 +515,6 @@ class SpiffExtensionDB {
   }
 
 
-
-
   /// Returns a list of all installed versions of an extension.
   /**
    * Returns a list of all installed versions of the extension
@@ -482,8 +524,37 @@ class SpiffExtensionDB {
   public function &get_extension_version_list_from_handle($handle)
   {
     assert('isset($handle) && $handle != ""');
-    //FIXME.
+    $query = new SqlQuery('
+      SELECT e.version
+      FROM   {t_extension} e
+      WHERE e.handle={handle}');
+    $query->set_table_names($this->table_names);
+    $query->set_string('handle', $handle);
+    $rs = $this->db->Execute($query->sql());
+    assert('is_object($rs)');
+    $version_list = array();
+    while ($row = $rs->FetchRow())
+      array_push($version_list, $row['version']);
     return $version_list;
+  }
+
+
+  public function &get_dependency_id_list_from_id($extension_id)
+  {
+    assert('isset($extension_id)');
+    $query = new SqlQuery('
+      SELECT m.dependency_id
+      FROM      {t_extension}                e
+      LEFT JOIN {t_extension_dependency_map} m ON e.id=m.extension_id
+      WHERE e.id={id}');
+    $query->set_table_names($this->table_names);
+    $query->set_int('id', $id);
+    $rs = $this->db->Execute($query->sql());
+    assert('is_object($rs)');
+    $dependency_list = array();
+    while ($row = $rs->FetchRow())
+      array_push($dependency_list, $row['dependency_id']);
+    return $dependency_list;
   }
 }
 ?>

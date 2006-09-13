@@ -78,7 +78,7 @@
     </query>
     <query>
     ALTER TABLE extension_dependency
-    ADD FOREIGN KEY(extension_dependency_extension_id)
+    ADD FOREIGN KEY(extension_id)
     REFERENCES extension(id)
     ON DELETE CASCADE
     </query>
@@ -108,13 +108,13 @@
     </query>
     <query>
     ALTER TABLE extension_dependency_map
-    ADD FOREIGN KEY(extension_dependency_map_extension_id)
+    ADD FOREIGN KEY(extension_id)
     REFERENCES extension(id)
     ON DELETE CASCADE
     </query>
     <query>
     ALTER TABLE extension_dependency_map
-    ADD FOREIGN KEY(extension_dependency_map_dependency_id)
+    ADD FOREIGN KEY(dependency_id)
     REFERENCES extension(id)
     ON DELETE CASCADE
     </query>
