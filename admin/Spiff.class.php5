@@ -26,12 +26,13 @@
   define('LIBSPIFFEXTENSION_DIR', '../libs/libspiffextension');
   define('LIBUSEFUL_DIR',         '../libs/libuseful');
   define('SPIFF_PLUGIN_DIR',      '../plugins');
+  define('SPIFF_DIR',             '..');
   
   // Load libs.
   require_once SMARTY_DIR .            '/Smarty.class.php';
   require_once ADODB_DIR .             '/adodb.inc.php';
   require_once LIBSPIFFACL_DIR .       '/SpiffAclDB.class.php5';
-  //require_once LIBSPIFFEXTENSION_DIR . '/SpiffExtensionDB.class.php5';
+  require_once LIBSPIFFEXTENSION_DIR . '/SpiffExtensionDB.class.php5';
   include_once LIBUSEFUL_DIR .         '/SqlQuery.class.php5';
   include_once LIBUSEFUL_DIR .         '/EventBus.class.php5';
   include_once LIBUSEFUL_DIR .         '/assert.inc.php';
@@ -39,29 +40,25 @@
   include_once LIBUSEFUL_DIR .         '/httpquery.inc.php';
   include_once LIBUSEFUL_DIR .         '/files.inc.php';
 
-  // Load internal stuff.
-  include_once 'functions/config.inc.php';
-  include_once 'functions/language.inc.php';
-  
-  include_once 'config.inc.php';
+  // Load shared internal stuff.
+  include_once SPIFF_DIR . '/functions/config.inc.php';
+  include_once SPIFF_DIR . '/functions/language.inc.php';
+  include_once SPIFF_DIR . '/objects/url.class.php';
+  include_once SPIFF_DIR . '/objects/user.class.php';
+  include_once SPIFF_DIR . '/objects/group.class.php';
+  include_once SPIFF_DIR . '/actions/printer_base.class.php';
+  include_once SPIFF_DIR . '/actions/content_printer.class.php';
+  include_once SPIFF_DIR . '/actions/header_printer.class.php';
+  include_once SPIFF_DIR . '/actions/footer_printer.class.php';
+  include_once SPIFF_DIR . '/services/plugin_registry.class.php';
+
+  // Load admin UI specific internal stuff.
   include_once 'error.inc.php';
-  
-  include_once 'objects/url.class.php';
-  include_once 'objects/user.class.php';
-  include_once 'objects/group.class.php';
-  
-  include_once 'actions/printer_base.class.php';
   include_once 'actions/breadcrumbs_printer.class.php';
-  include_once 'actions/content_printer.class.php';
   include_once 'actions/login_printer.class.php';
-  include_once 'actions/header_printer.class.php';
-  include_once 'actions/footer_printer.class.php';
   include_once 'actions/registration_printer.class.php';
   include_once 'actions/user_manager_printer.class.php';
   include_once 'actions/permission_tree_printer.class.php';
-  
-  include_once 'services/plugin_registry.class.php';
-  
   
   class Spiff {
     var $db;
