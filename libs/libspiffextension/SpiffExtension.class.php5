@@ -33,14 +33,15 @@ define('SPIFF_EXTENSION_DEPENDENCY_RE',   SPIFF_EXTENSION_HANDLE_RE
 class SpiffExtension extends SpiffAclResource {
   protected $version;
   protected $description;
-  private $dependencies;
+  private   $dependencies;
   
-  private function __constructor($handle, $name, $version, $section) {
+  public function __construct($handle, $name, $version) {
     assert('isset($handle)');
     assert('isset($name)');
     assert('isset($version)');
-    assert('is_object($section)');
-    parent::__constructor($handle, $name, $section);
+    $section = new SpiffAclResourceSection('extensions', 'Extensions');
+    parent::__construct($handle, $name, $section);
+    $this->set_version($version);
     $this->dependencies = array();
   }
 
@@ -54,7 +55,7 @@ class SpiffExtension extends SpiffAclResource {
   }
 
   public function set_description($description) {
-    assert('isset($description) && $description != ""');
+    assert('isset($description)');
     $this->description = $description;
   }
 

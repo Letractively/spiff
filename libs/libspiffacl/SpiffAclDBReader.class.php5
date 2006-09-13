@@ -37,7 +37,7 @@ define('SPIFF_ACLDB_FETCH_ITEMS',  2);
 define('SPIFF_ACLDB_FETCH_ALL',    3);
 
 class SpiffAclDBReader {
-  protected $db;
+  public    $db;
   protected $db_table_prefix;
   protected $table_names;
   
