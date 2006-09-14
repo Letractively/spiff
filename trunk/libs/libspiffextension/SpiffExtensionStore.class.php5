@@ -19,14 +19,18 @@
 ?>
 <?php
 include_once dirname(__FILE__).'/SpiffExtensionDB.class.php5';
+include_once dirname(__FILE__).'/../libuseful/zip.inc.php';
 
-class SpiffExtensionStore {
+class SpiffExtensionStore extends EventBus {
   private $extension_db;
+  private $directory;
   
-  function __construct(&$db)
+  function __construct(&$db, $directory)
   {
     assert('is_object($db)');
+    assert('is_dir($directory)');
     $this->extension_db = new SpiffExtensionDB($db);
+    $this->directory    = $directory;
   }
 
 
@@ -45,6 +49,16 @@ class SpiffExtensionStore {
   public function debug($debug = TRUE)
   {
     $this->db->debug = $debug;
+  }
+
+
+  /// Defines the directory in which extensions are installed.
+  /**
+   */
+  public function set_directory($directory)
+  {
+    assert('is_dir($directory)');
+    $this->directory = $directory;
   }
 
 
@@ -94,28 +108,75 @@ class SpiffExtensionStore {
   }
 
 
+  /// Extracts the given archive into a temporary directory.
+  /**
+   * \return The name of the temporary directory, or NULL.
+   */
+  private function install_archive($filename)
+  {
+    //FIXME: Make sure theres no name collision with the destination directory.
+    $temp_dir = '';
+    if (!unzip($filename, $temp_dir))
+      return NULL;
+    return $temp_dir;
+  }
+
+
   /*******************************************************************
    * Installer.
    *******************************************************************/
+  /// Installs the extension with the given filename.
+  /**
+   * May be given the name of an archive file, or the name of a directory
+   * containing the extracted extension.
+   * \return -1 if the archive was not found.
+   *         -2 if the archive could not be unpacked.
+   *         -3 if Plugin.class.php5 is missing.
+   *         -4 if the header could not be parsed correctly.
+   *         -5 if the class could not be instantiated.
+   *         -6 if the dependencies could not be solved.
+   *         -7 if the extension could not be installed.
+   *         -8 if the extension could not be registered.
+   *         The SpiffExtension class on success.
+   */
   public function add_extension($filename)
   {
-    $header = $this->parse_file($filename);
-    assert('$extension != NULL');
+    if (!file_exists($filename))
+      return -1;
+    if (is_dir($filename))
+      $temp_dir = $filename;
+    else if (!$temp_dir = $this->install_archive($filename))
+      return -2;
+    $filename = $temp_dir . '/Plugin.class.php5';
+    if (!file_exists($filename))
+      return -3;
+    if (!$header = $this->parse_file($filename));
+      return -4;
 
     // Instantiate the extension.
     $classname = 'SpiffExtension_' . $header['handle'];
     $extension = new $classname($header['handle'],
                                 $header['extension'],
                                 $header['version']);
+    if (!$extension)
+      return -5;
     $extension->set_author($header['author']);
     $extension->set_description($header['description']);
     foreach ($header['depends'] as $depend)
       $extension->add_dependency($depend);
 
-    // Check & install.
+    // Checks.
     if (!$this->extension_db->check_dependencies($extension))
-      return NULL;
-    $this->extension_db->register_extension($extension);
+      return -6;
+
+    // Ok, so the extension seems to be fine. Install it in the
+    // final directory.
+    if (!rename($temp_dir, $this->directory))
+      return -7;
+
+    // Register it.
+    if (!$this->extension_db->register_extension($extension))
+      return -8;
     return $extension;
   }
 }
