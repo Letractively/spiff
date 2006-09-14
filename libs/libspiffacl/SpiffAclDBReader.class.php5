@@ -94,6 +94,73 @@ class SpiffAclDBReader {
 
 
   /*******************************************************************
+   * Requesting resources.
+   *******************************************************************/
+  public function &get_resource_from_id($id)
+  {
+    assert('is_int($id)');
+    assert('$id != -1');
+    $query = new SqlQuery('
+      SELECT s.id section_id,s.name section_name,r.*
+      FROM      {t_resource}         r
+      LEFT JOIN {t_resource_section} s ON r.section_handle=s.handle
+      WHERE r.id={id}');
+    $query->set_table_names($this->table_names);
+    $query->set_int('id', $id);
+    $rs = $this->db->Execute($query->sql());
+    assert('is_object($rs)');
+    $row = $rs->FetchRow();
+    $section  = new SpiffAclResourceSection($row['section_handle'],
+                                            $row['section_name']);
+    if ($row['is_actor'] && $row['is_group'])
+      $resource = new SpiffAclActorGroup($row['handle'], $row['name'], $section);
+    else if ($row['is_actor'])
+      $resource = new SpiffAclActor($row['handle'], $row['name'], $section);
+    else if ($row['is_group'])
+      $resource = new SpiffAclResourceGroup($row['handle'], $row['name'], $section);
+    else
+      $resource = new SpiffAclResource($row['handle'], $row['name'], $section);
+    $section->set_id($row['section_id']);
+    $resource->set_id($row['id']);
+    return $resource;
+  }
+
+
+  public function &get_resource_from_handle($handle,
+                                            SpiffAclResourceSection &$section)
+  {
+    assert('isset($handle)');
+    assert('$handle != ""');
+    $query = new SqlQuery('
+      SELECT s.id section_id,s.name section_name,r.*
+      FROM      {t_resource}         r
+      LEFT JOIN {t_resource_section} s ON r.section_handle=s.handle
+      WHERE r.handle={handle}
+      AND   r.section_handle={section_handle}');
+    $query->set_table_names($this->table_names);
+    $query->set_string('handle',         $handle);
+    $query->set_string('section_handle', $section->get_handle());
+    //$this->debug();
+    $rs = $this->db->Execute($query->sql());
+    assert('is_object($rs)');
+    if (!$row = $rs->FetchRow())
+      die("SpiffAclDBReader::get_resource_from_handle(): Non existent.");
+    $section->set_id($row['section_id']);
+    $section->set_name($row['section_name']);
+    if ($row['is_actor'] && $row['is_group'])
+      $resource = new SpiffAclActorGroup($row['handle'], $row['name'], $section);
+    else if ($row['is_actor'])
+      $resource = new SpiffAclActor($row['handle'], $row['name'], $section);
+    else if ($row['is_group'])
+      $resource = new SpiffAclResourceGroup($row['handle'], $row['name'], $section);
+    else
+      $resource = new SpiffAclResource($row['handle'], $row['name'], $section);
+    $resource->set_id($row['id']);
+    return $resource;
+  }
+
+
+  /*******************************************************************
    * Requesting ACLs.
    *******************************************************************/
   /// Returns TRUE if the given actor has the requested permission.

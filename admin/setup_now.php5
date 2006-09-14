@@ -25,17 +25,10 @@
     <small><i>Dear user, please ignore the technical hogwash below.<br/>
     You can just scroll down to the bottom of this page. Thank you.</i></small>
 <?php
-define('LIBSPIFFACL_DIR',       '../libs/libspiffacl/');
-define('LIBSPIFFEXTENSION_DIR', '../libs/libspiffextension/');
-define('ADODB_DIR',             '../libs/adodb/');
-define('SMARTY_TEMP_DIR',       '../libs/smarty/templates_c/');
-define('SPIFF_PLUGIN_DIR',      '../plugins/');
+require_once '../Spiff.class.php5';
+require_once ADODB_DIR . '/adodb-xmlschema03.inc.php';
 
-require_once LIBSPIFFACL_DIR       . 'SpiffAclDB.class.php5';
-require_once LIBSPIFFEXTENSION_DIR . 'SpiffExtensionStore.class.php5';
-require_once ADODB_DIR             . '/adodb-xmlschema03.inc.php';
-require_once dirname(__FILE__)     . '/config.inc.php';
-
+define('SMARTY_TEMP_DIR', MY_SMARTY_DIR . '/templates_c/');
 
 function category($title) {
   echo "<h3 style='padding-left: 0px; padding-bottom: 5px;'>$title</h3>";
@@ -93,14 +86,37 @@ test(is_dir(SMARTY_TEMP_DIR));
 start('Checking file permissions of ' . SMARTY_TEMP_DIR);
 test(substr(sprintf('%o', fileperms(SMARTY_TEMP_DIR)), -4) === "0775");
 
-start('Checking whether template dir ' . SPIFF_PLUGIN_DIR . ' exists');
-test(is_dir(SPIFF_PLUGIN_DIR));
+start('Checking whether data dir ' . SPIFF_DATA_DIR . ' exists');
+test(is_dir(SPIFF_DATA_DIR));
 
-start('Checking file permissions of ' . SPIFF_PLUGIN_DIR);
-test(substr(sprintf('%o', fileperms(SPIFF_PLUGIN_DIR)), -4) === "0775");
+start('Checking file permissions of ' . SPIFF_DATA_DIR);
+test(substr(sprintf('%o', fileperms(SPIFF_DATA_DIR)), -4) === "0775");
 
 // Make sure that the installation was not already finished previously.
 //start('Making sure that we are not installing above another installation');
+
+
+/*******************************************************************
+ * Set up directories.
+ *******************************************************************/
+category('Creating Spiff directories');
+start('Creating extension directory ' . SPIFF_PLUGIN_DIR);
+if (is_dir(SPIFF_PLUGIN_DIR))
+  unnecessary();
+else
+  test(mkdir(SPIFF_PLUGIN_DIR));
+
+start('Setting permissions of ' . SPIFF_PLUGIN_DIR);
+test(chmod(SPIFF_PLUGIN_DIR, 0775));
+
+start('Creating extension repository directory ' . SPIFF_REPO_DIR);
+if (is_dir(SPIFF_REPO_DIR))
+  unnecessary();
+else
+  test(mkdir(SPIFF_REPO_DIR));
+
+start('Setting permissions of ' . SPIFF_REPO_DIR);
+test(chmod(SPIFF_REPO_DIR, 0775));
 
 
 /*******************************************************************
@@ -228,7 +244,6 @@ test($homepage = $acldb->add_resource(NULL, $resource));
 /*******************************************************************
  * Define permissions of the default groups.
  *******************************************************************/
- 
 category('Assigning Permissions To Groups');
 start('Defining permissions of group "Administrators"');
 $action_array = array(
@@ -250,13 +265,14 @@ test($acldb->grant_from_id($admin->get_id(),
                            $action_array,
                            $resource_array));
 
+
 /*******************************************************************
  * Install core plugins.
  *******************************************************************/
 category('Installing Core Extensions');
-$extstore = new SpiffExtensionStore($db);
-start('Installing login extension')
-test($extstore->add_extension(SPIFF_PLUGIN_DIR . '/login'));
+$extstore = new SpiffExtensionStore($db, SPIFF_PLUGIN_DIR);
+start('Installing login extension');
+test($extstore->add_extension(SPIFF_SPIFFPLUGIN_DIR . '/login'));
 
 ?>
     </td>

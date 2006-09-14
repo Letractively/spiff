@@ -1,6 +1,6 @@
 <?php
   /*
-  Copyright (C) 2005 Samuel Abels, <spam debain org>
+  Copyright (C) 2006 Samuel Abels, <spam debain org>
   
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -18,29 +18,8 @@
   */
 ?>
 <?php
-if (!function_exists('scandir')) {
-  function scandir($directory) {
-    $handle = opendir($directory);
-    $files  = array();
-    while ($file = readdir($handle))
-      if ($file != "." && $file != "..")
-        array_push($files, $file);
-    closedir($handle);
-    return $files;
-  }
-}
-
-
-function mkdir_recursive($directory, $mode = 0777)
-{
-  if(!file_exists($directory)) {
-    $parts     = explode('/', $directory);
-    $directory = '';
-    foreach($parts as $part) {
-      $directory .= $directory . '/';
-      if(!file_exists($directory))
-        mkdir($directory, 0777);
-    }
-  }
-}
+  require_once 'Spiff.class.php5';
+  
+  $spiff = new Spiff();
+  $spiff->show();
 ?>
