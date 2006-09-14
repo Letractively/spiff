@@ -529,6 +529,7 @@ class SpiffAclDB extends SpiffAclDBReader {
     $query->set_string('name',           $resource->get_name());
     $query->set_bool('is_actor',         $resource->is_actor());
     $query->set_bool('is_group',         $resource->is_group());
+    //$this->debug();
     $rs = $this->db->Execute($query->sql());
     assert('is_object($rs)');
     $resource_id = $this->db->Insert_Id();

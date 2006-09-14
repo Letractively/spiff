@@ -31,8 +31,8 @@ class SpiffExtensionStore {
     assert('is_object($db)');
     assert('is_dir($directory)');
     $this->extension_db = &new SpiffExtensionDB($db);
-    $this->directory    = $directory;
-    $this->event_bus    = &new EventBus();
+    $this->set_directory($directory);
+    $this->event_bus = &new EventBus();
   }
 
 
@@ -78,7 +78,7 @@ class SpiffExtensionStore {
   public function set_directory($directory)
   {
     assert('is_dir($directory)');
-    $this->directory = $directory;
+    $this->directory = $directory . '/';
   }
 
 
@@ -113,7 +113,7 @@ class SpiffExtensionStore {
         $header[$tag] .= ' ' . $matches[1];
 
       // New tag.
-      if (!preg_match("/^($tags):\s+(.*)$/", $line, $matches))
+      if (!preg_match("/^($tags):\s+(.+)$/", $line, $matches))
         continue;
       $tag          = strtolower($matches[1]);
       $header[$tag] = $matches[2];
@@ -128,7 +128,10 @@ class SpiffExtensionStore {
       || !isset($header['depends']))
       return NULL;
 
-    $header['depends'] = split(' *, *', $header['depends']);
+    if (ctype_space($header['depends']))
+      $header['depends'] = array();
+    else
+      $header['depends'] = split(' *, *', $header['depends']);
     return $header;
   }
 
@@ -139,11 +142,12 @@ class SpiffExtensionStore {
    */
   private function install_archive($filename)
   {
-    //FIXME: Make sure theres no name collision with the destination directory.
-    $temp_dir = '';
-    if (!unzip($filename, $temp_dir))
+    $basename = basename($filename);
+    $basename = substr($basename, 0, stripos($basename, '.'));
+    $dest_dir = mktmpdir($this->directory, $basename . '_');
+    if (!unzip($filename, $dest_dir))
       return NULL;
-    return $temp_dir;
+    return $dest_dir;
   }
 
 
@@ -158,9 +162,9 @@ class SpiffExtensionStore {
    *         -2 if the archive could not be unpacked.
    *         -3 if Plugin.class.php5 is missing.
    *         -4 if the header could not be parsed correctly.
-   *         -5 if the class could not be instantiated.
-   *         -6 if the dependencies could not be solved.
-   *         -7 if the extension could not be installed.
+   *         -5 if the plugin was already installed with the same version.
+   *         -6 if the class could not be instantiated.
+   *         -7 if the dependencies could not be solved.
    *         -8 if the extension could not be registered.
    *         The SpiffExtension class on success.
    */
@@ -168,25 +172,35 @@ class SpiffExtensionStore {
   {
     if (!file_exists($filename))
       return -1;
-    if (is_dir($filename))
-      $temp_dir = $filename;
-    else if (!$temp_dir = $this->install_archive($filename))
+    if (is_dir($filename)) {
+      $plugin_dir = mktmpdir($this->directory, basename($filename));
+      if (!cpdir($filename, $plugin_dir))
+        return -2;
+    }
+    else if (!$plugin_dir = $this->install_archive($filename))
       return -2;
-    $filename = $temp_dir . '/Plugin.class.php5';
+    $filename = $plugin_dir . '/Plugin.class.php5';
     if (!file_exists($filename))
       return -3;
     $header = $this->parse_file($filename);
     if (!is_array($header))
       return -4;
 
+    // Check whether the version was already installed.
+    if ($this->extension_db->get_extension_from_handle($header['handle'],
+                                                       $header['version'])) {
+      rmdir_recursive($plugin_dir);
+      return -5;
+    }
+
     // Instantiate the extension.
-    include_once $temp_dir . '/Plugin.class.php5';
+    include_once $plugin_dir . '/Plugin.class.php5';
     $classname = 'SpiffExtension_' . $header['handle'];
     $extension = new $classname($header['handle'],
                                 $header['extension'],
                                 $header['version']);
     if (!is_object($extension))
-      return -5;
+      return -6;
     $extension->set_author($header['author']);
     $extension->set_description($header['description']);
     foreach ($header['depends'] as $depend)
@@ -194,11 +208,6 @@ class SpiffExtensionStore {
 
     // Checks.
     if (!$this->extension_db->check_dependencies($extension))
-      return -6;
-
-    // Ok, so the extension seems to be fine. Install it in the
-    // final directory.
-    if (!rename($temp_dir, $this->directory))
       return -7;
 
     // Register it.

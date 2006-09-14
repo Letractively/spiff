@@ -55,9 +55,11 @@ class SpiffExtensionDB {
    */
   private function version_is_greater($version_a, $version_b)
   {
+    assert('isset($version_a)');
+    assert('isset($version_b)');
     // Split the version string into the components separated by dots.
-    $a_numbers = explode('.', $version);
-    $b_numbers = explode('.', $registered_version);
+    $a_numbers = explode('.', $version_a);
+    $b_numbers = explode('.', $version_b);
 
     // Walk through all the numbers of the version string.
     for ($i = 0;
@@ -509,14 +511,14 @@ class SpiffExtensionDB {
     // Ending up here, the operator is '>='.
     // Select the dependency with the version number that
     // matches the version requirement.
-    $best_version = NULL;
+    $best_version = '0';
     foreach ($registered_versions as $registered_version) {
       if ($this->version_is_greater($registered_version, $version)
         && $this->version_is_greater($registered_version, $best_version))
         $best_version = $registered_version;
     }
 
-    if ($best_version == NULL)
+    if ($best_version == '0')
       return NULL;
 
     return $this->get_extension_from_handle($handle, $best_version);

@@ -1,15 +1,16 @@
 Use case: Installing a plugin.
 -----------------------------
 - The user uploads the new plugin through the web interface.
-- Spiff installs the plugin into a temporary directory.
+- Spiff installs the plugin into a unique destination directory.
 - Spiff reads the header of the plugin. The header includes the
-  name, system name, version, description, and dependencies.
+  name, handle, version, author, description, and dependencies.
 - Spiff checks the header information and makes sure the dependencies
   are installed.
-- If everything is ok, Spiff moves the plugin into the plugin directory.
-- Spiff assigns a priority to the plugin, by comparing the dependency
-  list with the list of installed plugins.
-- Spiff registers the plugin in the database, with the priority appended.
+- If the version is already installed, Spiff removes the installation
+  and bails out.
+- If everything is ok, Spiff instantiates the plugin. The constructor
+  of the plugin MUST NOT do anything.
+- Spiff registers the plugin in the database.
 
 
 Use case: Login Plugin
@@ -18,12 +19,15 @@ Use case: Login Plugin
 - Spiff finds a request in the database to embed a login
   window in the homepage.
 - Spiff constructs the dependencies of the Login plugin.
-
 - Spiff constructs the Login plugin.
-- The plugin constructor registers a CHECK function that is
+
+- Spiff calls the initialize() method of all dependencies.
+- Spiff calls the initialize() method of the Login Plugin.
+
+- initialize() registers a CHECK function that is
   called before any other content is drawn to the web site
   by any plugin.
-- The plugin constructor registers a RENDERER function that
+- initialize() registers a RENDERER function that
   is called when the login form has to be written to the
   page.
 
@@ -50,7 +54,7 @@ Use case: Login Plugin
 
 Example Plugin
 --------------
-class SpiffExtension_Login extends SpiffExtension {
+class SpiffExtension_login extends SpiffExtension {
   function initialize(&$spiff) {
     $spiff->register_callback('on_plugin_page_open',      '$this->on_plugin_page_open');
     $spiff->register_callback('on_plugin_render_request', '$this->on_plugin_render_request');
