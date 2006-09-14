@@ -31,16 +31,67 @@ if (!function_exists('scandir')) {
 }
 
 
-function mkdir_recursive($directory, $mode = 0777)
-{
-  if(!file_exists($directory)) {
-    $parts     = explode('/', $directory);
-    $directory = '';
-    foreach($parts as $part) {
-      $directory .= $directory . '/';
-      if(!file_exists($directory))
-        mkdir($directory, 0777);
+function cpdir($src, $dest, $mode = 0775)
+{   
+  $dir = opendir($src);
+  while ($file = readdir($dir)) {
+    if ($file == '.' || $file == '..')
+      continue;
+   
+    $src_file  = $src  . '/' . $file;
+    $dest_file = $dest . '/' . $file;
+    if (is_dir($src_file)) {
+      mkdir($dest_file, $mode);
+      cpdir($src_file, $dest_file, $mode);
+      continue;
     }
+    copy($src_file, $dest_file);
   }
+  closedir($dir);
+  return TRUE;
+}
+
+
+function rmdir_recursive($dir) {
+  if (!$dh = @opendir($dir))
+    return;
+  while ($obj = readdir($dh)) {
+    if ($obj == '.' || $obj == '..')
+      continue;
+    if (!@unlink($dir . '/' . $obj))
+      rmdir_recursive($dir . '/' . $obj);
+  }
+  @rmdir($dir);
+  return TRUE;
+}
+
+
+function mktmpdir($directory, $prefix, $mode = 0775)
+{
+  if(!file_exists($directory))
+    return FALSE;
+  while ($i = rand(1, getrandmax())) {
+    $tmpdir = $directory . '/' . $prefix . $i;
+    if (file_exists($tmpdir))
+      continue;
+    mkdir($tmpdir, $mode);
+    return $tmpdir;
+  }
+  return FALSE;
+}
+
+
+function mkdir_recursive($directory, $mode = 0775)
+{
+  if(file_exists($directory))
+    return FALSE;
+  $parts     = explode('/', $directory);
+  $directory = '';
+  foreach ($parts as $part) {
+    $directory .= $directory . '/';
+    if (!file_exists($directory))
+      mkdir($directory, $mode);
+  }
+  return TRUE;
 }
 ?>

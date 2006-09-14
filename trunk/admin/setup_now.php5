@@ -100,6 +100,9 @@ test(substr(sprintf('%o', fileperms(SPIFF_DATA_DIR)), -4) === "0775");
  * Set up directories.
  *******************************************************************/
 category('Creating Spiff directories');
+start('Deleting installed extensions from ' . SPIFF_PLUGIN_DIR . ', if any');
+test(rmdir_recursive(SPIFF_PLUGIN_DIR));
+
 start('Creating extension directory ' . SPIFF_PLUGIN_DIR);
 if (is_dir(SPIFF_PLUGIN_DIR))
   unnecessary();
@@ -245,6 +248,11 @@ else {
 
 start('Clearing libspiffextension database tables');
 test($extstore->clear_database());
+
+start('Creating ACL section for extensions');
+$ac_extension_section = new SpiffAclResourceSection('extensions', 'Extensions');
+$ac_extension_section = $acldb->add_resource_section($ac_extension_section);
+test($ac_extension_section);
 
 
 /*******************************************************************
