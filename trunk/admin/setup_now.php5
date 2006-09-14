@@ -227,6 +227,40 @@ test($usr_anon = $acldb->add_resource($users->get_id(), $actor));
 
 
 /*******************************************************************
+ * Set up libspiffextension.
+ *******************************************************************/
+category('Setting Up libspiffextension');
+$extstore = new SpiffExtensionStore($db, SPIFF_PLUGIN_DIR);
+start('Creating database tables');
+$tables = $db->MetaTables();
+//echo "Tables: " . count($tables) . "<br/>";
+//FIXME: Compare the count with the number of tables in the schema file.
+if (count($tables) >= 11)
+  unnecessary();
+else {
+  $extstore->set_table_prefix($cfg['db_table_prefix']);
+  //$extstore->debug();
+  test($extstore->install());
+}
+
+start('Clearing libspiffextension database tables');
+test($extstore->clear_database());
+
+
+/*******************************************************************
+ * Install core plugins.
+ *******************************************************************/
+category('Installing Core Extensions');
+start('Registering Spiff extension');
+$spiff_ext = $extstore->add_extension(SPIFF_SPIFFPLUGIN_DIR . '/spiff');
+test(is_object($spiff_ext));
+
+start('Installing login extension');
+$login_ext = $extstore->add_extension(SPIFF_SPIFFPLUGIN_DIR . '/login');
+test(is_object($login_ext));
+
+
+/*******************************************************************
  * Build the following content table:
  * content: Content
  *            \-Homepage
@@ -239,6 +273,10 @@ test($cont_sect = $acldb->add_resource_section($cont_sect));
 start('Creating resource "Homepage" in "Content"');
 $resource = new SpiffAclResourceGroup('homepage', 'Homepage', $cont_sect);
 test($homepage = $acldb->add_resource(NULL, $resource));
+
+start('Adding login extension to homepage');
+$login_ext = $acldb->add_resource($homepage->get_id(), $login_ext);
+test(is_object($login_ext));
 
 
 /*******************************************************************
@@ -264,16 +302,6 @@ $resource_array = array(
 test($acldb->grant_from_id($admin->get_id(),
                            $action_array,
                            $resource_array));
-
-
-/*******************************************************************
- * Install core plugins.
- *******************************************************************/
-category('Installing Core Extensions');
-$extstore = new SpiffExtensionStore($db, SPIFF_PLUGIN_DIR);
-start('Installing login extension');
-test($extstore->add_extension(SPIFF_SPIFFPLUGIN_DIR . '/login'));
-
 ?>
     </td>
   </tr>

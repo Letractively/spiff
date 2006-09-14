@@ -80,14 +80,6 @@
       $this->extension_store = &new SpiffExtensionStore($this->db,
                                                         SPIFF_PLUGIN_DIR);
 
-      /* Plugin hook: on_construct
-       *   Called from within the Spiff() constructor before any
-       *   other output is produced.
-       *   The return value of the callback is ignored.
-       *   Args: None.
-       */
-      $this->extension_store->emit('on_construct');
-      
       // Init Smarty.
       $this->smarty = &new Smarty();
       $this->smarty->compile_dir  = MY_SMARTY_DIR . '/templates_c';
@@ -100,6 +92,14 @@
         $_POST   = array_map('stripslashes_deep', $_POST);
         $_COOKIE = array_map('stripslashes_deep', $_COOKIE);
       }
+
+      /* Plugin hook: on_construct
+       *   Called from within the Spiff() constructor before any
+       *   other output is produced.
+       *   The return value of the callback is ignored.
+       *   Args: None.
+       */
+      $this->extension_store->get_event_bus()->emit('on_construct');
     }
     
     
@@ -128,7 +128,7 @@
       
       // Fetch the requested site.
       $section  = isset($_GET['section']) ? $_GET['section'] : 'content';
-      $handle   = isset($_GET['handle'])  ? $_GET['handle']  : 'home';
+      $handle   = isset($_GET['handle'])  ? $_GET['handle']  : 'homepage';
       $section  = new SpiffAclResourceSection($section, $section);
       $resource = $this->acldb->get_resource_from_handle($handle, $section);
       
@@ -148,7 +148,7 @@
        *   The return value of the callback is ignored.
        *   Args: None.
        */
-      $this->extension_store->emit('on_destroy');
+      $this->extension_store->get_event_bus()->emit('on_destroy');
     }
   }
 ?>

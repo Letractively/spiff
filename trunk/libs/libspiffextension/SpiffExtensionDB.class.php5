@@ -89,7 +89,7 @@ class SpiffExtensionDB {
   /**
    * Returns TRUE on success, FALSE otherwise.
    */
-  public function register()
+  public function install()
   {
     $schema = new adoSchema($this->db);
     $schema->SetPrefix($this->db_table_prefix);
@@ -209,8 +209,8 @@ class SpiffExtensionDB {
                       $matches))
         continue;
       $dependency_handle   = $matches[1];
-      $dependency_operator = $matches[2];
-      $dependency_version  = $matches[3];
+      $dependency_operator = isset($matches[2]) ? $matches[2] : '>=';
+      $dependency_version  = isset($matches[3]) ? $matches[3] : 0;
 
       if (!$this->get_extension_from_operator($dependency_handle,
                                               $dependency_operator,
@@ -277,8 +277,8 @@ class SpiffExtensionDB {
                       $matches))
         assert('FALSE; // Invalid dependency specifier');
       $dependency_handle   = $matches[1];
-      $dependency_operator = $matches[2];
-      $dependency_version  = $matches[3];
+      $dependency_operator = isset($matches[2]) ? $matches[2] : '>=';
+      $dependency_version  = isset($matches[3]) ? $matches[3] : 0;
       
       // Add the requested dependency into the table.
       $query = new SqlQuery('
@@ -517,7 +517,7 @@ class SpiffExtensionDB {
     }
 
     if ($best_version == NULL)
-      return FALSE;
+      return NULL;
 
     return $this->get_extension_from_handle($handle, $best_version);
   }
@@ -538,6 +538,7 @@ class SpiffExtensionDB {
       WHERE e.handle={handle}');
     $query->set_table_names($this->table_names);
     $query->set_string('handle', $handle);
+    //$this->debug();
     $rs = $this->db->Execute($query->sql());
     assert('is_object($rs)');
     $version_list = array();

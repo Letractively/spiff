@@ -1,5 +1,3 @@
-* Add a plugin parser into libspiffextension.
-
 * Delete orphaned users.
 
 * Handle invalid/duplicate user/group names.
