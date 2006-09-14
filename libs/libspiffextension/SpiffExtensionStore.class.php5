@@ -21,16 +21,18 @@
 include_once dirname(__FILE__).'/SpiffExtensionDB.class.php5';
 include_once dirname(__FILE__).'/../libuseful/zip.inc.php';
 
-class SpiffExtensionStore extends EventBus {
+class SpiffExtensionStore {
   private $extension_db;
   private $directory;
+  private $event_bus;
   
   function __construct(&$db, $directory)
   {
     assert('is_object($db)');
     assert('is_dir($directory)');
-    $this->extension_db = new SpiffExtensionDB($db);
+    $this->extension_db = &new SpiffExtensionDB($db);
     $this->directory    = $directory;
+    $this->event_bus    = &new EventBus();
   }
 
 
@@ -52,6 +54,24 @@ class SpiffExtensionStore extends EventBus {
   }
 
 
+  public function install()
+  {
+    return $this->extension_db->install();
+  }
+
+
+  public function clear_database()
+  {
+    return $this->extension_db->clear_database();
+  }
+
+
+  public function set_table_prefix($prefix)
+  {
+    return $this->extension_db->set_table_prefix($prefix);
+  }
+
+
   /// Defines the directory in which extensions are installed.
   /**
    */
@@ -59,6 +79,12 @@ class SpiffExtensionStore extends EventBus {
   {
     assert('is_dir($directory)');
     $this->directory = $directory;
+  }
+
+
+  public function get_event_bus()
+  {
+    return $this->event_bus;
   }
 
 
@@ -91,17 +117,16 @@ class SpiffExtensionStore extends EventBus {
         continue;
       $tag          = strtolower($matches[1]);
       $header[$tag] = $matches[2];
+      //print "Tag: $tag, Value: $header[$tag]<br>";
     }
 
-    if (isset($header['extension'])
+    if (!isset($header['extension'])
       || !isset($header['handle'])
       || !isset($header['version'])
       || !isset($header['author'])
       || !isset($header['description'])
-      || !isset($header['depends'])) {
-      echo "Incomplete extension header in '$filename'.";
+      || !isset($header['depends']))
       return NULL;
-    }
 
     $header['depends'] = split(' *, *', $header['depends']);
     return $header;
@@ -150,15 +175,17 @@ class SpiffExtensionStore extends EventBus {
     $filename = $temp_dir . '/Plugin.class.php5';
     if (!file_exists($filename))
       return -3;
-    if (!$header = $this->parse_file($filename));
+    $header = $this->parse_file($filename);
+    if (!is_array($header))
       return -4;
 
     // Instantiate the extension.
+    include_once $temp_dir . '/Plugin.class.php5';
     $classname = 'SpiffExtension_' . $header['handle'];
     $extension = new $classname($header['handle'],
                                 $header['extension'],
                                 $header['version']);
-    if (!$extension)
+    if (!is_object($extension))
       return -5;
     $extension->set_author($header['author']);
     $extension->set_description($header['description']);
