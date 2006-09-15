@@ -41,8 +41,10 @@
           $groups = $this->acldb->get_resource_parents($resource);
         else {
           $groups = $this->acldb->get_resource_children($resource,
+                                                        NULL,
                                                         SPIFF_ACLDB_FETCH_GROUPS);
           $users  = $this->acldb->get_resource_children($resource,
+                                                        NULL,
                                                         SPIFF_ACLDB_FETCH_ITEMS);
         }
         break;
