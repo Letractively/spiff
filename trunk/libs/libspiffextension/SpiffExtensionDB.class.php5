@@ -26,12 +26,16 @@ include_once dirname(__FILE__).'/SpiffExtension.class.php5';
 class SpiffExtensionDB {
   private $db;
   private $db_table_prefix;
+  private $acl_section_handle;
   
-  function __construct(&$db)
+  function __construct(&$acldb, $acl_section_handle = 'extensions')
   {
-    assert('is_object($db)');
-    $this->db              = $db;
+    assert('is_object($acldb)');
+    assert('isset($acl_section_handle)');
+    $this->acldb           = $acldb;
+    $this->db              = $acldb->db;
     $this->db_table_prefix = '';
+    $this->acl_section     = &new SpiffAclResourceSection($acl_section_handle);
     $this->update_table_names();
   }
 
@@ -42,7 +46,6 @@ class SpiffExtensionDB {
   private function update_table_names()
   {
     $this->table_names = array (
-      't_extension'                => $this->db_table_prefix . 'extension',
       't_extension_dependency'     => $this->db_table_prefix . 'extension_dependency',
       't_extension_dependency_map' => $this->db_table_prefix . 'extension_dependency_map'
     );
@@ -105,15 +108,11 @@ class SpiffExtensionDB {
 
   /// Clears out the entire database. Use with care.
   /**
-   * Wipes out everything, including sections, actions, resources and acls.
+   * Wipes out everything.
    */
   public function clear_database()
   {
-    $query = new SqlQuery('DELETE FROM {t_extension}');
-    $query->set_table_names($this->table_names);
-    $rs = $this->db->Execute($query->sql());
-    assert('is_object($rs)');
-    return TRUE;
+    return $this->acldb->clear_section($this->acl_section);
   }
 
 
@@ -240,6 +239,8 @@ class SpiffExtensionDB {
       return $extension;
     
     // Start transaction.
+    //$this->debug();
+    //echo "Installing " . $extension->get_handle() . "<br>\n";
     $this->db->StartTrans();
 
     // Make sure that all dependencies are registered.
@@ -247,21 +248,25 @@ class SpiffExtensionDB {
       die('SpiffExtensionDB:register_extension(): Attempt to register'
          .' an extension with unmatched dependencies.');
 
-    // Insert the extension into the extension table.
-    $query = new SqlQuery('
-      INSERT INTO {t_extension}
-        (handle, name, version, author, description)
-      VALUES
-        ({handle}, {name}, {version}, {author}, {description})');
-    $query->set_table_names($this->table_names);
-    $query->set_string('handle',      $extension->get_handle());
-    $query->set_string('name',        $extension->get_name());
-    $query->set_string('version',     $extension->get_version());
-    $query->set_string('author',      $extension->get_author());
-    $query->set_string('description', $extension->get_description());
-    $rs = $this->db->Execute($query->sql());
-    assert('is_object($rs)');
-    $extension->set_id($this->db->Insert_Id());
+    // Create a group that holds all versions of the extension.
+    $handle         = $extension->get_handle();
+    $section_handle = $this->acl_section->get_handle();
+    if ($this->acldb->has_resource_from_handle($handle, $section_handle))
+      $parent = $this->acldb->get_resource_from_handle($handle);
+    else {
+      $parent = new SpiffAclResourceGroup($extension->get_name(), $handle);
+      $parent = $this->acldb->add_resource(NULL, $parent, $this->acl_section);
+    }
+
+    // Insert the extension into the ACL resource table.
+    $old_handle = $extension->get_handle();
+    $handle     = libspiffacl_mkhandle_from_string($extension->get_handle()
+                                                .$extension->get_version());
+    $extension->set_handle($handle);
+    $this->acldb->add_resource($parent->get_id(),
+                               $extension,
+                               $this->acl_section);
+    $extension->set_handle($old_handle);
 
     $dependency_re = '(' . SPIFF_EXTENSION_HANDLE_RE . ')'
                    . '(?:'
@@ -299,6 +304,7 @@ class SpiffExtensionDB {
       $query->set_string('dependency_handle',   $dependency_handle);
       $query->set_string('dependency_operator', $dependency_operator);
       $query->set_string('dependency_version',  $dependency_version);
+      //$this->debug();
       $rs = $this->db->Execute($query->sql());
       assert('is_object($rs)');
 
@@ -372,15 +378,9 @@ class SpiffExtensionDB {
   public function unregister_extension_from_id($id)
   {
     assert('is_int($id)');
+    $this->acldb->delete_resource_from_id($id);
 
     //FIXME: Unregister all extensions that require this extension.
-
-    // Unregister the requested extension.
-    $query = new SqlQuery('DELETE FROM {t_extension} WHERE id={id}');
-    $query->set_table_names($this->table_names);
-    $query->set_int('id', $id);
-    $rs = $this->db->Execute($query->sql());
-    assert('is_object($rs)');
     return TRUE;
   }
 
@@ -401,21 +401,27 @@ class SpiffExtensionDB {
    * the same version.
    * \return Boolean.
    */
+  public function has_extension_from_handle($handle, $version)
+  {
+    $handle = libspiffacl_mkhandle_from_string($handle . $version);
+    $section_handle = $this->acl_section->get_handle();
+    return $this->acldb->has_resource_from_handle($handle, $section_handle);
+  }
+
+
+  /// Checks whether the extension is registered.
+  /**
+   * Returns TRUE if the given extension is registered with
+   * the same version.
+   * \return Boolean.
+   */
   public function has_extension(SpiffExtension &$extension)
   {
     // Check whether the given extension is registered.
-    $query = new SqlQuery('
-      SELECT    e.id
-      FROM      {t_extension} e
-      WHERE e.handle={handle}
-      AND   e.version={version}');
-    $query->set_table_names($this->table_names);
-    $query->set_string('handle',  $extension->get_handle());
-    $query->set_string('version', $extension->get_version());
-    $rs = $this->db->Execute($query->sql());
-    assert('is_object($rs)');
-    $row = $rs->FetchRow();
-    return $row ? TRUE : FALSE;
+    $handle = libspiffacl_mkhandle_from_string($extension->get_handle()
+                                            .$extension->get_version());
+    $section_handle = $this->acl_section->get_handle();
+    return $this->acldb->has_resource_from_handle($handle, $section_handle);
   }
 
 
@@ -425,28 +431,31 @@ class SpiffExtensionDB {
   public function &get_extension_from_id($id)
   {
     assert('is_int($id)');
+    $extension = $this->acldb->get_resource_from_id($id);
+    // Attach a list of dependencies.
+    $this->extension_load_dependency_list($extension);
+    return $extension;
+  }
+
+
+  /// Attaches a list of dependencies.
+  private function extension_load_dependency_list(SpiffAclResource &$extension)
+  {
+    assert('is_object($extension)');
     $query = new SqlQuery('
-      SELECT    e1.*,e2.handle dep_handle
-      FROM      {t_extension}            e1
-      LEFT JOIN {t_extension_dependency} d1 ON e1.id=d1.extension_id
-      LEFT JOIN {t_extension_dependency} d2 ON d2.lft>d1.lft AND d2.rgt<d1.rgt
-      LEFT JOIN {t_extension}            e2 ON e2.id=d2.extension_id
-      WHERE e1.id={id}
-      ORDER BY d2.lft');
+      SELECT d.dependency_handle
+           , d.dependency_operator
+           , d.dependency_version
+      FROM  {t_extension_dependency} d
+      WHERE d.extension_id={id}');
     $query->set_table_names($this->table_names);
-    $query->set_int('id', $id);
+    $query->set_int('id', $extension->get_id());
     $rs = $this->db->Execute($query->sql());
     assert('is_object($rs)');
-    while($row = $rs->FetchRow()) {
-      if (!isset($extension)) {
-        $extension = new SpiffExtension($row['handle'],
-                                        $row['name'],
-                                        $row['version']);
-        $extension->set_description($row['description']);
-      }
-      $extension->add_dependency($row['dep_handle']);
-    }
-    return $extension;
+    while ($row = $rs->FetchRow())
+      $extension->add_dependency($row['dependency_handle']
+                                .$row['dependency_operator']
+                                .$row['dependency_version']);
   }
 
 
@@ -457,33 +466,11 @@ class SpiffExtensionDB {
   {
     assert('isset($handle)');
     assert('isset($version)');
-    $query = new SqlQuery('
-      SELECT    e.*
-           ,    d.dependency_handle
-           ,    d.dependency_operator
-           ,    d.dependency_version
-      FROM      {t_extension}            e
-      LEFT JOIN {t_extension_dependency} d ON e.id=d.extension_id
-      WHERE e.handle={handle}
-      AND   e.version={version}');
-    $query->set_table_names($this->table_names);
-    $query->set_string('handle',  $handle);
-    $query->set_string('version', $version);
-    $rs = $this->db->Execute($query->sql());
-    assert('is_object($rs)');
-    while ($row = $rs->FetchRow()) {
-      if (!isset($extension)) {
-        $extension = new SpiffExtension($row['handle'],
-                                        $row['name'],
-                                        $row['version']);
-        $extension->set_id($row['id']);
-        $extension->set_description($row['description']);
-      }
-      if (isset($row['dependency_handle']))
-        $extension->add_dependency($row['dependency_handle']
-                                  .$row['dependency_operator']
-                                  .$row['dependency_version']);
-    }
+    $handle         = libspiffacl_mkhandle_from_string($handle . $version);
+    $section_handle = $this->acl_section->get_handle();
+    $extension = $this->acldb->get_resource_from_handle($handle,
+                                                        $section_handle);
+    $this->extension_load_dependency_list($extension);
     return $extension;
   }
 
@@ -499,29 +486,35 @@ class SpiffExtensionDB {
     assert('isset($handle)');
     assert('isset($operator)');
     assert('isset($version)');
-    $registered_versions = $this->get_extension_version_list_from_handle(
-                                                                    $handle);
 
     // Operator '=' is easy...
     if ($operator == '=') {
-      $extension = $this->get_extension_from_handle($handle, $version);
+      $handle         = libspiffacl_mkhandle_from_string($handle . $version);
+      $section_handle = $this->acl_section->get_handle();
+      $extension = $this->get_extension_from_handle($handle, $section_handle);
       return $extension;
     }
+
+    $versions = $this->get_extension_version_list_from_handle($handle);
 
     // Ending up here, the operator is '>='.
     // Select the dependency with the version number that
     // matches the version requirement.
     $best_version = '0';
-    foreach ($registered_versions as $registered_version) {
-      if ($this->version_is_greater($registered_version, $version)
-        && $this->version_is_greater($registered_version, $best_version))
-        $best_version = $registered_version;
+    foreach ($versions as $cur) {
+      $cur_version = $cur->get_attribute('version');
+      if ($this->version_is_greater($cur_version, $version)
+        && $this->version_is_greater($cur_version, $best_version))
+        $best_version = $cur_version;
     }
 
     if ($best_version == '0')
       return NULL;
 
-    return $this->get_extension_from_handle($handle, $best_version);
+    //$best_version->set_handle($handle);
+    return $this->get_extension_from_handle($handle,
+                                            $best_version);
+    return $best_version;
   }
 
 
@@ -534,19 +527,11 @@ class SpiffExtensionDB {
   public function &get_extension_version_list_from_handle($handle)
   {
     assert('isset($handle) && $handle != ""');
-    $query = new SqlQuery('
-      SELECT e.version
-      FROM   {t_extension} e
-      WHERE e.handle={handle}');
-    $query->set_table_names($this->table_names);
-    $query->set_string('handle', $handle);
-    //$this->debug();
-    $rs = $this->db->Execute($query->sql());
-    assert('is_object($rs)');
-    $version_list = array();
-    while ($row = $rs->FetchRow())
-      array_push($version_list, $row['version']);
-    return $version_list;
+    $section_handle = $this->acl_section->get_handle();
+    $parent   = $this->acldb->get_resource_from_handle($handle,
+                                                       $section_handle);
+    $versions = $this->acldb->get_resource_children_from_id($parent->get_id());
+    return $versions;
   }
 
 

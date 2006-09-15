@@ -1,45 +1,5 @@
 <?xml version="1.0"?>
 <schema version="0.3">
-  <!-- Defines extensions (=plugins) -->
-  <table name="extension">
-    <opt platform="mysql">ENGINE=INNODB</opt>
-    <field name="id" type="I">
-      <NOTNULL/>
-      <KEY/>
-      <AUTOINCREMENT/>
-    </field>
-    <field name="handle" type="C" size="20">
-      <NOTNULL/>
-    </field>
-    <field name="name" type="C" size="40">
-      <NOTNULL/>
-    </field>
-    <field name="version" type="C" size="20">
-      <NOTNULL/>
-    </field>
-    <field name="author" type="C" size="20">
-      <NOTNULL/>
-    </field>
-    <field name="description" type="C" size="255">
-      <NOTNULL/>
-    </field>
-
-    <index name="extension_handle">
-      <col>handle</col>
-      <UNIQUE/>
-    </index>
-    <index name="extension_name_version">
-      <col>name</col>
-      <col>version</col>
-      <UNIQUE/>
-    </index>
-  </table>
-  <sql>
-    <query>
-    ALTER TABLE extension TYPE = innodb
-    </query>
-  </sql>
-
   <!-- Contains a list of the dependencies that each extension has
        specified. -->
   <table name="extension_dependency">
@@ -82,7 +42,7 @@
     <query>
     ALTER TABLE extension_dependency
     ADD FOREIGN KEY(extension_id)
-    REFERENCES extension(id)
+    REFERENCES resource(id)
     ON DELETE CASCADE
     </query>
   </sql>
@@ -112,13 +72,13 @@
     <query>
     ALTER TABLE extension_dependency_map
     ADD FOREIGN KEY(extension_id)
-    REFERENCES extension(id)
+    REFERENCES resource(id)
     ON DELETE CASCADE
     </query>
     <query>
     ALTER TABLE extension_dependency_map
     ADD FOREIGN KEY(dependency_id)
-    REFERENCES extension(id)
+    REFERENCES resource(id)
     ON DELETE CASCADE
     </query>
   </sql>

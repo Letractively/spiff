@@ -31,46 +31,42 @@ define('SPIFF_EXTENSION_DEPENDENCY_RE',   SPIFF_EXTENSION_HANDLE_RE
                                         . ')?');
 
 class SpiffExtension extends SpiffAclResource {
-  protected $version;
-  protected $author;
-  protected $description;
-  private   $dependencies;
+  private $dependencies;
   
   public function __construct($handle, $name, $version) {
     assert('isset($handle)');
     assert('isset($name)');
     assert('isset($version)');
-    $section = new SpiffAclResourceSection('extensions', 'Extensions');
-    parent::__construct($handle, $name, $section);
+    parent::__construct($name, $handle);
     $this->set_version($version);
     $this->dependencies = array();
   }
 
   public function set_version($version) {
     assert('isset($version) && $version != ""');
-    $this->version = $version;
+    $this->set_attribute('version', $version);
   }
 
   public function get_version() {
-    return $this->version;
+    return $this->get_attribute('version');
   }
 
   public function set_author($author) {
     assert('isset($author) && $author != ""');
-    $this->author = $author;
+    $this->set_attribute('author', $author);
   }
 
   public function get_author() {
-    return $this->author;
+    return $this->get_attribute('author');
   }
 
   public function set_description($description) {
     assert('isset($description)');
-    $this->description = $description;
+    $this->set_attribute('description', $description);
   }
 
   public function get_description() {
-    return $this->description;
+    return $this->get_attribute('description');
   }
 
   public function add_dependency($dependency) {

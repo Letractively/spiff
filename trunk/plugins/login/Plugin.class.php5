@@ -28,18 +28,19 @@ Depends:     spiff
 <?php
 class SpiffExtension_login extends SpiffExtension {
   function initialize() {
-    $this->register_callback('on_plugin_page_open',
-                             '$this->on_plugin_page_open');
-    $this->register_callback('on_plugin_render_request',
-                             '$this->on_plugin_render_request');
+    $this->register_callback('on_page_open',
+                             '$this->on_page_open');
+    $this->register_callback('on_render_request',
+                             '$this->on_render_request');
   }
 
-  public function on_plugin_page_open() {
-    echo "SpiffExtension_Login::on_plugin_page_open()<br>\n";
+  public function on_page_open() {
+    echo "SpiffExtension_login::on_page_open()<br>\n";
   }
 
-  public function on_plugin_render_request() {
-    echo "SpiffExtension_Login::on_plugin_render_request()<br>\n";
+  public function on_render_request() {
+    echo "SpiffExtension_login::on_render_request()<br>\n";
+    $this->append_content($this->smarty->fetch('login.tpl'));
   }
 }
 ?>
