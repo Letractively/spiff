@@ -101,61 +101,86 @@ class SpiffAclDBReader {
     assert('is_int($id)');
     assert('$id != -1');
     $query = new SqlQuery('
-      SELECT s.id section_id,s.name section_name,r.*
-      FROM      {t_resource}         r
-      LEFT JOIN {t_resource_section} s ON r.section_handle=s.handle
+      SELECT r.*,a.name attr_name,a.type,a.attr_string,a.attr_int
+      FROM      {t_resource}           r
+      LEFT JOIN {t_resource_attribute} a ON r.id=a.resource_id
       WHERE r.id={id}');
     $query->set_table_names($this->table_names);
     $query->set_int('id', $id);
     $rs = $this->db->Execute($query->sql());
     assert('is_object($rs)');
-    $row = $rs->FetchRow();
-    $section  = new SpiffAclResourceSection($row['section_handle'],
-                                            $row['section_name']);
+    if (!$row = $rs->FetchRow())
+      assert('FALSE; // Non existent.');
     if ($row['is_actor'] && $row['is_group'])
-      $resource = new SpiffAclActorGroup($row['handle'], $row['name'], $section);
+      $resource = new SpiffAclActorGroup($row['name'], $row['handle']);
     else if ($row['is_actor'])
-      $resource = new SpiffAclActor($row['handle'], $row['name'], $section);
+      $resource = new SpiffAclActor($row['name'], $row['handle']);
     else if ($row['is_group'])
-      $resource = new SpiffAclResourceGroup($row['handle'], $row['name'], $section);
+      $resource = new SpiffAclResourceGroup($row['name'], $row['handle']);
     else
-      $resource = new SpiffAclResource($row['handle'], $row['name'], $section);
-    $section->set_id($row['section_id']);
+      $resource = new SpiffAclResource($row['name'], $row['handle']);
     $resource->set_id($row['id']);
+
+    // Append all attributes.
+    do {
+      switch ($row['type']) {
+      case SPIFF_ACLDB_ATTRIB_TYPE_INT:
+        $value = (int)$row['attr_int'];
+        break;
+
+      case SPIFF_ACLDB_ATTRIB_TYPE_STRING:
+        $value = $row['attr_string'];
+        break;
+      }
+      if ($row['attr_name'] != NULL)
+        $resource->set_attribute($row['attr_name'], $value);
+    } while ($row = $rs->FetchRow());
     return $resource;
   }
 
 
-  public function &get_resource_from_handle($handle,
-                                            SpiffAclResourceSection &$section)
+  public function &get_resource_from_handle($handle, $section_handle)
   {
     assert('isset($handle)');
-    assert('$handle != ""');
+    assert('isset($section_handle)');
     $query = new SqlQuery('
-      SELECT s.id section_id,s.name section_name,r.*
-      FROM      {t_resource}         r
-      LEFT JOIN {t_resource_section} s ON r.section_handle=s.handle
+      SELECT r.*,a.name attr_name,a.type,a.attr_string,a.attr_int
+      FROM      {t_resource}           r
+      LEFT JOIN {t_resource_attribute} a ON r.id=a.resource_id
       WHERE r.handle={handle}
       AND   r.section_handle={section_handle}');
     $query->set_table_names($this->table_names);
     $query->set_string('handle',         $handle);
-    $query->set_string('section_handle', $section->get_handle());
+    $query->set_string('section_handle', $section_handle);
     //$this->debug();
     $rs = $this->db->Execute($query->sql());
     assert('is_object($rs)');
     if (!$row = $rs->FetchRow())
-      die("SpiffAclDBReader::get_resource_from_handle(): Non existent.");
-    $section->set_id($row['section_id']);
-    $section->set_name($row['section_name']);
+      assert("FALSE; // Handle $handle non existent.");
     if ($row['is_actor'] && $row['is_group'])
-      $resource = new SpiffAclActorGroup($row['handle'], $row['name'], $section);
+      $resource = new SpiffAclActorGroup($row['name'], $row['handle']);
     else if ($row['is_actor'])
-      $resource = new SpiffAclActor($row['handle'], $row['name'], $section);
+      $resource = new SpiffAclActor($row['name'], $row['handle']);
     else if ($row['is_group'])
-      $resource = new SpiffAclResourceGroup($row['handle'], $row['name'], $section);
+      $resource = new SpiffAclResourceGroup($row['name'], $row['handle']);
     else
-      $resource = new SpiffAclResource($row['handle'], $row['name'], $section);
+      $resource = new SpiffAclResource($row['name'], $row['handle']);
     $resource->set_id($row['id']);
+
+    // Append all attributes.
+    do {
+      switch ($row['type']) {
+      case SPIFF_ACLDB_ATTRIB_TYPE_INT:
+        $value = (int)$row['attr_int'];
+        break;
+
+      case SPIFF_ACLDB_ATTRIB_TYPE_STRING:
+        $value = $row['attr_string'];
+        break;
+      }
+      if ($row['attr_name'] != NULL)
+        $resource->set_attribute($row['attr_name'], $value);
+    } while ($row = $rs->FetchRow());
     return $resource;
   }
 

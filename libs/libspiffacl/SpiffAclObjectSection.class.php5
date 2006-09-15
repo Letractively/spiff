@@ -18,15 +18,18 @@
   */
 ?>
 <?php
+include_once dirname(__FILE__).'/functions.inc.php5';
+
 /// Base type for any object sections.
 class SpiffAclObjectSection {
   private $id;
   private $handle;
   private $name;
 
-  function __construct($handle, $name) {
-    assert('isset($handle)');
+  function __construct($name, $handle = NULL) {
     assert('isset($name)');
+    if ($handle == NULL)
+      $handle = libspiffacl_mkhandle_from_string($name);
     $this->id     = -1;
     $this->handle = $handle;
     $this->name   = $name;

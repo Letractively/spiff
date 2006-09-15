@@ -18,28 +18,23 @@
   */
 ?>
 <?php
+include_once dirname(__FILE__).'/functions.inc.php5';
+
 class SpiffAclResource {
   private $id;
   private $handle;
   private $name;
-  private $section;
   private $n_children;
   private $attributes = array();
 
-  public function __construct($handle, $name, SpiffAclObjectSection &$section) {
-    assert('isset($handle)');
+  public function __construct($name, $handle = NULL) {
     assert('isset($name)');
-    assert('is_object($section)');
+    if ($handle == NULL)
+      $handle = libspiffacl_mkhandle_from_string($name);
     $this->id         = -1;
     $this->handle     = $handle;
     $this->name       = $name;
-    $this->section    = $section;
     $this->n_children = 0;
-  }
-
-
-  public function get_section() {
-    return $this->section;
   }
 
 

@@ -123,7 +123,7 @@ test(chmod(SPIFF_REPO_DIR, 0775));
 
 
 /*******************************************************************
- * Set up phpGACL.
+ * Set up libspiffacl.
  *******************************************************************/
 // If necessary, create tables.
 category('Setting Up libspiffacl');
@@ -143,56 +143,108 @@ start('Clearing libspiffacl database tables');
 test($acldb->clear_database());
 
 
+/*******************************************************************
+ * Set up libspiffextension.
+ *******************************************************************/
+category('Setting Up libspiffextension');
+$extstore = new SpiffExtensionStore($acldb, SPIFF_PLUGIN_DIR);
+start('Creating database tables');
+$tables = $db->MetaTables();
+//echo "Tables: " . count($tables) . "<br/>";
+//FIXME: Compare the count with the number of tables in the schema file.
+if (count($tables) >= 10)
+  unnecessary();
+else {
+  $extstore->set_table_prefix($cfg['db_table_prefix']);
+  //$extstore->debug();
+  test($extstore->install());
+}
+
+start('Clearing libspiffextension database tables');
+test($extstore->clear_database());
+
+
+/*******************************************************************
+ * Install core extensions.
+ *******************************************************************/
+category('Installing Core Extensions');
+start('Creating resource section "Extensions"');
+$ac_extension_section = new SpiffAclResourceSection('Extensions');
+$ac_extension_section = $acldb->add_resource_section($ac_extension_section);
+test($ac_extension_section);
+
+start('Installing Spiff extension');
+$spiff_ext = $extstore->add_extension(SPIFF_SPIFFPLUGIN_DIR . '/spiff');
+test(is_object($spiff_ext));
+
+start('Installing Login extension');
+$login_ext = $extstore->add_extension(SPIFF_SPIFFPLUGIN_DIR . '/login');
+test(is_object($login_ext));
+
+
+/*******************************************************************
+ * Set up ACL user actions.
+ *******************************************************************/
 category('Initializing User Actions');
 start('Creating action section "User Permissions"');
-$ac_user_section = new SpiffAclActionSection('users', 'User Permissions');
+$ac_user_section = new SpiffAclActionSection('User Permissions', 'users');
 test($ac_user_section = $acldb->add_action_section($ac_user_section));
 
 start('Creating action "Administer User"');
-$action = new SpiffAclAction('administer', 'Administer User', $ac_user_section);
-test($ac_user_administer = $acldb->add_action($action));
+$action = new SpiffAclAction('Administer User', 'administer');
+test($ac_user_administer = $acldb->add_action($action, $ac_user_section));
 
 start('Creating action "View User"');
-$action = new SpiffAclAction('view', 'View User', $ac_user_section);
-test($ac_user_view = $acldb->add_action($action));
+$action = new SpiffAclAction('View User', 'view');
+test($ac_user_view = $acldb->add_action($action, $ac_user_section));
 
 start('Creating action "Create User"');
-$action = new SpiffAclAction('create', 'Create User', $ac_user_section);
-test($ac_user_create = $acldb->add_action($action));
+$action = new SpiffAclAction('Create User', 'create');
+test($ac_user_create = $acldb->add_action($action, $ac_user_section));
 
 start('Creating action "Edit User"');
-$action = new SpiffAclAction('edit', 'Edit User', $ac_user_section);
-test($ac_user_edit = $acldb->add_action($action));
+$action = new SpiffAclAction('Edit User', 'edit');
+test($ac_user_edit = $acldb->add_action($action, $ac_user_section));
 
 start('Creating action "Delete User"');
-$action = new SpiffAclAction('delete', 'Delete User', $ac_user_section);
-test($ac_user_delete = $acldb->add_action($action));
+$action = new SpiffAclAction('Delete User', 'delete');
+test($ac_user_delete = $acldb->add_action($action, $ac_user_section));
 
 
+/*******************************************************************
+ * Set up ACL content actions.
+ *******************************************************************/
 category('Initializing Content Actions');
 start('Creating action section "Content Permissions"');
-$ac_cont_section = new SpiffAclActionSection('content',
-                                        'Content Permissions');
+$ac_cont_section = new SpiffAclActionSection('Content Permissions',
+                                             'content');
 test($ac_cont_section = $acldb->add_action_section($ac_cont_section));
+
 start('Creating action "View Content"');
-test($ac_cont_view = $acldb->add_action(new SpiffAclAction('view',
-                                                      'View Content',
-                                                      $ac_cont_section)));
+$action = new SpiffAclAction('View Content', 'view');
+test($ac_cont_view = $acldb->add_action($action, $ac_cont_section));
 
 start('Creating action "Create Content"');
-test($ac_cont_create = $acldb->add_action(new SpiffAclAction('create',
-                                                        'Create Content',
-                                                         $ac_cont_section)));
+$action = new SpiffAclAction('Create Content', 'create');
+test($ac_cont_create = $acldb->add_action($action, $ac_cont_section));
 
 start('Creating action "Edit Content"');
-test($ac_cont_edit = $acldb->add_action(new SpiffAclAction('edit',
-                                                      'Edit Content',
-                                                      $ac_cont_section)));
+$action = new SpiffAclAction('Edit Content', 'edit');
+test($ac_cont_edit = $acldb->add_action($action, $ac_cont_section));
 
 start('Creating action "Delete Content"');
-test($ac_cont_delete = $acldb->add_action(new SpiffAclAction('delete',
-                                                        'Delete Content',
-                                                        $ac_cont_section)));
+$action = new SpiffAclAction('Delete Content', 'delete');
+test($ac_cont_delete = $acldb->add_action($action, $ac_cont_section));
+
+
+/*******************************************************************
+ * Set up ACL extension actions.
+ *******************************************************************/
+category('Initializing Extension Actions');
+start('Creating action section "Extension Permissions"');
+$ac_ext_section = new SpiffAclActionSection('Extension Permissions',
+                                            'extensions');
+test($ac_ext_section = $acldb->add_action_section($ac_ext_section));
 
 
 /*******************************************************************
@@ -205,67 +257,33 @@ test($ac_cont_delete = $acldb->add_action(new SpiffAclAction('delete',
  *******************************************************************/
 category('Initializing Users And Groups');
 start('Creating resource section "Users"');
-$users_section = new SpiffAclResourceSection('users', 'Users');
+$users_section = new SpiffAclResourceSection('Users');
 test($users_section = $acldb->add_resource_section($users_section));
 
 start('Creating group "Everybody"');
-$actor = new SpiffAclActorGroup('everybody', 'Everybody', $users_section);
-test($everybody = $acldb->add_resource(NULL, $actor));
+$actor     = new SpiffAclActorGroup('Everybody');
+$everybody = $acldb->add_resource(NULL, $actor, $users_section);
+test($everybody);
 
 start('Creating group "Administrators"');
-$actor = new SpiffAclActorGroup('administrators', 'Administrators', $users_section);
-test($admin = $acldb->add_resource($everybody->get_id(), $actor));
+$actor = new SpiffAclActorGroup('Administrators');
+$admin = $acldb->add_resource($everybody->get_id(), $actor, $users_section);
+test($admin);
 
 start('Creating user "Administrator"');
-$actor = new SpiffAclActor('administrator', 'Administrator', $users_section);
-test($usr_admin = $acldb->add_resource($admin->get_id(), $actor));
+$actor     = new SpiffAclActor('Administrator');
+$usr_admin = $acldb->add_resource($admin->get_id(), $actor, $users_section);
+test($usr_admin);
 
 start('Creating group "Users"');
-$actor = new SpiffAclActorGroup('users', 'Users', $users_section);
-test($users = $acldb->add_resource($everybody->get_id(), $actor));
+$actor = new SpiffAclActorGroup('Users');
+$users = $acldb->add_resource($everybody->get_id(), $actor, $users_section);
+test($users);
 
 start('Creating user "Anonymous George"');
-$actor = new SpiffAclActor('anonymous', 'Anonymous George', $users_section);
-test($usr_anon = $acldb->add_resource($users->get_id(), $actor));
-
-
-/*******************************************************************
- * Set up libspiffextension.
- *******************************************************************/
-category('Setting Up libspiffextension');
-$extstore = new SpiffExtensionStore($db, SPIFF_PLUGIN_DIR);
-start('Creating database tables');
-$tables = $db->MetaTables();
-//echo "Tables: " . count($tables) . "<br/>";
-//FIXME: Compare the count with the number of tables in the schema file.
-if (count($tables) >= 11)
-  unnecessary();
-else {
-  $extstore->set_table_prefix($cfg['db_table_prefix']);
-  //$extstore->debug();
-  test($extstore->install());
-}
-
-start('Clearing libspiffextension database tables');
-test($extstore->clear_database());
-
-start('Creating ACL section for extensions');
-$ac_extension_section = new SpiffAclResourceSection('extensions', 'Extensions');
-$ac_extension_section = $acldb->add_resource_section($ac_extension_section);
-test($ac_extension_section);
-
-
-/*******************************************************************
- * Install core plugins.
- *******************************************************************/
-category('Installing Core Extensions');
-start('Registering Spiff extension');
-$spiff_ext = $extstore->add_extension(SPIFF_SPIFFPLUGIN_DIR . '/spiff');
-test(is_object($spiff_ext));
-
-start('Installing login extension');
-$login_ext = $extstore->add_extension(SPIFF_SPIFFPLUGIN_DIR . '/login');
-test(is_object($login_ext));
+$actor    = new SpiffAclActor('Anonymous George', 'anonymous');
+$usr_anon = $acldb->add_resource($users->get_id(), $actor, $users_section);
+test($usr_anon);
 
 
 /*******************************************************************
@@ -275,16 +293,15 @@ test(is_object($login_ext));
  *******************************************************************/
 category('Initializing Content');
 start('Creating resource section "Content"');
-$cont_sect = new SpiffAclResourceSection('content', 'Content');
+$cont_sect = new SpiffAclResourceSection('Content');
 test($cont_sect = $acldb->add_resource_section($cont_sect));
 
-start('Creating resource "Homepage" in "Content"');
-$resource = new SpiffAclResourceGroup('homepage', 'Homepage', $cont_sect);
-test($homepage = $acldb->add_resource(NULL, $resource));
-
-start('Adding login extension to homepage');
-$login_ext = $acldb->add_resource($homepage->get_id(), $login_ext);
-test(is_object($login_ext));
+start('Creating Homepage');
+$resource  = new SpiffAclResource('Homepage');
+$extension = $login_ext->get_handle() . '=' . $login_ext->get_version();
+$resource->set_attribute('extension', $extension);
+$homepage = $acldb->add_resource(NULL, $resource, $cont_sect);
+test(is_object($homepage));
 
 
 /*******************************************************************

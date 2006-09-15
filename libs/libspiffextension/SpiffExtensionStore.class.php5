@@ -187,7 +187,7 @@ class SpiffExtensionStore {
       return -4;
 
     // Check whether the version was already installed.
-    if ($this->extension_db->get_extension_from_handle($header['handle'],
+    if ($this->extension_db->has_extension_from_handle($header['handle'],
                                                        $header['version'])) {
       rmdir_recursive($plugin_dir);
       return -5;
@@ -215,5 +215,14 @@ class SpiffExtensionStore {
       return -8;
     return $extension;
   }
+
+
+  /*******************************************************************
+   * Using installed extensions.
+   *******************************************************************/
+  public function prepare_extension($handle)
+  {
+    //FIXME: Load all extensions required to use the extension with
+    // the given handle.
+  }
 }
-?>

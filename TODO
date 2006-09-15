@@ -2,8 +2,6 @@
 
 * Handle invalid/duplicate user/group names.
 
-* Create use cases for plugins.
-
 * Decide how to lay out multiple plugins on one site.
   - Create layout containers? (Straight forward, but how can we hide
     complexity in simple cases?)
@@ -25,10 +23,6 @@
 * I18Nize the admin interface.
 
 * Add a navigation bar ("breadcrumbs") to the admin GUI.
-
-* Create a bus over which plugins are able to communicate. Investigate
-  open standard protocols, maybe there is even an implementation
-  already.
 
 * Create an admin GUI for content management. Essentially, this GUI
   is our "Plugin Central", where the user can add different plugins

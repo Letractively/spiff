@@ -77,7 +77,7 @@
              . ' Please check username, password and hostname.');
 
       $this->acldb           = &new SpiffAclDB($this->db);
-      $this->extension_store = &new SpiffExtensionStore($this->db,
+      $this->extension_store = &new SpiffExtensionStore($this->acldb,
                                                         SPIFF_PLUGIN_DIR);
 
       // Init Smarty.
@@ -129,7 +129,6 @@
       // Fetch the requested site.
       $section  = isset($_GET['section']) ? $_GET['section'] : 'content';
       $handle   = isset($_GET['handle'])  ? $_GET['handle']  : 'homepage';
-      $section  = new SpiffAclResourceSection($section, $section);
       $resource = $this->acldb->get_resource_from_handle($handle, $section);
       
       // Check permissions.
@@ -137,6 +136,13 @@
 
       // Load all plugins required to display the current page.
       //FIXME
+      
+      /* Plugin hook: on_page_open
+       *   Called from within Spiff->show().
+       *   The return value of the callback is ignored.
+       *   Args: None.
+       */
+      $this->extension_store->get_event_bus()->emit('on_page_open');
     }
 
 

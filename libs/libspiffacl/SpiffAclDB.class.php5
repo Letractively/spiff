@@ -94,6 +94,27 @@ class SpiffAclDB extends SpiffAclDBReader {
   }
 
 
+  /// Remove everything in the given section from the database. Use with care.
+  /**
+   */
+  public function clear_section(SpiffAclObjectSection &$section)
+  {
+    assert('is_object($section)');
+    $query = new SqlQuery('DELETE FROM {t_action_section}
+                           WHERE handle={handle}');
+    $query->set_table_names($this->table_names);
+    $query->set_string('handle', $section->get_handle());
+    //$this->debug();
+    $rs = $this->db->Execute($query->sql());
+    assert('is_object($rs)');
+    $query->set_sql('DELETE FROM {t_action_section}
+                     WHERE handle={handle}');
+    $rs = $this->db->Execute($query->sql());
+    assert('is_object($rs)');
+    return TRUE;
+  }
+
+
   /*******************************************************************
    * Object section manipulation.
    *******************************************************************/
@@ -112,7 +133,7 @@ class SpiffAclDB extends SpiffAclDBReader {
         ({handle}, {name})");
     $query->set_table_names($this->table_names);
     $query->set_string('handle', $section->get_handle());
-    $query->set_string('name',     $section->get_name());
+    $query->set_string('name',   $section->get_name());
     $rs = $this->db->Execute($query->sql());
     assert('is_object($rs)');
     $section->set_id($this->db->Insert_Id());
@@ -134,9 +155,9 @@ class SpiffAclDB extends SpiffAclDBReader {
       SET    handle={handle}, name={name}
       WHERE  id={id}");
     $query->set_table_names($this->table_names);
-    $query->set_int('id',          $section->get_id());
+    $query->set_int('id',        $section->get_id());
     $query->set_string('handle', $section->get_handle());
-    $query->set_string('name',     $section->get_name());
+    $query->set_string('name',   $section->get_name());
     $rs = $this->db->Execute($query->sql());
     assert('is_object($rs)');
     return $section;
@@ -240,10 +261,10 @@ class SpiffAclDB extends SpiffAclDBReader {
   /**
    * SpiffAclActions define verbs like "view", "edit", "delete", etc.
    */
-  public function &add_action(SpiffAclAction &$action)
+  public function &add_action(SpiffAclAction &$action,
+                              SpiffAclActionSection &$section)
   {
     assert('is_object($action)');
-    $section = $action->get_section();
     assert('is_object($section)');
     $query = new SqlQuery('
       INSERT INTO {t_action}
@@ -264,10 +285,10 @@ class SpiffAclDB extends SpiffAclDBReader {
   /// Saves the given SpiffAclAction to the database.
   /**
    */
-  public function &save_action(SpiffAclAction &$action)
+  public function &save_action(SpiffAclAction &$action,
+                               SpiffAclActionSection &$section)
   {
     assert('is_object($action)');
-    $section = $action->get_section();
     assert('is_object($section)');
     $query = new SqlQuery('
       UPDATE {t_action}
@@ -306,10 +327,10 @@ class SpiffAclDB extends SpiffAclDBReader {
   /**
    * All ACLs associated with the SpiffAclAction are removed.
    */
-  public function delete_action(SpiffAclAction &$action)
+  public function delete_action(SpiffAclAction &$action,
+                                SpiffAclActionSection &$section)
   {
     assert('is_object($action)');
-    $section = $action->get_section();
     assert('is_object($section)');
     $query = new SqlQuery('
       DELETE FROM {t_action}
@@ -330,19 +351,15 @@ class SpiffAclDB extends SpiffAclDBReader {
     assert('is_int($id)');
     assert('$id != -1');
     $query = new SqlQuery('
-      SELECT s.id section_id,s.name section_name,a.*
-      FROM      {t_action}         a
-      LEFT JOIN {t_action_section} s ON a.section_handle=s.handle
+      SELECT a.*
+      FROM  {t_action} a
       WHERE a.id={id}');
     $query->set_table_names($this->table_names);
     $query->set_int('id', $id);
     $rs = $this->db->Execute($query->sql());
     assert('is_object($rs)');
     $row = $rs->FetchRow();
-    $section = new SpiffAclActionSection($row['section_handle'],
-                                    $row['section_name']);
-    $action  = new SpiffAclAction($row['handle'], $row['name'], $section);
-    $section->set_id($row['section_id']);
+    $action = new SpiffAclAction($row['name'], $row['handle']);
     $action->set_id($row['id']);
     return $action;
   }
@@ -354,10 +371,8 @@ class SpiffAclDB extends SpiffAclDBReader {
     assert('isset($handle)');
     assert('$handle !== ""');
     $query = new SqlQuery('
-      SELECT s.id section_id, s.handle section_handle, s.name section_name,
-             a.*
-      FROM      {t_action}         a
-      LEFT JOIN {t_action_section} s ON a.section_handle=s.handle
+      SELECT a.*
+      FROM      {t_action} a
       WHERE a.handle={handle}
       AND   a.section_handle={section_handle}');
     $query->set_table_names($this->table_names);
@@ -368,10 +383,7 @@ class SpiffAclDB extends SpiffAclDBReader {
     assert('is_object($rs)');
     $row = $rs->FetchRow();
     //print_r($row);
-    $section = new SpiffAclActionSection($row['section_handle'],
-                                         $row['section_name']);
-    $action  = new SpiffAclAction($row['handle'], $row['name'], $section);
-    $section->set_id($row['section_id']);
+    $action = new SpiffAclAction($row['name'], $row['handle']);
     $action->set_id($row['id']);
     return $action;
   }
@@ -406,16 +418,18 @@ class SpiffAclDB extends SpiffAclDBReader {
     $query->set_table_names($this->table_names);
     $query->set_int('resource_id', $resource_id);
     $query->set_string('name', $name);
-    if (is_numeric($value) || is_bool($value)) {
-      $query->set_int('type',     SPIFF_ACLDB_ATTRIB_TYPE_INT);
+    if (is_int($value) || is_bool($value)) {
+      $query->set_int('type', SPIFF_ACLDB_ATTRIB_TYPE_INT);
       $query->set_int('attr_int', $value);
       $query->set_null('attr_string');
     }
     else {
-      $query->set_int('type',           SPIFF_ACLDB_ATTRIB_TYPE_STRING);
+      $query->set_int('type', SPIFF_ACLDB_ATTRIB_TYPE_STRING);
       $query->set_string('attr_string', $value);
       $query->set_null('attr_int');
     }
+    //$this->debug();
+    //echo $query->sql() . '<br>';
     $rs = $this->db->Execute($query->sql());
     assert('is_object($rs)');
     return $this->db->Insert_Id();
@@ -495,11 +509,12 @@ class SpiffAclDB extends SpiffAclDBReader {
   }
 
   
-  public function &add_resource($parent_id, SpiffAclResource &$resource)
+  public function &add_resource($parent_id,
+                                SpiffAclResource &$resource,
+                                SpiffAclResourceSection &$section)
   {
     assert('is_int($parent_id) || is_null($parent_id)');
     assert('is_object($resource)');
-    $section = $resource->get_section();
     assert('is_object($section)');
 
     // Let's take a journey.
@@ -595,10 +610,10 @@ class SpiffAclDB extends SpiffAclDBReader {
   }
 
 
-  public function &save_resource(SpiffAclResource &$resource)
+  public function &save_resource(SpiffAclResource &$resource,
+                                 SpiffAclResourceSection &$section)
   {
     assert('is_object($resource)');
-    $section = $resource->get_section();
     assert('is_object($section)');
 
     $this->db->StartTrans();
@@ -651,10 +666,38 @@ class SpiffAclDB extends SpiffAclDBReader {
   }
 
 
-  public function delete_resource(SpiffAclResource &$resource)
+  public function has_resource_from_handle($handle, $section_handle)
+  {
+    assert('isset($handle)');
+    assert('isset($section_handle)');
+    $query = new SqlQuery('
+      SELECT id
+      FROM {t_resource}
+      WHERE handle={handle}
+      AND   section_handle={section_handle}');
+    $query->set_table_names($this->table_names);
+    $query->set_string('handle',         $handle);
+    $query->set_string('section_handle', $section_handle);
+    $rs = $this->db->Execute($query->sql());
+    $row = $rs->FetchRow();
+    return $row ? TRUE : FALSE;
+  }
+
+
+  public function has_resource(SpiffAclResource &$resource,
+                               SpiffAclResourceSection &$section)
   {
     assert('is_object($resource)');
-    $section = $resource->get_section();
+    assert('is_object($section)');
+    return $this->has_resource_from_handle($resource->get_handle(),
+                                           $section->get_handle());
+  }
+
+
+  public function delete_resource(SpiffAclResource &$resource,
+                                  SpiffAclResourceSection &$section)
+  {
+    assert('is_object($resource)');
     assert('is_object($section)');
     $query = new SqlQuery('
       DELETE FROM {t_resource}
@@ -693,12 +736,12 @@ class SpiffAclDB extends SpiffAclDBReader {
     }
 
     $query = new SqlQuery('
-      SELECT r.*,t1.n_children,s.id section_id, s.name section_name
-      FROM      {t_resource}          r
-      LEFT JOIN {t_resource_path}     t1 ON t1.resource_id=r.id
-      LEFT JOIN {t_path_ancestor_map} p  ON t1.path=p.resource_path
-      LEFT JOIN {t_resource_path}     t2 ON t2.path=p.ancestor_path
-      LEFT JOIN {t_resource_section}  s  ON s.handle=r.section_handle
+      SELECT r.*,a.name attr_name,a.type,a.attr_string,a.attr_int,t1.n_children
+      FROM      {t_resource}           r
+      LEFT JOIN {t_resource_attribute} a  ON r.id=a.resource_id
+      LEFT JOIN {t_resource_path}      t1 ON t1.resource_id=r.id
+      LEFT JOIN {t_path_ancestor_map}  p  ON t1.path=p.resource_path
+      LEFT JOIN {t_resource_path}      t2 ON t2.path=p.ancestor_path
       WHERE t2.resource_id={resource_id}
       AND   t1.depth=t2.depth + 1'
       . $sql);
@@ -707,15 +750,29 @@ class SpiffAclDB extends SpiffAclDBReader {
     //$this->debug();
     $rs = $this->db->Execute($query->sql());
     assert('is_object($rs)');
+    $last     = '';
     $children = array();
     while ($row = $rs->FetchRow()) {
-      $section = new SpiffAclResourceSection($row['section_handle'],
-                                        $row['section_name']);
-      $section->set_id($row['section_id']);
-      $child = new SpiffAclResource($row['handle'], $row['name'], $section);
-      $child->set_id($row['id']);
-      $child->set_n_children($row['n_children']);
-      array_push($children, $child);
+      if ($row['handle'] != $last) {
+        $last  = $row['handle'];
+        $child = new SpiffAclResource($row['name'], $row['handle']);
+        $child->set_id($row['id']);
+        $child->set_n_children($row['n_children']);
+        array_push($children, $child);
+      }
+
+      // Append all attributes.
+      switch ($row['type']) {
+      case SPIFF_ACLDB_ATTRIB_TYPE_INT:
+        $value = (int)$row['attr_int'];
+        break;
+
+      case SPIFF_ACLDB_ATTRIB_TYPE_STRING:
+        $value = $row['attr_string'];
+        break;
+      }
+      if ($row['attr_name'] != NULL)
+        $child->set_attribute($row['attr_name'], $value);
     }
     //print_r($children);
     return $children;
@@ -744,12 +801,11 @@ class SpiffAclDB extends SpiffAclDBReader {
     assert('is_int($id)');
     assert('$id != -1');
     $query = new SqlQuery('
-      SELECT s.id section_id,s.name section_name,r.*
+      SELECT r.*
       FROM      {t_resource}          r
       LEFT JOIN {t_resource_path}     t1 ON t1.resource_id=r.id
       LEFT JOIN {t_path_ancestor_map} p  ON t1.path=p.ancestor_path
       LEFT JOIN {t_resource_path}     t2 ON t2.path=p.resource_path
-      LEFT JOIN {t_resource_section}  s  ON s.handle=r.section_handle
       WHERE t2.resource_id={id}
       AND   t2.depth=t1.depth + 1');
     $query->set_table_names($this->table_names);
@@ -760,15 +816,10 @@ class SpiffAclDB extends SpiffAclDBReader {
     // Each resource may have multiple parents.
     $parents = array();
     while ($row = $rs->FetchRow()) {
-      $section = new SpiffAclResourceSection($row['section_handle'],
-                                        $row['section_name']);
       if ($row['is_actor'])
-        $parent = new SpiffAclActorGroup($row['handle'], $row['name'], $section);
+        $parent = new SpiffAclActorGroup($row['name'], $row['handle']);
       else
-        $parent = new SpiffAclResourceGroup($row['handle'],
-                                       $row['name'],
-                                       $section);
-      $section->set_id($row['section_id']);
+        $parent = new SpiffAclResourceGroup($row['name'], $row['handle']);
       $parent->set_id($row['id']);
       array_push($parents, $parent);
     }
