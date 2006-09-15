@@ -27,8 +27,10 @@
         // Get a list of all resources under the given group id.
         $resource = $this->acldb->get_resource_from_id($resource_id);
         $groups   = $this->acldb->get_resource_children($resource,
+                                                        NULL,
                                                         SPIFF_ACLDB_FETCH_GROUPS);
         $items    = $this->acldb->get_resource_children($resource,
+                                                        NULL,
                                                         SPIFF_ACLDB_FETCH_ITEMS);
         $parents  = $this->acldb->get_resource_parents($resource);
       }
@@ -36,7 +38,7 @@
         $resource  = NULL;
         $section   = new SpiffAclResourceSection('users', '');
         $everybody = $this->acldb->get_resource_from_handle('everybody',
-                                                           $section);
+                                                            $section);
         $groups    = array($everybody);
         $items     = array();
         $parent    = NULL;

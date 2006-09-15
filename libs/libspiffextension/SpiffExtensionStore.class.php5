@@ -151,6 +151,18 @@ class SpiffExtensionStore {
   }
 
 
+  private function instantiate_extension(SpiffExtension &$extension)
+  {
+    $constructor = 'SpiffExtension_' . $extension->get_handle();
+    //echo "Constructing extension: $constructor<br>\n";
+    include_once $extension->get_filename() . '/Plugin.class.php5';
+    $extension   = new $constructor($extension->get_handle(),
+                                    $extension->get_name(),
+                                    $extension->get_version());
+    return $extension;
+  }
+
+
   /*******************************************************************
    * Installer.
    *******************************************************************/
@@ -187,7 +199,7 @@ class SpiffExtensionStore {
       return -4;
 
     // Check whether the version was already installed.
-    if ($this->extension_db->has_extension_from_handle($header['handle'],
+    if ($this->extension_db->get_extension_from_handle($header['handle'],
                                                        $header['version'])) {
       rmdir_recursive($plugin_dir);
       return -5;
@@ -203,6 +215,7 @@ class SpiffExtensionStore {
       return -6;
     $extension->set_author($header['author']);
     $extension->set_description($header['description']);
+    $extension->set_filename($plugin_dir);
     foreach ($header['depends'] as $depend)
       $extension->add_dependency($depend);
 
@@ -220,9 +233,18 @@ class SpiffExtensionStore {
   /*******************************************************************
    * Using installed extensions.
    *******************************************************************/
-  public function prepare_extension($handle)
+  public function prepare_extension($specifier)
   {
-    //FIXME: Load all extensions required to use the extension with
-    // the given handle.
+    // Load all extensions required to use the extension with the given handle.
+    $extension = $this->extension_db->get_extension_from_operator_string(
+                                                                    $specifier);
+    foreach ($extension->get_dependency_list() as $dependency) {
+      $dependency  = $this->extension_db->get_extension_from_operator_string(
+                                                                   $dependency);
+      $dependency  = $this->instantiate_extension($dependency);
+      $dependency->initialize();
+    }
+    $extension = $this->instantiate_extension($extension);
+    $extension->initialize();
   }
 }

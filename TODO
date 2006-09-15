@@ -1,3 +1,7 @@
+* Finish the login plugin.
+
+* Port the admin GUI into a plugin.
+
 * Delete orphaned users.
 
 * Handle invalid/duplicate user/group names.

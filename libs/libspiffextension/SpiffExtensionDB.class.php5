@@ -235,7 +235,8 @@ class SpiffExtensionDB {
   public function &register_extension(SpiffExtension &$extension)
   {
     // Check whether the extension is already registered.
-    if ($this->has_extension($extension))
+    if ($this->get_extension_from_handle($extension->get_handle(),
+                                         $extension->get_version()))
       return $extension;
     
     // Start transaction.
@@ -251,7 +252,7 @@ class SpiffExtensionDB {
     // Create a group that holds all versions of the extension.
     $handle         = $extension->get_handle();
     $section_handle = $this->acl_section->get_handle();
-    if ($this->acldb->has_resource_from_handle($handle, $section_handle))
+    if ($this->acldb->get_resource_from_handle($handle, $section_handle))
       $parent = $this->acldb->get_resource_from_handle($handle);
     else {
       $parent = new SpiffAclResourceGroup($extension->get_name(), $handle);
@@ -395,43 +396,13 @@ class SpiffExtensionDB {
   }
 
 
-  /// Checks whether the extension is registered.
-  /**
-   * Returns TRUE if the given extension is registered with
-   * the same version.
-   * \return Boolean.
-   */
-  public function has_extension_from_handle($handle, $version)
-  {
-    $handle = libspiffacl_mkhandle_from_string($handle . $version);
-    $section_handle = $this->acl_section->get_handle();
-    return $this->acldb->has_resource_from_handle($handle, $section_handle);
-  }
-
-
-  /// Checks whether the extension is registered.
-  /**
-   * Returns TRUE if the given extension is registered with
-   * the same version.
-   * \return Boolean.
-   */
-  public function has_extension(SpiffExtension &$extension)
-  {
-    // Check whether the given extension is registered.
-    $handle = libspiffacl_mkhandle_from_string($extension->get_handle()
-                                            .$extension->get_version());
-    $section_handle = $this->acl_section->get_handle();
-    return $this->acldb->has_resource_from_handle($handle, $section_handle);
-  }
-
-
   /// Returns the extension with the given id.
   /**
    */
   public function &get_extension_from_id($id)
   {
     assert('is_int($id)');
-    $extension = $this->acldb->get_resource_from_id($id);
+    $extension = $this->acldb->get_resource_from_id($id, 'SpiffExtension');
     // Attach a list of dependencies.
     $this->extension_load_dependency_list($extension);
     return $extension;
@@ -439,7 +410,7 @@ class SpiffExtensionDB {
 
 
   /// Attaches a list of dependencies.
-  private function extension_load_dependency_list(SpiffAclResource &$extension)
+  private function extension_load_dependency_list(SpiffExtension &$extension)
   {
     assert('is_object($extension)');
     $query = new SqlQuery('
@@ -466,10 +437,16 @@ class SpiffExtensionDB {
   {
     assert('isset($handle)');
     assert('isset($version)');
-    $handle         = libspiffacl_mkhandle_from_string($handle . $version);
+    $version_handle = libspiffacl_mkhandle_from_string($handle . $version);
     $section_handle = $this->acl_section->get_handle();
-    $extension = $this->acldb->get_resource_from_handle($handle,
-                                                        $section_handle);
+    $extension = $this->acldb->get_resource_from_handle($version_handle,
+                                                        $section_handle,
+                                                        'SpiffExtension');
+    if (!$extension) {
+      $null = NULL;
+      return $null;
+    }
+    $extension->set_handle($handle);
     $this->extension_load_dependency_list($extension);
     return $extension;
   }
@@ -489,9 +466,8 @@ class SpiffExtensionDB {
 
     // Operator '=' is easy...
     if ($operator == '=') {
-      $handle         = libspiffacl_mkhandle_from_string($handle . $version);
       $section_handle = $this->acl_section->get_handle();
-      $extension = $this->get_extension_from_handle($handle, $section_handle);
+      $extension = $this->get_extension_from_handle($handle, $version);
       return $extension;
     }
 
@@ -502,19 +478,51 @@ class SpiffExtensionDB {
     // matches the version requirement.
     $best_version = '0';
     foreach ($versions as $cur) {
-      $cur_version = $cur->get_attribute('version');
-      if ($this->version_is_greater($cur_version, $version)
-        && $this->version_is_greater($cur_version, $best_version))
-        $best_version = $cur_version;
+      if ($this->version_is_greater($cur->get_version(), $version)
+        && (!$best_version
+            || $this->version_is_greater($cur->get_version(),
+                                     $best_version->get_version())))
+        $best_version = $cur;
     }
 
-    if ($best_version == '0')
-      return NULL;
+    if ($best_version->get_version() == '0') {
+      $null = NULL;
+      return $null;
+    }
 
-    //$best_version->set_handle($handle);
-    return $this->get_extension_from_handle($handle,
-                                            $best_version);
+    $best_version->set_handle($handle);
     return $best_version;
+  }
+
+
+  /// Returns the extension that best matches the given criteria.
+  /**
+   * Returns the extension with the highest version number that matches the
+   * given criteria.
+   * \param $operator One of '=' or '>='.
+   */
+  public function &get_extension_from_operator_string($specifier)
+  {
+    assert('isset($specifier)');
+    $extension_re = '(' . SPIFF_EXTENSION_HANDLE_RE . ')'
+                  . '(?:'
+                  .    ' ?'
+                  .    '(' . SPIFF_EXTENSION_VERSION_OPER_RE . ')'
+                  .    ' ?'
+                  .    '(' . SPIFF_EXTENSION_VERSION_RE      . ')'
+                  . ')?';
+
+    // Extract the handle, operator, and version number.
+    if (!preg_match('/' . $extension_re . '/', $specifier, $matches))
+      assert('FALSE; // Invalid extension specifier');
+    $handle   = $matches[1];
+    $operator = isset($matches[2]) ? $matches[2] : '>=';
+    $version  = isset($matches[3]) ? $matches[3] : 0;
+    assert('isset($handle)');
+    assert('isset($operator)');
+    assert('isset($version)');
+
+    return $this->get_extension_from_operator($handle, $operator, $version);
   }
 
 
@@ -530,7 +538,8 @@ class SpiffExtensionDB {
     $section_handle = $this->acl_section->get_handle();
     $parent   = $this->acldb->get_resource_from_handle($handle,
                                                        $section_handle);
-    $versions = $this->acldb->get_resource_children_from_id($parent->get_id());
+    $versions = $this->acldb->get_resource_children_from_id($parent->get_id(),
+                                                            'SpiffExtension');
     return $versions;
   }
 

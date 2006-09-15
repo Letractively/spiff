@@ -135,7 +135,8 @@
       //FIXME
 
       // Load all plugins required to display the current page.
-      //FIXME
+      $extension = $resource->get_attribute('extension');
+      $this->extension_store->prepare_extension($extension);
       
       /* Plugin hook: on_page_open
        *   Called from within Spiff->show().

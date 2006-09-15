@@ -346,49 +346,6 @@ class SpiffAclDB extends SpiffAclDBReader {
   }
 
 
-  public function &get_action_from_id($id)
-  {
-    assert('is_int($id)');
-    assert('$id != -1');
-    $query = new SqlQuery('
-      SELECT a.*
-      FROM  {t_action} a
-      WHERE a.id={id}');
-    $query->set_table_names($this->table_names);
-    $query->set_int('id', $id);
-    $rs = $this->db->Execute($query->sql());
-    assert('is_object($rs)');
-    $row = $rs->FetchRow();
-    $action = new SpiffAclAction($row['name'], $row['handle']);
-    $action->set_id($row['id']);
-    return $action;
-  }
-
-
-  public function &get_action_from_handle($handle,
-                                          SpiffAclActionSection &$section)
-  {
-    assert('isset($handle)');
-    assert('$handle !== ""');
-    $query = new SqlQuery('
-      SELECT a.*
-      FROM      {t_action} a
-      WHERE a.handle={handle}
-      AND   a.section_handle={section_handle}');
-    $query->set_table_names($this->table_names);
-    $query->set_string('handle',         $handle);
-    $query->set_string('section_handle', $section->get_handle());
-    //$this->debug();
-    $rs = $this->db->Execute($query->sql());
-    assert('is_object($rs)');
-    $row = $rs->FetchRow();
-    //print_r($row);
-    $action = new SpiffAclAction($row['name'], $row['handle']);
-    $action->set_id($row['id']);
-    return $action;
-  }
-
-
   /*******************************************************************
    * Resource attributes.
    *******************************************************************/
@@ -464,34 +421,6 @@ class SpiffAclDB extends SpiffAclDBReader {
   }
 
   
-  public function resource_load_attributes(&$resource)
-  {
-    $query = new SqlQuery('
-     SELECT r.name, r.type, r.attr_string, r.attr_int
-     FROM {t_resource_attribute} r
-     WHERE r.resource_id={resource_id}');
-    $query->set_table_names($this->table_names);
-    $query->set_int('resource_id', $resource->get_id());
-    $rs = $this->db->Execute($query->sql());
-    assert('is_object($rs)');
-    while ($row = $rs->FetchRow()) {
-      switch ($row['type']) {
-      case SPIFF_ACLDB_ATTRIB_TYPE_STRING:
-        $resource->set_attribute($row['name'], $row['attr_string']);
-        break;
-
-      case SPIFF_ACLDB_ATTRIB_TYPE_INT:
-        $resource->set_attribute($row['name'], (int)$row['attr_int']);
-        break;
-      
-      default:
-        assert('FALSE; //should not be reached!');
-      }
-    }
-    return TRUE;
-  }
-
-
   /*******************************************************************
    * Resource manipulation.
    *******************************************************************/
@@ -666,34 +595,6 @@ class SpiffAclDB extends SpiffAclDBReader {
   }
 
 
-  public function has_resource_from_handle($handle, $section_handle)
-  {
-    assert('isset($handle)');
-    assert('isset($section_handle)');
-    $query = new SqlQuery('
-      SELECT id
-      FROM {t_resource}
-      WHERE handle={handle}
-      AND   section_handle={section_handle}');
-    $query->set_table_names($this->table_names);
-    $query->set_string('handle',         $handle);
-    $query->set_string('section_handle', $section_handle);
-    $rs = $this->db->Execute($query->sql());
-    $row = $rs->FetchRow();
-    return $row ? TRUE : FALSE;
-  }
-
-
-  public function has_resource(SpiffAclResource &$resource,
-                               SpiffAclResourceSection &$section)
-  {
-    assert('is_object($resource)');
-    assert('is_object($section)');
-    return $this->has_resource_from_handle($resource->get_handle(),
-                                           $section->get_handle());
-  }
-
-
   public function delete_resource(SpiffAclResource &$resource,
                                   SpiffAclResourceSection &$section)
   {
@@ -710,135 +611,6 @@ class SpiffAclDB extends SpiffAclDBReader {
     if ($rs)
       $resource->set_id(-1);
     return $rs;
-  }
-
-
-  public function &get_resource_children_from_id($resource_id,
-                                                 $options = SPIFF_ACLDB_FETCH_ALL)
-  {
-    assert('is_int($resource_id)');
-    switch ($options) {
-    case SPIFF_ACLDB_FETCH_GROUPS:
-      $sql = ' AND r.is_group=1';
-      break;
-      
-    case SPIFF_ACLDB_FETCH_ITEMS:
-      $sql = ' AND r.is_group=0';
-      break;
-      
-    case SPIFF_ACLDB_FETCH_ALL:
-      $sql = '';
-      break;
-
-    default:
-      die('get_resource_children_from_id(): Invalid option.');
-      break;
-    }
-
-    $query = new SqlQuery('
-      SELECT r.*,a.name attr_name,a.type,a.attr_string,a.attr_int,t1.n_children
-      FROM      {t_resource}           r
-      LEFT JOIN {t_resource_attribute} a  ON r.id=a.resource_id
-      LEFT JOIN {t_resource_path}      t1 ON t1.resource_id=r.id
-      LEFT JOIN {t_path_ancestor_map}  p  ON t1.path=p.resource_path
-      LEFT JOIN {t_resource_path}      t2 ON t2.path=p.ancestor_path
-      WHERE t2.resource_id={resource_id}
-      AND   t1.depth=t2.depth + 1'
-      . $sql);
-    $query->set_table_names($this->table_names);
-    $query->set_int('resource_id', $resource_id);
-    //$this->debug();
-    $rs = $this->db->Execute($query->sql());
-    assert('is_object($rs)');
-    $last     = '';
-    $children = array();
-    while ($row = $rs->FetchRow()) {
-      if ($row['handle'] != $last) {
-        $last  = $row['handle'];
-        $child = new SpiffAclResource($row['name'], $row['handle']);
-        $child->set_id($row['id']);
-        $child->set_n_children($row['n_children']);
-        array_push($children, $child);
-      }
-
-      // Append all attributes.
-      switch ($row['type']) {
-      case SPIFF_ACLDB_ATTRIB_TYPE_INT:
-        $value = (int)$row['attr_int'];
-        break;
-
-      case SPIFF_ACLDB_ATTRIB_TYPE_STRING:
-        $value = $row['attr_string'];
-        break;
-      }
-      if ($row['attr_name'] != NULL)
-        $child->set_attribute($row['attr_name'], $value);
-    }
-    //print_r($children);
-    return $children;
-  }
-
-
-  public function &get_resource_children(SpiffAclResource &$resource,
-                                         $options = SPIFF_ACLDB_FETCH_ALL)
-  {
-    assert('is_object($resource)');
-    if (!$resource->is_group()) {
-      $list = array();
-      return $list;
-    }
-    return $this->get_resource_children_from_id($resource->get_id(), $options);
-  }
-
-
-  /// Returns a list of all parents of the resource with the given id.
-  /**
-   * Each resource may have multiple parents, so the result of this
-   * method is an array.
-   */
-  public function &get_resource_parents_from_id($id)
-  {
-    assert('is_int($id)');
-    assert('$id != -1');
-    $query = new SqlQuery('
-      SELECT r.*
-      FROM      {t_resource}          r
-      LEFT JOIN {t_resource_path}     t1 ON t1.resource_id=r.id
-      LEFT JOIN {t_path_ancestor_map} p  ON t1.path=p.ancestor_path
-      LEFT JOIN {t_resource_path}     t2 ON t2.path=p.resource_path
-      WHERE t2.resource_id={id}
-      AND   t2.depth=t1.depth + 1');
-    $query->set_table_names($this->table_names);
-    $query->set_int('id', $id);
-    $rs = $this->db->Execute($query->sql());
-    assert('is_object($rs)');
-    
-    // Each resource may have multiple parents.
-    $parents = array();
-    while ($row = $rs->FetchRow()) {
-      if ($row['is_actor'])
-        $parent = new SpiffAclActorGroup($row['name'], $row['handle']);
-      else
-        $parent = new SpiffAclResourceGroup($row['name'], $row['handle']);
-      $parent->set_id($row['id']);
-      array_push($parents, $parent);
-    }
-    
-    return $parents;
-  }
-
-
-  /// Returns a list of all parents of the given resource.
-  /**
-   * Each resource may have multiple parents, so the result of this
-   * method is an array.
-   * This method is a convenience wrapper around
-   * get_resource_parents_from_id();
-   */
-  public function &get_resource_parents(SpiffAclResource &$resource)
-  {
-    assert('is_object($resource)');
-    return $this->get_resource_parents_from_id($resource->get_id());
   }
 
 
