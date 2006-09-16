@@ -19,6 +19,11 @@
 ?>
 <?php
 class SpiffAclActorGroup extends SpiffAclActor {
+  public function __construct($name, $handle = NULL) {
+    parent::__construct($name, $handle);
+    $this->delete_attribute('auth_string');
+  }
+  
   public function is_group() {
     return TRUE;
   }

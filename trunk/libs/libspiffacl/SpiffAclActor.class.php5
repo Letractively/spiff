@@ -18,9 +18,35 @@
   */
 ?>
 <?php
+define('SPIFF_ACL_ACTOR_AUTH_STRING_SALT_LEN', 4);
+define('SPIFF_ACL_ACTOR_AUTH_STRING_SALT',
+       substr(base64_encode(pack("H*",
+                                 sha1(mt_rand()))),
+                                 0,
+                                 SPIFF_ACL_ACTOR_AUTH_STRING_SALT_LEN));
+
 class SpiffAclActor extends SpiffAclResource {
+  public function __construct($name, $handle = NULL) {
+    parent::__construct($name, $handle);
+    $this->set_auth_string('');
+  }
+  
   public function is_actor() {
     return TRUE;
+  }
+
+  public function set_auth_string($auth) {
+    $salt = SPIFF_ACL_ACTOR_AUTH_STRING_SALT;
+    $this->set_attribute('auth_string', sha1($auth . $salt) . $salt);
+  }
+
+  public function has_auth_string($auth) {
+    $salt   = substr($this->get_attribute('auth_string'),
+                     SPIFF_ACL_ACTOR_AUTH_STRING_SALT_LEN * -1);
+    $string = substr($this->get_attribute('auth_string'),
+                     0,
+                     SPIFF_ACL_ACTOR_AUTH_STRING_SALT_LEN * -1);
+    return (sha1($auth . $salt) == $string);
   }
 }
 ?>
