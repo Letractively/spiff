@@ -45,7 +45,7 @@ require_once LIBSPIFFEXTENSION_DIR . '/SpiffExtensionStore.class.php5';
 
 // Load shared internal stuff.
 include_once SPIFF_DIR . '/functions/config.inc.php';
-include_once SPIFF_DIR . '/functions/gettext.inc.php';
+include_once SPIFF_DIR . '/functions/smarty.inc.php';
 include_once SPIFF_DIR . '/actions/printer_base.class.php';
 
 class Spiff {
@@ -86,7 +86,7 @@ class Spiff {
     $this->smarty->compile_dir  = MY_SMARTY_DIR . '/templates_c';
     $this->smarty->cache_dir    = MY_SMARTY_DIR . '/cache';
     $this->smarty->config_dir   = MY_SMARTY_DIR . '/configs';
-    $this->smarty->register_function('gettext', 'gettext_smarty');
+    $this->smarty->register_function('gettext',        'smarty_gettext');
     
     if (get_magic_quotes_gpc()) {
       $_GET    = array_map('stripslashes_deep', $_GET);
@@ -146,10 +146,13 @@ class Spiff {
 
     // Load all plugins required to use the extension associated with the
     // current page.
-    $extension = $resource->get_attribute('extension');
-    $extension = $this->extension_store->prepare_extension($extension);
-    $this->smarty->template_dir = $extension->get_filename();
+    $extension      = $resource->get_attribute('extension');
+    $extension      = $this->extension_store->prepare_extension($extension);
+    $rel_plugin_dir = substr(SPIFF_PLUGIN_DIR, strlen(SPIFF_DIR) + 1);
+    $basename       = basename($extension->get_filename());
     $this->smarty->clear_all_assign();
+    $this->smarty->template_dir = $extension->get_filename();
+    $this->smarty->assign('plugin_dir', $rel_plugin_dir . '/' . $basename);
     
     /* Plugin hook: on_page_open
      *   Type: EventBus signal.

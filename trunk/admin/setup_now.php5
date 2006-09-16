@@ -219,6 +219,10 @@ start('Installing Login extension');
 $login_ext = $extstore->add_extension(SPIFF_SPIFFPLUGIN_DIR . '/login');
 test(is_object($login_ext));
 
+start('Installing Admin Center extension');
+$admin_ext = $extstore->add_extension(SPIFF_SPIFFPLUGIN_DIR . '/admin_center');
+test(is_object($admin_ext));
+
 
 /*******************************************************************
  * Set up ACL user actions.
@@ -329,12 +333,20 @@ test($usr_anon);
 /*******************************************************************
  * Build the following content table:
  * content: Content
+ *            |-Admin Center
  *            \-Homepage
  *******************************************************************/
 category('Initializing Content');
 start('Creating resource section "Content"');
 $cont_sect = new SpiffAclResourceSection('Content');
 test($cont_sect = $acldb->add_resource_section($cont_sect));
+
+start('Creating Admin Center');
+$resource  = new SpiffAclResource('Admin Center');
+$extension = $admin_ext->get_handle() . '=' . $admin_ext->get_version();
+$resource->set_attribute('extension', $extension);
+$admin_center = $acldb->add_resource(NULL, $resource, $cont_sect);
+test(is_object($admin_center));
 
 start('Creating Homepage');
 $resource  = new SpiffAclResource('Homepage');
@@ -376,7 +388,7 @@ test($acldb->grant_from_id($admin->get_id(),
     <font size='+1' color='green'>Successfully finished initialization,
     Spiff&trade; setup is now complete! :-)</font><br/>
     <br/>
-    You can now start to <a href=".">edit your web site</a>,
+    You can now start to <a href="../index.php5?handle=admin_center">edit your web site</a>,
     or <a href="..">view your home page</a>.
 <? } else { ?>
     <font size='+1' color='red'>Initialization failed :-(.

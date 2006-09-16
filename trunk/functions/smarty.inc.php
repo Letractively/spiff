@@ -18,7 +18,7 @@
   */
 ?>
 <?php
-function &gettext_smarty($params) {
+function smarty_gettext($params) {
   assert('isset($params["text"])');
   return gettext($params['text']);
 }
