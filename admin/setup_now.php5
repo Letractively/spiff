@@ -28,8 +28,6 @@
 require_once '../Spiff.class.php5';
 require_once ADODB_DIR . '/adodb-xmlschema03.inc.php';
 
-define('SMARTY_TEMP_DIR', MY_SMARTY_DIR . '/templates_c/');
-
 function category($title) {
   echo "<h3 style='padding-left: 0px; padding-bottom: 5px;'>$title</h3>";
 }
@@ -113,13 +111,6 @@ test(in_array($cfg['db_name'], $databases));
  * File system checks.
  *******************************************************************/
 category('Checking for files and directories');
-start('Checking whether template dir ' . strip_spiff_dir(SMARTY_TEMP_DIR)
-    . ' exists');
-test(is_dir(SMARTY_TEMP_DIR));
-
-start('Checking file permissions of ' . strip_spiff_dir(SMARTY_TEMP_DIR));
-test(substr(sprintf('%o', fileperms(SMARTY_TEMP_DIR)), -4) === "0775");
-
 start('Checking whether data dir ' . strip_spiff_dir(SPIFF_DATA_DIR)
     . ' exists');
 test(is_dir(SPIFF_DATA_DIR));
@@ -138,6 +129,15 @@ category('Creating Spiff directories');
 start('Deleting installed extensions from ' . strip_spiff_dir(SPIFF_PLUGIN_DIR)
     . ', if any');
 test(rmdir_recursive(SPIFF_PLUGIN_DIR));
+
+start('Creating smarty template directory ' . strip_spiff_dir(SMARTY_TEMP_DIR));
+if (is_dir(SMARTY_TEMP_DIR))
+  unnecessary();
+else
+  test(mkdir(SMARTY_TEMP_DIR));
+
+start('Setting permissions of ' . strip_spiff_dir(SMARTY_TEMP_DIR));
+test(chmod(SMARTY_TEMP_DIR, 0775));
 
 start('Creating extension directory ' . strip_spiff_dir(SPIFF_PLUGIN_DIR));
 if (is_dir(SPIFF_PLUGIN_DIR))

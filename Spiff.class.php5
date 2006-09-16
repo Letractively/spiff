@@ -25,6 +25,7 @@ define('SPIFF_PLUGIN_DIR',      SPIFF_DATA_DIR . '/installed_plugins');
 define('SPIFF_REPO_DIR',        SPIFF_DATA_DIR . '/repo');
 define('SPIFF_SPIFFPLUGIN_DIR', SPIFF_DIR .      '/plugins');
 define('MY_SMARTY_DIR',         SPIFF_DIR .      '/libs/smarty');
+define('SMARTY_TEMP_DIR',       SPIFF_DATA_DIR . '/smarty_templates_c/');
 define('ADODB_DIR',             SPIFF_DIR .      '/libs/adodb');
 define('LIBSPIFFACL_DIR',       SPIFF_DIR .      '/libs/libspiffacl');
 define('LIBSPIFFEXTENSION_DIR', SPIFF_DIR .      '/libs/libspiffextension');
@@ -83,7 +84,7 @@ class Spiff {
 
     // Init Smarty.
     $this->smarty = &new Smarty();
-    $this->smarty->compile_dir  = MY_SMARTY_DIR . '/templates_c';
+    $this->smarty->compile_dir  = SMARTY_TEMP_DIR;
     $this->smarty->cache_dir    = MY_SMARTY_DIR . '/cache';
     $this->smarty->config_dir   = MY_SMARTY_DIR . '/configs';
     $this->smarty->register_function('gettext',        'smarty_gettext');
