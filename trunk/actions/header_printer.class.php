@@ -1,7 +1,7 @@
 <?php
   /*
   Copyright (C) 2006 Samuel Abels, <spam debain org>
-  
+
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation; either version 2 of the License, or
@@ -18,10 +18,13 @@
   */
 ?>
 <?php
-  require_once 'Spiff.class.php5';
-  
-  $spiff = new Spiff();
-  $spiff->print_header();
-  $spiff->show();
-  $spiff->print_footer();
+  class HeaderPrinter extends PrinterBase {
+    function show() {
+      $url = new URL('?', $_GET);
+      $url->set_var('do_login', 1);
+      
+      $this->smarty->clear_all_assign();
+      $this->parent->append_content($this->smarty->fetch('header.tpl'));
+    }
+  }
 ?>

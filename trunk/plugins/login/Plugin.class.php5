@@ -4,7 +4,7 @@ Extension:   Login Form
 Handle:      login
 Version:     0.1
 Author:      Samuel Abels
-Description: Demo plugin to shows how it works.
+Description: Displays a form for logging in.
 Depends:     spiff
 */
   /*
