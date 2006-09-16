@@ -5,7 +5,7 @@ Handle:      spiff_admin
 Version:     0.1
 Author:      Samuel Abels
 Description: This extension brings all administration tasks together.
-Depends:     
+Depends:     spiff>=0.1 login
 */
   /*
   Copyright (C) 2006 Samuel Abels, <spam debain org>
@@ -41,6 +41,11 @@ class SpiffExtension_spiff_admin extends SpiffExtension {
     //echo "SpiffExtension_login::on_render_request()<br>\n";
     $smarty = $this->spiff->get_smarty();
     $smarty->template_dir = dirname(__FILE__) . '/templates';
+
+    if (isset($_GET['manage_users']))
+      return $smarty->fetch('user_editor.tpl');
+    else
+      return $smarty->fetch('admin.tpl');
   }
 }
 ?>
