@@ -29,5 +29,15 @@ class EventBus extends Trackable {
       return $signal->emit($args);
     return FALSE;
   }
+
+
+  public function register_callback() {
+    $args        = func_get_args();
+    $signal_name = array_shift($args);
+    $func        = array_shift($args);
+    $this->add_signal($signal_name);
+    $signal = $this->__get($signal_name);
+    $signal->connect($func, $args, TRUE);
+  }
 }
 ?>

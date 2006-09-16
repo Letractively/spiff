@@ -22,17 +22,17 @@ include_once dirname(__FILE__).'/SpiffExtensionDB.class.php5';
 include_once dirname(__FILE__).'/../libuseful/zip.inc.php';
 
 class SpiffExtensionStore {
+  private $parent;
   private $extension_db;
   private $directory;
-  private $event_bus;
   
-  function __construct(&$db, $directory)
+  function __construct(&$parent, &$db, $directory)
   {
     assert('is_object($db)');
     assert('is_dir($directory)');
+    $this->parent       = $parent;
     $this->extension_db = &new SpiffExtensionDB($db);
     $this->set_directory($directory);
-    $this->event_bus = &new EventBus();
   }
 
 
@@ -82,9 +82,9 @@ class SpiffExtensionStore {
   }
 
 
-  public function get_event_bus()
+  public function get_parent()
   {
-    return $this->event_bus;
+    return $this->parent;
   }
 
 
@@ -156,10 +156,11 @@ class SpiffExtensionStore {
     $constructor = 'SpiffExtension_' . $extension->get_handle();
     //echo "Constructing extension: $constructor<br>\n";
     include_once $extension->get_filename() . '/Plugin.class.php5';
-    $extension   = new $constructor($extension->get_handle(),
+    $instance    = new $constructor($extension->get_handle(),
                                     $extension->get_name(),
                                     $extension->get_version());
-    return $extension;
+    $instance->set_attribute_list($extension->get_attribute_list());
+    return $instance;
   }
 
 
@@ -244,7 +245,9 @@ class SpiffExtensionStore {
       $dependency  = $this->instantiate_extension($dependency);
       $dependency->initialize();
     }
-    $extension = $this->instantiate_extension($extension);
-    $extension->initialize();
+    $ext = $this->instantiate_extension($extension);
+    $ext->set_extension_store($this);
+    $ext->initialize();
+    return $ext;
   }
 }

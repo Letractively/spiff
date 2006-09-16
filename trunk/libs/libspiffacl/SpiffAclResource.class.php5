@@ -105,6 +105,13 @@ class SpiffAclResource {
   }
 
 
+  /// Replaces the entire attribute list.
+  public function set_attribute_list(&$list) {
+    assert('is_array($list)');
+    $this->attributes = $list;
+  }
+
+
   public function &get_attribute_list() {
     return $this->attributes;
   }

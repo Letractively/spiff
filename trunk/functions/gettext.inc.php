@@ -18,23 +18,8 @@
   */
 ?>
 <?php
-  unset($lang);
-  if (preg_match("/^[a-z0-9_]+$/i", cfg('lang')))
-    include_once "language/" . cfg('lang') . ".inc.php";
-  
-  function &lang($_phrase = '') {
-    global $lang;
-    if (!$_phrase)
-      return $lang;
-    if (!$lang[$_phrase])
-      return $_phrase;
-    return $lang[$_phrase];
-  }
-  
-  
-  function &smarty_lang($params) {
-    if (!isset($params[text]))
-      die("smarty_lang(): No text given.");
-    return lang($params[text]);
-  }
+function &gettext_smarty($params) {
+  assert('isset($params["text"])');
+  return gettext($params['text']);
+}
 ?>
