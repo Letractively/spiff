@@ -5,27 +5,24 @@ Installation Instructions
 
 02. Copy spiff to your webserver.
 
-03. Grant all permissions on libs/smarty/templates_c to the webserver.
+03. Grant all permissions on data/ to the webserver.
     This is done by either using your FTP client (refer to the documentation
     of the client in that case), or with shell access by issuing the following
     command:
 
-    chmod 777 libs/smarty/templates_c/
+    chmod 777 data/
   
-04. Grant all permissions on data/ to the webserver. See above to find out
-    how this is done.
-  
-05. Copy spiff/config.inc.php.tmpl to spiff/config.inc.php.
+04. Copy spiff/config.inc.php.tmpl to spiff/config.inc.php.
 
-06. Edit spiff/config.inc.php according to your webserver configuration.
-   The file should be self explaining.
+05. Edit spiff/config.inc.php according to your webserver configuration.
+    The file should be self explaining.
 
-07. Open spiff/admin/setup.php in your web browser and follow the instructions.
+06. Open spiff/admin/setup.php in your web browser and follow the instructions.
     Make sure that no error message appears.
     !!! WARNING: This step will erase the content of the database that
         was configured in spiff/admin/config.inc.php !!!
 
-08. If you encountered any bugs, please report them at
+07. If you encountered any bugs, please report them at
     http://code.google.com/p/spiff/issues/list
 
-09. Done! You should now be able to open spiff/index.php in your web browser.
+08. Done! You should now be able to open spiff/index.php in your web browser.
