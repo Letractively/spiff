@@ -18,13 +18,13 @@
   */
 ?>
 <?php
-  unset($cfg);
-  include_once dirname(__FILE__) . '/../config.inc.php';
-  
-  function &cfg($_key) {
-    global $cfg;
-    if (!$_key || !isset($cfg[$_key]))
-      die("cfg(): Invalid configuration key '$_key'.\n");
-    return $cfg[$_key];
-  }
+unset($cfg);
+include_once dirname(__FILE__) . '/../config.inc.php';
+
+function &cfg($_key) {
+  global $cfg;
+  if (!$_key || !isset($cfg[$_key]))
+    die("cfg(): Invalid configuration key '$_key'.\n");
+  return $cfg[$_key];
+}
 ?>

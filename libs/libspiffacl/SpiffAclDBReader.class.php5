@@ -287,7 +287,7 @@ class SpiffAclDBReader {
     $children = array();
     while ($row = $rs->FetchRow()) {
       if ($row['handle'] != $last) {
-        $last  = $row['handle'];
+        $last = $row['handle'];
         if ($type == NULL && $row['is_actor'] && $row['is_group'])
           $type = 'SpiffAclActorGroup';
         else if ($type == NULL && $row['is_actor'])

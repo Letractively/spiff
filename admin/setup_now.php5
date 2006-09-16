@@ -147,7 +147,8 @@ test($acldb->clear_database());
  * Set up libspiffextension.
  *******************************************************************/
 category('Setting Up libspiffextension');
-$extstore = new SpiffExtensionStore($acldb, SPIFF_PLUGIN_DIR);
+$null = NULL;
+$extstore = new SpiffExtensionStore($null, $acldb, SPIFF_PLUGIN_DIR);
 start('Creating database tables');
 $tables = $db->MetaTables();
 //echo "Tables: " . count($tables) . "<br/>";

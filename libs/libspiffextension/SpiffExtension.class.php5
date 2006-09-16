@@ -31,6 +31,7 @@ define('SPIFF_EXTENSION_DEPENDENCY_RE',   SPIFF_EXTENSION_HANDLE_RE
                                         . ')?');
 
 class SpiffExtension extends SpiffAclResource {
+  private $extension_store;
   private $dependencies;
   
   public function __construct($handle, $name, $version = '0') {
@@ -89,6 +90,15 @@ class SpiffExtension extends SpiffAclResource {
 
   public function get_dependency_list() {
     return $this->dependencies;
+  }
+
+  public function set_extension_store(SpiffExtensionStore &$extension_store) {
+    $this->extension_store = $extension_store;
+  }
+
+  public function get_extension_store() {
+    assert('is_object($this->extension_store)');
+    return $this->extension_store;
   }
 }
 ?>
