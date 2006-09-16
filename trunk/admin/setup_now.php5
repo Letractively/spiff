@@ -35,19 +35,19 @@ function category($title) {
 }
 
 function start($message) {
-  echo "$message: ";
+  echo "<div class='install_log_msg'>$message: ";
 }
 
 function success() {
-  echo "<font color='green'><b>Success!</b></font><br/>";
+  echo "<font color='green'><b>Success!</b></font></div>";
 }
 
 function unnecessary() {
-  echo "<font color='green'><b>Not necessary.</b></font><br/>";
+  echo "<font color='green'><b>Not necessary.</b></font></div>";
 }
 
 function failed() {
-  echo "<font color='red'><b>Failed! Sorry dude.</b></font><br/>\n";
+  echo "<font color='red'><b>Failed! Sorry dude.</b></font></div>\n";
 }
 
 function test($result) {
@@ -60,14 +60,39 @@ function test($result) {
   }
 }
 
+function strip_spiff_dir($dir) {
+  return substr($dir, strlen(SPIFF_DIR) + 1);
+}
+
+function db_supports_innodb(&$db) {
+  $sql = 'SHOW VARIABLES LIKE "have_innodb"';
+  //$db->debug = 1;
+  $rs = $db->Execute($sql);
+  assert('isset($rs)');
+  $row = $rs->FetchRow();
+  if (!$row)
+    return FALSE;
+  return $row['Value'] == 'YES';
+}
+
 $success = TRUE;
 $db      = &ADONewConnection($cfg['db_dbn']);
 $acldb   = new SpiffAclDB($db);
 
 /*******************************************************************
- * Tests.
+ * Dependency tests.
  *******************************************************************/
-// Test database connection.
+category('Checking dependencies');
+start('Checking whether server is running a supported version of PHP');
+test(version_compare(PHP_VERSION, '5.1', '>='));
+
+start('Checking whether gettext is installed');
+test(function_exists('gettext'));
+
+
+/*******************************************************************
+ * Database tests.
+ *******************************************************************/
 category('Testing database');
 start('Trying to connect to the database server');
 test(is_resource($db->_connectionID));
@@ -76,20 +101,30 @@ start('Checking whether the database server type "' . $cfg['db_type'] .
       '" is supported');
 test($cfg['db_type'] === 'mysqlt' || $cfg['db_type'] === 'mysqli');
 
+start('Checking whether the database server supports InnoDB tables');
+test(db_supports_innodb($db));
+
 start('Making sure that database "'.$cfg['db_name'].'" exists');
 $databases = $db->GetCol("show databases");
 test(in_array($cfg['db_name'], $databases));
 
-start('Checking whether template dir ' . SMARTY_TEMP_DIR . ' exists');
+
+/*******************************************************************
+ * File system checks.
+ *******************************************************************/
+category('Checking for files and directories');
+start('Checking whether template dir ' . strip_spiff_dir(SMARTY_TEMP_DIR)
+    . ' exists');
 test(is_dir(SMARTY_TEMP_DIR));
 
-start('Checking file permissions of ' . SMARTY_TEMP_DIR);
+start('Checking file permissions of ' . strip_spiff_dir(SMARTY_TEMP_DIR));
 test(substr(sprintf('%o', fileperms(SMARTY_TEMP_DIR)), -4) === "0775");
 
-start('Checking whether data dir ' . SPIFF_DATA_DIR . ' exists');
+start('Checking whether data dir ' . strip_spiff_dir(SPIFF_DATA_DIR)
+    . ' exists');
 test(is_dir(SPIFF_DATA_DIR));
 
-start('Checking file permissions of ' . SPIFF_DATA_DIR);
+start('Checking file permissions of ' . strip_spiff_dir(SPIFF_DATA_DIR));
 test(substr(sprintf('%o', fileperms(SPIFF_DATA_DIR)), -4) === "0775");
 
 // Make sure that the installation was not already finished previously.
@@ -100,25 +135,27 @@ test(substr(sprintf('%o', fileperms(SPIFF_DATA_DIR)), -4) === "0775");
  * Set up directories.
  *******************************************************************/
 category('Creating Spiff directories');
-start('Deleting installed extensions from ' . SPIFF_PLUGIN_DIR . ', if any');
+start('Deleting installed extensions from ' . strip_spiff_dir(SPIFF_PLUGIN_DIR)
+    . ', if any');
 test(rmdir_recursive(SPIFF_PLUGIN_DIR));
 
-start('Creating extension directory ' . SPIFF_PLUGIN_DIR);
+start('Creating extension directory ' . strip_spiff_dir(SPIFF_PLUGIN_DIR));
 if (is_dir(SPIFF_PLUGIN_DIR))
   unnecessary();
 else
   test(mkdir(SPIFF_PLUGIN_DIR));
 
-start('Setting permissions of ' . SPIFF_PLUGIN_DIR);
+start('Setting permissions of ' . strip_spiff_dir(SPIFF_PLUGIN_DIR));
 test(chmod(SPIFF_PLUGIN_DIR, 0775));
 
-start('Creating extension repository directory ' . SPIFF_REPO_DIR);
+start('Creating extension repository directory '
+    . strip_spiff_dir(SPIFF_REPO_DIR));
 if (is_dir(SPIFF_REPO_DIR))
   unnecessary();
 else
   test(mkdir(SPIFF_REPO_DIR));
 
-start('Setting permissions of ' . SPIFF_REPO_DIR);
+start('Setting permissions of ' . strip_spiff_dir(SPIFF_REPO_DIR));
 test(chmod(SPIFF_REPO_DIR, 0775));
 
 
@@ -272,7 +309,7 @@ $admin = $acldb->add_resource($everybody->get_id(), $actor, $users_section);
 test($admin);
 
 start('Creating user "Administrator"');
-$actor     = new SpiffAclActor('Administrator');
+$actor = new SpiffAclActor('Administrator');
 $actor->set_auth_string($_POST['admin_pwd']);
 assert('$actor->has_auth_string($_POST["admin_pwd"])');
 $usr_admin = $acldb->add_resource($admin->get_id(), $actor, $users_section);

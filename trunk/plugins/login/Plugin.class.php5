@@ -27,19 +27,63 @@ Depends:     spiff
 ?>
 <?php
 class SpiffExtension_login extends SpiffExtension {
-  function initialize() {
-    $bus = $this->get_extension_store()->get_parent()->get_event_bus();
+  private $spiff;
+  private $render;
+  
+  function initialize(&$spiff) {
+    $this->spiff = $spiff;
+    $bus         = $spiff->get_event_bus();
     $bus->register_callback('on_page_open', array($this, 'on_page_open'));
+  }
+
+  public function login($username, $password) {
+    if (!isset($username) || !isset($password))
+      return FALSE;
+    // Get user from database.
+    $acldb = $this->spiff->get_acldb();
+    $user  = $acldb->get_resource_from_name($username, 'users');
+    if (!$user)
+      return FALSE;
+    $_SESSION['uid'] = $user->get_id();
+    return TRUE;
   }
 
   public function on_page_open() {
     //echo "SpiffExtension_login::on_page_open()<br>\n";
+    session_start();
+    
+    if ($this->spiff->get_current_user() != NULL)
+      $this->render = 'nothing';
+    else
+      $this->render = 'form';
+
+    if (isset($_POST['login'])) {
+      if ($this->login($_POST['username'], $_POST['password']))
+        $this->render = 'nothing';
+      else
+        $this->render = 'failure';
+    }
   }
 
   public function on_render_request() {
     //echo "SpiffExtension_login::on_render_request()<br>\n";
-    $smarty = $this->get_extension_store()->get_parent()->get_smarty();
-    return $smarty->fetch('login.tpl');
+    $smarty = $this->spiff->get_smarty();
+    $user   = $this->spiff->get_current_user();
+    switch ($this->render) {
+    case 'nothing':
+      $smarty->assign_by_ref('user', $user);
+      return $smarty->fetch('logged_in.tpl');
+      break;
+
+    case 'form':
+      return $smarty->fetch('login.tpl');
+      break;
+
+    case 'failure':
+      $smarty->assign('error', gettext("Login failed."));
+      return $smarty->fetch('login.tpl');
+      break;
+    }
   }
 }
 ?>

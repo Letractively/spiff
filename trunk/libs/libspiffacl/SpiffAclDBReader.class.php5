@@ -142,20 +142,10 @@ class SpiffAclDBReader {
   /*******************************************************************
    * Requesting resources.
    *******************************************************************/
-  public function &get_resource_from_id($id, $type = NULL)
+  private function &get_resource_from_db_result($db_result, $type = NULL)
   {
-    assert('is_int($id)');
-    assert('$id != -1');
-    $query = new SqlQuery('
-      SELECT r.*,a.name attr_name,a.type,a.attr_string,a.attr_int
-      FROM      {t_resource}           r
-      LEFT JOIN {t_resource_attribute} a ON r.id=a.resource_id
-      WHERE r.id={id}');
-    $query->set_table_names($this->table_names);
-    $query->set_int('id', $id);
-    $rs = $this->db->Execute($query->sql());
-    assert('is_object($rs)');
-    if (!$row = $rs->FetchRow()) {
+    assert('is_object($db_result)');
+    if (!$row = $db_result->FetchRow()) {
       $null = NULL;
       return $null;
     }
@@ -186,8 +176,24 @@ class SpiffAclDBReader {
       }
       if ($row['attr_name'] != NULL)
         $resource->set_attribute($row['attr_name'], $value);
-    } while ($row = $rs->FetchRow());
+    } while ($row = $db_result->FetchRow());
     return $resource;
+  }
+
+
+  public function &get_resource_from_id($id, $type = NULL)
+  {
+    assert('is_int($id)');
+    assert('$id != -1');
+    $query = new SqlQuery('
+      SELECT r.*,a.name attr_name,a.type,a.attr_string,a.attr_int
+      FROM      {t_resource}           r
+      LEFT JOIN {t_resource_attribute} a ON r.id=a.resource_id
+      WHERE r.id={id}');
+    $query->set_table_names($this->table_names);
+    $query->set_int('id', $id);
+    $rs = $this->db->Execute($query->sql());
+    return $this->get_resource_from_db_result($rs, $type);
   }
 
 
@@ -208,40 +214,28 @@ class SpiffAclDBReader {
     $query->set_string('section_handle', $section_handle);
     //$this->debug();
     $rs = $this->db->Execute($query->sql());
-    assert('is_object($rs)');
-    if (!$row = $rs->FetchRow()) {
-      $null = NULL;
-      return $null;
-    }
-    if ($type == NULL && $row['is_actor'] && $row['is_group'])
-      $type = 'SpiffAclActorGroup';
-    else if ($type == NULL && $row['is_actor'])
-      $type = 'SpiffAclActor';
-    else if ($type == NULL && $row['is_group'])
-      $type = 'SpiffAclResourceGroup';
-    else if ($type == NULL)
-      $type = 'SpiffAclResource';
-    else if ($row['is_group'])
-      $type .= 'Group';
-    //echo "Get type: $type<br>\n";
-    $resource = new $type($row['name'], $row['handle']);
-    $resource->set_id($row['id']);
+    return $this->get_resource_from_db_result($rs, $type);
+  }
 
-    // Append all attributes.
-    do {
-      switch ($row['type']) {
-      case SPIFF_ACLDB_ATTRIB_TYPE_INT:
-        $value = (int)$row['attr_int'];
-        break;
 
-      case SPIFF_ACLDB_ATTRIB_TYPE_STRING:
-        $value = $row['attr_string'];
-        break;
-      }
-      if ($row['attr_name'] != NULL)
-        $resource->set_attribute($row['attr_name'], $value);
-    } while ($row = $rs->FetchRow());
-    return $resource;
+  public function &get_resource_from_name($name,
+                                          $section_handle,
+                                          $type = NULL)
+  {
+    assert('isset($name)');
+    assert('isset($section_handle)');
+    $query = new SqlQuery('
+      SELECT r.*,a.name attr_name,a.type,a.attr_string,a.attr_int
+      FROM      {t_resource}           r
+      LEFT JOIN {t_resource_attribute} a ON r.id=a.resource_id
+      WHERE r.name={name}
+      AND   r.section_handle={section_handle}');
+    $query->set_table_names($this->table_names);
+    $query->set_string('name',           $name);
+    $query->set_string('section_handle', $section_handle);
+    //$this->debug();
+    $rs = $this->db->Execute($query->sql());
+    return $this->get_resource_from_db_result($rs);
   }
 
 
