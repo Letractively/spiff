@@ -245,3 +245,4 @@ class SpiffExtensionStore {
     return $ext;
   }
 }
+?>
