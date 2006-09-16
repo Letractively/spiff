@@ -237,7 +237,7 @@ class SpiffExtensionStore {
       $dependency  = $this->extension_db->get_extension_from_operator_string(
                                                                    $dependency);
       $dependency  = $this->instantiate_extension($dependency);
-      $dependency->initialize();
+      $dependency->initialize($this->parent);
     }
     $ext = $this->instantiate_extension($extension);
     $ext->set_extension_store($this);

@@ -34,7 +34,7 @@
   <tr>
     <td align='right' bgcolor='#fffefe'>
     <form action='setup_now.php5' method=POST>
-    <br/><?=gettext('New Administrator Password:')?> <input type='text' name='admin_pwd' /><br/><br/>
+    <br/><?=gettext('New Administrator Password:')?> <input type='password' name='admin_pwd' /><br/><br/>
     <input type='submit' name='do' value='Delete Data And Install Now!' />
     </form>
     </td>
