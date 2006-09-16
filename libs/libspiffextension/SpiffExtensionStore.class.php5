@@ -82,12 +82,6 @@ class SpiffExtensionStore {
   }
 
 
-  public function get_parent()
-  {
-    return $this->parent;
-  }
-
-
   /*******************************************************************
    * Parser.
    *******************************************************************/
@@ -247,7 +241,7 @@ class SpiffExtensionStore {
     }
     $ext = $this->instantiate_extension($extension);
     $ext->set_extension_store($this);
-    $ext->initialize();
+    $ext->initialize($this->parent);
     return $ext;
   }
 }

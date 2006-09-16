@@ -64,10 +64,7 @@ class Spiff {
     setlocale(LC_MESSAGES, $l);
     
     // Setup gettext.
-    if (!function_exists('gettext'))
-      die('Spiff::Spiff(): This webserver does not have gettext'
-        . ' installed.<br/>'
-        . 'Please contact your webspace provider.');
+    assert('function_exists("gettext")');
     $domain = 'spiff';
     bindtextdomain($domain, './language');
     textdomain($domain);
@@ -129,6 +126,15 @@ class Spiff {
   }
 
 
+  function &get_current_user() {
+    if (session_id() == '' || !isset($_SESSION['uid'])) {
+      $null = NULL;
+      return $null;
+    }
+    return $this->acldb->get_resource_from_id($_SESSION['uid']);
+  }
+
+
   function show() {
     // Fetch the requested site.
     $section  = isset($_GET['section']) ? $_GET['section'] : 'content';
@@ -143,6 +149,7 @@ class Spiff {
     $extension = $resource->get_attribute('extension');
     $extension = $this->extension_store->prepare_extension($extension);
     $this->smarty->template_dir = $extension->get_filename();
+    $this->smarty->clear_all_assign();
     
     /* Plugin hook: on_page_open
      *   Type: EventBus signal.

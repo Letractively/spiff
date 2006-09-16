@@ -27,7 +27,7 @@ Depends:
 ?>
 <?php
 class SpiffExtension_spiff extends SpiffExtension {
-  function initialize() {
+  function initialize(&$spiff) {
   }
 }
 ?>
