@@ -505,6 +505,7 @@ class SpiffAclDB extends SpiffAclDBReader {
     $query->set_hex('path',        $path);
     $query->set_int('depth',       $depth);
     $query->set_int('resource_id', $resource_id);
+    //$this->debug();
     $rs = $this->db->Execute($query->sql());
     assert('is_object($rs)');
 

@@ -20,7 +20,7 @@
 <table cellpadding='20'>
   <tr>
     <td bgcolor='#f5f5f2'>
-<? if ($_GET['do'] == 1) { ?>
+<? if (isset($_POST['do'])) { ?>
     <h2>Spiff&trade; Installation Process Running...</h2>
     <small><i>Dear user, please ignore the technical hogwash below.<br/>
     You can just scroll down to the bottom of this page. Thank you.</i></small>
@@ -273,6 +273,8 @@ test($admin);
 
 start('Creating user "Administrator"');
 $actor     = new SpiffAclActor('Administrator');
+$actor->set_auth_string($_POST['admin_pwd']);
+assert('$actor->has_auth_string($_POST["admin_pwd"])');
 $usr_admin = $acldb->add_resource($admin->get_id(), $actor, $users_section);
 test($usr_admin);
 

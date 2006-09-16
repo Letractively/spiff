@@ -105,6 +105,12 @@ class SpiffAclResource {
   }
 
 
+  public function delete_attribute($name) {
+    assert('isset($name)');
+    unset($this->attributes[$name]);
+  }
+
+
   /// Replaces the entire attribute list.
   public function set_attribute_list(&$list) {
     assert('is_array($list)');
