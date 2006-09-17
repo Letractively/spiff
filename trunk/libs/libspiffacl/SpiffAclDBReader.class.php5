@@ -418,6 +418,7 @@ class SpiffAclDBReader {
     $query->set_int('actor_id',    $actor_id);
     $query->set_int('action_id',   $action_id);
     $query->set_int('resource_id', $resource_id);
+    //$this->debug();
     $rs = $this->db->Execute($query->sql());
     assert('is_object($rs)');
     $row = $rs->FetchRow();

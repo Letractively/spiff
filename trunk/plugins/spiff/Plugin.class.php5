@@ -5,7 +5,7 @@ Handle:      spiff
 Version:     0.1
 Author:      Samuel Abels
 Description: This extension only serves as a dependency.
-Depends:     
+Depends:     login
 */
   /*
   Copyright (C) 2006 Samuel Abels, <spam debain org>
