@@ -23,20 +23,20 @@
       switch ($id) {
       case -1:
         // New group.
-        $section  = new SpiffAclResourceSection('users', '');
-        $resource = new SpiffAclActorGroup('', '', $section);
+        $resource = new SpiffAclActorGroup('');
+        $resource->set_id(-1);
         break;
 
       case -2:
         // New user.
-        $section  = new SpiffAclResourceSection('users', '');
-        $resource = new SpiffAclActor('', '', $section);
+        $resource = new SpiffAclActor('');
+        $resource->set_id(-2);
         break;
 
       default:
         // Existing user or group.
         $resource = $this->acldb->get_resource_from_id($id);
-        $this->acldb->resource_load_attributes($resource);
+        assert('is_object($resource)');
         if (!$resource->is_group())
           $groups = $this->acldb->get_resource_parents($resource);
         else {
@@ -50,35 +50,33 @@
         break;
       }
 
-      $this->smarty->clear_all_assign();
       $this->smarty->assign_by_ref('groups',    $groups);
       $this->smarty->assign_by_ref('users',     $users);
       $this->smarty->assign_by_ref('parent_id', $parent_id);
       if ($resource->is_group()) {
         $this->smarty->assign_by_ref('group', $resource);
-        $content = $this->smarty->fetch('group_editor.tpl');
+        return $this->smarty->fetch('group_editor.tpl');
       }
       else {
         $this->smarty->assign_by_ref('user', $resource);
-        $content = $this->smarty->fetch('user_editor.tpl');
+        return $this->smarty->fetch('user_editor.tpl');
       }
-      $this->parent->append_content($content);
     }
 
 
     function delete_resource($id, $parent_id) {
       $this->acldb->delete_resource_from_id($id);
-      $this->show_resource($parent_id, $parent_id);
+      return $this->show_resource($parent_id, $parent_id);
     }
 
 
     function add_group($parent_id) {
-      $this->show_resource(-1, $parent_id);
+      return $this->show_resource(-1, $parent_id);
     }
 
 
     function add_user($parent_id) {
-      $this->show_resource(-2, $parent_id);
+      return $this->show_resource(-2, $parent_id);
     }
 
 
@@ -86,32 +84,28 @@
       switch ($id) {
       case -1:
         // New group.
-        $section  = new SpiffAclResourceSection('users', '');
-        $resource = new SpiffAclActorGroup('', '', $section);
-        $parent   = $this->acldb->get_resource_from_id($parent_id);
+        $resource = new SpiffAclActorGroup($_POST['name']);
         break;
 
       case -2:
         // New user.
-        $section  = new SpiffAclResourceSection('users', '');
-        $resource = new SpiffAclActor('', '', $section);
-        $parent   = $this->acldb->get_resource_from_id($parent_id);
+        $resource = new SpiffAclActor($_POST['name']);
         break;
 
       default:
         // Existing user or group.
         $resource = $this->acldb->get_resource_from_id($id);
-        $this->acldb->resource_load_attributes($resource);
+        $resource->set_name($_POST['name']);
       }
 
-      $resource->set_name($_POST['name']);
       $resource->set_attribute('description',      $_POST['description']);
       $resource->set_attribute('use_group_rights', $_POST['use_group_rights'] ? TRUE : FALSE);
 
+      $section = new SpiffAclResourceSection('users');
       if ($id == -1 || $id == -2)
-        $resource = $this->acldb->add_resource($parent, $resource);
+        $resource = $this->acldb->add_resource($parent_id, $resource, $section);
       else
-        $this->acldb->save_resource($resource);
+        $this->acldb->save_resource($resource, $section);
 
       // Save permissions.
       if (!isset($_POST['changelog_entries']))
@@ -140,11 +134,9 @@
         // Build our objects.
         if ($action_id > 0)
           $action = $this->acldb->get_action_from_id($action_id);
-        else {
-          $section = new SpiffAclActionSection('users', '');
+        else
           $action  = $this->acldb->get_action_from_handle($action_handle,
-                                                          $section);
-        }
+                                                          'users');
         if ($resource_id)
           $resource = $this->acldb->get_resource_from_id($resource_id);
 
@@ -185,27 +177,27 @@
       if (isset($_GET['id']))
         $id = (int)$_GET['id'];
       else {
-        $section   = new SpiffAclResourceSection('users', '');
         $resource  = $this->acldb->get_resource_from_handle('everybody',
-                                                             $section);
+                                                            'users');
         $id        = $resource->get_id();
         $parent_id = $id;
       }
 
       assert('is_int($id)');
 
+      //echo "ID: $id, Parent ID: $parent_id<br>\n";
       if (isset($_POST['save'])) {
-        $gid = $this->submit_resource($id, $parent_id);
-        $this->show_resource($id, $parent_id);
+        $id = $this->submit_resource($id, $parent_id);
+        return $this->show_resource($id, $parent_id);
       }
       elseif (isset($_POST['delete']))
-        $this->delete_resource($id, $parent_id);
+        return $this->delete_resource($id, $parent_id);
       elseif (isset($_POST['group_add']))
-        $this->add_group($id);
+        return $this->add_group($id);
       elseif (isset($_POST['user_add']))
-        $this->add_user($id);
+        return $this->add_user($id);
       else
-        $this->show_resource($id, $parent_id);
+        return $this->show_resource($id, $parent_id);
     }
   }
 ?>

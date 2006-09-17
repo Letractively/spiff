@@ -27,10 +27,10 @@
     
     function PrinterBase(&$_parent) {
       $this->parent          = &$_parent;
-      $this->extension_store = $_parent->get_extension_store();
-      $this->event_bus       = $_parent->get_event_bus();
-      $this->smarty          = $_parent->get_smarty();
-      $this->acldb           = $_parent->get_acldb();
+      $this->extension_store = &$_parent->get_extension_store();
+      $this->event_bus       = &$_parent->get_event_bus();
+      $this->smarty          = &$_parent->get_smarty();
+      $this->acldb           = &$_parent->get_acldb();
     }
 
     function show() {

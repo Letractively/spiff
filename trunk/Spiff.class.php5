@@ -39,6 +39,7 @@ include_once LIBUSEFUL_DIR .         '/string.inc.php';
 include_once LIBUSEFUL_DIR .         '/httpquery.inc.php';
 include_once LIBUSEFUL_DIR .         '/files.inc.php';
 include_once LIBUSEFUL_DIR .         '/cookie.inc.php';
+include_once LIBUSEFUL_DIR .         '/URL.class.php';
 require_once MY_SMARTY_DIR .         '/Smarty.class.php';
 require_once ADODB_DIR .             '/adodb.inc.php';
 require_once LIBSPIFFACL_DIR .       '/SpiffAclDB.class.php5';
@@ -141,6 +142,13 @@ class Spiff {
     $section  = isset($_GET['section']) ? $_GET['section'] : 'content';
     $handle   = isset($_GET['handle'])  ? $_GET['handle']  : 'homepage';
     $resource = $this->acldb->get_resource_from_handle($handle, $section);
+
+    // Setup base url that plugins should use to access the current site.
+    $url      = new URL($_SERVER['PHP_SELF']);
+    if (isset($_GET['section']))
+      $url->set_var('section', $_GET['section']);
+    if (isset($_GET['handle']))
+      $url->set_var('handle',  $_GET['handle']);
     
     // Check permissions.
     //FIXME
@@ -153,7 +161,8 @@ class Spiff {
     $basename       = basename($extension->get_filename());
     $this->smarty->clear_all_assign();
     $this->smarty->template_dir = $extension->get_filename();
-    $this->smarty->assign('plugin_dir', $rel_plugin_dir . '/' . $basename);
+    $this->smarty->assign('url',        $url->get_string());
+    $this->smarty->assign('plugin_dir', $rel_plugin_dir  . '/' . $basename);
     
     /* Plugin hook: on_page_open
      *   Type: EventBus signal.

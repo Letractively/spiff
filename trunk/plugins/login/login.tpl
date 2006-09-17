@@ -1,4 +1,4 @@
-<form action='{$smarty.server.REQUEST_URI}' method='POST'>
+<form action='{$url}' method='POST'>
 <table id='login' cellspacing='10' cellpadding='0'>
 {if $error}
   <tr>

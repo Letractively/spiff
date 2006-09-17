@@ -26,6 +26,7 @@ Depends:     spiff>=0.1 login
   */
 ?>
 <?php
+include_once SPIFF_DIR         . '/actions/printer_base.class.php';
 include_once dirname(__FILE__) . '/user_manager_printer.class.php';
 include_once dirname(__FILE__) . '/permission_tree_printer.class.php';
 
@@ -38,12 +39,17 @@ class SpiffExtension_spiff_admin extends SpiffExtension {
 
 
   public function on_render_request() {
-    //echo "SpiffExtension_login::on_render_request()<br>\n";
     $smarty = $this->spiff->get_smarty();
     $smarty->template_dir = dirname(__FILE__) . '/templates';
 
-    if (isset($_GET['manage_users']))
-      return $smarty->fetch('user_editor.tpl');
+    if (isset($_GET['permission_tree'])) {
+      $printer = new PermissionTreePrinter($this->spiff);
+      return $printer->show();
+    }
+    else if (isset($_GET['manage_users'])) {
+      $printer = new UserManagerPrinter($this->spiff);
+      return $printer->show();
+    }
     else
       return $smarty->fetch('admin.tpl');
   }

@@ -36,9 +36,8 @@
       }
       else {
         $resource  = NULL;
-        $section   = new SpiffAclResourceSection('users', '');
         $everybody = $this->acldb->get_resource_from_handle('everybody',
-                                                            $section);
+                                                            'users');
         $groups    = array($everybody);
         $items     = array();
         $parent    = NULL;
@@ -81,7 +80,6 @@
                                'users_administer' => 'Administer');
 
       // Fire smarty.
-      $this->smarty->clear_all_assign();
       $this->smarty->assign('actor_id',  $actor_id);
       $this->smarty->assign('parent_id', $parent_id);
       $this->smarty->assign_by_ref('resource',        $resource);
@@ -89,7 +87,7 @@
       $this->smarty->assign_by_ref('groups',          $group_list);
       $this->smarty->assign_by_ref('items',           $item_list);
       $this->smarty->assign_by_ref('defined_actions', $defined_actions);
-      $this->parent->append_content($this->smarty->fetch('permission_tree.tpl'));
+      return $this->smarty->fetch('permission_tree.tpl');
     }
 
 
@@ -108,7 +106,7 @@
         $parent_id = $_GET['parent_id'] * 1;
       else
         $parent_id = NULL;
-      $this->show_tree($actor_id, $resource_id, $parent_id);
+      return $this->show_tree($actor_id, $resource_id, $parent_id);
     }
   }
 ?>

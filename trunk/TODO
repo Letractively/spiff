@@ -1,4 +1,4 @@
-* Port the admin GUI into a plugin.
+* Check permissions when accessing a page.
 
 * Delete orphaned users.
 
