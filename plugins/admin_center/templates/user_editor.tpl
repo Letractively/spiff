@@ -39,7 +39,7 @@
 {assign var=perm_url value="?edit_permissions=1&amp;uid=$uid"}
 
     <h3>Things This User May Do</h3>
-    <iframe id='permission_tree' src="{$url}&amp;permission_tree=1&amp;actor_id={$user->get_id()}" border="0" width="100%" height="30">
+    <iframe id='permission_tree' src="{$url}&amp;permission_tree=1&amp;actor_id={$user->get_id()}" style='border: 0' width="100%" height="30">
     </iframe>
 
     <h3>Unconfirmed Permission Changes</h3>

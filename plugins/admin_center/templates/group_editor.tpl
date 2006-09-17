@@ -1,14 +1,3 @@
-{literal}
-<script>
-<!-- Start Hide
-
-function change_members() {
-  document.writeln('<font face="Arial" size="4">' + output_text + '</font><Br><Br>');
-}
-
-// End Hide-->
-</script>
-{/literal}
 <form action="{$url}&amp;manage_users=1&amp;{if $parent_id != $group->get_id()}parent_id={$parent_id}&amp;{/if}id={$group->get_id()}" method="post">
 <table class="container" width="100%" border="0" cellpadding="0" cellspacing="0">
   <tr>
@@ -56,7 +45,7 @@ function change_members() {
 {assign var=perm_url value="?edit_permissions=1&amp;id=$id"}
 
     <h3>Things That The Users In This Group May Do</h3>
-    <iframe id='permission_tree' src="{$url}&amp;permission_tree=1&amp;actor_id={$group->get_id()}" border="0" width="100%" height="30">
+    <iframe id='permission_tree' src="{$url}&amp;permission_tree=1&amp;actor_id={$group->get_id()}" style='border: 0' width="100%" height="30">
     </iframe>
 
     <h3>Unconfirmed Permission Changes</h3>

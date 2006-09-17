@@ -52,6 +52,7 @@ include_once SPIFF_DIR . '/actions/printer_base.class.php';
 
 class Spiff {
   private $db;
+  private $debug;
   private $event_bus;
   private $extension_store;
   private $smarty;
@@ -77,6 +78,7 @@ class Spiff {
       or die('Spiff::Spiff(): Error: Can\'t connect.'
            . ' Please check username, password and hostname.');
 
+    $this->debug           = FALSE;
     $this->acldb           = &new SpiffAclDB($this->db);
     $this->event_bus       = &new EventBus();
     $this->extension_store = &new SpiffExtensionStore($this,
@@ -107,6 +109,11 @@ class Spiff {
   }
   
   
+  function debug($debug = TRUE) {
+    $this->debug = $debug;
+  }
+
+
   function &get_extension_store() {
     return $this->extension_store;
   }
@@ -128,31 +135,69 @@ class Spiff {
   }
 
 
+  function get_current_user_id() {
+    if (session_id() == '' || !isset($_SESSION['uid']))
+      return -1;
+    return $_SESSION['uid'];
+  }
+
+
   function &get_current_user() {
-    if (session_id() == '' || !isset($_SESSION['uid'])) {
+    if ($this->get_current_user_id() <= 0) {
       $null = NULL;
       return $null;
     }
-    return $this->acldb->get_resource_from_id($_SESSION['uid']);
+    return $this->acldb->get_resource_from_id($this->get_current_user_id());
   }
 
 
   function show() {
-    // Fetch the requested site.
+    if (!session_id())
+      session_start();
+
+    // Decide which site was requested.
     $section  = isset($_GET['section']) ? $_GET['section'] : 'content';
     $handle   = isset($_GET['handle'])  ? $_GET['handle']  : 'homepage';
     $resource = $this->acldb->get_resource_from_handle($handle, $section);
+    if (!$resource)
+      die('No such resource.');
+
+    // Find out which user it is that requests the site.
+    $current_user = $this->get_current_user();
+    if ($current_user == NULL)
+      $current_user = $this->acldb->get_resource_from_handle('anonymous',
+                                                             'users');
+    
+    // Check permissions.
+    //$this->debug();
+    if ($this->debug)
+      echo 'User "'            . $current_user->get_name()   . '"'
+         . ' (Handle: "'       . $current_user->get_handle() . '")'
+         . ' trying to view "' . $resource->get_name()       . '"'
+         . ' (Handle: "'       . $resource->get_handle()     . '")'
+         . '<br>';
+    $read = $this->acldb->get_action_from_handle('view', 'content');
+    assert('is_object($read)');
+    if (!$this->acldb->has_permission_from_id($current_user->get_id(),
+                                              $read->get_id(),
+                                              $resource->get_id())) {
+      if ($this->debug)
+        echo 'Permission denied.<br/>';
+      $resource = $this->acldb->get_resource_from_handle('system/login',
+                                                         'content');
+      assert('is_object($resource)');
+    }
+    if ($this->debug)
+      echo 'Loading: "'  . $resource->get_name()   . '"'
+         . ' (Handle: "' . $resource->get_handle() . '")<br/>';
 
     // Setup base url that plugins should use to access the current site.
-    $url      = new URL($_SERVER['PHP_SELF']);
+    $url = new URL($_SERVER['PHP_SELF']);
     if (isset($_GET['section']))
       $url->set_var('section', $_GET['section']);
     if (isset($_GET['handle']))
       $url->set_var('handle',  $_GET['handle']);
     
-    // Check permissions.
-    //FIXME
-
     // Load all plugins required to use the extension associated with the
     // current page.
     $extension      = $resource->get_attribute('extension');
@@ -163,7 +208,7 @@ class Spiff {
     $this->smarty->template_dir = $extension->get_filename();
     $this->smarty->assign('url',        $url->get_string());
     $this->smarty->assign('plugin_dir', $rel_plugin_dir  . '/' . $basename);
-    
+
     /* Plugin hook: on_page_open
      *   Type: EventBus signal.
      *   Called from within Spiff->show().
@@ -171,7 +216,7 @@ class Spiff {
      *   Args: None.
      */
     $this->event_bus->emit('on_page_open');
-
+    
     /* Plugin hook: on_render_request
      *   Type: Method call.
      *   Called from within Spiff->show().

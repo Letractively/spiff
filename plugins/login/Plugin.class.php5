@@ -5,7 +5,7 @@ Handle:      login
 Version:     0.1
 Author:      Samuel Abels
 Description: Displays a form for logging in.
-Depends:     spiff
+Depends:     
 */
   /*
   Copyright (C) 2006 Samuel Abels, <spam debain org>
@@ -50,16 +50,17 @@ class SpiffExtension_login extends SpiffExtension {
 
   public function on_page_open() {
     //echo "SpiffExtension_login::on_page_open()<br>\n";
-    session_start();
-    
-    if ($this->spiff->get_current_user() != NULL)
-      $this->render = 'nothing';
+
+    $current_user = $this->spiff->get_current_user();
+    //echo 'User ' . $current_user->get_handle() . '<br>';
+    if ($current_user != NULL && $current_user->get_handle() != 'anonymous')
+      $this->render = 'logged_in';
     else
       $this->render = 'form';
 
     if (isset($_POST['login'])) {
       if ($this->login($_POST['username'], $_POST['password']))
-        $this->render = 'nothing';
+        $this->render = 'same_page';
       else
         $this->render = 'failure';
     }
@@ -67,10 +68,15 @@ class SpiffExtension_login extends SpiffExtension {
 
   public function on_render_request() {
     //echo "SpiffExtension_login::on_render_request()<br>\n";
+    //echo 'Rendering ' . $this->render . '<br>';
     $smarty = $this->spiff->get_smarty();
     $user   = $this->spiff->get_current_user();
     switch ($this->render) {
-    case 'nothing':
+    case 'same_page':
+      $this->spiff->show();
+      break;
+      
+    case 'logged_in':
       $smarty->assign_by_ref('user', $user);
       return $smarty->fetch('logged_in.tpl');
       break;

@@ -22,6 +22,6 @@ function libspiffacl_mkhandle_from_string($string)
   //FIXME: Return something that can be used to reproduce the original string.
   $string = strtolower($string);
   $string = str_replace(' ', '_', $string);
-  return preg_replace('/[^\w-_\.]+/', '', $string);
+  return preg_replace('/[^\w-_\/\.]+/', '', $string);
 }
 ?>

@@ -211,13 +211,13 @@ $ac_extension_section = new SpiffAclResourceSection('Extensions');
 $ac_extension_section = $acldb->add_resource_section($ac_extension_section);
 test($ac_extension_section);
 
-start('Installing Spiff extension');
-$spiff_ext = $extstore->add_extension(SPIFF_SPIFFPLUGIN_DIR . '/spiff');
-test(is_object($spiff_ext));
-
 start('Installing Login extension');
 $login_ext = $extstore->add_extension(SPIFF_SPIFFPLUGIN_DIR . '/login');
 test(is_object($login_ext));
+
+start('Installing Spiff extension');
+$spiff_ext = $extstore->add_extension(SPIFF_SPIFFPLUGIN_DIR . '/spiff');
+test(is_object($spiff_ext));
 
 start('Installing Admin Center extension');
 $admin_ext = $extstore->add_extension(SPIFF_SPIFFPLUGIN_DIR . '/admin_center');
@@ -333,20 +333,15 @@ test($usr_anon);
 /*******************************************************************
  * Build the following content table:
  * content: Content
- *            |-Admin Center
- *            \-Homepage
+ *            |-Homepage
+ *            \-System
+ *              |-Admin Center
+ *              \-Login Page
  *******************************************************************/
 category('Initializing Content');
 start('Creating resource section "Content"');
 $cont_sect = new SpiffAclResourceSection('Content');
 test($cont_sect = $acldb->add_resource_section($cont_sect));
-
-start('Creating Admin Center');
-$resource  = new SpiffAclResource('Admin Center');
-$extension = $admin_ext->get_handle() . '=' . $admin_ext->get_version();
-$resource->set_attribute('extension', $extension);
-$admin_center = $acldb->add_resource(NULL, $resource, $cont_sect);
-test(is_object($admin_center));
 
 start('Creating Homepage');
 $resource  = new SpiffAclResource('Homepage');
@@ -355,28 +350,69 @@ $resource->set_attribute('extension', $extension);
 $homepage = $acldb->add_resource(NULL, $resource, $cont_sect);
 test(is_object($homepage));
 
+start('Creating System Group');
+$resource = new SpiffAclResourceGroup('System Pages', 'system');
+$system   = $acldb->add_resource(NULL, $resource, $cont_sect);
+test(is_object($system));
+
+start('Creating System Login Page');
+$resource  = new SpiffAclResource('System Login', 'system/login');
+$extension = $login_ext->get_handle();
+$resource->set_attribute('extension', $extension);
+$system_login = $acldb->add_resource($system->get_id(), $resource, $cont_sect);
+test(is_object($system_login));
+
+start('Creating Admin Center');
+$resource  = new SpiffAclResource('Admin Center', 'system/admin');
+$extension = $admin_ext->get_handle();
+$resource->set_attribute('extension', $extension);
+$admin_center = $acldb->add_resource($system->get_id(), $resource, $cont_sect);
+test(is_object($admin_center));
+
 
 /*******************************************************************
  * Define permissions of the default groups.
  *******************************************************************/
-category('Assigning Permissions To Groups');
-start('Defining permissions of group "Administrators"');
+category('Assigning Permissions');
+start('Defining permissions of group "Administrators" on other users');
 $action_array = array(
   $ac_user_administer->get_id(),
   $ac_user_view->get_id(),
   $ac_user_create->get_id(),
   $ac_user_edit->get_id(),
   $ac_user_delete->get_id(),
+);
+$resource_array = array(
+  $everybody->get_id()
+);
+test($acldb->grant_from_id($admin->get_id(),
+                           $action_array,
+                           $resource_array));
+
+start('Defining permissions of group "Administrators" on content');
+$action_array = array(
   $ac_cont_view->get_id(),
   $ac_cont_create->get_id(),
   $ac_cont_edit->get_id(),
   $ac_cont_delete->get_id()
 );
 $resource_array = array(
-  $everybody->get_id(),
-  $homepage->get_id()
+  $homepage->get_id(),
+  $system->get_id()
 );
 test($acldb->grant_from_id($admin->get_id(),
+                           $action_array,
+                           $resource_array));
+
+start('Defining permissions of group "Users"');
+$action_array = array(
+  $ac_cont_view->get_id()
+);
+$resource_array = array(
+  $homepage->get_id(),
+  $system_login->get_id()
+);
+test($acldb->grant_from_id($users->get_id(),
                            $action_array,
                            $resource_array));
 ?>

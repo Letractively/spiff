@@ -12,7 +12,7 @@ function setHeight()
   var iframe = parent.document.getElementById('permission_tree');
   var table  = document.getElementById('permission_table');
   var height = document.body.scrollHeight;
-  table.style.visibility = "visible";
+  table.style.visibility = 'visible';
   iframe.setAttribute('height', height);
 }
 
@@ -185,7 +185,7 @@ function changePerm(element,
 {foreach from=$items item=current}
   <tr>
     <td>
-      <img src="img/user.png" alt="User:" /> {$current->get_name()}
+      <img src="{$plugin_dir}/img/user.png" alt="User:" /> {$current->get_name()}
     </td>
     {assign var=actions value=$current->permission}
     {foreach from=$defined_actions item=action_name key=action_handle}
