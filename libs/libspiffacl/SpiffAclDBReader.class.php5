@@ -115,11 +115,10 @@ class SpiffAclDBReader {
   }
 
 
-  public function &get_action_from_handle($handle,
-                                          SpiffAclActionSection &$section)
+  public function &get_action_from_handle($handle, $section_handle)
   {
-    assert('isset($handle)');
-    assert('$handle !== ""');
+    assert('isset($handle) && $handle != ""');
+    assert('isset($section_handle) && $section_handle != ""');
     $query = new SqlQuery('
       SELECT a.*
       FROM      {t_action} a
@@ -127,7 +126,7 @@ class SpiffAclDBReader {
       AND   a.section_handle={section_handle}');
     $query->set_table_names($this->table_names);
     $query->set_string('handle',         $handle);
-    $query->set_string('section_handle', $section->get_handle());
+    $query->set_string('section_handle', $section_handle);
     //$this->debug();
     $rs = $this->db->Execute($query->sql());
     assert('is_object($rs)');
@@ -282,18 +281,16 @@ class SpiffAclDBReader {
     while ($row = $rs->FetchRow()) {
       if ($row['handle'] != $last) {
         $last = $row['handle'];
-        if ($type == NULL && $row['is_actor'] && $row['is_group'])
-          $type = 'SpiffAclActorGroup';
-        else if ($type == NULL && $row['is_actor'])
-          $type = 'SpiffAclActor';
-        else if ($type == NULL && $row['is_group'])
-          $type = 'SpiffAclResourceGroup';
-        else if ($type == NULL)
-          $type = 'SpiffAclResource';
-        else if ($row['is_group'])
-          $type .= 'Group';
-        //echo "Get type: $type<br>\n";
-        $child = new $type($row['name'], $row['handle']);
+        $obj_type = $type ? $type : '';
+        if ($type == NULL && $row['is_actor'])
+          $obj_type = 'SpiffAclActor';
+        if ($type == NULL && !$row['is_actor'])
+          $obj_type = 'SpiffAclResource';
+        if ($row['is_group'])
+          $obj_type .= 'Group';
+        //echo "Get type: $obj_type<br>\n";
+        assert('class_exists($obj_type)');
+        $child = new $obj_type($row['name'], $row['handle']);
         $child->set_id($row['id']);
         $child->set_n_children($row['n_children']);
         array_push($children, $child);
@@ -318,15 +315,17 @@ class SpiffAclDBReader {
 
 
   public function &get_resource_children(SpiffAclResource &$resource,
-                                         $options = SPIFF_ACLDB_FETCH_ALL,
-                                         $type = NULL)
+                                         $type = NULL,
+                                         $options = SPIFF_ACLDB_FETCH_ALL)
   {
     assert('is_object($resource)');
     if (!$resource->is_group()) {
       $list = array();
       return $list;
     }
-    return $this->get_resource_children_from_id($resource->get_id(), $options);
+    return $this->get_resource_children_from_id($resource->get_id(),
+                                                $type,
+                                                $options);
   }
 
 

@@ -66,10 +66,13 @@
     
     // Returns the URL as a string.
     function get_string($_escape = FALSE) {
+      $base = $this->base;
+      if (!strstr($base, '?'))
+        $base .= '?';
       if ($_escape)
-        return htmlentities($this->base . http_build_query($this->vars));
+        return htmlentities($base . http_build_query($this->vars));
       else
-        return $this->base . http_build_query($this->vars);
+        return $base . http_build_query($this->vars);
     }
   }
 ?>

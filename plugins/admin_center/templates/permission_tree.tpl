@@ -125,7 +125,7 @@ function changePerm(element,
 {if $resource}
   <tr>
     <td>
-    <a href="?permission_tree=1&amp;actor_id={$actor_id}{if $parent_id}&amp;resource_id={$parent_id}{/if}">&lt;- Parent Group</a>
+    <a href="{$url}&amp;permission_tree=1&amp;actor_id={$actor_id}{if $parent_id}&amp;resource_id={$parent_id}{/if}">&lt;- Parent Group</a>
     </td>
     <td colspan="5"></td>
   </tr>
@@ -133,7 +133,7 @@ function changePerm(element,
 {foreach from=$groups item=current_group}
   <tr>
     <td>
-    <a href="?permission_tree=1&amp;actor_id={$actor_id}&amp;{if $resource}parent_id={$resource->get_id()}&amp;{/if}resource_id={$current_group->get_id()}"><img src="img/group.png" alt="Group:" /> {$current_group->get_name()}</a>
+    <a href="{$url}&amp;permission_tree=1&amp;actor_id={$actor_id}&amp;{if $resource}parent_id={$resource->get_id()}&amp;{/if}resource_id={$current_group->get_id()}"><img src="{$plugin_dir}/img/group.png" alt="Group:" /> {$current_group->get_name()}</a>
     </td>
     {assign var=actions value=$current_group->permission}
     {assign var=acl value=$actions.users_administer}
