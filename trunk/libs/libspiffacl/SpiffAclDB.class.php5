@@ -107,10 +107,6 @@ class SpiffAclDB extends SpiffAclDBReader {
     //$this->debug();
     $rs = $this->db->Execute($query->sql());
     assert('is_object($rs)');
-    $query->set_sql('DELETE FROM {t_action_section}
-                     WHERE handle={handle}');
-    $rs = $this->db->Execute($query->sql());
-    assert('is_object($rs)');
     return TRUE;
   }
 
@@ -318,7 +314,7 @@ class SpiffAclDB extends SpiffAclDBReader {
       DELETE FROM {t_action}
       WHERE id={action_id}');
     $query->set_table_names($this->table_names);
-    $query->set_string('action_id', $action_id);
+    $query->set_int('action_id', $action_id);
     return $this->db->Execute($query->sql());
   }
 
@@ -396,12 +392,12 @@ class SpiffAclDB extends SpiffAclDBReader {
   private function resource_update_attribute($resource_id, $name, $value)
   {
     $query = new SqlQuery('
-     UPDATE {t_resource_attribute}
-     SET type={type},
-         attr_string={attr_string},
-         attr_int={attr_int}
-     WHERE resource_id={resource_id}
-     AND   name={name}');
+      UPDATE {t_resource_attribute}
+      SET type={type},
+          attr_string={attr_string},
+          attr_int={attr_int}
+      WHERE resource_id={resource_id}
+      AND   name={name}');
     $query->set_table_names($this->table_names);
     $query->set_int('resource_id', $resource_id);
     $query->set_string('name', $name);
