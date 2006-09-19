@@ -1,3 +1,4 @@
+import sys
 from ObjectSection   import *
 from ActionSection   import *
 from ResourceSection import *
@@ -7,6 +8,12 @@ from Resource        import *
 from ResourceGroup   import *
 from Actor           import *
 from ActorGroup      import *
+
+sys.path.append('../libuseful_python/')
+from SqlQuery import *
+
+sys.path.append('../')
+from sqlalchemy import *
 
 class DBReader:
     fetch_all, fetch_groups, fetch_items = range(3)
