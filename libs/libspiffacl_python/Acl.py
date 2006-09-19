@@ -1,6 +1,6 @@
-import Action
+from Action import *
 
-class Acl():
+class Acl(object):
     def __init__(self, actor_id, action, resource_id, permit = False):
         self.__actor_id    = int(actor_id)
         self.__action      = action
@@ -13,10 +13,10 @@ class Acl():
     def get_actor_id(self):
         return self.__actor_id
 
-    def set_acl(self, acl):
+    def set_action(self, action):
         self.__action = action
 
-    def get_acl(self):
+    def get_action(self):
         return self.__action
 
     def set_resource_id(self, resource_id):

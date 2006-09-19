@@ -1,4 +1,4 @@
-import DBObject
+from DBObject import *
 
 class ObjectSection(DBObject):
     pass

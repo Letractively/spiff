@@ -1,6 +1,6 @@
 from functions import make_handle_from_string
 
-class DBObject(object):
+class DBObject:
     def __init__(self, name, handle = None):
         self.__id     = -1
         self.__name   = name
@@ -63,7 +63,7 @@ if __name__ == '__main__':
             newhandle = "newhandle"
             dbobject.set_handle(newhandle)
             assert dbobject.get_name()   == newname
-            assert dbobject.get_handle() == handle
+            assert dbobject.get_handle() == newhandle
 
     testcase = DBObjectTest()
     runner   = unittest.TextTestRunner()

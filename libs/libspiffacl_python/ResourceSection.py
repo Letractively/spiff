@@ -1,4 +1,4 @@
-import ObjectSection
+from ObjectSection import *
 
 class ResourceSection(ObjectSection):
     pass
