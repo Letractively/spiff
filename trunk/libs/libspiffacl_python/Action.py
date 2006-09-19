@@ -1,4 +1,4 @@
-import DBObject
+from DBObject import *
 
 class Action(DBObject):
     pass

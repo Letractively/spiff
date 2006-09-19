@@ -1,4 +1,4 @@
-import Resource
+from Resource import *
 
 class ResourceGroup(Resource):
     def is_group(self):

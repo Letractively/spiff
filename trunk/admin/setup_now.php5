@@ -424,7 +424,7 @@ test($acldb->grant_from_id($users->get_id(),
     <font size='+1' color='green'>Successfully finished initialization,
     Spiff&trade; setup is now complete! :-)</font><br/>
     <br/>
-    You can now start to <a href="../index.php5?handle=admin_center">edit your web site</a>,
+    You can now start to <a href="../index.php5?handle=system/admin">edit your web site</a>,
     or <a href="..">view your home page</a>.
 <? } else { ?>
     <font size='+1' color='red'>Initialization failed :-(.
