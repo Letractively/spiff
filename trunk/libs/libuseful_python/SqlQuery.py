@@ -1,3 +1,5 @@
+from MySQLdb import escape_string
+
 class SqlQuery:
     def __init__(self, table_names, sql):
         self.__tables_names = table_names
@@ -19,7 +21,7 @@ class SqlQuery:
 
     def set_string(self, name, value):
         assert name is not None and name is not ''
-        item = {'type': 'string', 'value': value.escape()}
+        item = {'type': 'string', 'value': escape_string(value)}
         self.__data[name] = item
 
 
@@ -40,3 +42,25 @@ class SqlQuery:
             value = self.__data[name]['value'].replace('}', '\}')
             sql   = self.__sql.replace('{' + name + '}', value)
         return sql.replace('\}', '}')
+
+
+if __name__ == '__main__':
+    import unittest
+
+    class SqlQueryTest(unittest.TestCase):
+        def runTest(self):
+            # Read config.
+            tbl = {'my_tbl': 'my_table'}
+            sql = '''
+                SELECT * FROM {my_tbl}
+                WHERE id={id}
+                AND   string={string}
+                AND   hex={hex}
+                AND   null={null}'''
+            query = SqlQuery(tbl, sql)
+            assert query.sql != sql
+            #FIXME
+
+    testcase = SqlQueryTest()
+    runner   = unittest.TextTestRunner()
+    runner.run(testcase)

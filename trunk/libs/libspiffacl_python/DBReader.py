@@ -11,29 +11,29 @@ from ResourceGroup   import *
 from Actor           import *
 from ActorGroup      import *
 
-from libuseful_python import SqlQuery
+from libuseful_python.SqlQuery import SqlQuery
 
 class DBReader:
     fetch_all, fetch_groups, fetch_items = range(3)
     attrib_type_int, attrib_type_string = range(2)
 
     def __init__(self, db):
-        self.__db           = db
+        self.db             = db
         self.__table_prefix = ''
-        self.__table_names  = {}
+        self._table_names   = {}
         self.__update_table_names()
 
 
     def __update_table_names(self):
         pfx = self.__table_prefix
-        self.__table_names['t_action_section']     = pfx + 'action_section'
-        self.__table_names['t_resource_section']   = pfx + 'resource_section'
-        self.__table_names['t_action']             = pfx + 'action'
-        self.__table_names['t_resource']           = pfx + 'resource'
-        self.__table_names['t_resource_attribute'] = pfx + 'resource_attribute'
-        self.__table_names['t_resource_path']      = pfx + 'resource_path'
-        self.__table_names['t_path_ancestor_map']  = pfx + 'path_ancestor_map'
-        self.__table_names['t_acl']                = pfx + 'acl'
+        self._table_names['t_action_section']     = pfx + 'action_section'
+        self._table_names['t_resource_section']   = pfx + 'resource_section'
+        self._table_names['t_action']             = pfx + 'action'
+        self._table_names['t_resource']           = pfx + 'resource'
+        self._table_names['t_resource_attribute'] = pfx + 'resource_attribute'
+        self._table_names['t_resource_path']      = pfx + 'resource_path'
+        self._table_names['t_path_ancestor_map']  = pfx + 'path_ancestor_map'
+        self._table_names['t_acl']                = pfx + 'acl'
 
 
     def debug(self, debug = True):
@@ -46,7 +46,7 @@ class DBReader:
 
     def __get_action_from_query(self, query):
         assert query is not None
-        result = self.__db.execute(query.sql)
+        result = self.db.execute(query.get_sql())
         assert result is not None
         row = result.shift()
         if not row: return None
@@ -57,7 +57,7 @@ class DBReader:
 
     def get_action_from_id(self, id):
         assert id is not None
-        query = SqlQuery(self.__table_names, '''
+        query = SqlQuery(self._table_names, '''
             SELECT a.*
             FROM  {t_action} a
             WHERE a.id={id}''')
@@ -68,7 +68,7 @@ class DBReader:
     def get_action_from_handle(self, handle, section_handle):
         assert handle         is not None
         assert section_handle is not None
-        query = SqlQuery(self.__table_names, '''
+        query = SqlQuery(self._table_names, '''
             SELECT a.*
             FROM  {t_action} a
             WHERE a.handle={handle}
@@ -94,7 +94,7 @@ class DBReader:
 
     def __get_resource_from_query(self, query, type = None):
         assert query is not None
-        result = self.__db.execute(query.sql)
+        result = self.db.execute(query.get_sql())
         assert result is not None
         row = result.shift()
         if not row: return None
@@ -120,7 +120,7 @@ class DBReader:
 
     def get_resource_from_id(self, id, type = None):
         assert id >= 0
-        query = SqlQuery(self.__table_names, '''
+        query = SqlQuery(self._table_names, '''
             SELECT r.*,a.name attr_name,a.type,a.attr_string,a.attr_int
             FROM      {t_resource}           r
             LEFT JOIN {t_resource_attribute} a ON r.id=a.resource_id
@@ -132,7 +132,7 @@ class DBReader:
     def get_resource_from_handle(self, handle, section_handle, type = None):
         assert handle         is not None
         assert section_handle is not None
-        query = SqlQuery(self.__table_names, '''
+        query = SqlQuery(self._table_names, '''
             SELECT r.*,a.name attr_name,a.type,a.attr_string,a.attr_int
             FROM      {t_resource}           r
             LEFT JOIN {t_resource_attribute} a ON r.id=a.resource_id
@@ -146,7 +146,7 @@ class DBReader:
     def get_resource_from_name(self, name, section_handle, type = None):
         assert name           is not None
         assert section_handle is not None
-        query = SqlQuery(self.__table_names, '''
+        query = SqlQuery(self._table_names, '''
             SELECT r.*,a.name attr_name,a.type,a.attr_string,a.attr_int
             FROM      {t_resource}           r
             LEFT JOIN {t_resource_attribute} a ON r.id=a.resource_id
@@ -173,7 +173,7 @@ class DBReader:
         else:
             assert False
 
-        query = SqlQuery(self.__table_names, '''
+        query = SqlQuery(self._table_names, '''
             SELECT r.*,a.name attr_name,a.type,a.attr_string,a.attr_int,t1.n_children
             FROM      {t_resource}           r
             LEFT JOIN {t_resource_attribute} a  ON r.id=a.resource_id
@@ -183,7 +183,7 @@ class DBReader:
             WHERE t2.resource_id={resource_id}
             AND   t1.depth=t2.depth + 1''' + sql)
         query.set_int('resource_id', resource_id)
-        result = self.__db.execute(query.sql)
+        result = self.db.execute(query.get_sql())
         assert result is not None
 
         # Collect all children.
@@ -218,7 +218,7 @@ class DBReader:
 
     def get_resource_parents_from_id(self, parent_id, type = None):
         assert parent_id >= 0
-        query = SqlQuery(self.__table_names, '''
+        query = SqlQuery(self._table_names, '''
             SELECT r.*,a.name attr_name,a.type,a.attr_string,a.attr_int,t1.n_children
             FROM      {t_resource}           r
             LEFT JOIN {t_resource_attribute} a  ON r.id=a.resource_id
@@ -228,7 +228,7 @@ class DBReader:
             WHERE t2.resource_id={resource_id}
             AND   t2.depth=t1.depth + 1''')
         query.set_int('resource_id', parent_id)
-        result = self.__db.execute(query.sql)
+        result = self.db.execute(query.get_sql())
         assert result is not None
 
         # Collect all parents.
@@ -260,7 +260,7 @@ class DBReader:
         assert actor_id    is not None
         assert action_id   is not None
         assert resource_id is not None
-        query = SqlQuery(self.__table_names, '''
+        query = SqlQuery(self._table_names, '''
             SELECT    ac.permit
             FROM      {t_resource_path}     t1
             LEFT JOIN {t_path_ancestor_map} p1 ON t1.path=p1.resource_path
@@ -279,7 +279,7 @@ class DBReader:
         query.set_int('actor_id',    actor_id)
         query.set_int('action_id',   action_id)
         query.set_int('resource_id', resource_id)
-        result = self.__db.execute(query.sql)
+        result = self.db.execute(query.get_sql())
         assert result is not None
         row = result.shift()
         if row is None or row[0] is 0: return False
@@ -299,7 +299,7 @@ class DBReader:
     def get_permission_list_from_id(self, actor_id, resource_id):
         assert actor_id    is not None
         assert resource_id is not None
-        query = SqlQuery(self.__table_names, '''
+        query = SqlQuery(self._table_names, '''
             SELECT    ac1.actor_id, ac1.resource_id, ac1.permit,
                       a.*,
                       s.id section_id, s.name section_name,
@@ -418,7 +418,7 @@ class DBReader:
             AND t3.depth = t3_maxdepth''')
         query.set_int('actor_id',    actor_id)
         query.set_int('resource_id', resource_id)
-        result = self.__db.execute(query.sql)
+        result = self.db.execute(query.get_sql())
         assert result is not None
 
         # Collect all permissions.

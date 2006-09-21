@@ -4,12 +4,12 @@ from functions import int2hex
 class DB(DBReader):
     def __get_resource_path_from_id(self, id):
         assert id is not None
-        query = SqlQuery(self.__table_names, '''
+        query = SqlQuery(self._table_names, '''
             SELECT HEX(path) path
             FROM   {t_resource_path}
             WHERE  resource_id={id}''')
         query.set_int('id', id)
-        result = self.__db.execute(query.sql)
+        result = self.db.execute(query.get_sql())
         assert result is not None
         row = result.shift()
         if not row: return None
@@ -50,10 +50,10 @@ class DB(DBReader):
         @rtype:  Boolean
         @return: True on success, False otherwise.
         """
-        query = SqlQuery(self.__table_names, 'DELETE FROM {t_action_section}')
-        self.__db.execute(query.sql)
+        query = SqlQuery(self._table_names, 'DELETE FROM {t_action_section}')
+        self.db.execute(query.get_sql())
         query.set_sql('DELETE FROM {t_resource_section}')
-        result = self.__db.execute(query.sql)
+        result = self.db.execute(query.get_sql())
         assert result is not None
         return True
 
@@ -61,30 +61,30 @@ class DB(DBReader):
     def __add_object_section(self, table, section):
         assert table is 'action_section' or table is 'resource_section'
         assert section is not None
-        query = SqlQuery(self.__table_names, '''
+        query = SqlQuery(self._table_names, '''
             INSERT INTO {t_''' + table + '''}
               (handle, name)
             VALUES
               ({handle}, {name})''')
         query.set_string('handle', section.get_handle())
         query.set_string('name',   section.get_name())
-        result = self.__db.execute(query.sql)
+        result = self.db.execute(query.get_sql())
         assert result is not None
-        section.set_id(self.__db.last_insert_id())
+        section.set_id(self.db.last_insert_id())
         return True
 
 
     def __save_object_section(self, table, section):
         assert table is 'action_section' or table is 'resource_section'
         assert section is not None
-        query = SqlQuery(self.__table_names, '''
+        query = SqlQuery(self._table_names, '''
             UPDATE {t_''' + table + '''}
             SET    handle={handle}, name={name}
             WHERE  id={id}''')
         query.set_int('id', section.get_id())
         query.set_string('handle', section.get_handle())
         query.set_string('name',   section.get_name())
-        result = self.__db.execute(query.sql)
+        result = self.db.execute(query.get_sql())
         assert result is not None
         return True
 
@@ -92,11 +92,11 @@ class DB(DBReader):
     def __delete_object_section(self, table, section):
         assert table is 'action_section' or table is 'resource_section'
         assert section is not None
-        query = SqlQuery(self.__table_names, '''
+        query = SqlQuery(self._table_names, '''
             DELETE FROM {t_''' + table + '''}
             WHERE handle={handle}''')
         query.set_string('handle', section.get_handle())
-        result = self.__db.execute(query.sql)
+        result = self.db.execute(query.get_sql())
         assert result is not None
         section.set_id(-1)
         return True
@@ -195,7 +195,7 @@ class DB(DBReader):
         """
         assert action  is not None
         assert section is not None
-        query = SqlQuery(self.__table_names, '''
+        query = SqlQuery(self._table_names, '''
             INSERT INTO {t_action}
               (section_handle, handle, name)
             VALUES
@@ -203,9 +203,9 @@ class DB(DBReader):
         query.set_string('section_handle', section.get_handle())
         query.set_string('handle',         action.get_handle())
         query.set_string('name',           action.get_name())
-        result = self.__db.execute(query.sql)
+        result = self.db.execute(query.get_sql())
         assert result is not None
-        action.set_id(self.__db.last_insert_id)
+        action.set_id(self.db.last_insert_id)
 
 
     def save_action(self, action, section):
@@ -221,7 +221,7 @@ class DB(DBReader):
         """
         assert action  is not None
         assert section is not None
-        query = SqlQuery(self.__table_names, '''
+        query = SqlQuery(self._table_names, '''
             UPDATE {t_action}
             SET section_handle={section_handle},
                 handle={handle},
@@ -231,7 +231,7 @@ class DB(DBReader):
         query.set_string('section_handle', section.get_handle())
         query.set_string('handle',         action.get_handle())
         query.set_string('name',           action.get_name())
-        result = self.__db.execute(query.sql)
+        result = self.db.execute(query.get_sql())
         assert result is not None
         return True
 
@@ -247,13 +247,13 @@ class DB(DBReader):
         @return: True if the action existed, False otherwise.
         """
         assert action_id is not None
-        query = SqlQuery(self.__table_names, '''
+        query = SqlQuery(self._table_names, '''
             DELETE FROM {t_action}
             WHERE id={action_id}''')
         query.set_int('id', action_id)
-        result = self.__db.execute(query.sql)
+        result = self.db.execute(query.get_sql())
         assert result is not None
-        if self.__db.affected_rows is 0:
+        if self.db.affected_rows is 0:
             return False
         return True
 
@@ -273,15 +273,15 @@ class DB(DBReader):
         """
         assert handle         is not None
         assert section_handle is not None
-        query = SqlQuery(self.__table_names, '''
+        query = SqlQuery(self._table_names, '''
             DELETE FROM {t_action}
             WHERE section_handle={section_handle}
             AND   handle={handle}''')
         query.set_string('section_handle', section_handle)
         query.set_string('handle',         handle)
-        result = self.__db.execute(query.sql)
+        result = self.db.execute(query.get_sql())
         assert result is not None
-        if self.__db.affected_rows is 0:
+        if self.db.affected_rows is 0:
             return False
         return True
 
@@ -310,14 +310,14 @@ class DB(DBReader):
     def __resource_has_attribute(self, resource_id, name):
         assert resource_id >= 0
         assert name is not None
-        query = SqlQuery(self.__table_names, '''
+        query = SqlQuery(self._table_names, '''
             SELECT id
             FROM {t_resource_attribute}
             WHERE resource_id={resource_id}
             AND   name={name}''')
         query.set_int('resource_id', resource_id)
         query.set_string('name', name)
-        result = self.__db.execute(query.sql)
+        result = self.db.execute(query.get_sql())
         assert result is not None
         row = result.shift()
         if row is not None: return True
@@ -327,7 +327,7 @@ class DB(DBReader):
     def __resource_add_attribute(self, resource_id, name, value):
         assert resource_id >= 0
         assert name is not None
-        query = SqlQuery(self.__table_names, '''
+        query = SqlQuery(self._table_names, '''
             INSERT INTO {t_resource_attribute}
               (resource_id, name, type, attr_string, attr_int)
             VALUES
@@ -342,15 +342,15 @@ class DB(DBReader):
             query.set_int('type', self.__attrib_type['string'])
             query.set_string('attr_string', value)
             query.set_none('attr_int')
-        result = self.__db.execute(query.sql)
+        result = self.db.execute(query.get_sql())
         assert result is not None
-        return self.__db.last_insert_id
+        return self.db.last_insert_id
 
 
     def __resource_update_attribute(self, resource_id, name, value):
         assert resource_id >= 0
         assert name is not None
-        query = SqlQuery(self.__table_names, '''
+        query = SqlQuery(self._table_names, '''
             UPDATE {t_resource_attribute}
             SET type={type},
                 attr_string={attr_string},
@@ -367,7 +367,7 @@ class DB(DBReader):
             query.set_int('type', self.__attrib_type['string'])
             query.set_string('attr_string', value)
             query.set_none('attr_int')
-        result = self.__db.execute(query.sql)
+        result = self.db.execute(query.get_sql())
         assert result is not None
         return True
 
@@ -375,22 +375,36 @@ class DB(DBReader):
     def __resource_add_n_children(self, resource, n):
         assert resource is not None
         assert n >= 0
-        query = SqlQuery(self.__table_names, '''
+        query = SqlQuery(self._table_names, '''
             UPDATE {t_resource_path}
             SET n_children=n_children + ({n_children})
             WHERE resource_id={resource_id}''')
         query.set_int('resource_id', resource_id)
         query.set_int('n_children',  n_children)
-        result = self.__db.execute(query.sql)
+        result = self.db.execute(query.get_sql())
         assert result is not None
 
 
     def add_resource(self, parent_id, resource, section):
+        """
+        Inserts the given rescource into the given section of the database,
+        under the parent with the given id.
+
+        @type  parent_id: int
+        @param parent_id: The id of the resource under which the new resource
+                          is added.
+        @type  resource: Resource
+        @param resource: The resource that is added.
+        @type  section: ResourceSection
+        @param section: The associated resource section.
+        @rtype:  Boolean
+        @return: True on success, False otherwise.
+        """
         assert parent_id >= 0
         assert resource is not None
         assert section  is not None
 
-        transaction = self.__db.begin()
+        transaction = self.db.begin()
 
         if parent_id is None:
             parent_path = ''
@@ -402,7 +416,7 @@ class DB(DBReader):
             self.__resource_add_n_children(parent_id, 1)
 
         # Create the resource.
-        query = SqlQuery(self.__table_names, '''
+        query = SqlQuery(self._table_names, '''
             INSERT INTO {t_resource}
               (section_handle, handle, name, is_actor, is_group)
             VALUES
@@ -412,24 +426,24 @@ class DB(DBReader):
         query.set_string('name',           resource.get_name())
         query.set_bool('is_actor',         resource.is_actor())
         query.set_bool('is_group',         resource.is_group())
-        result = self.__db.execute(query.sql)
+        result = self.db.execute(query.get_sql())
         assert result is not None
-        resource_id = self.__db.last_insert_id
+        resource_id = self.db.last_insert_id
 
         # Add a new node into the tree.
-        query = SqlQuery(self.__table_names, '''
+        query = SqlQuery(self._table_names, '''
             INSERT INTO {t_resource_path}
               (path, resource_id)
             VALUES
               ({path}, {resource_id})''')
         query.set_hex('path',        parent_path + '0000000000');
         query.set_int('resource_id', resource_id)
-        result = self.__db.execute(query.sql)
+        result = self.db.execute(query.get_sql())
         assert result is not None
-        path_id = self.__db.last_insert_id
+        path_id = self.db.last_insert_id
 
         # Assign the correct path to the new node.
-        query = SqlQuery(self.__table_names, '''
+        query = SqlQuery(self._table_names, '''
             UPDATE {t_resource_path}
             SET path={path},
                 depth={depth}
@@ -439,19 +453,19 @@ class DB(DBReader):
         query.set_hex('path',        path + '00')
         query.set_int('depth',       depth)
         query.set_int('resource_id', resource_id)
-        result = self.__db.execute(query.sql)
+        result = self.db.execute(query.get_sql())
         assert result is not None
         
         # Add a link to every ancestor of the new node into a map.
         while parent_path is not '':
-            query = SqlQuery(self.__table_names, '''
+            query = SqlQuery(self._table_names, '''
                 INSERT INTO {t_path_ancestor_map}
                   (resource_path, ancestor_path)
                 VALUES
                   ({resource_path}, {ancestor_path})''')
             query.set_hex('resource_path', path        + '00')
             query.set_hex('ancestor_path', parent_path + '00')
-            result = self.__db.execute(query.sql)
+            result = self.db.execute(query.get_sql())
             assert result is not None
             parent_path = parent_path[0:path.len() - 8]
 
@@ -463,16 +477,26 @@ class DB(DBReader):
             
         transaction.commit()
         resource.set_id(resource_id)
-        return resource
+        return True
 
 
     def save_resource(self, resource, section):
+        """
+        Updates the given rescource in the given section of the database.
+
+        @type  resource: Resource
+        @param resource: The resource that is saved.
+        @type  section: ResourceSection
+        @param section: The associated resource section.
+        @rtype:  Boolean
+        @return: True on success, False otherwise.
+        """
         assert resource is not None
         assert section  is not None
 
-        transaction = self.__db.begin()
+        transaction = self.db.begin()
 
-        query = SqlQuery(self.__table_names, '''
+        query = SqlQuery(self._table_names, '''
             UPDATE {t_resource}
             SET section_handle={section_handle},
                 handle={handle},
@@ -486,7 +510,7 @@ class DB(DBReader):
         query.set_string('name',           resource.get_name())
         query.set_bool('is_actor',         resource.is_actor())
         query.set_bool('is_group',         resource.is_group())
-        result = self.__db.execute(query.sql)
+        result = self.db.execute(query.get_sql())
         assert result is not None
 
         # Save the attributes.
@@ -496,37 +520,67 @@ class DB(DBReader):
             self.__resource_add_attribute(resource_id, attrib_name, value)
             
         transaction.commit()
-        return resource
+        return True
 
 
     def delete_resource_from_id(self, resource_id):
+        """
+        Deletes the rescource with the given id from the database.
+
+        @type  resource_id: int
+        @param resource_id: The id of the resource that is deleted.
+        @rtype:  Boolean
+        @return: True if the resource existed, False otherwise.
+        """
         assert resource_id >= 0
-        query = SqlQuery(self.__table_names, '''
+        query = SqlQuery(self._table_names, '''
             DELETE FROM {t_resource}
             WHERE id={resource_id}''')
         query.set_id('resource_id', resource_id)
-        result = self.__db.execute(query.sql)
+        result = self.db.execute(query.get_sql())
         assert result is not None
+        if self.db.affected_rows is 0:
+            return False
         return True
 
         
     def delete_resource_from_handle(self, handle, section_handle):
+        """
+        Deletes the rescource with the given handle out of the
+        given section of the database.
+
+        @type  handle: string
+        @param handle: The handle of the resource that is deleted.
+        @type  section: string
+        @param section: The handle of the associated resource section.
+        @rtype:  Boolean
+        @return: True if the resource existed, False otherwise.
+        """
         assert handle         is not None
         assert section_handle is not None
-        query = SqlQuery(self.__table_names, '''
+        query = SqlQuery(self._table_names, '''
             DELETE FROM {t_resource}
             WHERE section_handle={section_handle}
             AND   handle={handle}''')
         query.set_string('section_handle', section_handle)
         query.set_string('handle',         handle)
-        result = self.__db.execute(query.sql)
+        result = self.db.execute(query.get_sql())
         assert result is not None
+        if self.db.affected_rows is 0:
+            return False
         return True
 
 
-    def delete_resource(self, resource, section):
+    def delete_resource(self, resource):
+        """
+        Convenience wrapper around delete_resource_from_id().
+
+        @type  resource: Resource
+        @param resource: The resource that is deleted.
+        @rtype:  Boolean
+        @return: True if the resource existed, False otherwise.
+        """
         assert resource is not None
-        assert section  is not None
         assert resource.get_id() >= 0
         return self.delete_resource_from_id(resource.get_id())
 
@@ -536,7 +590,7 @@ class DB(DBReader):
         assert action_id   >= 0
         assert resource_id >= 0
         assert permit == True or permit == False
-        query = SqlQuery(self.__table_names, '''
+        query = SqlQuery(self._table_names, '''
             INSERT INTO {t_acl}
               (actor_id, action_id, resource_id, permit)
             VALUES
@@ -545,9 +599,9 @@ class DB(DBReader):
         query.set_int('action_id',   action_id)
         query.set_int('resource_id', resource_id)
         query.set_bool('permit',    permit)
-        result = self.__db.execute(query.sql)
+        result = self.db.execute(query.get_sql())
         assert result is not None
-        return self.__db.last_insert_id
+        return self.db.last_insert_id
 
 
     def __update_acl_from_id(self, actor_id, action_id, resource_id, permit):
@@ -555,7 +609,7 @@ class DB(DBReader):
         assert action_id   >= 0
         assert resource_id >= 0
         assert permit == True or permit == False
-        query = SqlQuery(self.__table_names, '''
+        query = SqlQuery(self._table_names, '''
             UPDATE {t_acl}
             SET   permit={permit}
             WHERE actor_id={actor_id}
@@ -565,7 +619,7 @@ class DB(DBReader):
         query.set_int('action_id',   action_id)
         query.set_int('resource_id', resource_id)
         query.set_bool('permit',    permit)
-        result = self.__db.execute(query.sql)
+        result = self.db.execute(query.get_sql())
         assert result is not None
         return True
 
@@ -574,7 +628,7 @@ class DB(DBReader):
         assert actor_id    >= 0
         assert action_id   >= 0
         assert resource_id >= 0
-        query = SqlQuery(self.__table_names, '''
+        query = SqlQuery(self._table_names, '''
             SELECT id
             FROM {t_acl}
             WHERE actor_id={actor_id}
@@ -583,7 +637,7 @@ class DB(DBReader):
         query.set_int('actor_id',    actor_id)
         query.set_int('action_id',   action_id)
         query.set_int('resource_id', resource_id)
-        result = self.__db.execute(query.sql)
+        result = self.db.execute(query.get_sql())
         assert result is not None
         row = result.shift()
         if row is None: return False
@@ -595,6 +649,21 @@ class DB(DBReader):
                                action_list,
                                resource_list,
                                permit):
+        """
+        Defines whether or not the given actors may perform the given actions
+        on the given resources.
+
+        @type  actor_list: list[Actor]
+        @param actor_list: A list containing actors.
+        @type  action_list: list[Action]
+        @param action_list: A list containing actions.
+        @type  resource_list: list[Resource]
+        @param resource_list: A list containing resources.
+        @type  permit: boolean
+        @param permit: True to permit the given actions, False to deny them.
+        @rtype:  Boolean
+        @return: True on success, False otherwise.
+        """
         assert actor_list    is not None
         assert action_list   is not None
         assert resource_list is not None
@@ -621,6 +690,20 @@ class DB(DBReader):
 
 
     def set_permission(self, actor, action, resource, permit):
+        """
+        Convenience wrapper around set_permission_from_id().
+
+        @type  actor: Actor
+        @param actor: The actor whose permissions should be changed.
+        @type  action: Action
+        @param action: The action to permit or deny.
+        @type  resource: Resource
+        @param resource: The resource on which a permission should be defined.
+        @type  permit: boolean
+        @param permit: True to permit the given action, False to deny it.
+        @rtype:  Boolean
+        @return: True on success, False otherwise.
+        """
         assert actor    is not None
         assert action   is not None
         assert resource is not None
@@ -632,6 +715,18 @@ class DB(DBReader):
 
 
     def grant_from_id(self, actor_list, action_list, resource_list):
+        """
+        Convenience wrapper around set_permission_from_id().
+
+        @type  actor_list: list[Actor]
+        @param actor_list: A list containing actors.
+        @type  action_list: list[Action]
+        @param action_list: A list containing actions.
+        @type  resource_list: list[Resource]
+        @param resource_list: A list containing resources.
+        @rtype:  Boolean
+        @return: True on success, False otherwise.
+        """
         assert actor_list    is not None
         assert action_list   is not None
         assert resource_list is not None
@@ -642,6 +737,18 @@ class DB(DBReader):
 
 
     def grant(self, actor, action, resource):
+        """
+        Convenience wrapper around set_permission().
+
+        @type  actor: Actor
+        @param actor: The actor whose permissions should be changed.
+        @type  action: Action
+        @param action: The action to permit.
+        @type  resource: Resource
+        @param resource: The resource on which a permission should be defined.
+        @rtype:  Boolean
+        @return: True on success, False otherwise.
+        """
         assert actor    is not None
         assert action   is not None
         assert resource is not None
@@ -649,6 +756,18 @@ class DB(DBReader):
 
 
     def deny_from_id(self, actor_list, action_list, resource_list):
+        """
+        Convenience wrapper around set_permission_from_id().
+
+        @type  actor_list: list[Actor]
+        @param actor_list: A list containing actors.
+        @type  action_list: list[Action]
+        @param action_list: A list containing actions.
+        @type  resource_list: list[Resource]
+        @param resource_list: A list containing resources.
+        @rtype:  Boolean
+        @return: True on success, False otherwise.
+        """
         assert actor_list    is not None
         assert action_list   is not None
         assert resource_list is not None
@@ -659,6 +778,18 @@ class DB(DBReader):
 
 
     def deny(self, actor, action, resource):
+        """
+        Convenience wrapper around set_permission().
+
+        @type  actor: Actor
+        @param actor: The actor whose permissions should be changed.
+        @type  action: Action
+        @param action: The action to deny.
+        @type  resource: Resource
+        @param resource: The resource on which a permission should be defined.
+        @rtype:  Boolean
+        @return: True on success, False otherwise.
+        """
         assert actor    is not None
         assert action   is not None
         assert resource is not None
@@ -667,7 +798,7 @@ class DB(DBReader):
 
 if __name__ == '__main__':
     import unittest
-    import pysqlite
+    import sqlite
     import MySQLdb
     from sqlalchemy   import *
     from ConfigParser import RawConfigParser
@@ -756,6 +887,7 @@ if __name__ == '__main__':
             # Connect to MySQL.
             auth = user + ':' + password
             dbn  = 'mysql://' + auth + '@' + host + '/' + db_name
+            print dbn
             db   = create_engine(dbn)
             self.test_with_db(db)
 

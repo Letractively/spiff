@@ -1,0 +1,23 @@
+# Testfile for the Python parser.
+import me
+
+# A comment.
+
+class TestClass:
+    def __init__(self, blah):
+        """
+        Test of a constructor API description.
+
+        @type  blah: SomeObject
+        @param blah: Whatever it may be.
+        @rtype:  Boolean
+        @return: True if the action existed, False otherwise.
+        """
+        return False
+
+class SecondClass(TestClass):
+    def do_something(self, var_a, var_b, var_c):
+        """
+        Free form.
+        """
+        return beer
