@@ -1,5 +1,12 @@
 import re
 
+def int2hex(n, len):
+    assert n   is not None
+    assert len is not None
+    hexval = ('0' * len) + n.tohex()
+    return hexval[len * -1:]
+
+
 def make_handle_from_string(string):
     #FIXME: Return something that can be used to reproduce the original string.
     string = string.lower().replace(' ', '_')
