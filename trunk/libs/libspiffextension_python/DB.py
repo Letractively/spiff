@@ -8,22 +8,50 @@ class DB:
 
 
     def __update_table_names(self):
-
-
-    def __version_is_greater(self):
+        pfx = self.__table_prefix
+        table_name = pfx + 'extension_dependency'
+        self.__table_names['t_extension_dependency'] = table_name
+        table_name = pfx + 'extension_dependency_map'
+        self.__table_names['t_extension_dependency_map'] = table_name
+        table_name = pfx + 'extension_callback'
+        self.__table_names['t_extension_callback'] = table_name
 
 
     def install(self):
+        """
+        Installs (or upgrades) database tables.
+
+        @rtype:  Boolean
+        @return: True on success, False otherwise.
+        """
         #FIXME
-        pass
+        return True
+
+
+    def uninstall(self):
+        """
+        Drops all tables from the database. Use with care.
+
+        @rtype:  Boolean
+        @return: True on success, False otherwise.
+        """
+        #FIXME
+        return True
 
 
     def clear_database(self):
+        """
+        Drops the content of any database table used by this library.
+        Use with care.
+
+        @rtype:  Boolean
+        @return: True on success, False otherwise.
+        """
         return self.acldb.clear_section(self.__acl_section)
 
 
     def debug(self, debug = True):
-        self.db.debug = debug
+        self.__db.debug = debug
 
 
     def set_table_prefix(self, prefix):
@@ -59,13 +87,13 @@ class DB:
 
     def check_dependencies(self, extension):
         """
-        Checks whether the required dependencies are registered.
+        Checks whether all required dependencies are registered.
 
         Returns True if all dependencies needed to register the given
         extension are registered, False otherwise.
 
         @type  extension: Extension
-        @param extension: The extension whose dependencies are wanted.
+        @param extension: The extension whose dependencies will be checked.
         @rtype:  Boolean
         @return: True if all dependency requirements are met, False otherwise.
         """
@@ -101,6 +129,8 @@ class DB:
         @return: False if the extension did not exist, True otherwise.
         """
         assert extension_id >= 0
+        #FIXME
+        return True
 
 
     def unregister_extension_from_handle(self, handle):
@@ -113,6 +143,8 @@ class DB:
         @return: False if the extension did not exist, True otherwise.
         """
         assert handle is not None
+        #FIXME
+        return True
 
 
     def unregister_extension(self, extension):
@@ -125,6 +157,8 @@ class DB:
         @return: False if the extension did not exist, True otherwise.
         """
         assert extension is not None
+        #FIXME
+        return True
 
 
     def get_extension_from_id(self, id):
@@ -137,6 +171,8 @@ class DB:
         @return: The extension on success, None if it does not exist.
         """
         assert id >= 0
+        #FIXME
+        return extension
 
 
     def get_extension_from_handle(self, handle, version):
@@ -151,6 +187,8 @@ class DB:
         @return: The extension on success, None if none was found.
         """
         assert handle is not None
+        #FIXME
+        return extension
 
 
     def get_extension_from_descriptor(self, descriptor):
@@ -177,6 +215,8 @@ class DB:
         @return: The extension on success, None if none was found.
         """
         assert operator is not None
+        #FIXME
+        return extension
 
 
     def get_version_list_from_handle(self, handle):
@@ -184,9 +224,67 @@ class DB:
         Returns a list of all registered versions that have the given
         handle.
 
-        @type  handle:  string
-        @param handle:  The handle of the wanted extension versions.
+        @type  handle: string
+        @param handle: The handle of the wanted extension versions.
         @rtype:  list[string]
         @return: A list containing version numbers.
         """
         assert handle is not None
+        #FIXME
+        return version_list
+
+
+    def link_extension_to_callback(self, extension_id, callback):
+        """
+        Associates the given extension with the given callback.
+
+        @type  extension_id: int
+        @param extension_id: The id of the extension to associate.
+        @type  callback: Callback
+        @param callback: The callback to associate.
+        @rtype:  int
+        @return: The id of the callback, or <0 if an error occured.
+        """
+        assert extension_id >= 0
+        assert callback is not None
+        
+        query = SqlQuery(self.__table_names, '''
+            INSERT INTO {t_extension_callback}
+              (extension_id, context, name)
+            VALUES
+              ({extension_id}, {context}, {name})''')
+        query.set_int('extension_id', extension_id)
+        query.set_string('context',   context)
+        query.set_string('name',      name)
+        result = self.__db.execute(query.sql)
+        assert result is not None
+
+        return self.__db.last_insert_id
+
+
+    def get_extension_id_list_from_callback(self, callback):
+        """
+        Returns a list of all extensions that are associated with the given
+        callback.
+
+        @type  callback: Callback
+        @param callback: The callback to look for.
+        @rtype:  list[int]
+        @return: A list containing all associated extension ids, None on error.
+        """
+        assert callback is not None
+        
+        query = SqlQuery(self.__table_names, '''
+            SELECT id
+            FROM {t_extension_callback}
+            WHERE context={context}
+            AND   name={name}''')
+        query.set_string('context',   context)
+        query.set_string('name',      name)
+        result = self.__db.execute(query.sql)
+        assert result is not None
+
+        extension_id_list = []
+        for row in result:
+            extension_id_list.append(row['id'])
+        return extension_id_list

@@ -1,4 +1,6 @@
 import sys
+sys.path.append('..')
+
 from ObjectSection   import *
 from ActionSection   import *
 from ResourceSection import *
@@ -9,11 +11,7 @@ from ResourceGroup   import *
 from Actor           import *
 from ActorGroup      import *
 
-sys.path.append('../libuseful_python/')
-from SqlQuery import *
-
-sys.path.append('../')
-from sqlalchemy import *
+from libuseful_python import SqlQuery
 
 class DBReader:
     fetch_all, fetch_groups, fetch_items = range(3)
@@ -445,3 +443,34 @@ class DBReader:
         actor_id    = actor.get_id()
         resource_id = resource.get_id()
         return self.get_permission_list_from_id(actor_id, resource_id)
+
+
+if __name__ == '__main__':
+    import unittest
+    import MySQLdb
+    from sqlalchemy   import *
+    from ConfigParser import RawConfigParser
+
+    class DBReaderTest(unittest.TestCase):
+        def runTest(self):
+            # Read config.
+            cfg = RawConfigParser()
+            cfg.read('unit_test.cfg')
+            host     = cfg.get('database', 'host')
+            db_name  = cfg.get('database', 'db_name')
+            user     = cfg.get('database', 'user')
+            password = cfg.get('database', 'password')
+
+            # Connect to MySQL.
+            auth = user + ':' + password
+            dbn  = 'mysql://' + auth + '@' + host + '/' + db_name
+            db   = create_engine(dbn)
+
+            # We only test instantiation here, the other test
+            # are done in the derived class "DB".
+            db = DB(db)
+            assert db is not None
+
+    testcase = DBReaderTest()
+    runner   = unittest.TextTestRunner()
+    runner.run(testcase)

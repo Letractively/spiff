@@ -1,12 +1,7 @@
-from DBReader import *
+from DBReader  import *
+from functions import int2hex
 
 class DB(DBReader):
-    def __int2hex(self, n):
-        assert n is not None
-        hexval = '00000000' + n.tohex()
-        return hexval[-8:]
-
-
     def __get_resource_path_from_id(self, id):
         assert id is not None
         query = SqlQuery(self.__table_names, '''
@@ -24,31 +19,43 @@ class DB(DBReader):
 
 
     def install(self):
+        """
+        Installs (or upgrades) database tables.
+
+        @rtype:  Boolean
+        @return: True on success, False otherwise.
+        """
         #FIXME
-        pass
+        return True
+
+
+    def uninstall(self):
+        """
+        Drops all tables from the database. Use with care.
+
+        @rtype:  Boolean
+        @return: True on success, False otherwise.
+        """
+        #FIXME
+        return True
 
 
     def clear_database(self):
+        """
+        Drops the content of any database table used by this library.
+        Use with care.
+
+        Wipes out everything, including sections, actions, resources and acls.
+
+        @rtype:  Boolean
+        @return: True on success, False otherwise.
+        """
         query = SqlQuery(self.__table_names, 'DELETE FROM {t_action_section}')
         self.__db.execute(query.sql)
         query.set_sql('DELETE FROM {t_resource_section}')
         result = self.__db.execute(query.sql)
         assert result is not None
         return True
-
-
-    def clear_section_from_handle(self, handle):
-        query = SqlQuery(self.__table_names, '''
-            DELETE FROM {t_action_section}
-            WHERE handle={handle}''')
-        query.set_string('handle', handle)
-        result = self.__db.execute(query.sql)
-        assert result is not None
-        return True
-
-
-    def clear_section(self, section):
-        return self.clear_section_from_handle(section.get_handle())
 
 
     def __add_object_section(self, table, section):
@@ -64,7 +71,7 @@ class DB(DBReader):
         result = self.__db.execute(query.sql)
         assert result is not None
         section.set_id(self.__db.last_insert_id())
-        return section
+        return True
 
 
     def __save_object_section(self, table, section):
@@ -79,7 +86,7 @@ class DB(DBReader):
         query.set_string('name',   section.get_name())
         result = self.__db.execute(query.sql)
         assert result is not None
-        return section
+        return True
 
 
     def __delete_object_section(self, table, section):
@@ -96,36 +103,96 @@ class DB(DBReader):
 
 
     def add_action_section(self, section):
+        """
+        Insert the given action section into the database.
+
+        @type  section: ActionSection
+        @param section: The section to be inserted.
+        @rtype:  Boolean
+        @return: True on success, False otherwise.
+        """
         assert section is not None
         return self.__add_object_section('action_section', section)
 
 
     def save_action_section(self, section):
+        """
+        Updates the given action section in the database.
+
+        @type  section: ActionSection
+        @param section: The section to be saved.
+        @rtype:  Boolean
+        @return: True on success, False otherwise.
+        """
         assert section is not None
         return self.__save_object_section('action_section', section)
 
 
     def delete_action_section(self, section):
+        """
+        Deletes the given action section from the database.
+        All associated actions and ACLs will be deleted. Use with care!
+
+        @type  section: ActionSection
+        @param section: The section to be deleted.
+        @rtype:  Boolean
+        @return: True on success, False otherwise.
+        """
         assert section is not None
         return self.__delete_object_section('action_section', section)
 
 
     def add_resource_section(self, section):
+        """
+        Insert the given resource section into the database.
+
+        @type  section: ResourceSection
+        @param section: The section to be inserted.
+        @rtype:  Boolean
+        @return: True on success, False otherwise.
+        """
         assert section is not None
         return self.__add_object_section('resource_section', section)
 
 
     def save_resource_section(self, section):
+        """
+        Updates the given resource section in the database.
+
+        @type  section: ResourceSection
+        @param section: The section to be saved.
+        @rtype:  Boolean
+        @return: True on success, False otherwise.
+        """
         assert section is not None
         return self.__save_object_section('resource_section', section)
 
 
     def delete_resource_section(self, section):
+        """
+        Deletes the given resource section from the database.
+        All associated resources and ACLs will be deleted. Use with care!
+
+        @type  section: ResourceSection
+        @param section: The section to be deleted.
+        @rtype:  Boolean
+        @return: True on success, False otherwise.
+        """
         assert section is not None
         return self.__delete_object_section('resource_section', section)
 
 
     def add_action(action, section):
+        """
+        Inserts the given action into the given section in the database.
+
+        @type  action: Action
+        @param action: The action to be added.
+        @type  section: ActionSection
+        @param section: The section into which the action is inserted.
+        @rtype:  Boolean
+        @return: True on success, False otherwise.
+        """
         assert action  is not None
         assert section is not None
         query = SqlQuery(self.__table_names, '''
@@ -142,6 +209,16 @@ class DB(DBReader):
 
 
     def save_action(self, action, section):
+        """
+        Updates the given action in the database.
+
+        @type  action: Action
+        @param action: The action to be saved.
+        @type  section: ActionSection
+        @param section: The section into which the action is inserted.
+        @rtype:  Boolean
+        @return: True on success, False otherwise.
+        """
         assert action  is not None
         assert section is not None
         query = SqlQuery(self.__table_names, '''
@@ -150,7 +227,7 @@ class DB(DBReader):
                 handle={handle},
                 name={name}
             WHERE id={id}''')
-        query.set_id('id', action.get_id())
+        query.set_int('id', action.get_id())
         query.set_string('section_handle', section.get_handle())
         query.set_string('handle',         action.get_handle())
         query.set_string('name',           action.get_name())
@@ -160,6 +237,15 @@ class DB(DBReader):
 
 
     def delete_action_from_id(self, action_id):
+        """
+        Deletes the action with the given id from the database.
+        All ACLs associated with the action are removed.
+
+        @type  action_id: int
+        @param action_id: The id of the action to be removed.
+        @rtype:  Boolean
+        @return: True if the action existed, False otherwise.
+        """
         assert action_id is not None
         query = SqlQuery(self.__table_names, '''
             DELETE FROM {t_action}
@@ -167,22 +253,58 @@ class DB(DBReader):
         query.set_int('id', action_id)
         result = self.__db.execute(query.sql)
         assert result is not None
+        if self.__db.affected_rows is 0:
+            return False
         return True
 
 
-    def delete_action(self, action, section):
-        assert action  is not None
-        assert section is not None
+    def delete_action_from_handle(self, handle, section_handle):
+        """
+        Deletes the action with the given handle in the section with the
+        given section handle from the database.
+        All ACLs associated with the action are removed.
+
+        @type  handle: string
+        @param handle: The handle of the action to be removed.
+        @type  section_handle: string
+        @param section_handle: The handle of the associated section.
+        @rtype:  Boolean
+        @return: True if the action existed, False otherwise.
+        """
+        assert handle         is not None
+        assert section_handle is not None
         query = SqlQuery(self.__table_names, '''
             DELETE FROM {t_action}
             WHERE section_handle={section_handle}
             AND   handle={handle}''')
-        query.set_string('section_handle', section.get_handle())
-        query.set_string('handle',         action.get_handle())
+        query.set_string('section_handle', section_handle)
+        query.set_string('handle',         handle)
         result = self.__db.execute(query.sql)
         assert result is not None
-        action.set_id(-1)
+        if self.__db.affected_rows is 0:
+            return False
         return True
+
+
+    def delete_action(self, action, section):
+        """
+        Convenience wrapper around delete_action_from_handle().
+
+        @type  action: Action
+        @param action: The action to be removed.
+        @type  section: ActionSection
+        @param section: The associated section.
+        @rtype:  Boolean
+        @return: True if the action existed, False otherwise.
+        """
+        assert action  is not None
+        assert section is not None
+        handle         = action.get_handle()
+        section_handle = section.get_handle()
+        if self.delete_action_from_handle(handle, section_handle):
+            action.set_id(-1)
+            return True
+        return False
 
 
     def __resource_has_attribute(self, resource_id, name):
@@ -312,7 +434,7 @@ class DB(DBReader):
             SET path={path},
                 depth={depth}
             WHERE resource_id={resource_id}''')
-        path  = parent_path + self.__int2hex(path_id)
+        path  = parent_path + int2hex(path_id, 8)
         depth = path.len() / 8
         query.set_hex('path',        path + '00')
         query.set_int('depth',       depth)
@@ -541,3 +663,102 @@ class DB(DBReader):
         assert action   is not None
         assert resource is not None
         return self.set_permission(actor, action, resource, False)
+
+
+if __name__ == '__main__':
+    import unittest
+    import pysqlite
+    import MySQLdb
+    from sqlalchemy   import *
+    from ConfigParser import RawConfigParser
+
+    class DBTest(unittest.TestCase):
+        def test_with_db(self, db):
+            assert db is not None
+            db = DB(db)
+            assert db.uninstall()
+            assert db.install()
+
+            # Test ActionSection.
+            action_section = ActionSection('user permissions')
+            assert db.add_action_section(action_section)
+            assert action_section.get_id() >= 0
+            action_section.set_name('User Permissions')
+            assert db.save_action_section(action_section)
+            assert db.delete_action_section(action_section)
+            assert db.add_action_section(action_section)
+
+            # Test ResourceSection.
+            resource_section = ResourceSection('users')
+            assert db.add_resource_section(resource_section)
+            assert resource_section.get_id() >= 0
+            resource_section.set_name('Users')
+            assert db.save_resource_section(resource_section)
+            assert db.delete_resource_section(resource_section)
+            assert db.add_resource_section(resource_section)
+
+            # Test Action.
+            action = Action('view user')
+            assert db.add_action(action)
+            assert action.get_id() >= 0
+            action.set_name('View a User')
+            assert db.save_action(action)
+            assert db.delete_action_from_id(action.get_id())
+
+            assert db.add_action(action)
+            handle         = action.get_handle()
+            section_handle = action_section.get_handle()
+            assert db.delete_action_from_handle(handle, section_handle)
+
+            assert db.add_action(action)
+            assert db.delete_action(action, action_section)
+            assert not db.delete_action(action, action_section)
+            assert db.add_action(action, action_section)
+
+            # Test Resource.
+            resource = Resource('my website')
+            assert db.add_resource(resource)
+            assert resource.get_id() >= 0
+            resource.set_name('Homepage')
+            assert db.save_resource(resource)
+            assert db.delete_resource_from_id(resource.get_id())
+
+            assert db.add_resource(resource)
+            handle         = resource.get_handle()
+            section_handle = resource_section.get_handle()
+            assert db.delete_resource_from_handle(handle, section_handle)
+
+            assert db.add_resource(resource)
+            assert db.delete_resource(resource, resource_section)
+            assert not db.delete_resource(resource, resource_section)
+            assert db.add_resource(resource, resource_section)
+
+            # Test ResourceGroup.
+            #FIXME
+
+            # Test Acl.
+            #FIXME
+
+            # Clean up.
+            assert db.clear_database()
+            assert db.uninstall()
+
+
+        def runTest(self):
+            # Read config.
+            cfg = RawConfigParser()
+            cfg.read('unit_test.cfg')
+            host     = cfg.get('database', 'host')
+            db_name  = cfg.get('database', 'db_name')
+            user     = cfg.get('database', 'user')
+            password = cfg.get('database', 'password')
+
+            # Connect to MySQL.
+            auth = user + ':' + password
+            dbn  = 'mysql://' + auth + '@' + host + '/' + db_name
+            db   = create_engine(dbn)
+            self.test_with_db(db)
+
+    testcase = DBTest()
+    runner   = unittest.TextTestRunner()
+    runner.run(testcase)
