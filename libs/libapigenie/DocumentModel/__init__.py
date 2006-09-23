@@ -6,9 +6,11 @@ __all__ = ['Chunk',
            'Type',
            'Variable']
 
-from Chunk    import Chunk
-from File     import File
-from Function import Function
-from String   import String
-from Type     import Type
-from Variable import Variable
+from Chunk     import Chunk
+from Class     import Class
+from Container import Container
+from File      import File
+from Function  import Function
+from String    import String
+from Type      import Type
+from Variable  import Variable
