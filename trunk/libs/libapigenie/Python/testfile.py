@@ -4,6 +4,13 @@ import me
 # A comment.
 
 class TestClass:
+    """
+    This is a simple test class, it is only read by the Python parser to
+    make sure that this documentation can be read correctly.
+
+    I, for one, like multi line comments.
+    So I use them.
+    """
     def __init__(self, blah):
         """
         Test of a constructor API description. This Description might span
