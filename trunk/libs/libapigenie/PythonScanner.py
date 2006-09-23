@@ -75,10 +75,8 @@ classes         = Str('class')        \
                 + Opt(inherit_braces) \
                 + colon
 
-# Comment stuff.
-comment         = Str('#') + Rep(AnyBut("\n"))
-
 # Other stuff.
+comment         = Str('#') + Rep(AnyBut("\n"))
 resword         = Str('if', 'then', 'else', 'end', 'return')
 blank_line      = indentation + Opt(comment) + lineterm
 
@@ -135,15 +133,10 @@ class PythonScanner(Scanner):
 
     lexicon = Lexicon([
         # Words.
-        (name,            'name'),
-        (variable,        'variable'),
-        (number,          'number'),
         (classes,         'class'),
         (functions,       'function'),
-        (resword,         'keyword'),
 
         # Braces, dots, operators.
-        (operators,       TEXT),
         (opening_bracket, open_bracket_action),
         (closing_bracket, close_bracket_action),
 
@@ -161,14 +154,12 @@ class PythonScanner(Scanner):
         ]),
 
         # Whitespace / control characters.
-        (spaces,          IGNORE),
         (lineterm,        newline_action),
-        (escaped_newline, IGNORE),
         State('indent', [
             (blank_line,  IGNORE),
             (indentation, indentation_action),
         ]),
-        (AnyChar,         IGNORE)
+        (AnyChar,         TEXT)
     ])
 
 
@@ -179,36 +170,56 @@ if __name__ == '__main__':
     from libuseful_python.string import wrap
 
     class PythonFileTest(unittest.TestCase):
+        def store_token(self, token):
+            #print '(%d, %d) tok: %s  tokType: %s' % \
+            #    (position[1], position[2], token[1], token[0])
+            regexp     = re.compile('[ \t]+')
+            token_text = regexp.sub(' ', token[1].strip())
+            regexp     = re.compile('(\S[^\n]*)\n')
+            token_text = regexp.sub('\\1', token_text)
+            regexp     = re.compile('[\r\n]\s+')
+            token_text = regexp.sub('\n', token_text)
+            token_text = token_text.replace('\n', '\n\n')
+            if token[0] is 'class':
+                words = token_text.split(' ')
+                item  = Class(words[1])
+                self.file.add_child(item)
+                print
+                print '********** Class:', token[1], '**********'
+            elif token[0] is 'function':
+                print '--------------'
+                words = token_text.split(' ')
+                words.pop(0)
+                func_name  = words.pop(0)
+                arg_string = ''.join(words)
+                ret_val    = [] #FIXME
+                item  = Function(func_name, arg_string, ret_val)
+                self.file.add_child(item)
+                print 'Function:', token[1]
+            elif token[0] is 'comment_text':
+                comment = wrap(token_text, 50)
+                print 'Comment:'
+                for line in comment.split("\n"):
+                    print ' ', line
+            elif token[0] is 'arg_type':
+                print 'Argument type:', token[1]
+            elif token[0] is 'arg_param':
+                print 'Argument explanation:', token[1]
+            elif token[0] is 'return_type':
+                print 'Return type:', token[1]
+            elif token[0] is 'return_value':
+                print 'Return value explanation:', token[1]
+
         def runTest(self):
-            filename = 'test.python'
-            infile   = open(filename, "r")
-            scanner  = PythonScanner(infile, filename)
+            filename  = 'test.python'
+            infile    = open(filename, "r")
+            scanner   = PythonScanner(infile, filename)
+            self.file = File()
             while True:
-                token = scanner.read()
+                token    = scanner.read()
+                position = scanner.position()
                 if token[0] is None: break
-                #position = scanner.position()
-                #print '(%d, %d) tok: %s  tokType: %s' % \
-                #    (position[1], position[2], token[1], token[0])
-                if token[0] is 'class':
-                    print 'Class:', token[1]
-                elif token[0] is 'function':
-                    print '------------------------------------------'
-                    print 'Function:', token[1]
-                elif token[0] is 'comment_text':
-                    regexp  = re.compile('[ \t\r\n]+')
-                    comment = regexp.sub(' ', token[1])
-                    comment = wrap(comment.strip(), 70)
-                    print 'Comment:'
-                    for line in comment.split("\n"):
-                        print ' ', line
-                elif token[0] is 'arg_type':
-                    print 'Argument type:', token[1]
-                elif token[0] is 'arg_param':
-                    print 'Argument explanation:', token[1]
-                elif token[0] is 'return_type':
-                    print 'Return type:', token[1]
-                elif token[0] is 'return_value':
-                    print 'Return value explanation:', token[1]
+                self.store_token(token)
             return True
             
     testcase = PythonFileTest()

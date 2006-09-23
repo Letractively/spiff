@@ -1,6 +1,7 @@
-from Chunk import Chunk
+from Container import Container
 
-# Class definition.
-class Class(Chunk):
+class Class(Container):
     def __init__(self, name):
+        assert name is not None
+        Container.__init__(self)
         self.__name = name

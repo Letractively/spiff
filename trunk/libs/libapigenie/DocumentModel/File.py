@@ -1,18 +1,11 @@
-# Complete file.
-class File:
+from Container import Container
+
+class File(Container):
     def __init__(self):
-        self.__chunks = []
+        Container.__init__(self)
+        self.__lines = []
 
-    def load(self, filename):
-        """
-        Parses the file and stores it's chunks in this object.
-        
-        @rtype:  Boolean
-        @return: True on success, False otherwise.
-        """
-        assert False # Should not be called.
-
-    def get(self):
+    def get_string(self):
         """
         Returns the complete file in one string.
         
@@ -20,6 +13,6 @@ class File:
         @return: The contents of the file.
         """
         complete = ''
-        for chunk in self.__chunks:
+        for chunk in self.__lines:
             complete.append(chunk.get_string())
         return complete
