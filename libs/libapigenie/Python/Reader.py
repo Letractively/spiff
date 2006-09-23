@@ -128,8 +128,7 @@ class Reader:
             position = parser.position()
             if token[0] is None: break
             self.store_token(token)
-        print '***********************************'
-        print self.file.get_string()
+        print self.file.get_string(),
         return True
 
 

@@ -468,7 +468,7 @@ if __name__ == '__main__':
 
             # We only test instantiation here, the other test
             # are done in the derived class "DB".
-            db = DB(db)
+            db = DBReader(db)
             assert db is not None
 
     testcase = DBReaderTest()
