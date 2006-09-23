@@ -2,11 +2,26 @@ from Chunk import Chunk
 
 class Container(Chunk):
     def __init__(self):
-        self.__children = []
-    
+        self.children = []
+
+
     def add_child(self, child):
         assert child is not None
-        self.__children.append(child)
+        self.children.append(child)
+
 
     def get_child_list(self):
-        return self.__children
+        return self.children
+
+
+    def get_string(self):
+        """
+        Returns the complete chunk (including all children) in one string.
+        
+        @rtype:  string
+        @return: The contents of the file.
+        """
+        complete = ''
+        for child in self.children:
+            complete += child.get_string()
+        return complete
