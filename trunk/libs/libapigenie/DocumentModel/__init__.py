@@ -1,5 +1,6 @@
 __all__ = ['Chunk',
            'Class',
+           'Container',
            'File',
            'Function',
            'String',

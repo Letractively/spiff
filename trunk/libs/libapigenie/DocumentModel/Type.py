@@ -1,14 +1,16 @@
-class Type:
+from Chunk import Chunk
+
+class Type(Chunk):
     def __init__(self, name):
-        self.__name        = name
-        self.__inheritance = []
+        self.name        = name
+        self.inheritance = []
 
     def add_inheritance(self, type):
-        self.__inheritance.append(type)
+        self.inheritance.append(type)
 
     def get_inheritance(self):
         """
         @rtype:  list[Type]
         @return: A list of all types from which this type inherits directly.
         """
-        return self.__inheritance
+        return self.inheritance

@@ -1,5 +1,6 @@
 import sys
 sys.path.append('..')
+sys.path.append('../..')
 from DocumentModel import *
 from Plex          import *
 
@@ -82,7 +83,7 @@ blank_line      = indentation + Opt(comment) + lineterm
 
 
 """ Implement scanner """
-class PythonScanner(Scanner):
+class Parser(Scanner):
     def __init__(self, file, filename):
         Scanner.__init__(self, self.lexicon, file, filename)
         self.indentation_stack     = [0]
@@ -169,59 +170,16 @@ if __name__ == '__main__':
     import re
     from libuseful_python.string import wrap
 
-    class PythonFileTest(unittest.TestCase):
-        def store_token(self, token):
-            #print '(%d, %d) tok: %s  tokType: %s' % \
-            #    (position[1], position[2], token[1], token[0])
-            regexp     = re.compile('[ \t]+')
-            token_text = regexp.sub(' ', token[1].strip())
-            regexp     = re.compile('(\S[^\n]*)\n')
-            token_text = regexp.sub('\\1', token_text)
-            regexp     = re.compile('[\r\n]\s+')
-            token_text = regexp.sub('\n', token_text)
-            token_text = token_text.replace('\n', '\n\n')
-            if token[0] is 'class':
-                words = token_text.split(' ')
-                item  = Class(words[1])
-                self.file.add_child(item)
-                print
-                print '********** Class:', token[1], '**********'
-            elif token[0] is 'function':
-                print '--------------'
-                words = token_text.split(' ')
-                words.pop(0)
-                func_name  = words.pop(0)
-                arg_string = ''.join(words)
-                ret_val    = [] #FIXME
-                item  = Function(func_name, arg_string, ret_val)
-                self.file.add_child(item)
-                print 'Function:', token[1]
-            elif token[0] is 'comment_text':
-                comment = wrap(token_text, 50)
-                print 'Comment:'
-                for line in comment.split("\n"):
-                    print ' ', line
-            elif token[0] is 'arg_type':
-                print 'Argument type:', token[1]
-            elif token[0] is 'arg_param':
-                print 'Argument explanation:', token[1]
-            elif token[0] is 'return_type':
-                print 'Return type:', token[1]
-            elif token[0] is 'return_value':
-                print 'Return value explanation:', token[1]
-
+    class ParserTest(unittest.TestCase):
         def runTest(self):
-            filename  = 'test.python'
+            filename  = 'testfile.py'
             infile    = open(filename, "r")
-            scanner   = PythonScanner(infile, filename)
-            self.file = File()
+            scanner   = Parser(infile, filename)
             while True:
                 token    = scanner.read()
                 position = scanner.position()
                 if token[0] is None: break
-                self.store_token(token)
-            return True
-            
-    testcase = PythonFileTest()
+
+    testcase = ParserTest()
     runner   = unittest.TextTestRunner()
     runner.run(testcase)
