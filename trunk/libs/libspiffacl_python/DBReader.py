@@ -11,6 +11,7 @@ from ResourceGroup   import *
 from Actor           import *
 from ActorGroup      import *
 
+from sqlalchemy                import *
 from libuseful_python.SqlQuery import SqlQuery
 
 class DBReader:
@@ -18,22 +19,123 @@ class DBReader:
     attrib_type_int, attrib_type_string = range(2)
 
     def __init__(self, db):
-        self.db             = db
-        self.__table_prefix = ''
-        self._table_names   = {}
+        self.db            = db
+        self._table_prefix = ''
+        self._table_names  = {}
+        self._table_map    = {}
+        self._table_list   = []
         self.__update_table_names()
 
 
     def __update_table_names(self):
-        pfx = self.__table_prefix
-        self._table_names['t_action_section']     = pfx + 'action_section'
-        self._table_names['t_resource_section']   = pfx + 'resource_section'
-        self._table_names['t_action']             = pfx + 'action'
-        self._table_names['t_resource']           = pfx + 'resource'
-        self._table_names['t_resource_attribute'] = pfx + 'resource_attribute'
-        self._table_names['t_resource_path']      = pfx + 'resource_path'
-        self._table_names['t_path_ancestor_map']  = pfx + 'path_ancestor_map'
-        self._table_names['t_acl']                = pfx + 'acl'
+        pfx   = self._table_prefix
+        map   = self._table_map
+        list  = self._table_list
+        names = self._table_names
+        names['t_action_section']     = pfx + 'action_section'
+        names['t_resource_section']   = pfx + 'resource_section'
+        names['t_action']             = pfx + 'action'
+        names['t_resource']           = pfx + 'resource'
+        names['t_resource_attribute'] = pfx + 'resource_attribute'
+        names['t_resource_path']      = pfx + 'resource_path'
+        names['t_path_ancestor_map']  = pfx + 'path_ancestor_map'
+        names['t_acl']                = pfx + 'acl'
+        metadata = BoundMetaData(self.db)
+        list.append(Table(names['t_action_section'], metadata,
+            Column('id',     Integer,     primary_key = True),
+            Column('handle', String(230), unique = True),
+            Column('name',   String(230), unique = True),
+            mysql_engine='INNODB'
+        ))
+        map[list[-1].name] = list[-1]
+        list.append(Table(names['t_resource_section'], metadata,
+            Column('id',     Integer,     primary_key = True),
+            Column('handle', String(230), unique = True),
+            Column('name',   String(230), unique = True),
+            mysql_engine='INNODB'
+        ))
+        map[list[-1].name] = list[-1]
+        list.append(Table(names['t_action'], metadata,
+            Column('id',             Integer,     primary_key = True),
+            Column('section_handle', String(230), index = True),
+            Column('handle',         String(230), unique = True),
+            Column('name',           String(230), unique = True),
+            ForeignKeyConstraint(['section_handle'],
+                                 ['action_section.handle'],
+                                 ondelete = 'CASCADE'),
+            mysql_engine='INNODB'
+        ))
+        map[list[-1].name] = list[-1]
+        list.append(Table(names['t_resource'], metadata,
+            Column('id',             Integer,     primary_key = True),
+            Column('section_handle', String(230), index = True),
+            Column('handle',         String(230), unique = True),
+            Column('name',           String(230), unique = True),
+            Column('is_actor',       Boolean,     index = True),
+            Column('is_group',       Boolean,     index = True),
+            ForeignKeyConstraint(['section_handle'],
+                                 ['resource_section.handle'],
+                                 ondelete = 'CASCADE'),
+            mysql_engine='INNODB'
+        ))
+        map[list[-1].name] = list[-1]
+        list.append(Table(names['t_resource_attribute'], metadata,
+            Column('id',             Integer,     primary_key = True),
+            Column('resource_id',    Integer,     index = True),
+            Column('name',           String(50)),
+            Column('type',           Integer),
+            Column('attr_string',    String(200)),
+            Column('attr_int',       Integer),
+            ForeignKeyConstraint(['resource_id'],
+                                 ['resource.id'],
+                                 ondelete = 'CASCADE'),
+            mysql_engine='INNODB'
+        ))
+        map[list[-1].name] = list[-1]
+        list.append(Table(names['t_resource_path'], metadata,
+            Column('id',             Integer,     primary_key = True),
+            Column('path',           Binary(255), index = True),
+            Column('depth',          Integer,     index = True),
+            Column('resource_id',    Integer,     index = True),
+            Column('n_children',     Integer),
+            Column('refcount',       Integer),
+            ForeignKeyConstraint(['resource_id'],
+                                 ['resource.id'],
+                                 ondelete = 'CASCADE'),
+            mysql_engine='INNODB'
+        ))
+        map[list[-1].name] = list[-1]
+        list.append(Table(names['t_path_ancestor_map'], metadata,
+            Column('resource_path',  Binary(255), index = True),
+            Column('ancestor_path',  Binary(255), index = True),
+            ForeignKeyConstraint(['resource_path'],
+                                 ['resource_path.path'],
+                                 ondelete = 'CASCADE'),
+            ForeignKeyConstraint(['ancestor_path'],
+                                 ['resource_path.path'],
+                                 ondelete = 'CASCADE'),
+            mysql_engine='INNODB'
+        ))
+        map[list[-1].name] = list[-1]
+        list.append(Table(names['t_acl'], metadata,
+            Column('id',             Integer, primary_key = True),
+            Column('actor_id',       Integer, index = True),
+            Column('action_id',      Integer, index = True),
+            Column('resource_id',    Integer, index = True),
+            Column('permit',         Boolean, index = True),
+            Column('refcount',       Integer),
+            ForeignKeyConstraint(['actor_id'],
+                                 ['resource_path.resource_id'],
+                                 ondelete = 'CASCADE'),
+            ForeignKeyConstraint(['action_id'],
+                                 ['action.id'],
+                                 ondelete = 'CASCADE'),
+            ForeignKeyConstraint(['resource_id'],
+                                 ['resource.id'],
+                                 ondelete = 'CASCADE'),
+            mysql_engine='INNODB'
+        ))
+        map[list[-1].name] = list[-1]
 
 
     def debug(self, debug = True):
@@ -41,7 +143,7 @@ class DBReader:
 
 
     def set_table_prefix(self, prefix):
-        self.__table_prefix = prefix
+        self._table_prefix = prefix
 
 
     def __get_action_from_query(self, query):
@@ -85,9 +187,10 @@ class DBReader:
         elif not type and not row['is_actor']:
             type = 'Resource'
         if row['is_group']:
-            type.append('Group')
+            type += 'Group'
         #print 'Type', type
-        resource = type(row['name'], row['handle'])
+        obj      = eval(type)
+        resource = obj(row['name'], row['handle'])
         resource.set_id(row['id'])
         return resource
 
@@ -96,7 +199,7 @@ class DBReader:
         assert query is not None
         result = self.db.execute(query.get_sql())
         assert result is not None
-        row = result.shift()
+        row = result.fetchone()
         if not row: return None
         resource = self.__get_resource_from_row(row, type)
         if not resource: return None
@@ -104,15 +207,15 @@ class DBReader:
         # Append all attributes.
         while 1:
             # Determine attribute type.
-            if row['type'] is attrib_type_int:
+            if row['type'] is self.attrib_type_int:
                 value = int(row['attr_int'])
-            elif row['type'] is attrib_type_string:
+            elif row['type'] is self.attrib_type_string:
                 value = row['string']
 
             # Append attribute.
             if row['attr_name'] is not None:
                 resource.set_attribute(row['attr_name'], value)
-            row = result.shift()
+            row = result.fetchone()
             if not row: break
             
         return resource
