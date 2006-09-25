@@ -1,17 +1,12 @@
-__all__ = ['Chunk',
-           'Class',
+__all__ = ['Documentable',
+           'Chunk',
            'Container',
+           'Directory',
            'File',
+           'Class',
            'Function',
            'String',
-           'Type',
            'Variable']
 
-from Chunk     import Chunk
-from Class     import Class
-from Container import Container
-from File      import File
-from Function  import Function
-from String    import String
-from Type      import Type
-from Variable  import Variable
+for module in __all__:
+    eval('from %s import %s' % module)

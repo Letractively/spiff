@@ -1,5 +1,7 @@
+from Documentable import Documentable
+
 # A piece of a file.
-class Chunk:
+class Chunk(Documentable):
     name   = 'undefined'
     string = ''
     docs   = ''
@@ -18,14 +20,3 @@ class Chunk:
         generated.
         """
         return self.string
-
-
-    def set_docs(self, docs):
-        """
-        Inserts the API documentation.
-        """
-        self.docs = docs
-
-
-    def get_docs(self):
-        return self.docs
