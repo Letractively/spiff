@@ -97,8 +97,8 @@ class DBReader:
             Column('path',           Binary(255), index = True),
             Column('depth',          Integer,     index = True),
             Column('resource_id',    Integer,     index = True),
-            Column('n_children',     Integer),
-            Column('refcount',       Integer),
+            Column('n_children',     Integer,     index = True, default = 0),
+            Column('refcount',       Integer,     index = True, default = 0),
             ForeignKeyConstraint(['resource_id'],
                                  ['resource.id'],
                                  ondelete = 'CASCADE'),
@@ -106,13 +106,13 @@ class DBReader:
         ))
         map[list[-1].name] = list[-1]
         list.append(Table(names['t_path_ancestor_map'], metadata,
-            Column('resource_path',  Binary(255), index = True),
-            Column('ancestor_path',  Binary(255), index = True),
-            ForeignKeyConstraint(['resource_path'],
-                                 ['resource_path.path'],
+            Column('resource_path_id',  Integer, index = True),
+            Column('ancestor_path_id',  Integer, index = True),
+            ForeignKeyConstraint(['resource_path_id'],
+                                 ['resource_path.id'],
                                  ondelete = 'CASCADE'),
-            ForeignKeyConstraint(['ancestor_path'],
-                                 ['resource_path.path'],
+            ForeignKeyConstraint(['ancestor_path_id'],
+                                 ['resource_path.id'],
                                  ondelete = 'CASCADE'),
             mysql_engine='INNODB'
         ))
@@ -148,9 +148,9 @@ class DBReader:
 
     def __get_action_from_query(self, query):
         assert query is not None
-        result = self.db.execute(query.get_sql())
+        result = query.execute()
         assert result is not None
-        row = result.shift()
+        row = result.fetchone()
         if not row: return None
         action = Action(row['name'], row['handle'])
         action.set_id(row['id'])
@@ -159,45 +159,39 @@ class DBReader:
 
     def get_action_from_id(self, id):
         assert id is not None
-        query = SqlQuery(self._table_names, '''
-            SELECT a.*
-            FROM  {t_action} a
-            WHERE a.id={id}''')
-        query.set_int('id', id)
-        return self.__get_action_from_query(query)
+        table  = self._table_map['action']
+        select = table.select(table.c.id == id)
+        return self.__get_action_from_query(select)
 
 
     def get_action_from_handle(self, handle, section_handle):
         assert handle         is not None
         assert section_handle is not None
-        query = SqlQuery(self._table_names, '''
-            SELECT a.*
-            FROM  {t_action} a
-            WHERE a.handle={handle}
-            AND   a.section_handle={section_handle}''')
-        query.set_string('handle',         handle)
-        query.set_string('section_handle', section_handle)
-        return self.__get_action_from_query(query)
+        table  = self._table_map['action']
+        select = table.select(and_(table.c.handle         == handle,
+                                   table.c.section_handle == section_handle))
+        return self.__get_action_from_query(select)
 
 
     def __get_resource_from_row(self, row, type = None):
         if not row: return None
-        if not type and row['is_actor']:
+        tbl_r = self._table_map['resource']
+        if not type and row[tbl_r.c.is_actor]:
             type = 'Actor'
-        elif not type and not row['is_actor']:
+        elif not type and not row[tbl_r.c.is_actor]:
             type = 'Resource'
-        if row['is_group']:
+        if row[tbl_r.c.is_group]:
             type += 'Group'
         #print 'Type', type
         obj      = eval(type)
-        resource = obj(row['name'], row['handle'])
-        resource.set_id(row['id'])
+        resource = obj(row[tbl_r.c.name], row[tbl_r.c.handle])
+        resource.set_id(row[tbl_r.c.id])
         return resource
 
 
     def __get_resource_from_query(self, query, type = None):
         assert query is not None
-        result = self.db.execute(query.get_sql())
+        result = query.execute()
         assert result is not None
         row = result.fetchone()
         if not row: return None
@@ -205,16 +199,17 @@ class DBReader:
         if not resource: return None
 
         # Append all attributes.
+        tbl_a = self._table_map['resource_attribute']
         while 1:
             # Determine attribute type.
-            if row['type'] is self.attrib_type_int:
-                value = int(row['attr_int'])
-            elif row['type'] is self.attrib_type_string:
-                value = row['string']
+            if row[tbl_a.c.type] is self.attrib_type_int:
+                value = int(row[tbl_a.c.attr_int])
+            elif row[tbl_a.c.type] is self.attrib_type_string:
+                value = row[tbl_a.c.attr_string]
 
             # Append attribute.
-            if row['attr_name'] is not None:
-                resource.set_attribute(row['attr_name'], value)
+            if row[tbl_a.c.name] is not None:
+                resource.set_attribute(row[tbl_a.c.name], value)
             row = result.fetchone()
             if not row: break
             
@@ -223,41 +218,33 @@ class DBReader:
 
     def get_resource_from_id(self, id, type = None):
         assert id >= 0
-        query = SqlQuery(self._table_names, '''
-            SELECT r.*,a.name attr_name,a.type,a.attr_string,a.attr_int
-            FROM      {t_resource}           r
-            LEFT JOIN {t_resource_attribute} a ON r.id=a.resource_id
-            WHERE r.id={id}''')
-        query.set_int('id', id)
-        return self.__get_resource_from_query(query, type)
+        tbl_r  = self._table_map['resource']
+        tbl_a  = self._table_map['resource_attribute']
+        table  = outerjoin(tbl_r, tbl_a, tbl_r.c.id == tbl_a.c.resource_id)
+        select = table.select(tbl_r.c.id == id, use_labels = True)
+        return self.__get_resource_from_query(select, type)
         
 
     def get_resource_from_handle(self, handle, section_handle, type = None):
         assert handle         is not None
         assert section_handle is not None
-        query = SqlQuery(self._table_names, '''
-            SELECT r.*,a.name attr_name,a.type,a.attr_string,a.attr_int
-            FROM      {t_resource}           r
-            LEFT JOIN {t_resource_attribute} a ON r.id=a.resource_id
-            WHERE r.handle={handle}
-            AND   r.section_handle={section_handle}''')
-        query.set_string('handle',         handle)
-        query.set_string('section_handle', section_handle)
-        return self.__get_resource_from_query(query, type)
+        tbl_r  = self._table_map['resource']
+        tbl_a  = self._table_map['resource_attribute']
+        table  = outerjoin(tbl_r, tbl_a, tbl_r.c.id == tbl_a.c.resource_id)
+        select = table.select(and_(tbl_r.c.handle         == handle,
+                                   tbl_r.c.section_handle == section_handle))
+        return self.__get_resource_from_query(select, type)
 
 
     def get_resource_from_name(self, name, section_handle, type = None):
         assert name           is not None
         assert section_handle is not None
-        query = SqlQuery(self._table_names, '''
-            SELECT r.*,a.name attr_name,a.type,a.attr_string,a.attr_int
-            FROM      {t_resource}           r
-            LEFT JOIN {t_resource_attribute} a ON r.id=a.resource_id
-            WHERE r.name={name}
-            AND   r.section_handle={section_handle}''')
-        query.set_string('name',           name)
-        query.set_string('section_handle', section_handle)
-        return self.__get_resource_from_query(query, type)
+        tbl_r  = self._table_map['resource']
+        tbl_a  = self._table_map['resource_attribute']
+        table  = outerjoin(tbl_r, tbl_a, tbl_r.c.id == tbl_a.c.resource_id)
+        select = table.select(and_(tbl_r.c.name           == name,
+                                   tbl_r.c.section_handle == section_handle))
+        return self.__get_resource_from_query(select, type)
 
 
     def get_resource_children_from_id(self,
@@ -266,45 +253,49 @@ class DBReader:
                                       options = fetch_all):
         assert resource_id is not None
 
+        tbl_r  = self._table_map['resource']
+        tbl_a  = self._table_map['resource_attribute']
+        tbl_p1 = self._table_map['resource_path'].alias('p1')
+        tbl_m  = self._table_map['path_ancestor_map']
+        tbl_p2 = self._table_map['resource_path'].alias('p2')
+        table  = tbl_r.outerjoin(tbl_a,  tbl_r.c.id  == tbl_a.c.resource_id)
+        table  = table.outerjoin(tbl_p1, tbl_r.c.id  == tbl_p1.c.resource_id)
+        table  = table.outerjoin(tbl_m,  tbl_p1.c.id == tbl_m.c.resource_path_id)
+        table  = table.outerjoin(tbl_p2, tbl_p2.c.id == tbl_m.c.ancestor_path_id)
+        select = table.select(and_(tbl_p2.c.resource_id == resource_id,
+                                   tbl_p1.c.depth       == tbl_p2.c.depth + 1),
+                              use_labels = True)
+
         # Define whether to fetch groups, items, or both.
-        if options is fetch_groups:
-            sql = ' AND r.is_group=1'
-        elif options is fetch_items:
-            sql = ' AND r.is_group=0'
-        elif options is fetch_all:
-            sql = ''
+        if options is self.fetch_groups:
+            result = select.execute(is_group = 1)
+        elif options is self.fetch_items:
+            result = select.execute(is_group = 0)
+        elif options is self.fetch_all:
+            result = select.execute()
         else:
             assert False
 
-        query = SqlQuery(self._table_names, '''
-            SELECT r.*,a.name attr_name,a.type,a.attr_string,a.attr_int,t1.n_children
-            FROM      {t_resource}           r
-            LEFT JOIN {t_resource_attribute} a  ON r.id=a.resource_id
-            LEFT JOIN {t_resource_path}      t1 ON t1.resource_id=r.id
-            LEFT JOIN {t_path_ancestor_map}  p  ON t1.path=p.resource_path
-            LEFT JOIN {t_resource_path}      t2 ON t2.path=p.ancestor_path
-            WHERE t2.resource_id={resource_id}
-            AND   t1.depth=t2.depth + 1''' + sql)
-        query.set_int('resource_id', resource_id)
-        result = self.db.execute(query.get_sql())
         assert result is not None
 
         # Collect all children.
         last     = None
         children = [];
         for row in result:
-            if row['handle'] is not last:
-                last = row['handle']
+            if row[tbl_r.c.handle] is not last:
+                last = row[tbl_r.c.handle]
                 resource = self.__get_resource_from_row(row, type)
-                resource.set_n_children(row['n_children'])
+                resource.set_n_children(row[tbl_p1.c.n_children])
                 children.append(resource)
 
             # Append attribute (if any).
-            if row['attr_name'] is None: continue
-            if row['type'] is attrib_type_int:
-                resource.set_attribute(row['name'], int(row['attr_int']))
-            elif row['type'] is attrib_type_string:
-                resource.set_attribute(row['name'], row['attr_string'])
+            if row[tbl_a.c.name] is None: continue
+            if row[tbl_a.c.type] is attrib_type_int:
+                resource.set_attribute(row[tbl_a.c.name],
+                                       int(row[tbl_a.c.attr_int]))
+            elif row[tbl_a.c.type] is attrib_type_string:
+                resource.set_attribute(row[tbl_a.c.name],
+                                       row[tbl_a.c.attr_string])
 
         return children
 
@@ -321,35 +312,40 @@ class DBReader:
 
     def get_resource_parents_from_id(self, parent_id, type = None):
         assert parent_id >= 0
-        query = SqlQuery(self._table_names, '''
-            SELECT r.*,a.name attr_name,a.type,a.attr_string,a.attr_int,t1.n_children
-            FROM      {t_resource}           r
-            LEFT JOIN {t_resource_attribute} a  ON r.id=a.resource_id
-            LEFT JOIN {t_resource_path}      t1 ON t1.resource_id=r.id
-            LEFT JOIN {t_path_ancestor_map}  p  ON t1.path=p.ancestor_path
-            LEFT JOIN {t_resource_path}      t2 ON t2.path=p.resource_path
-            WHERE t2.resource_id={resource_id}
-            AND   t2.depth=t1.depth + 1''')
-        query.set_int('resource_id', parent_id)
-        result = self.db.execute(query.get_sql())
+
+        tbl_r  = self._table_map['resource']
+        tbl_a  = self._table_map['resource_attribute']
+        tbl_p1 = self._table_map['resource_path'].alias('p1')
+        tbl_m  = self._table_map['path_ancestor_map']
+        tbl_p2 = self._table_map['resource_path'].alias('p2')
+        table  = tbl_r.outerjoin(tbl_a,  tbl_r.c.id  == tbl_a.c.resource_id)
+        table  = table.outerjoin(tbl_p1, tbl_r.c.id  == tbl_p1.c.resource_id)
+        table  = table.outerjoin(tbl_m,  tbl_p1.c.id == tbl_m.c.ancestor_path_id)
+        table  = table.outerjoin(tbl_p2, tbl_p2.c.id == tbl_m.c.resource_path_id)
+        select = table.select(and_(tbl_p2.c.resource_id == parent_id,
+                                   tbl_p2.c.depth       == tbl_p1.c.depth + 1),
+                              use_labels = True)
+        result = select.execute()
         assert result is not None
 
         # Collect all parents.
         last    = None
         parents = [];
         for row in result:
-            if row['handle'] is not last:
-                last = row['handle']
+            if row[tbl_r.c.handle] is not last:
+                last = row[tbl_r.c.handle]
                 resource = self.__get_resource_from_row(row, type)
-                resource.set_n_children(row['n_children'])
+                resource.set_n_children(row[tbl_p1.c.n_children])
                 parents.append(resource)
 
             # Append attribute (if any).
-            if row['attr_name'] is None: continue
-            if row['type'] is attrib_type_int:
-                resource.set_attribute(row['name'], int(row['attr_int']))
-            elif row['type'] is attrib_type_string:
-                resource.set_attribute(row['name'], row['attr_string'])
+            if row[tbl_a.c.name] is None: continue
+            if row[tbl_a.c.type] is attrib_type_int:
+                resource.set_attribute(row[tbl_a.c.name],
+                                       int(row[tbl_a.c.attr_int]))
+            elif row[tbl_a.c.type] is attrib_type_string:
+                resource.set_attribute(row[tbl_a.c.name],
+                                       row[tbl_a.c.attr_string])
 
         return parents
 
@@ -384,7 +380,7 @@ class DBReader:
         query.set_int('resource_id', resource_id)
         result = self.db.execute(query.get_sql())
         assert result is not None
-        row = result.shift()
+        row = result.fetchrow()
         if row is None or row[0] is 0: return False
         return True
 

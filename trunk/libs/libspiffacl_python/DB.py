@@ -1,5 +1,6 @@
 from DBReader  import *
 from functions import int2hex
+import string
 
 class DB(DBReader):
     def __get_resource_path_from_id(self, id):
@@ -402,9 +403,11 @@ class DB(DBReader):
         
         # Add a link to every ancestor of the new node into a map.
         while parent_path is not '':
-            insert = self._table_map['path_ancestor_map'].insert()
-            result = insert.execute(resource_path = path        + '00',
-                                    ancestor_path = parent_path + '00')
+            parent_id = string.atol(parent_path[-8:], 16)
+            #print "Path:", parent_path[-8:], "ID:", parent_id
+            insert    = self._table_map['path_ancestor_map'].insert()
+            result    = insert.execute(resource_path_id = path_id,
+                                       ancestor_path_id = parent_id)
             assert result is not None
             parent_path = parent_path[0:len(parent_path) - 8]
 
@@ -796,6 +799,19 @@ if __name__ == '__main__':
                                    sub_resource,
                                    resource_section)
 
+            children = db.get_resource_children_from_id(resource.get_id())
+            assert children is not None
+            assert len(children) == 1
+            children = db.get_resource_children(resource)
+            assert children is not None
+            assert len(children) == 1
+
+            parents = db.get_resource_parents_from_id(sub_resource.get_id())
+            assert parents is not None
+            assert len(parents) == 1
+            parents = db.get_resource_parents(sub_resource)
+            assert parents is not None
+            assert len(parents) == 1
 
             # Test ActorGroup.
             actor = ActorGroup('Administrators')
