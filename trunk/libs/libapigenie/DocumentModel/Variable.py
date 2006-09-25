@@ -8,17 +8,17 @@ class Variable:
         return self.name
 
 
-    def set_docs(self, string):
-        self.docs = string
-
-
-    def get_docs(self):
-        return self.docs
-
-
     def set_type(self, type):
         self.type = type
 
 
     def get_type(self):
         return self.type
+
+
+    def set_docs(self, string):
+        self.docs = string
+
+
+    def get_docs(self):
+        return self.docs

@@ -69,17 +69,14 @@ class DB(DBReader):
         return True
 
 
-    def __save_object_section(self, table, section):
-        assert table is 'action_section' or table is 'resource_section'
+    def __save_object_section(self, table_name, section):
+        assert table_name is 'action_section' \
+            or table_name is 'resource_section'
         assert section is not None
-        query = SqlQuery(self._table_names, '''
-            UPDATE {t_''' + table + '''}
-            SET    handle={handle}, name={name}
-            WHERE  id={id}''')
-        query.set_int('id', section.get_id())
-        query.set_string('handle', section.get_handle())
-        query.set_string('name',   section.get_name())
-        result = self.db.execute(query.get_sql())
+        table  = self._table_map[table_name]
+        update = table.update(table.c.id == section.get_id())
+        result = update.execute(handle = section.get_handle(),
+                                name   = section.get_name())
         assert result is not None
         return True
 
@@ -209,17 +206,11 @@ class DB(DBReader):
         """
         assert action  is not None
         assert section is not None
-        query = SqlQuery(self._table_names, '''
-            UPDATE {t_action}
-            SET section_handle={section_handle},
-                handle={handle},
-                name={name}
-            WHERE id={id}''')
-        query.set_int('id', action.get_id())
-        query.set_string('section_handle', section.get_handle())
-        query.set_string('handle',         action.get_handle())
-        query.set_string('name',           action.get_name())
-        result = self.db.execute(query.get_sql())
+        table  = self._table_map['action']
+        update = table.update(table.c.id == action.get_id())
+        result = update.execute(section_handle = section.get_handle(),
+                                handle         = action.get_handle(),
+                                name           = action.get_name())
         assert result is not None
         return True
 
@@ -286,16 +277,12 @@ class DB(DBReader):
     def __resource_has_attribute(self, resource_id, name):
         assert resource_id >= 0
         assert name is not None
-        query = SqlQuery(self._table_names, '''
-            SELECT id
-            FROM {t_resource_attribute}
-            WHERE resource_id={resource_id}
-            AND   name={name}''')
-        query.set_int('resource_id', resource_id)
-        query.set_string('name', name)
-        result = self.db.execute(query.get_sql())
+        table  = self._table_map['resource_attribute']
+        select = table.select(and_(table.c.resource_id == resource_id,
+                                   table.c.name        == name))
+        result = select.execute()
         assert result is not None
-        row = result.shift()
+        row = result.fetchone()
         if row is not None: return True
         return False
 
@@ -326,29 +313,22 @@ class DB(DBReader):
     def __resource_update_attribute(self, resource_id, name, value):
         assert resource_id >= 0
         assert name is not None
-        query = SqlQuery(self._table_names, '''
-            UPDATE {t_resource_attribute}
-            SET type={type},
-                attr_string={attr_string},
-                attr_int={attr_int}
-            WHERE resource_id={resource_id}
-            AND   name={name}''')
-        query.set_int('resource_id', resource_id)
-        query.set_string('name', name)
+        table  = self._table_map['resource_attribute']
+        update = table.update(and_(table.c.resource_id == resource_id,
+                                   table.c.name        == name))
         try:
             int(value)
             is_int = True
         except:
             is_int = False
         if is_int:
-            query.set_int('type', self.attrib_type_int)
-            query.set_int('attr_int', value)
-            query.set_none('attr_string')
+            result = update.execute(type  = self.attrib_type_int,
+                                    name  = name,
+                                    value = value)
         else:
-            query.set_int('type', self.attrib_type_string)
-            query.set_string('attr_string', value)
-            query.set_none('attr_int')
-        result = self.db.execute(query.get_sql())
+            result = update.execute(type  = self.attrib_type_string,
+                                    name  = name,
+                                    value = value)
         assert result is not None
         return True
 
@@ -356,13 +336,9 @@ class DB(DBReader):
     def __resource_add_n_children(self, resource_id, n_children):
         assert resource_id >= 0
         assert n_children  >= 0
-        query = SqlQuery(self._table_names, '''
-            UPDATE {t_resource_path}
-            SET n_children=n_children + ({n_children})
-            WHERE resource_id={resource_id}''')
-        query.set_int('resource_id', resource_id)
-        query.set_int('n_children',  n_children)
-        result = self.db.execute(query.get_sql())
+        table  = self._table_map['resource_path']
+        update = table.update(table.c.resource_id == resource_id)
+        result = update.execute(n_children = table.c.n_children + n_children)
         assert result is not None
 
 
@@ -460,21 +436,13 @@ class DB(DBReader):
         connection  = self.db.connect()
         transaction = connection.begin()
 
-        query = SqlQuery(self._table_names, '''
-            UPDATE {t_resource}
-            SET section_handle={section_handle},
-                handle={handle},
-                name={name},
-                is_actor={is_actor},
-                is_group={is_group}
-            WHERE id={id}''')
-        query.set_int('id', resource.get_id())
-        query.set_string('section_handle', section.get_handle())
-        query.set_string('handle',         resource.get_handle())
-        query.set_string('name',           resource.get_name())
-        query.set_int('is_actor',          resource.is_actor())
-        query.set_int('is_group',          resource.is_group())
-        result = self.db.execute(query.get_sql())
+        table  = self._table_map['resource']
+        update = table.update(table.c.id == resource.get_id())
+        result = update.execute(section_handle = section.get_handle(),
+                                handle         = resource.get_handle(),
+                                name           = resource.get_name(),
+                                is_actor       = resource.is_actor(),
+                                is_group       = resource.is_group())
         assert result is not None
 
         # Save the attributes.
@@ -567,17 +535,11 @@ class DB(DBReader):
         assert action_id   >= 0
         assert resource_id >= 0
         assert permit == True or permit == False
-        query = SqlQuery(self._table_names, '''
-            UPDATE {t_acl}
-            SET   permit={permit}
-            WHERE actor_id={actor_id}
-            AND   action_id={action_id}
-            AND   resource_id={resource_id}''')
-        query.set_int('actor_id',    actor_id)
-        query.set_int('action_id',   action_id)
-        query.set_int('resource_id', resource_id)
-        query.set_bool('permit',    permit)
-        result = self.db.execute(query.get_sql())
+        table  = self._table_map['acl']
+        update = table.update(and_(table.c.actor_id    == actor_id,
+                                   table.c.action_id   == action_id,
+                                   table.c.resource_id == resource_id))
+        result = update.execute(permit = permit)
         assert result is not None
         return True
 
@@ -586,18 +548,13 @@ class DB(DBReader):
         assert actor_id    >= 0
         assert action_id   >= 0
         assert resource_id >= 0
-        query = SqlQuery(self._table_names, '''
-            SELECT id
-            FROM {t_acl}
-            WHERE actor_id={actor_id}
-            AND   action_id={action_id}
-            AND   resource_id={resource_id}''')
-        query.set_int('actor_id',    actor_id)
-        query.set_int('action_id',   action_id)
-        query.set_int('resource_id', resource_id)
-        result = self.db.execute(query.get_sql())
+        table  = self._table_map['acl']
+        select = table.select(and_(table.c.actor_id    == actor_id,
+                                   table.c.action_id   == action_id,
+                                   table.c.resource_id == resource_id))
+        result = select.execute()
         assert result is not None
-        row = result.shift()
+        row = result.fetchone()
         if row is None: return False
         return True
 
@@ -880,7 +837,7 @@ if __name__ == '__main__':
             # Connect to MySQL.
             auth = user + ':' + password
             dbn  = 'mysql://' + auth + '@' + host + '/' + db_name
-            print dbn
+            #print dbn
             db   = create_engine(dbn)
             self.test_with_db(db)
 

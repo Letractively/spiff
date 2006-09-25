@@ -569,7 +569,7 @@ if __name__ == '__main__':
             dbn  = 'mysql://' + auth + '@' + host + '/' + db_name
             db   = create_engine(dbn)
 
-            # We only test instantiation here, the other test
+            # We only test instantiation here, the other tests
             # are done in the derived class "DB".
             db = DBReader(db)
             assert db is not None
