@@ -1,13 +1,11 @@
 from Container import Container
-from String    import String
 
 # Function definition.
 class Function(Container):
     def __init__(self, string, name):
         assert string is not None
         assert name   is not None
-        Container.__init__(self)
-        self.add_child(String(string))
+        Container.__init__(self, string)
         self.name = name
         self.args = {}
         self.ret  = None

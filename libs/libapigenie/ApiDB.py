@@ -20,52 +20,52 @@ class ApiDB:
     def __update_table_names(self):
         metadata = BoundMetaData(self.db)
         pfx = self._table_prefix
-        self.__add_table(Table(pfx + 'api_documentation', metadata,
-            Column('id',            Integer, primary_key = True),
-            Column('documentation', Text),
-            mysql_engine='INNODB'
-        ))
-        self.__add_table(Table(pfx + 'fs_dir', metadata,
-            Column('id',   Integer, primary_key = True),
-            Column('name', Integer),
-            Column('api_documentation_id', Integer),
-            mysql_engine='INNODB'
-        ))
-        self.__add_table(Table(pfx + 'fs_file', metadata,
-            Column('id',                   Integer, primary_key = True),
-            Column('name',                 Integer),
-            Column('api_documentation_id', Integer),
-            mysql_engine='INNODB'
-        ))
-        self.__add_table(Table(pfx + 'source_chunk', metadata,
-            Column('id',                   Integer, primary_key = True),
-            Column('name',                 String(230)),
-            Column('data',                 String(230)),
-            Column('api_documentation_id', Integer),
-            ForeignKeyConstraint(['api_documentation_id'],
-                                 ['api_documentation.id'],
-                                 ondelete = 'CASCADE'),
-            mysql_engine='INNODB'
-        ))
-        self.__add_table(Table(pfx + 'source_tree', metadata,
+        self.__add_table(Table(pfx + 'fs_tree', metadata,
             Column('id',              Integer,     primary_key = True),
-            Column('source_chunk_id', Integer),
             Column('path',            Binary(255), unique = True),
             Column('depth',           Integer),
             Column('n_children',      Integer),
-            ForeignKeyConstraint(['source_chunk_id'],
-                                 ['source_chunk.id'],
+            mysql_engine='INNODB'
+        ))
+        self.__add_table(Table(pfx + 'fs_tree_ancestor_map', metadata,
+            Column('node_id',     Integer, unique = True),
+            Column('ancestor_id', Integer),
+            ForeignKeyConstraint(['node_id'],
+                                 ['fs_tree.id'],
+                                 ondelete = 'CASCADE'),
+            ForeignKeyConstraint(['ancestor_id'],
+                                 ['fs_tree.id'],
                                  ondelete = 'CASCADE'),
             mysql_engine='INNODB'
         ))
-        self.__add_table(Table(pfx + 'source_tree_ancestor_map', metadata,
-            Column('chunk_id',    Integer, unique = True),
-            Column('ancestor_id', Integer),
-            ForeignKeyConstraint(['chunk_id'],
-                                 ['source_tree.id'],
+        self.__add_table(Table(pfx + 'fs_dir', metadata,
+            Column('id',            Integer, primary_key = True),
+            Column('node_id',       Integer),
+            Column('name',          Integer),
+            Column('documentation', TEXT),
+            ForeignKeyConstraint(['node_id'],
+                                 ['fs_tree.id'],
                                  ondelete = 'CASCADE'),
-            ForeignKeyConstraint(['ancestor_id'],
-                                 ['source_tree.id'],
+            mysql_engine='INNODB'
+        ))
+        self.__add_table(Table(pfx + 'fs_file', metadata,
+            Column('id',            Integer, primary_key = True),
+            Column('node_id',       Integer),
+            Column('name',          Integer),
+            Column('documentation', TEXT),
+            ForeignKeyConstraint(['node_id'],
+                                 ['fs_tree.id'],
+                                 ondelete = 'CASCADE'),
+            mysql_engine='INNODB'
+        ))
+        self.__add_table(Table(pfx + 'source_chunk', metadata,
+            Column('id',            Integer, primary_key = True),
+            Column('node_id',       Integer),
+            Column('name',          String(230)),
+            Column('data',          String(230)),
+            Column('documentation', TEXT),
+            ForeignKeyConstraint(['node_id'],
+                                 ['fs_tree.id'],
                                  ondelete = 'CASCADE'),
             mysql_engine='INNODB'
         ))
@@ -85,35 +85,24 @@ class ApiDB:
                                  ondelete = 'CASCADE'),
             mysql_engine='INNODB'
         ))
-        self.__add_table(Table(pfx + 'variable', metadata,
-            Column('id',                   Integer, primary_key = True),
-            Column('name',                 String(100)),
-            Column('var_type',             String(100)),
-            Column('api_documentation_id', Integer),
-            ForeignKeyConstraint(['api_documentation_id'],
-                                 ['api_documentation.id'],
-                                 ondelete = 'CASCADE'),
-            mysql_engine='INNODB'
-        ))
-        self.__add_table(Table(pfx + 'api_function_argument_map', metadata,
+        self.__add_table(Table(pfx + 'argument', metadata,
+            Column('id',              Integer, primary_key = True),
             Column('api_function_id', Integer),
-            Column('argument_id',     Integer),
+            Column('name',            String(100)),
+            Column('type',            String(100)),
+            Column('documentation',   TEXT),
             ForeignKeyConstraint(['api_function_id'],
                                  ['api_function.id'],
                                  ondelete = 'CASCADE'),
-            ForeignKeyConstraint(['argument_id'],
-                                 ['variable.id'],
-                                 ondelete = 'CASCADE'),
             mysql_engine='INNODB'
         ))
-        self.__add_table(Table(pfx + 'api_function_return_map', metadata,
+        self.__add_table(Table(pfx + 'return_value', metadata,
+            Column('id',              Integer, primary_key = True),
             Column('api_function_id', Integer),
-            Column('return_id',       Integer),
+            Column('type',            String(100)),
+            Column('documentation',   TEXT),
             ForeignKeyConstraint(['api_function_id'],
                                  ['api_function.id'],
-                                 ondelete = 'CASCADE'),
-            ForeignKeyConstraint(['return_id'],
-                                 ['variable.id'],
                                  ondelete = 'CASCADE'),
             mysql_engine='INNODB'
         ))
@@ -316,3 +305,43 @@ class ApiDB:
         @return: True on success, False otherwise.
         """
         return self.remove_file_from_id(file.get_id())
+
+
+if __name__ == '__main__':
+    import unittest
+    import MySQLdb
+    from ConfigParser import RawConfigParser
+
+    class ApiDBTest(unittest.TestCase):
+        def test_with_db(self, db):
+            assert db is not None
+            db = ApiDB(db)
+            assert db.uninstall()
+            assert db.install()
+
+            #FIXME
+
+            # Clean up.
+            assert db.clear_database()
+            assert db.uninstall()
+
+
+        def runTest(self):
+            # Read config.
+            cfg = RawConfigParser()
+            cfg.read('unit_test.cfg')
+            host     = cfg.get('database', 'host')
+            db_name  = cfg.get('database', 'db_name')
+            user     = cfg.get('database', 'user')
+            password = cfg.get('database', 'password')
+
+            # Connect to MySQL.
+            auth = user + ':' + password
+            dbn  = 'mysql://' + auth + '@' + host + '/' + db_name
+            #print dbn
+            db   = create_engine(dbn)
+            self.test_with_db(db)
+
+    testcase = ApiDBTest()
+    runner   = unittest.TextTestRunner()
+    runner.run(testcase)

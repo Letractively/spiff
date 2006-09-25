@@ -1,4 +1,6 @@
 class Documentable:
+    docs   = ''
+
     def set_docs(self, docs):
         """
         Attaches documentation.

@@ -1,3 +1,4 @@
+return
 # Testfile for the Python parser.
 import me
 

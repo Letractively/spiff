@@ -106,7 +106,7 @@ class DBReader:
         ))
         map[list[-1].name] = list[-1]
         list.append(Table(names['t_path_ancestor_map'], metadata,
-            Column('resource_path_id',  Integer, index = True),
+            Column('resource_path_id',  Integer, unique = True),
             Column('ancestor_path_id',  Integer, index = True),
             ForeignKeyConstraint(['resource_path_id'],
                                  ['resource_path.id'],

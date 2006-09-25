@@ -1,14 +1,13 @@
 from Container import Container
-from String    import String
 
 class Class(Container):
     def __init__(self, string, name):
         assert string is not None
         assert name   is not None
-        Container.__init__(self)
-        self.add_child(String(string))
-        self.name    = name
-        self.methods = {}
+        Container.__init__(self, string)
+        self.name     = name
+        self.inherits = {}
+        self.methods  = {}
 
 
     def add_method(self, func):

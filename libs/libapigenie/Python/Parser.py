@@ -163,6 +163,7 @@ class Parser(Scanner):
             (blank_line,  'line'),
             (indentation, indentation_action),
         ]),
+        (Eof,                'eof'),
         (AnyChar,            'line'),
     ])
 

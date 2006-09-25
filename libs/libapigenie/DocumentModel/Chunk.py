@@ -4,13 +4,15 @@ from Documentable import Documentable
 class Chunk(Documentable):
     name   = 'undefined'
     string = ''
-    docs   = ''
 
-    def __init__(self):
-        assert False # Should not be called.
+    def __init__(self, string = ''):
+        self.string = string
 
 
     def get_name(self):
+        """
+        Returns the name of this chunk.
+        """
         return self.name
 
 
