@@ -12,13 +12,20 @@ class Chunk:
         return self.name
 
 
-    def set_docs(self, string):
-        self.docs = string
+    def get_string(self):
+        """
+        The string from the source file that caused this chunk to be
+        generated.
+        """
+        return self.string
+
+
+    def set_docs(self, docs):
+        """
+        Inserts the API documentation.
+        """
+        self.docs = docs
 
 
     def get_docs(self):
         return self.docs
-
-
-    def get_string(self):
-        return self.string
