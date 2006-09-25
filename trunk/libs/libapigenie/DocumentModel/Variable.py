@@ -1,4 +1,6 @@
-class Variable:
+from Documentable import Documentable
+
+class Variable(Documentable):
     def __init__(self, name, type = None):
         self.name = name
         self.type = type
@@ -14,11 +16,3 @@ class Variable:
 
     def get_type(self):
         return self.type
-
-
-    def set_docs(self, string):
-        self.docs = string
-
-
-    def get_docs(self):
-        return self.docs

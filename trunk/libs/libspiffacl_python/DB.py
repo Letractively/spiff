@@ -716,7 +716,6 @@ class DB(DBReader):
 
 if __name__ == '__main__':
     import unittest
-    import sqlite
     import MySQLdb
     from ConfigParser import RawConfigParser
 

@@ -1,7 +1,8 @@
 from Chunk import Chunk
 
 class Container(Chunk):
-    def __init__(self):
+    def __init__(self, string = ''):
+        Chunk.__init__(self, string)
         self.children = []
 
 
@@ -21,7 +22,7 @@ class Container(Chunk):
         @rtype:  string
         @return: The contents of the file.
         """
-        complete = ''
+        complete = self.string
         for child in self.children:
             complete += child.get_string()
         return complete
