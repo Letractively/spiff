@@ -11,8 +11,7 @@ from ResourceGroup   import *
 from Actor           import *
 from ActorGroup      import *
 
-from sqlalchemy                import *
-from libuseful_python.SqlQuery import SqlQuery
+from sqlalchemy import *
 
 class DBReader:
     fetch_all, fetch_groups, fetch_items = range(3)
@@ -21,41 +20,32 @@ class DBReader:
     def __init__(self, db):
         self.db            = db
         self._table_prefix = ''
-        self._table_names  = {}
         self._table_map    = {}
         self._table_list   = []
         self.__update_table_names()
 
 
+    def __add_table(self, table):
+        self._table_list.append(table)
+        self._table_map[table.name] = table
+
+
     def __update_table_names(self):
-        pfx   = self._table_prefix
-        map   = self._table_map
-        list  = self._table_list
-        names = self._table_names
-        names['t_action_section']     = pfx + 'action_section'
-        names['t_resource_section']   = pfx + 'resource_section'
-        names['t_action']             = pfx + 'action'
-        names['t_resource']           = pfx + 'resource'
-        names['t_resource_attribute'] = pfx + 'resource_attribute'
-        names['t_resource_path']      = pfx + 'resource_path'
-        names['t_path_ancestor_map']  = pfx + 'path_ancestor_map'
-        names['t_acl']                = pfx + 'acl'
         metadata = BoundMetaData(self.db)
-        list.append(Table(names['t_action_section'], metadata,
+        pfx = self._table_prefix
+        self.__add_table(Table(pfx + 'action_section', metadata,
             Column('id',     Integer,     primary_key = True),
             Column('handle', String(230), unique = True),
             Column('name',   String(230), unique = True),
             mysql_engine='INNODB'
         ))
-        map[list[-1].name] = list[-1]
-        list.append(Table(names['t_resource_section'], metadata,
+        self.__add_table(Table(pfx + 'resource_section', metadata,
             Column('id',     Integer,     primary_key = True),
             Column('handle', String(230), unique = True),
             Column('name',   String(230), unique = True),
             mysql_engine='INNODB'
         ))
-        map[list[-1].name] = list[-1]
-        list.append(Table(names['t_action'], metadata,
+        self.__add_table(Table(pfx + 'action', metadata,
             Column('id',             Integer,     primary_key = True),
             Column('section_handle', String(230), index = True),
             Column('handle',         String(230), unique = True),
@@ -65,8 +55,7 @@ class DBReader:
                                  ondelete = 'CASCADE'),
             mysql_engine='INNODB'
         ))
-        map[list[-1].name] = list[-1]
-        list.append(Table(names['t_resource'], metadata,
+        self.__add_table(Table(pfx + 'resource', metadata,
             Column('id',             Integer,     primary_key = True),
             Column('section_handle', String(230), index = True),
             Column('handle',         String(230), unique = True),
@@ -78,8 +67,7 @@ class DBReader:
                                  ondelete = 'CASCADE'),
             mysql_engine='INNODB'
         ))
-        map[list[-1].name] = list[-1]
-        list.append(Table(names['t_resource_attribute'], metadata,
+        self.__add_table(Table(pfx + 'resource_attribute', metadata,
             Column('id',             Integer,     primary_key = True),
             Column('resource_id',    Integer,     index = True),
             Column('name',           String(50)),
@@ -91,8 +79,7 @@ class DBReader:
                                  ondelete = 'CASCADE'),
             mysql_engine='INNODB'
         ))
-        map[list[-1].name] = list[-1]
-        list.append(Table(names['t_resource_path'], metadata,
+        self.__add_table(Table(pfx + 'resource_path', metadata,
             Column('id',             Integer,     primary_key = True),
             Column('path',           Binary(255), index = True),
             Column('depth',          Integer,     index = True),
@@ -104,9 +91,8 @@ class DBReader:
                                  ondelete = 'CASCADE'),
             mysql_engine='INNODB'
         ))
-        map[list[-1].name] = list[-1]
-        list.append(Table(names['t_path_ancestor_map'], metadata,
-            Column('resource_path_id',  Integer, unique = True),
+        self.__add_table(Table(pfx + 'path_ancestor_map', metadata,
+            Column('resource_path_id',  Integer, index = True),
             Column('ancestor_path_id',  Integer, index = True),
             ForeignKeyConstraint(['resource_path_id'],
                                  ['resource_path.id'],
@@ -116,8 +102,7 @@ class DBReader:
                                  ondelete = 'CASCADE'),
             mysql_engine='INNODB'
         ))
-        map[list[-1].name] = list[-1]
-        list.append(Table(names['t_acl'], metadata,
+        self.__add_table(Table(pfx + 'acl', metadata,
             Column('id',             Integer, primary_key = True),
             Column('actor_id',       Integer, index = True),
             Column('action_id',      Integer, index = True),
@@ -135,7 +120,6 @@ class DBReader:
                                  ondelete = 'CASCADE'),
             mysql_engine='INNODB'
         ))
-        map[list[-1].name] = list[-1]
 
 
     def debug(self, debug = True):
@@ -183,7 +167,7 @@ class DBReader:
         if row[tbl_r.c.is_group]:
             type += 'Group'
         #print 'Type', type
-        obj      = eval(type)
+        obj      = eval(type) #FIXME: eval sucks
         resource = obj(row[tbl_r.c.name], row[tbl_r.c.handle])
         resource.set_id(row[tbl_r.c.id])
         return resource
@@ -359,30 +343,35 @@ class DBReader:
         assert actor_id    is not None
         assert action_id   is not None
         assert resource_id is not None
-        query = SqlQuery(self._table_names, '''
-            SELECT    ac.permit
-            FROM      {t_resource_path}     t1
-            LEFT JOIN {t_path_ancestor_map} p1 ON t1.path=p1.resource_path
-            LEFT JOIN {t_resource_path}     t2 ON t1.id=t2.id
-                                               OR t2.path=p1.ancestor_path
-            LEFT JOIN {t_acl}               ac ON t2.resource_id=ac.resource_id
-            LEFT JOIN {t_resource_path}     t3 ON t3.id=ac.actor_id
-            LEFT JOIN {t_path_ancestor_map} p2 ON t3.path=p2.ancestor_path
-            LEFT JOIN {t_resource_path}     t4 ON t4.id=t3.id
-                                               OR t4.path=p2.resource_path
-            WHERE t1.resource_id={resource_id}
-            AND   ac.action_id={action_id}
-            AND   t4.resource_id={actor_id}
-            ORDER BY t2.path, t3.path
-            LIMIT    1''')
-        query.set_int('actor_id',    actor_id)
-        query.set_int('action_id',   action_id)
-        query.set_int('resource_id', resource_id)
-        result = self.db.execute(query.get_sql())
+        tbl_p1 = self._table_map['resource_path'].alias('p1')
+        tbl_m1 = self._table_map['path_ancestor_map'].alias('m1')
+        tbl_p2 = self._table_map['resource_path'].alias('p2')
+        tbl_ac = self._table_map['acl']
+        tbl_p3 = self._table_map['resource_path'].alias('p3')
+        tbl_m2 = self._table_map['path_ancestor_map'].alias('m2')
+        tbl_p4 = self._table_map['resource_path'].alias('p4')
+        tbl = tbl_p1.outerjoin(tbl_m1, tbl_p1.c.id == tbl_m1.c.resource_path_id)
+        tbl = tbl.outerjoin(tbl_p2, or_(tbl_p2.c.id == tbl_p1.c.id,
+                                        tbl_p2.c.id == tbl_m1.c.ancestor_path_id))
+        tbl = tbl.outerjoin(tbl_ac, tbl_p2.c.resource_id == tbl_ac.c.resource_id)
+        tbl = tbl.outerjoin(tbl_p3, tbl_p3.c.id == tbl_ac.c.actor_id)
+        tbl = tbl.outerjoin(tbl_m2, tbl_p3.c.id == tbl_m2.c.ancestor_path_id)
+        tbl = tbl.outerjoin(tbl_p4, or_(tbl_p4.c.id == tbl_p3.c.id,
+                                        tbl_p4.c.id == tbl_m2.c.resource_path_id))
+        sel = select([tbl_ac.c.permit],
+                     and_(tbl_p1.c.resource_id == resource_id,
+                          tbl_ac.c.action_id   == action_id,
+                          tbl_p4.c.resource_id == actor_id),
+                     order_by   = [desc(tbl_p2.c.path), desc(tbl_p3.c.path)],
+                     use_labels = True,
+                     from_obj   = [tbl])
+
+        result = sel.execute()
         assert result is not None
-        row = result.fetchrow()
-        if row is None or row[0] is 0: return False
-        return True
+        row = result.fetchone()
+        #print "Searching: (%i, %i, %i)", (actor_id, action_id, resource_id)
+        if row is None: return False
+        return row[0]
 
 
     def has_permission(self, actor, action, resource):
@@ -398,139 +387,158 @@ class DBReader:
     def get_permission_list_from_id(self, actor_id, resource_id):
         assert actor_id    is not None
         assert resource_id is not None
-        query = SqlQuery(self._table_names, '''
-            SELECT    ac1.actor_id, ac1.resource_id, ac1.permit,
-                      a.*,
-                      s.id section_id, s.name section_name,
-                      t2.depth, t3.depth,
-                      max(t2.depth) t2_maxdepth, max(t3.depth) t3_maxdepth
 
-            -- **************************************************************
-            -- * 1. Get all ACLs that match the given resource.
-            -- **************************************************************
-            -- All paths that match directly.
-            FROM resource_path t1
+        # **************************************************************
+        # * 1. Get all ACLs that match the given resource.
+        # **************************************************************
+        # All paths that match directly.
+        tbl_p1 = self._table_map['resource_path'].alias('p1')
 
-            -- All paths that are a parent of the direct match.
-            LEFT JOIN path_ancestor_map p1 ON t1.path = p1.resource_path
+        # All paths that are a parent of the direct match.
+        tbl_m1 = self._table_map['path_ancestor_map'].alias('m1')
+        tbl = tbl_p1.outerjoin(tbl_m1, tbl_p1.c.id == tbl_m1.c.resource_path_id)
 
-            -- Still all paths that are a parent of the direct match, and also the
-            -- direct match itself.
-            LEFT JOIN resource_path t2 ON t1.id = t2.id OR t2.path = p1.ancestor_path
+        # Still all paths that are a parent of the direct match, and also the
+        # direct match itself.
+        tbl_p2 = self._table_map['resource_path'].alias('p2')
+        tbl = tbl.outerjoin(tbl_p2, or_(tbl_p2.c.id == tbl_p1.c.id,
+                                        tbl_p2.c.id == tbl_m1.c.ancestor_path_id))
 
-            -- All ACLs that reference the given resource or any of its parents.
-            LEFT JOIN acl ac1 ON t2.resource_id = ac1.resource_id
+        # All ACLs that reference the given resource or any of its parents.
+        tbl_ac1 = self._table_map['acl'].alias('ac1')
+        tbl = tbl.outerjoin(tbl_ac1, tbl_p2.c.resource_id == tbl_ac1.c.resource_id)
 
-            -- Path of the actor that is referenced by the ACL.
-            LEFT JOIN resource_path t3 ON t3.id = ac1.actor_id
+        # Path of the actor that is referenced by the ACL.
+        tbl_p3 = self._table_map['resource_path'].alias('p3')
+        tbl = tbl.outerjoin(tbl_p3, tbl_p3.c.id == tbl_ac1.c.actor_id)
 
-            -- Paths of all children of the actor.
-            LEFT JOIN path_ancestor_map p2 ON t3.path = p2.ancestor_path
+        # Paths of all children of the actor.
+        tbl_m2 = self._table_map['path_ancestor_map'].alias('m2')
+        tbl = tbl.outerjoin(tbl_m2, tbl_p3.c.id == tbl_m2.c.ancestor_path_id)
 
-            -- Paths of all children of the actor, and also the actor itself.
-            LEFT JOIN resource_path t4 ON t4.id = t3.id OR t4.path = p2.resource_path
+        # Paths of all children of the actor, and also the actor itself.
+        tbl_p4 = self._table_map['resource_path'].alias('p4')
+        tbl = tbl.outerjoin(tbl_p4, or_(tbl_p4.c.id == tbl_p3.c.id,
+                                        tbl_p4.c.id == tbl_m2.c.resource_path_id))
 
-            -- Informative only.
-            LEFT JOIN action a ON a.id = ac1.action_id
-            LEFT JOIN action_section s ON a.section_handle = s.handle
-            
+        # Informative only.
+        tbl_a1 = self._table_map['action'].alias('a1')
+        tbl = tbl.outerjoin(tbl_a1, tbl_a1.c.id == tbl_ac1.c.action_id)
+        tbl_s1 = self._table_map['action_section'].alias('s1')
+        tbl = tbl.outerjoin(tbl_s1, tbl_a1.c.section_handle == tbl_s1.c.handle)
 
-            -- **************************************************************
-            -- * 2. We want to filter out any ACL that is defined for the
-            -- * same action but has a shorter actor path.
-            -- * A side effect of this way of doing it is that ACLs are 
-            -- * added even if they were not defined for the right actor,
-            -- * so we need to filter them out in the next step (see 3.).
-            -- **************************************************************
-            -- Get all ACLs that control the same action as the ACL above.
-            LEFT JOIN acl ac2 ON ac1.action_id=ac2.action_id
+        # **************************************************************
+        # * 2. We want to filter out any ACL that is defined for the
+        # * same action but has a shorter actor path.
+        # * A side effect of this way of doing it is that ACLs are 
+        # * added even if they were not defined for the right actor,
+        # * so we need to filter them out in the next step (see 3.).
+        # **************************************************************
+        # Get all ACLs that control the same action as the ACL above.
+        tbl_ac2 = self._table_map['acl'].alias('ac2')
+        tbl = tbl.outerjoin(tbl_ac2, tbl_ac1.c.action_id == tbl_ac2.c.action_id)
 
-            -- Get a list of all ACLs that perform the same action, but only
-            -- if their actor path is longer.
-            LEFT JOIN resource_path t5 ON ac2.actor_id=t5.resource_id AND t5.depth>t3.depth
+        # Get a list of all ACLs that perform the same action, but only
+        # if their actor path is longer.
+        tbl_p5 = self._table_map['resource_path'].alias('p5')
+        tbl = tbl.outerjoin(tbl_p5, and_(tbl_ac2.c.actor_id == tbl_p5.c.resource_id,
+                                         tbl_p5.c.depth > tbl_p3.c.depth))
 
+        # **************************************************************
+        # * 3. Filter out any ACLs that are irrelevant because they do
+        # * not have the correct path.
+        # **************************************************************
+        # Get a list of all actors that are pointed to by the ACL joined
+        # above.
+        tbl_p6 = self._table_map['resource_path'].alias('p6')
+        tbl = tbl.outerjoin(tbl_p6, tbl_p6.c.resource_id == tbl_ac2.c.actor_id)
 
-            -- **************************************************************
-            -- * 3. Filter out any ACL that is irrelevant because it does
-            -- * not have the correct path.
-            -- **************************************************************
-            -- Get a list of all actors that are pointed to by the ACL joined
-            -- above.
-            LEFT JOIN resource_path t6 ON t6.resource_id=ac2.actor_id
+        # Get their children.
+        tbl_m3 = self._table_map['path_ancestor_map'].alias('m3')
+        tbl = tbl.outerjoin(tbl_m3, tbl_m3.c.ancestor_path_id == tbl_p6.c.id)
 
-            -- Get their children.
-            LEFT JOIN path_ancestor_map p3 ON t6.path = p3.ancestor_path
-
-            -- Keep only those that are inherited by the wanted actor.
-            LEFT JOIN resource_path t7 ON p3.resource_path=t7.path OR t6.id=t7.id
-
-
-            -- **************************************************************
-            -- * 4. We want to filter out any ACL that is defined for the
-            -- * same action but has a shorter resource path.
-            -- * A side effect of this way of doing it is that ACLs are
-            -- * added even if they were not defined for the right resource,
-            -- * so we need to filter them out in the next step (see 3.).
-            -- **************************************************************
-            -- Get all ACLs that control the same action as the ACL above.
-            LEFT JOIN acl ac3 ON ac1.action_id=ac3.action_id
-
-            -- Get a list of all ACLs that perform the same action, but only
-            -- if their resource path is longer.
-            LEFT JOIN resource_path t8 ON ac3.resource_id=t8.resource_id AND t8.depth>t3.depth
+        # Keep only those that are inherited by the wanted actor.
+        tbl_p7 = self._table_map['resource_path'].alias('p7')
+        tbl = tbl.outerjoin(tbl_p7, or_(tbl_p6.c.id == tbl_p7.c.id,
+                                        tbl_m3.c.resource_path_id == tbl_p7.c.id))
 
 
-            -- **************************************************************
-            -- * 5. Filter out any ACL that is irrelevant because it does
-            -- * not have the correct path.
-            -- **************************************************************
-            -- Get a list of all resources that are pointed to by the ACL
-            -- joined above.
-            LEFT JOIN resource_path t9 ON t9.resource_id=ac3.resource_id
+        # **************************************************************
+        # * 4. We want to filter out any ACL that is defined for the
+        # * same action but has a shorter resource path.
+        # * A side effect of this way of doing it is that ACLs are
+        # * added even if they were not defined for the right resource,
+        # * so we need to filter them out in the next step (see 3.).
+        # **************************************************************
+        # Get all ACLs that control the same action as the ACL above.
+        tbl_ac3 = self._table_map['acl'].alias('ac3')
+        tbl = tbl.outerjoin(tbl_ac3, tbl_ac1.c.action_id == tbl_ac3.c.action_id)
 
-            -- Get their children.
-            LEFT JOIN path_ancestor_map p4 ON t9.path = p4.ancestor_path
+        # Get a list of all ACLs that perform the same action, but only
+        # if their resource path is longer.
+        tbl_p8 = self._table_map['resource_path'].alias('p8')
+        tbl = tbl.outerjoin(tbl_p8, and_(tbl_ac3.c.resource_id == tbl_p8.c.resource_id,
+                                         tbl_p8.c.depth > tbl_p3.c.depth))
 
-            -- Keep only those that are inherited by the wanted resource.
-            LEFT JOIN resource_path t10 ON p4.resource_path=t10.path OR t9.id=t10.id
 
+        # **************************************************************
+        # * 5. Filter out any ACL that is irrelevant because it does
+        # * not have the correct path.
+        # **************************************************************
+        # Get a list of all resources that are pointed to by the ACL
+        # joined above.
+        tbl_p9 = self._table_map['resource_path'].alias('p9')
+        tbl = tbl.outerjoin(tbl_p9, tbl_p9.c.resource_id == tbl_ac3.c.resource_id)
 
-            -- See 1.
-            WHERE t1.resource_id={resource_id}
-            AND   t4.resource_id={actor_id}
+        # Get their children.
+        tbl_m4 = self._table_map['path_ancestor_map'].alias('m4')
+        tbl = tbl.outerjoin(tbl_m4, tbl_m4.c.ancestor_path_id == tbl_p9.c.id)
 
-            -- See 2.
-            AND t5.id IS NULL
+        # Keep only those that are inherited by the wanted resource.
+        tbl_p10 = self._table_map['resource_path'].alias('p10')
+        tbl = tbl.outerjoin(tbl_p10, or_(tbl_p9.c.id == tbl_p10.c.id,
+                                         tbl_m4.c.resource_path_id == tbl_p10.c.id))
 
-            -- See 3.
-            AND t7.resource_id={actor_id}
-
-            -- See 4.
-            AND t8.id IS NULL
-
-            -- See 5.
-            AND t10.resource_id={resource_id}
-
-            -- Magic.
-            GROUP BY t2.path, t3.path, ac1.action_id
-            HAVING t2.depth = t2_maxdepth
-            AND t3.depth = t3_maxdepth''')
-        query.set_int('actor_id',    actor_id)
-        query.set_int('resource_id', resource_id)
-        result = self.db.execute(query.get_sql())
+        #print 'Get: %i,%i' % (actor_id, resource_id)
+        p2_max_depth = func.max(tbl_p2.c.depth).label('p2_max_depth')
+        p3_max_depth = func.max(tbl_p3.c.depth).label('p3_max_depth')
+        sel = select([tbl_ac1.c.actor_id,
+                      tbl_ac1.c.resource_id,
+                      tbl_ac1.c.permit,
+                      tbl_a1,
+                      tbl_s1.c.id,
+                      tbl_s1.c.handle,
+                      tbl_s1.c.name,
+                      tbl_p2.c.depth.label('p2_depth'),
+                      tbl_p3.c.depth.label('p3_depth'),
+                      p2_max_depth,
+                      p3_max_depth],
+                     and_(tbl_p1.c.resource_id  == resource_id,  # See 1.
+                          tbl_p4.c.resource_id  == actor_id,     # See 1.
+                          tbl_p5.c.id           == None,         # See 2.
+                          tbl_p7.c.resource_id  == actor_id,     # See 3.
+                          tbl_p8.c.id           == None,         # See 4.
+                          tbl_p10.c.resource_id == resource_id), # See 5.
+                     from_obj   = [tbl],
+                     use_labels = True,
+                     group_by   = [tbl_p2.c.id,
+                                   tbl_p3.c.id,
+                                   tbl_ac1.c.action_id],
+                     having = and_('p2_depth = p2_max_depth',
+                                   'p3_depth = p3_max_depth'))
+        #print sel
+        result = sel.execute()
         assert result is not None
 
         # Collect all permissions.
         acl_list = [];
         for row in result:
-            section = ActionSection(row['section_name'], row['section_handle'])
-            action  = Action(row['name'], row['handle'], section)
-            section.set_id(row['section_id'])
-            action.set_id(row['id'])
-            acl = Acl(row['actor_id'],
+            action  = Action(row[tbl_a1.c.name], row[tbl_a1.c.handle])
+            action.set_id(row[tbl_a1.c.id])
+            acl = Acl(row[tbl_ac1.c.actor_id],
                       action,
-                      row['resource_id'],
-                      row['permit'])
+                      row[tbl_ac1.c.resource_id],
+                      row[tbl_ac1.c.permit])
             acl_list.append(acl)
         
         return acl_list

@@ -1,18 +1,20 @@
 from DBReader  import *
-from functions import int2hex
+from functions import *
 import string
 
 class DB(DBReader):
     def __get_resource_path_from_id(self, id):
         assert id is not None
         table  = self._table_map['resource_path']
-        select = table.select(table.c.resource_id == id)
-        result = select.execute()
+        query  = select([table.c.path],
+                        table.c.resource_id == id,
+                        from_obj = [table])
+        result = query.execute()
         assert result is not None
         row = result.fetchone()
         if not row: return None
         length = len(row['path'])
-        path   = row['path'][0:length - 2]
+        path   = bin_path2hex_path(row['path']) #[0:length - 2]
         return path
 
 
@@ -387,24 +389,27 @@ class DB(DBReader):
         resource_id = result.last_inserted_ids()[0]
 
         # Add a new node into the tree.
-        table  = self._table_map['resource_path']
-        insert = table.insert()
-        result = insert.execute(path        = parent_path + '0000000000',
-                                resource_id = resource_id)
+        table    = self._table_map['resource_path']
+        insert   = table.insert()
+        bin_path = hex_path2bin_path(parent_path + '00000000')
+        result   = insert.execute(path        = bin_path,
+                                  resource_id = resource_id)
         assert result is not None
         path_id = result.last_inserted_ids()[0]
 
         # Assign the correct path to the new node.
-        path   = parent_path + int2hex(path_id, 8)
-        depth  = len(path) / 8
-        update = table.update(table.c.resource_id == resource_id)
-        result = update.execute(path = path + '00', depth = depth)
+        path     = parent_path + int2hex(path_id, 8)
+        bin_path = hex_path2bin_path(path)
+        depth    = len(path) / 8
+        update   = table.update(table.c.resource_id == resource_id)
+        result   = update.execute(path = bin_path, depth = depth)
         assert result is not None
         
         # Add a link to every ancestor of the new node into a map.
         while parent_path is not '':
             parent_id = string.atol(parent_path[-8:], 16)
             #print "Path:", parent_path[-8:], "ID:", parent_id
+            #print 'Mapping', path_id, 'to', parent_id
             insert    = self._table_map['path_ancestor_map'].insert()
             result    = insert.execute(resource_path_id = path_id,
                                        ancestor_path_id = parent_id)
@@ -585,25 +590,26 @@ class DB(DBReader):
         assert actor_list    is not None
         assert action_list   is not None
         assert resource_list is not None
-        if same_type(actor_list, 0):
+        if type(actor_list) == type(0):
             actor_list = [ actor_list ]
-        if same_type(action_list, 0):
+        if type(action_list) == type(0):
             action_list = [ action_list ]
-        if same_type(resource_list, 0):
+        if type(resource_list) == type(0):
             resource_list = [ resource_list ]
         for actor_id in actor_list:
             for action_id in action_list:
                 for resource_id in resource_list:
+                    #print 'Set: %i,%i,%i' % (actor_id, action_id, resource_id)
                     if self.__has_acl_from_id(actor_id, action_id, resource_id):
-                        self.__add_acl_from_id(actor_id,
-                                               action_id,
-                                               resource_id,
-                                               permit)
-                    else:
                         self.__update_acl_from_id(actor_id,
                                                   action_id,
                                                   resource_id,
                                                   permit)
+                    else:
+                        self.__add_acl_from_id(actor_id,
+                                               action_id,
+                                               resource_id,
+                                               permit)
         return True
 
 
@@ -626,9 +632,33 @@ class DB(DBReader):
         assert action   is not None
         assert resource is not None
         assert permit == True or permit == False
-        return self.set_permission_from_id(actor.get_id(),
-                                           action.get_id(),
-                                           resource.get_id(),
+
+        # Copy each item into a list of ids.
+        if type(actor) != type([]):
+            actor_list = [actor.get_id()]
+        else:
+            actor_list = []
+            for obj in actor:
+                actor_list.append(obj.get_id())
+
+        if type(action) != type([]):
+            action_list = [action.get_id()]
+        else:
+            action_list = []
+            for obj in action:
+                action_list.append(obj.get_id())
+
+        if type(resource) != type([]):
+            resource_list = [resource.get_id()]
+        else:
+            resource_list = []
+            for obj in resource:
+                resource_list.append(obj.get_id())
+        # Done.
+
+        return self.set_permission_from_id(actor_list,
+                                           action_list,
+                                           resource_list,
                                            permit)
 
 
@@ -763,52 +793,52 @@ if __name__ == '__main__':
             assert db.add_action(action, action_section)
 
             # Test Resource.
-            resource = Resource('my website')
-            assert db.add_resource(None, resource, resource_section)
-            assert resource.get_id() >= 0
-            resource.set_name('Homepage')
-            assert db.save_resource(resource, resource_section)
-            assert db.delete_resource_from_id(resource.get_id())
+            website = Resource('my website')
+            assert db.add_resource(None, website, resource_section)
+            assert website.get_id() >= 0
+            website.set_name('Homepage')
+            assert db.save_resource(website, resource_section)
+            assert db.delete_resource_from_id(website.get_id())
 
-            assert db.add_resource(None, resource, resource_section)
-            handle         = resource.get_handle()
+            assert db.add_resource(None, website, resource_section)
+            handle         = website.get_handle()
             section_handle = resource_section.get_handle()
             assert db.delete_resource_from_handle(handle, section_handle)
 
-            assert db.add_resource(None, resource, resource_section)
-            assert db.delete_resource(resource)
-            assert resource.get_id() < 0
+            assert db.add_resource(None, website, resource_section)
+            assert db.delete_resource(website)
+            assert website.get_id() < 0
 
             # Test ResourceGroup.
-            resource = ResourceGroup('my website')
-            assert db.add_resource(None, resource, resource_section)
-            assert resource.get_id() >= 0
-            resource.set_name('Homepage')
-            assert db.save_resource(resource, resource_section)
+            homepage = ResourceGroup('my website')
+            assert db.add_resource(None, homepage, resource_section)
+            assert homepage.get_id() >= 0
+            homepage.set_name('Homepage')
+            assert db.save_resource(homepage, resource_section)
 
-            sub_resource = Resource('my child site')
-            assert db.add_resource(resource.get_id(),
-                                   sub_resource,
+            child_page = Resource('my child site')
+            assert db.add_resource(homepage.get_id(),
+                                   child_page,
                                    resource_section)
-            assert sub_resource.get_id() >= 0
-            sub_resource.set_name('Child Page')
-            assert db.save_resource(sub_resource, resource_section)
-            assert db.delete_resource_from_id(sub_resource.get_id())
-            assert db.add_resource(resource.get_id(),
-                                   sub_resource,
+            assert child_page.get_id() >= 0
+            child_page.set_name('Child Page')
+            assert db.save_resource(child_page, resource_section)
+            assert db.delete_resource_from_id(child_page.get_id())
+            assert db.add_resource(homepage.get_id(),
+                                   child_page,
                                    resource_section)
 
-            children = db.get_resource_children_from_id(resource.get_id())
+            children = db.get_resource_children_from_id(homepage.get_id())
             assert children is not None
             assert len(children) == 1
-            children = db.get_resource_children(resource)
+            children = db.get_resource_children(homepage)
             assert children is not None
             assert len(children) == 1
 
-            parents = db.get_resource_parents_from_id(sub_resource.get_id())
+            parents = db.get_resource_parents_from_id(child_page.get_id())
             assert parents is not None
             assert len(parents) == 1
-            parents = db.get_resource_parents(sub_resource)
+            parents = db.get_resource_parents(child_page)
             assert parents is not None
             assert len(parents) == 1
 
@@ -831,9 +861,152 @@ if __name__ == '__main__':
                                    sub_resource,
                                    resource_section)
 
+            # ***********************************
+            # * ACL tests below.
+            # ***********************************
+            assert db.clear_database()
+
+            # Set up sections.
+            action_section  = ActionSection('user permissions')
+            user_section    = ResourceSection('Users')
+            content_section = ResourceSection('Content')
+            assert db.add_action_section(action_section)
+            assert db.add_resource_section(user_section)
+            assert db.add_resource_section(content_section)
+
+            # Set up actions.
+            view = Action('View Content')
+            assert db.add_action(view, action_section)
+            edit = Action('Edit Content')
+            assert db.add_action(edit, action_section)
+            delete = Action('Delete Content')
+            assert db.add_action(delete, action_section)
+
+            # Set up content.
+            homepage         = ResourceGroup('Homepage')
+            sub_page_1       = ResourceGroup('Sub Page 1')
+            sub_page_1_1     = ResourceGroup('Sub Page 1.1')
+            sub_page_1_1_1   = ResourceGroup('Sub Page 1.1.1')
+            sub_page_1_1_1_1 = ResourceGroup('Sub Page 1.1.1.1')
+            sub_page_1_2     = ResourceGroup('Sub Page 1.2')
+            sub_page_2       = ResourceGroup('Sub Page 2')
+            assert db.add_resource(None, homepage, content_section)
+            assert db.add_resource(homepage.get_id(),
+                                   sub_page_1,
+                                   content_section)
+            assert db.add_resource(sub_page_1.get_id(),
+                                   sub_page_1_1,
+                                   content_section)
+            assert db.add_resource(sub_page_1_1.get_id(),
+                                   sub_page_1_1_1,
+                                   content_section)
+            assert db.add_resource(sub_page_1_1.get_id(),
+                                   sub_page_1_1_1_1,
+                                   content_section)
+            assert db.add_resource(sub_page_1.get_id(),
+                                   sub_page_1_2,
+                                   content_section)
+            assert db.add_resource(homepage.get_id(),
+                                   sub_page_2,
+                                   content_section)
+
+            # Set up groups.
+            users  = ActorGroup('Users')
+            admins = ActorGroup('Amins')
+            assert db.add_resource(None, users,  resource_section)
+            assert db.add_resource(None, admins, resource_section)
+            
+            # Set up users.
+            user = Actor('Normal User')
+            assert db.add_resource(users.get_id(),  user,  resource_section)
+            anon = Actor('Anonymous User')
+            assert db.add_resource(users.get_id(),  anon,  resource_section)
+            admin = Actor('Administrator')
+            assert db.add_resource(admins.get_id(), admin, resource_section)
+            
+            # Set up ACLs.
+            db.grant(admins, [view, edit, delete], homepage)
+            db.grant(users,  view,                 homepage)
+            db.grant(user,   edit,                 sub_page_1)
+            db.deny(anon,    view,                 sub_page_1)
 
             # Test Acl.
-            #FIXME
+            assert db.has_permission(admin, view, homepage)
+            assert db.has_permission(admin, view, sub_page_1)
+            assert db.has_permission(admin, view, sub_page_1_1)
+            assert db.has_permission(admin, view, sub_page_1_1_1)
+            assert db.has_permission(admin, view, sub_page_1_1_1_1)
+            assert db.has_permission(admin, view, sub_page_1_2)
+            assert db.has_permission(admin, view, sub_page_2)
+
+            assert db.has_permission(admin, edit, homepage)
+            assert db.has_permission(admin, edit, sub_page_1)
+            assert db.has_permission(admin, edit, sub_page_1_1)
+            assert db.has_permission(admin, edit, sub_page_1_1_1)
+            assert db.has_permission(admin, edit, sub_page_1_1_1_1)
+            assert db.has_permission(admin, edit, sub_page_1_2)
+            assert db.has_permission(admin, edit, sub_page_2)
+
+            assert db.has_permission(admin, delete, homepage)
+            assert db.has_permission(admin, delete, sub_page_1)
+            assert db.has_permission(admin, delete, sub_page_1_1)
+            assert db.has_permission(admin, delete, sub_page_1_1_1)
+            assert db.has_permission(admin, delete, sub_page_1_1_1_1)
+            assert db.has_permission(admin, delete, sub_page_1_2)
+            assert db.has_permission(admin, delete, sub_page_2)
+
+            assert db.has_permission(user, view, homepage)
+            assert db.has_permission(user, view, sub_page_1)
+            assert db.has_permission(user, view, sub_page_1_1)
+            assert db.has_permission(user, view, sub_page_1_1_1)
+            assert db.has_permission(user, view, sub_page_1_1_1_1)
+            assert db.has_permission(user, view, sub_page_1_2)
+            assert db.has_permission(user, view, sub_page_2)
+
+            assert not db.has_permission(user, edit, homepage)
+            assert db.has_permission(user, edit, sub_page_1)
+            assert db.has_permission(user, edit, sub_page_1_1)
+            assert db.has_permission(user, edit, sub_page_1_1_1)
+            assert db.has_permission(user, edit, sub_page_1_1_1_1)
+            assert db.has_permission(user, edit, sub_page_1_2)
+            assert not db.has_permission(user, edit, sub_page_2)
+
+            assert not db.has_permission(user, delete, homepage)
+            assert not db.has_permission(user, delete, sub_page_1)
+            assert not db.has_permission(user, delete, sub_page_1_1)
+            assert not db.has_permission(user, delete, sub_page_1_1_1)
+            assert not db.has_permission(user, delete, sub_page_1_1_1_1)
+            assert not db.has_permission(user, delete, sub_page_1_2)
+            assert not db.has_permission(user, delete, sub_page_2)
+
+            assert db.has_permission(anon, view, homepage)
+            assert not db.has_permission(anon, view, sub_page_1)
+            assert not db.has_permission(anon, view, sub_page_1_1)
+            assert not db.has_permission(anon, view, sub_page_1_1_1)
+            assert not db.has_permission(anon, view, sub_page_1_1_1_1)
+            assert not db.has_permission(anon, view, sub_page_1_2)
+            assert db.has_permission(anon, view, sub_page_2)
+
+            assert not db.has_permission(anon, edit, homepage)
+            assert not db.has_permission(anon, edit, sub_page_1)
+            assert not db.has_permission(anon, edit, sub_page_1_1)
+            assert not db.has_permission(anon, edit, sub_page_1_1_1)
+            assert not db.has_permission(anon, edit, sub_page_1_1_1_1)
+            assert not db.has_permission(anon, edit, sub_page_1_2)
+            assert not db.has_permission(anon, edit, sub_page_2)
+
+            assert not db.has_permission(anon, delete, homepage)
+            assert not db.has_permission(anon, delete, sub_page_1)
+            assert not db.has_permission(anon, delete, sub_page_1_1)
+            assert not db.has_permission(anon, delete, sub_page_1_1_1)
+            assert not db.has_permission(anon, delete, sub_page_1_1_1_1)
+            assert not db.has_permission(anon, delete, sub_page_1_2)
+            assert not db.has_permission(anon, delete, sub_page_2)
+
+            perms = db.get_permission_list_from_id(admins.get_id(),
+                                                   sub_page_1_1_1.get_id())
+            #for acl in perms:
+            #    print 'Permission:', acl.get_action().get_name()
 
             # Clean up.
             assert db.clear_database()
