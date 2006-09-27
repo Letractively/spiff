@@ -14,7 +14,7 @@ class DB(DBReader):
         row = result.fetchone()
         if not row: return None
         length = len(row['path'])
-        path   = bin_path2hex_path(row['path']) #[0:length - 2]
+        path   = bin_path2hex_path(row['path'])
         return path
 
 
