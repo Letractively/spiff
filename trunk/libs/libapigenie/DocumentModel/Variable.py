@@ -27,9 +27,9 @@ class Variable:
         return self.type
 
 
-    def set_documentation(self, docs):
+    def set_docs(self, docs):
         self.docs = docs
 
 
-    def get_documentation(self):
+    def get_docs(self):
         return self.docs

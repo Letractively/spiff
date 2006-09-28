@@ -65,21 +65,21 @@ class ApiDB:
             mysql_engine='INNODB'
         ))
         self.__add_table(Table(pfx + 'argument', metadata,
-            Column('id',              Integer, primary_key = True),
-            Column('api_doc_id',      Integer),
-            Column('name',            String(100)),
-            Column('type',            String(100)),
-            Column('documentation',   TEXT),
+            Column('id',         Integer, primary_key = True),
+            Column('api_doc_id', Integer),
+            Column('name',       String(100)),
+            Column('type',       String(100)),
+            Column('docs',       TEXT),
             ForeignKeyConstraint(['api_doc_id'],
                                  ['api_doc.id'],
                                  ondelete = 'CASCADE'),
             mysql_engine='INNODB'
         ))
         self.__add_table(Table(pfx + 'return_value', metadata,
-            Column('id',              Integer, primary_key = True),
-            Column('api_doc_id',      Integer),
-            Column('type',            String(100)),
-            Column('documentation',   TEXT),
+            Column('id',         Integer, primary_key = True),
+            Column('api_doc_id', Integer),
+            Column('type',       String(100)),
+            Column('docs',       TEXT),
             ForeignKeyConstraint(['api_doc_id'],
                                  ['api_doc.id'],
                                  ondelete = 'CASCADE'),
@@ -251,6 +251,37 @@ class ApiDB:
                                 name    = chunk.get_name())
         assert result is not None
         chunk_id = result.last_inserted_ids()[0]
+
+        if chunk.get_type() == 'api_doc':
+            # Insert documentation, if any.
+            table  = self._table_map['api_doc']
+            insert = table.insert()
+            result = insert.execute(source_chunk_id = chunk_id,
+                                    documents_chunk_id = chunk_id, #FIXME
+                                    introduction    = chunk.get_introduction(),
+                                    description     = chunk.get_description())
+            assert result is not None
+            api_doc_id = result.last_inserted_ids()[0]
+
+            # Insert argument documentation, if any.
+            for arg in chunk.get_argument_list():
+                table  = self._table_map['argument']
+                insert = table.insert()
+                result = insert.execute(api_doc_id = api_doc_id,
+                                        name       = arg.get_name(),
+                                        type       = arg.get_type(),
+                                        docs       = arg.get_docs())
+                assert result is not None
+
+            # Insert return type documentation, if any.
+            return_var = chunk.get_return()
+            if return_var is not None:
+                table  = self._table_map['return_value']
+                insert = table.insert()
+                result = insert.execute(api_doc_id = api_doc_id,
+                                        type       = return_var.get_type(),
+                                        docs       = return_var.get_docs())
+                assert result is not None
 
         for child in chunk.get_child_list():
             self.add_chunk(chunk_id, child)

@@ -30,6 +30,9 @@ class ApiDoc(Chunk):
             return None
         return self.argument_map[name]
 
+    def get_argument_list(self):
+        return self.arguments
+
     def set_return(self, var):
         self.return_var = var
 
