@@ -1,72 +1,40 @@
 import sys
-sys.path.append('..')
 sys.path.append('../..')
-from DocumentModel import *
-from Plex          import *
+from Plex import *
 
 # Single char definitions.
-letter          = Range('AZaz')
-digit           = Range('09')
-opening_bracket = Str('(')
-closing_bracket = Str(')')
-colon           = Str(':')
-spaces          = Any(" \t\r\n")
-operators       = Any('+-*/=<>')
-lineterm        = Str("\n") | Eof
-escaped_newline = Str('\n')
+letter    = Range('AZaz')
+digit     = Range('09')
+spaces    = Any(" \t\r\n")
+nl        = Str("\n") | Eof
+not_nl    = AnyBut("\r\n")
+o_bracket = Str('(')
+c_bracket = Str(')')
+colon     = Str(':')
 
 # Single word definitions.
-number          = Rep1(digit)
-name            = letter + Rep(letter | digit)
-variable        = Rep1(letter | Str('_')) + Rep(letter | digit | Any('_.'))
-function_name   = variable
-indentation     = Rep(Str(' ')) | Rep(Str("\t"))
-multi_comment   = Str('"""') | Str("'''")
-
-# API doc parser.
-api_text        = Rep1(Rep(spaces)          \
-                     + Rep(indentation)     \
-                     + AnyBut('@ \t\r\n')   \
-                     + Rep(AnyBut('"\r\n')) \
-                     + Eol)
-api_arg_type    = Str('@type')        \
-                + Rep(spaces)         \
-                + variable            \
-                + Rep(spaces)         \
-                + colon               \
-                + api_text
-api_arg_param   = Str('@param')       \
-                + Rep(spaces)         \
-                + variable            \
-                + Rep(spaces)         \
-                + colon               \
-                + api_text
-api_rtype       = Str('@rtype')       \
-                + Rep(spaces)         \
-                + colon               \
-                + api_text
-api_rvalue      = Str('@return')      \
-                + Rep(spaces)         \
-                + colon               \
-                + api_text
+name        = letter + Rep(letter | digit)
+indentation = Rep(Str(' ')) | Rep(Str("\t"))
+variable    = Rep1(letter | Str('_')) + Rep(letter | digit | Any('_.'))
+func_name   = variable
+module      = variable + Rep(Str('.') + variable)
 
 # Function/Method definition related.
-arg_separator   = Opt(spaces) + Str(',') + Opt(spaces)
+arg_separator   = Rep(spaces) + Str(',') + Rep(spaces)
 arg_list        = Opt(variable + Rep(arg_separator + variable))
-arg_braces      = opening_bracket     \
+arg_braces      = o_bracket           \
                 + Rep(spaces)         \
                 + arg_list            \
                 + Rep(spaces)         \
-                + closing_bracket
+                + c_bracket
 functions       = Str('def')          \
-                + Rep(spaces)         \
-                + function_name       \
+                + Rep1(spaces)        \
+                + func_name           \
                 + Rep(spaces)         \
                 + arg_braces          \
                 + colon
 
 # Class definition related.
-inherit_list    = arg_list
 inherit_braces  = arg_braces
 classes         = Str('class')        \
                 + Rep(spaces)         \
@@ -75,112 +43,154 @@ classes         = Str('class')        \
                 + Opt(inherit_braces) \
                 + colon
 
-# Other stuff.
-comment         = Str('#') + Rep(AnyBut("\n"))
-resword         = Str('if', 'then', 'else', 'end', 'return')
-blank_line      = indentation + Opt(comment) + lineterm
+# Keywords.
+kw_import      = Str('import') + Rep1(spaces) + module
+kw_from_import = Str('from')          \
+               + Rep1(spaces)         \
+               + module               \
+               + Rep1(spaces)         \
+               + Str('import')        \
+               + Rep1(spaces)         \
+               + (name | Str('*'))
+kw_return      = Str('return') + Rep1(spaces) + Rep1(not_nl)
 
+# Other definitions.
+line                = Rep(not_nl) + nl
+blank_line          = indentation + nl
+comment             = Str('#') + Rep(not_nl)
+multi_comment_delim = Str('"""') | Str("'''")
 
 class Parser(Scanner):
     def __init__(self, file, filename):
         Scanner.__init__(self, self.lexicon, file, filename)
+        self.my_buffer             = ''
         self.indentation_stack     = [0]
         self.bracket_nesting_level = 0
         self.begin('indent')
 
-    def open_bracket_action(self, text):
-        self.bracket_nesting_level = self.bracket_nesting_level + 1
-        return text
+    def _buffer_flush(self):
+        indent = self._get_current_indent_level()
+        #print "_buffer_flush (%i): '%s'" % (indent, self.my_buffer)
+        if self.my_buffer != '':
+            self.produce('text', self.my_buffer)
+            self.my_buffer = ''
 
-    def close_bracket_action(self, text):
-        self.bracket_nesting_level = self.bracket_nesting_level - 1
-        return text
-
-    def open_multi_comment(self, text):
-        if self.bracket_nesting_level == 0:
-            self.begin('multi_comment')
-            return 'multi_comment'
-
-    def close_multi_comment(self, text):
-        self.begin('')
-        return 'multi_comment'
-
-    def current_level(self):
-        return self.indentation_stack[-1]
-
-    def newline_action(self, text):
+    def _newline_action(self, text):
+        #print '_newline_action'
+        self._buffer_flush()
+        self.produce('newline', text)
         if self.bracket_nesting_level == 0:
             self.begin('indent')
-            return 'newline'
 
-    def indentation_action(self, text):
-        current_level = self.current_level()
-        new_level = len(text)
+    def _indentation_action(self, text):
+        #print '_indentation_action'
+        self.my_buffer += text
+        self._buffer_flush()
+        current_level = self._get_current_indent_level()
+        new_level     = len(text)
         if new_level > current_level:
-            self.indent_to(new_level)
+            self._indent_to(new_level)
         elif new_level < current_level:
-            self.dedent_to(new_level)
-        self.produce('indent', text)
+            self._dedent_to(new_level)
         self.begin('')
 
-    def indent_to(self, new_level):
+    def _indent_to(self, new_level):
         self.indentation_stack.append(new_level)
-        self.produce('INDENT_ACTION', '')
 
-    def dedent_to(self, new_level):
-        while new_level < self.current_level():
+    def _dedent_to(self, new_level):
+        while new_level < self._get_current_indent_level():
             self.indentation_stack.pop()
             self.produce('DEDENT_ACTION', '')
 
+    def _get_current_indent_level(self):
+        return self.indentation_stack[-1]
+
+    def _open_multi_line_comment(self, text):
+        #print '_open_multi_line_comment'
+        self._buffer_flush()
+        self.produce('documentation_delimiter', text)
+        self.begin('multi_comment')
+
+    def _close_multi_line_comment(self, text):
+        #print '_close_multi_line_comment'
+        self.produce('multi_line_comment', self.my_buffer)
+        self.my_buffer = ''
+        self.produce('documentation_delimiter', text)
+        self.begin('')
+
+    def _open_bracket_action(self, text):
+        #print '_open_bracket_action'
+        self.my_buffer += text
+        self.bracket_nesting_level = self.bracket_nesting_level + 1
+
+    def _close_bracket_action(self, text):
+        #print '_close_bracket_action'
+        self.my_buffer += text
+        self.bracket_nesting_level = self.bracket_nesting_level - 1
+
+    def _text(self, text):
+        #print "Char:", text
+        self.my_buffer += text
+
     def eof(self):
-        self.dedent_to(0)
+        self._dedent_to(0)
+        pass
 
     lexicon = Lexicon([
-        # Words.
-        (classes,         'class'),
-        (functions,       'function'),
-
-        # Braces, dots, operators.
-        (opening_bracket, open_bracket_action),
-        (closing_bracket, close_bracket_action),
-
-        # Comments.
-        (comment,         'comment'),
-        (multi_comment,   open_multi_comment),
-        State('multi_comment', [
-            (multi_comment,   close_multi_comment),
-            (api_arg_type,    'arg_type'),
-            (api_arg_param,   'arg_param'),
-            (api_rtype,       'return_type'),
-            (api_rvalue,      'return_value'),
-            (api_text,        'comment_text'),
-            (AnyChar,         'line')
-        ]),
-
-        # Whitespace / control characters.
-        (lineterm,        newline_action),
+        # Handle whitespace and indentation.
+        (nl, _newline_action),
         State('indent', [
-            (blank_line,  'line'),
-            (indentation, indentation_action),
+            (blank_line,  _text),
+            (indentation, _indentation_action)
         ]),
-        (Eof,                'eof'),
-        (AnyChar,            'line'),
+        
+        (multi_comment_delim, _open_multi_line_comment),
+        State('multi_comment', [
+            (multi_comment_delim, _close_multi_line_comment),
+            (AnyChar,             _text)
+        ]),
+
+        # Brackets.
+        (o_bracket, _open_bracket_action),
+        (c_bracket, _close_bracket_action),
+
+        # Keywords.
+        (kw_import,      'import'),
+        (kw_from_import, 'from_import'),
+        (kw_return,      'return'),
+        (classes,        'class'),
+        (functions,      'function'),
+
+        # Other.
+        (comment,       'comment'),
+        (AnyChar,       _text),
     ])
 
 
 if __name__ == '__main__':
     import unittest
-    from libuseful_python.string import wrap
 
     class ParserTest(unittest.TestCase):
         def runTest(self):
+            # Read the entire file into one string.
             filename  = 'testfile.py'
             infile    = open(filename, "r")
-            scanner   = Parser(infile, filename)
+            in_text   = infile.read()
+            infile.close()
+
+            # Re-open and parse the entire file.
+            infile  = open(filename, "r")
+            scanner = Parser(infile, filename)
+            content = ''
             while True:
                 token    = scanner.read()
                 position = scanner.position()
                 if token[0] is None: break
+                #print "Token type: %s, Token: '%s'" % (token[0], token[1])
+                content += token[1]
+
+            # Make sure that every single string was extracted.
+            assert content == in_text
 
     testcase = ParserTest()
     runner   = unittest.TextTestRunner()

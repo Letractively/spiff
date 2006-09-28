@@ -1,6 +1,5 @@
-from Container import Container
+from Chunk import Chunk
 
-class File(Container):
+class File(Chunk):
     def __init__(self, name):
-        Container.__init__(self, '')
-        self.name = name
+        Chunk.__init__(self, 'file', '', name)

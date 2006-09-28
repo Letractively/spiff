@@ -1,10 +1,9 @@
-from Documentable import Documentable
-
-class Variable(Documentable):
+class Variable:
     def __init__(self, name, type = None):
         self.id   = -1
         self.name = name
         self.type = type
+        self.docs = ''
 
 
     def set_id(self, id):
@@ -26,3 +25,11 @@ class Variable(Documentable):
 
     def get_type(self):
         return self.type
+
+
+    def set_documentation(self, docs):
+        self.docs = docs
+
+
+    def get_documentation(self):
+        return self.docs
