@@ -1,147 +1,85 @@
-from Parser import *
-from libuseful_python.string import wrap
-import re
+import sys
+sys.path.append('..')
+from DocumentModel import Chunk
+from Parser        import Parser
+from my_string     import *
+import PyDocString
+import StringIO
 
 class Reader:
     def __init__(self):
         self.debug     = 0
         self.stack     = []
-        self.collector = ''
 
 
-    def __cleanup_whitespace(self, text):
-        regexp = re.compile('[ \t]+')
-        text   = regexp.sub(' ', text.strip())
-        return text
+    def _add_class(self, token):
+        token_text = cleanup_whitespace(token[1])
+        class_def  = token_text[6:]
+        class_name = class_def[0:-1]
+        my_class   = Chunk(token[0], token[1], class_name)
+        self.stack[-1].add_child(my_class)
+        self.stack.append(my_class)
+        if self.debug > 0:
+            print '** Class:', class_name, '**'
 
+    def _add_function(self, token):
+        token_text = cleanup_whitespace(token[1])
+        func_def   = token_text[4:]
+        words      = func_def.split('(')
+        func_name  = words.pop(0)
+        arg_string = ''.join(words)[0:-1]
+        func       = Chunk(token[0], token[1], func_name)
+        self.stack[-1].add_child(func)
+        self.stack.append(func)
+        if self.debug > 0:
+            print 'Function:', func_name
 
-    def __cleanup_linebreaks(self, text):
-        regexp = re.compile('(\S[^\n]*)\n')
-        text   = regexp.sub('\\1', text)
-        regexp = re.compile('[\r\n]\s+')
-        text   = regexp.sub('\n', text)
-        text   = text.replace('\n', '\n\n')
-        return text
+    def _add_documentation(self, token):
+        text   = StringIO.StringIO(token[1])
+        parser = PyDocString.Parser(text, '')
+        while True:
+            token = parser.read()
+            if token[0] is None: break
+            assert False # Parser should not produce anything.
+        chunk = parser.apidoc
+        text.close()
+        self.stack[-1].add_child(chunk)
+        if self.debug > 0:
+            print 'Documentation:'
+            text = wrap(token[1], 50)
+            for line in text.split("\n"):
+                print ' ', line
 
-
-    def __collector_flush(self):
-        #print "Flushing: >>", self.collector, "<<"
-        self.stack[-1].add_child(Chunk(self.collector))
-        self.collector = ''
-
-
-    def store_token(self, token):
+    def _add_chunk(self, token):
         if self.debug > 2:
             print 'Token(%s): %s' % (token[0], token[1])
 
         if token[0] is 'class':
-            self.__collector_flush()
-            token_text = self.__cleanup_whitespace(token[1])
-            class_def  = token_text[4:]
-            class_name = class_def[0:-1]
-            my_class   = Class(token[1], class_name)
-            self.stack[-1].add_child(my_class)
-            self.stack.append(my_class)
-            if self.debug > 0:
-                print
-                print '********** Class:', class_name, '**********'
+            self._add_class(token)
         elif token[0] is 'function':
-            self.__collector_flush()
-            token_text = self.__cleanup_whitespace(token[1])
-            words      = token_text.split(' ')
-            words.pop(0)
-            func_name  = words.pop(0)
-            arg_string = ''.join(words)
-            func       = Function(token[1], func_name)
-            self.stack[-1].add_child(func)
-            self.stack.append(func)
-            if self.debug > 0:
-                print '--------------'
-                print 'Function:', token[1]
-        elif token[0] is 'INDENT_ACTION':
-            if self.debug > 0:
-                print 'Indenting'
+            self._add_function(token)
         elif token[0] is 'DEDENT_ACTION':
-            if self.debug > 0:
-                print 'Dedenting'
-            self.__collector_flush()
             self.stack.pop()
-        elif token[0] is 'comment_text':
-            self.collector += token[1]
-            if self.debug > 0:
-                print 'Comment:'
-                text = wrap(token[1], 50)
-                for line in text.split("\n"):
-                    print ' ', line
-        elif token[0] is 'arg_type':
-            self.collector += token[1]
-            arg_string = self.__cleanup_whitespace(token[1])
-            words      = arg_string.split(' ')
-            name       = words[1][0:-1]
-            type       = ''.join([s for s in arg_string.split(':')[1:]])
-            if self.stack[-1].has_arg(name):
-                self.stack[-1].get_arg(name).set_type(type)
-            else:
-                arg = Variable(name, type)
-                self.stack[-1].add_arg(arg)
-            if self.debug > 1:
-                print 'Argument name:', name, 'Type:', type
-        elif token[0] is 'arg_param':
-            self.collector += token[1]
-            arg_string = self.__cleanup_whitespace(token[1])
-            words      = arg_string.split(' ')
-            name       = words[1][0:-1]
-            docs       = ''.join([s for s in arg_string.split(':')[1:]])
-            if not self.stack[-1].has_arg(name):
-                arg = Variable(name)
-                self.stack[-1].add_arg(arg)
-            self.stack[-1].get_arg(name).set_docs(docs)
-            if self.debug > 1:
-                print 'Argument name:', name, 'Docs:', docs
-        elif token[0] is 'return_type':
-            self.collector += token[1]
-            ret_string = self.__cleanup_whitespace(token[1])
-            type       = ''.join([s for s in ret_string.split(':')[1:]])
-            ret        = self.stack[-1].get_return()
-            if ret:
-                ret.set_type(type)
-            else:
-                ret = Variable('return_value', type)
-                self.stack[-1].set_return(ret)
-            if self.debug > 1:
-                print 'Return type:', token[1]
-        elif token[0] is 'return_value':
-            self.collector += token[1]
-            ret_string = self.__cleanup_whitespace(token[1])
-            docs       = ''.join([s for s in ret_string.split(':')[1:]])
-            ret        = self.stack[-1].get_return()
-            if not ret:
-                ret = Variable('return_value')
-                self.stack[-1].set_return(ret)
-            ret.set_docs(docs)
-            if self.debug > 1:
-                print 'Return value explanation:', token[1]
-        elif token[0] is 'eof':
-            self.__collector_flush()
+        elif token[0] is 'multi_line_comment' \
+             and self.stack[-1].get_n_children('documentation') == 0:
+            self._add_documentation(token)
         else:
-            # Default is to grab the text into a string chunk.
-            if self.debug > 1:
-                print 'Text Token(%s): "%s"' % (token[0], token[1])
-            self.collector += token[1]
+            chunk = Chunk(token[0], token[1], '')
+            self.stack[-1].add_child(chunk)
 
 
     def read(self, filename):
-        infile    = open(filename, 'r')
-        parser    = Parser(infile, filename)
-        self.file = File(filename)
-        self.stack.append(self.file)
+        infile = open(filename, 'r')
+        parser = Parser(infile, filename)
+        file   = Chunk('file', '', filename)
+        self.stack.append(file)
         while True:
             token    = parser.read()
             position = parser.position()
             if token[0] is None: break
-            self.store_token(token)
-        #print self.file.get_string(),
-        return True
+            self._add_chunk(token)
+        infile.close()
+        return file
 
 
 if __name__ == '__main__':
@@ -149,17 +87,18 @@ if __name__ == '__main__':
 
     class ReaderTest(unittest.TestCase):
         def runTest(self):
-            # Read the entire file into one string
+            # Read the entire file into one string.
             filename = 'testfile.py'
             infile   = open(filename, 'r')
             in_str   = infile.read()
             infile.close()
 
             # Parse the file.
-            reader   = Reader()
-            reader.read(filename)
+            reader = Reader()
+            file   = reader.read(filename)
             
-            out_str = reader.file.get_string()
+            # Make sure that the model is complete.
+            out_str = file.get_data()
             assert len(out_str) > 10
             assert out_str == in_str
 

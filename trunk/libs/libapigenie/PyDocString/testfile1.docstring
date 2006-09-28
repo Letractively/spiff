@@ -1,0 +1,14 @@
+    Test of a constructor API description. This description might span
+    over multiple lines.
+
+    It also might not. Or it might use @variable names.
+
+    @type  blah: SomeObject
+    @param blah: Whatever it may be.
+    @type  blah2: AnotherObject
+    @param blah2: An object with a description.
+    @type  blah3: AnotherObject2
+    @param blah3: An object 2 with a description that is a little longer
+                  than just one line.
+    @rtype:  Boolean
+    @return: True if the action existed, False otherwise.

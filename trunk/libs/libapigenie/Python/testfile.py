@@ -1,6 +1,10 @@
-return
+import sys
+sys.exit()
 # Testfile for the Python parser.
 import me
+import me.maybe.someday
+from me import something
+from some_module import *
 
 # A comment.
 
@@ -30,7 +34,10 @@ class TestClass:
         return False
 
 class SecondClass(TestClass):
-    def do_something1(self, var_a, var_b, var_c):
+    def do_something1(self,
+                      var_a,
+                      var_b,
+                      var_c):
         """
         Comment 1, simple, single line.
         """
