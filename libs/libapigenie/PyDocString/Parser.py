@@ -82,7 +82,7 @@ class Parser(Scanner):
         if not arg:
             arg = Variable(arg_name, '')
             self.apidoc.add_argument(arg)
-        arg.set_documentation(arg_param)
+        arg.set_docs(arg_param)
 
     def _return_type(self, text):
         #print "_return_type:", text
@@ -103,7 +103,7 @@ class Parser(Scanner):
         if not return_var:
             return_var = Variable('return', '')
             self.apidoc.set_return(return_var)
-        return_var.set_documentation(return_param)
+        return_var.set_docs(return_param)
 
     def _indent(self, text):
         #print "_indent: '%s'" % text
