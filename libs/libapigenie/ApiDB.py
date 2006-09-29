@@ -224,15 +224,15 @@ class ApiDB:
         return True
 
 
-    def add_chunk(self, parent_id, chunk):
+    def add(self, parent_id, chunk):
         """
-        Adds the given source chunk into the database.
+        Adds the given chunk into the database.
 
         @type  parent_id: int
         @param parent_id: The id of the chunk under which the new
                           chunk is added.
         @type  chunk: Chunk
-        @param chunk: The chunk that is deleted.
+        @param chunk: The chunk that is to be added.
         @rtype:  Boolean
         @return: True on success, False otherwise.
         """
@@ -284,7 +284,7 @@ class ApiDB:
                 assert result is not None
 
         for child in chunk.get_child_list():
-            self.add_chunk(chunk_id, child)
+            self.add(chunk_id, child)
 
         transaction.commit()
         connection.close()
@@ -292,7 +292,7 @@ class ApiDB:
         return True
 
 
-    def get_chunk_from_id(self, id):
+    def get_from_id(self, id):
         """
         Returns the chunk with the given id from the database, including
         all of it's children.
@@ -355,7 +355,7 @@ class ApiDB:
         return chunk
 
 
-    def remove_chunk_from_id(self, id):
+    def remove_from_id(self, id):
         """
         Removes the chunk with the given id from the database.
 
@@ -369,7 +369,7 @@ class ApiDB:
         return self.__remove_node_from_id(node_id)
 
 
-    def remove_chunk(self, chunk):
+    def remove(self, chunk):
         """
         Removes the given chunk from the database.
 
@@ -378,7 +378,7 @@ class ApiDB:
         @rtype:  Boolean
         @return: True on success, False otherwise.
         """
-        return self.remove_chunk_from_id(chunk.get_id())
+        return self.remove_from_id(chunk.get_id())
 
 
 if __name__ == '__main__':
@@ -396,29 +396,29 @@ if __name__ == '__main__':
 
             # Directories.
             dir = Directory('/')
-            assert db.add_chunk(None, dir)
-            assert db.remove_chunk(dir)
-            assert db.add_chunk(None, dir)
-            dir2 = db.get_chunk_from_id(dir.get_id())
+            assert db.add(None, dir)
+            assert db.remove(dir)
+            assert db.add(None, dir)
+            dir2 = db.get_from_id(dir.get_id())
             assert dir.get_name() == dir2.get_name()
 
             subdir = Directory('mysubdir')
-            assert db.add_chunk(dir.get_id(), subdir)
-            assert db.remove_chunk(subdir)
-            assert db.add_chunk(dir.get_id(), subdir)
-            subdir2 = db.get_chunk_from_id(subdir.get_id())
+            assert db.add(dir.get_id(), subdir)
+            assert db.remove(subdir)
+            assert db.add(dir.get_id(), subdir)
+            subdir2 = db.get_from_id(subdir.get_id())
             assert subdir.get_name() == subdir2.get_name()
             
             # Files.
             file = File('lala.py')
-            assert db.add_chunk(dir.get_id(), file)
-            assert db.remove_chunk(file)
-            assert db.add_chunk(dir.get_id(), file)
-            file2 = db.get_chunk_from_id(file.get_id())
+            assert db.add(dir.get_id(), file)
+            assert db.remove(file)
+            assert db.add(dir.get_id(), file)
+            file2 = db.get_from_id(file.get_id())
 
             # Chunks.
             chunk = Chunk('text', 'whatever.this = maybe')
-            assert db.add_chunk(file.get_id(), chunk)
+            assert db.add(file.get_id(), chunk)
 
             # Read an entire file into one string.
             filename = 'Python/testfile.py'
@@ -432,11 +432,11 @@ if __name__ == '__main__':
             chunk  = reader.read(filename)
             assert chunk is not None
             assert chunk.get_data() == in_str
-            assert db.add_chunk(None, chunk)
+            assert db.add(None, chunk)
             
             # Check whether the data is still complete if we load it from
             # the database.
-            chunk = db.get_chunk_from_id(chunk.get_id())
+            chunk = db.get_from_id(chunk.get_id())
             assert chunk.get_data() == in_str
 
             # Clean up.
