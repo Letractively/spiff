@@ -18,7 +18,7 @@ class TestClass:
     """
     def __init__(self, blah):
         """
-        Test of a constructor API description. This Description might span
+        Test of a constructor API description. This description might span
         over multiple lines.
 
         It also might not. Or it might use @variable names.

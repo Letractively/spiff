@@ -26,16 +26,21 @@ class Chunk:
         return self.type
 
 
-    def get_data(self):
+    def get_data(self, recursive = True):
         """
-        Returns the complete chunk (including all children) in one string.
+        Returns the complete chunk (including all children, if recursive is
+        True) in one string.
         
         @rtype:  string
         @return: The contents of the file.
         """
+        if not recursive:
+            return self.data
         complete = self.data
+        #print "%s START: '%s'" % (self.get_type(), complete)
         for child in self.children:
             complete += child.get_data()
+        #print "%s END: '%s'" % (self.get_type(), complete)
         return complete
 
 
@@ -66,9 +71,9 @@ class Chunk:
         return child
 
 
-    def get_child(self, type, name):
+    def get_child(self, type, name = ''):
         """
-        Returns the child with the given type and name.
+        Returns the first child with the given type and name.
         
         @type  type: string
         @param type: The type of the child that this function returns.
