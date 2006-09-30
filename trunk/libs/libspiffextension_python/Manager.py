@@ -14,6 +14,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 from Callback import *
 from DB       import *
+from tempfile import *
 
 class Manager:
     __no_such_file_error,     \
@@ -36,7 +37,7 @@ class Manager:
     def __install_directory(self, dirname):
         assert os.path.is_dir(dirname)
         prefix = os.path.basename(dirname)
-        target = make_tmp_dir(dirname, prefix)
+        target = mkdtemp('', prefix, dirname)
         if not target: return None
         os.path.copy(dirname, target)
         return target
@@ -46,7 +47,7 @@ class Manager:
         assert os.path.is_file(filename)
         dirname = os.path.dirname(filename)
         prefix  = os.path.basename(filename).sub('.')
-        target  = make_tmp_dir(dirname, prefix)
+        target  = mkdtemp('', prefix, dirname)
         if not unzip(filename, target):
             return None
         return target

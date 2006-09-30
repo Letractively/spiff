@@ -24,21 +24,37 @@ def descriptor_is_valid(descriptor):
     return regexp.match(descriptor)
 
 
-def version_is_greater(version1, version2):
-    #FIXME
-    pass
+def version_is_greater(version_a, version_b):
+    assert version_a is not None
+    assert version_b is not None
+    numbers_a = version_a.split('.')
+    numbers_b = version_b.split('.')
+    len_a     = len(numbers_a)
+    len_b     = len(numbers_b)
+    if len_a > len_b:
+        len_ab = len_a
+    else:
+        len_ab = len_b
 
-
-def make_temp_dir(dirname, prefix):
-    #FIXME
-    pass
+    for i in range(len_ab):
+        if i >= len_a:
+            numbers_a.append(0)
+        if i >= len_b:
+            numbers_b.append(0)
+        if int(numbers_a[i]) > int(numbers_b[i]):
+            return True
+        if int(numbers_a[i]) < int(numbers_b[i]):
+            return False
+    if len_a > len_b:
+        return True
+    return False
 
 
 if __name__ == '__main__':
     import unittest
 
     class FunctionTest(unittest.TestCase):
-        def runTest(self):
+        def descriptor_is_valid_test(self):
             valid = [ 'spiff',
                       'spiff1',
                       'spiff=1',
@@ -66,6 +82,33 @@ if __name__ == '__main__':
             for descriptor in invalid:
                 #print 'Testing', descriptor
                 assert not descriptor_is_valid(descriptor)
+
+        def version_is_greater_test(self):
+            versions = [
+                '1',
+                '1.0',
+                '1.0.0',
+                '1.0.3.1',
+                '2',
+                '2.10.3',
+                '2.12.2',
+                '12.34.56' ]
+            for a in range(len(versions)):
+                for b in range(len(versions)):
+                    #print "Testing", versions[a], "against", versions[b]
+                    if a == b:
+                        assert not version_is_greater(versions[a], versions[b])
+                        assert not version_is_greater(versions[b], versions[a])
+                    if a > b:
+                        assert version_is_greater(versions[a], versions[b])
+                        assert not version_is_greater(versions[b], versions[a])
+                    if b > a:
+                        assert not version_is_greater(versions[a], versions[b])
+                        assert version_is_greater(versions[b], versions[a])
+
+        def runTest(self):
+            self.descriptor_is_valid_test()
+            self.version_is_greater_test()
 
     testcase = FunctionTest()
     runner   = unittest.TextTestRunner()
