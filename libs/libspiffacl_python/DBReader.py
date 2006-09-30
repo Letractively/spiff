@@ -142,6 +142,7 @@ class DBReader:
 
     def set_table_prefix(self, prefix):
         self._table_prefix = prefix
+        self.__update_table_names()
 
 
     def __get_action_from_query(self, query):

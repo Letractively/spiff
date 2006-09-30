@@ -12,23 +12,74 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+import sys
+sys.path.append('..')
+from sqlalchemy import *
+
 class DB:
     def __init__(self, acldb, section_handle):
-        self.__acldb        = acldb
-        self.__db           = acldb.db
-        self.__table_prefix = ''
-        self.__acl_section  = libspiffacl_python.ActionSection(section_handle)
+        self.db            = acldb.db
+        self._acldb        = acldb
+        self._table_prefix = ''
+        self._table_map    = {}
+        self._table_list   = []
+        self._acl_section  = libspiffacl_python.ActionSection(section_handle)
         self.__update_table_names()
 
 
+    def __add_table(self, table):
+        self._table_list.append(table)
+        self._table_map[table.name] = table
+
+
     def __update_table_names(self):
-        pfx = self.__table_prefix
-        table_name = pfx + 'extension_dependency'
-        self.__table_names['t_extension_dependency'] = table_name
-        table_name = pfx + 'extension_dependency_map'
-        self.__table_names['t_extension_dependency_map'] = table_name
-        table_name = pfx + 'extension_callback'
-        self.__table_names['t_extension_callback'] = table_name
+        metadata = BoundMetaData(self.db)
+        pfx = self._table_prefix
+        self.__add_table(Table(pfx + 'extension_dependency', metadata,
+            Column('id',                  Integer,    primary_key = True),
+            Column('extension_id',        Integer),
+            Column('dependency_handle',   String(20), index = True),
+            Column('dependency_operator', String(3),  index = True),
+            Column('dependency_version',  String(20), index = True),
+            #FIXME: Request the name of the destination table from self._acldb.
+            ForeignKeyConstraint(['extension_id'],
+                                 ['resource.id'],
+                                 ondelete = 'CASCADE'),
+            mysql_engine='INNODB'
+        ))
+        self.__add_table(Table(pfx + 'extension_dependency_map', metadata,
+            Column('extension_id',  Integer),
+            Column('dependency_id', Integer),
+            #FIXME: Request the name of the destination table from self._acldb.
+            ForeignKeyConstraint(['extension_id'],
+                                 ['resource.id'],
+                                 ondelete = 'CASCADE'),
+            #FIXME: Request the name of the destination table from self._acldb.
+            ForeignKeyConstraint(['dependency_id'],
+                                 ['resource.id'],
+                                 ondelete = 'CASCADE'),
+            mysql_engine='INNODB'
+        ))
+        self.__add_table(Table(pfx + 'extension_callback', metadata,
+            Column('id',           Integer,     primary_key = True),
+            Column('extension_id', Integer),
+            Column('name',         String(200)),
+            Column('event_uri',    String(255), index = True),
+            #FIXME: Request the name of the destination table from self._acldb.
+            ForeignKeyConstraint(['extension_id'],
+                                 ['resource.id'],
+                                 ondelete = 'CASCADE'),
+            mysql_engine='INNODB'
+        ))
+
+
+    def debug(self, debug = True):
+        self.db.debug = debug
+
+
+    def set_table_prefix(self, prefix):
+        self._table_prefix = prefix
+        self.__update_table_names()
 
 
     def install(self):
@@ -38,7 +89,8 @@ class DB:
         @rtype:  Boolean
         @return: True on success, False otherwise.
         """
-        #FIXME
+        for table in self._table_list:
+            table.create(checkfirst = True)
         return True
 
 
@@ -49,7 +101,8 @@ class DB:
         @rtype:  Boolean
         @return: True on success, False otherwise.
         """
-        #FIXME
+        for table in self._table_list[::-1]:
+            table.drop(checkfirst = True)
         return True
 
 
@@ -61,42 +114,52 @@ class DB:
         @rtype:  Boolean
         @return: True on success, False otherwise.
         """
-        return self.acldb.clear_section(self.__acl_section)
-
-
-    def debug(self, debug = True):
-        self.__db.debug = debug
-
-
-    def set_table_prefix(self, prefix):
-        self.__table_prefix = prefix
-        self.__update_table_names()
+        return self.acldb.clear_section(self._acl_section)
 
 
     def __has_dependency_link_from_id(self, extension_id, dependency_id):
         assert extension_id  >= 0
         assert dependency_id >= 0
+        table  = self._table_map['extension_dependency_map']
+        query  = select([table.c.extension_id],
+                        and_(table.c.extension_id  == extension_id,
+                             table.c.dependency_id == dependency_id),
+                        from_obj = [table])
+        result = query.execute()
+        assert result is not None
+        row = result.fetchone()
+        if not row: return False
+        return True
 
     
     def __add_dependency_link_from_id(self, extension_id, dependency_id):
         assert extension_id  >= 0
         assert dependency_id >= 0
+        table  = self._table_map['extension_dependency_map']
+        query  = table.insert()
+        result = query.execute(extension_id  = extension_id,
+                               dependency_id = dependency_id)
+        assert result is not None
 
 
     def __get_dependency_id_list_from_id(self, extension_id):
         assert extension_id >= 0
+        #FIXME
 
 
     def __get_dependency_id_list(self, extension):
         assert extension is not None
+        return self.__get_dependency_id_list_from_id(extension.get_id())
 
 
     def __get_dependency_list_from_id(self, extension_id):
         assert extension_id >= 0
+        #FIXME
 
 
     def __get_dependency_list(self, extension):
         assert extension is not None
+        return self.__get_dependency_list_from_id(extension.get_id())
 
 
     def check_dependencies(self, extension):
@@ -262,18 +325,13 @@ class DB:
         assert extension_id >= 0
         assert callback is not None
         
-        query = SqlQuery(self.__table_names, '''
-            INSERT INTO {t_extension_callback}
-              (extension_id, context, name)
-            VALUES
-              ({extension_id}, {context}, {name})''')
-        query.set_int('extension_id', extension_id)
-        query.set_string('context',   context)
-        query.set_string('name',      name)
-        result = self.__db.execute(query.sql)
+        table  = self._table_map['extension_callback']
+        query  = table.insert()
+        result = query.execute(extension_id  = extension_id,
+                               callback_name = callback.get_name(),
+                               event_uri     = callback.get_event_uri())
         assert result is not None
-
-        return self.__db.last_insert_id
+        return self._db.last_insert_id
 
 
     def get_extension_id_list_from_callback(self, callback):
@@ -288,17 +346,55 @@ class DB:
         """
         assert callback is not None
         
-        query = SqlQuery(self.__table_names, '''
-            SELECT id
-            FROM {t_extension_callback}
-            WHERE context={context}
-            AND   name={name}''')
-        query.set_string('context',   context)
-        query.set_string('name',      name)
-        result = self.__db.execute(query.sql)
+        table  = self._table_map['extension_callback']
+        query  = select([table.c.extension_id],
+                        and_(table.c.name      == callback.get_name(),
+                             table.c.event_uri == callback.get_event_uri()),
+                        from_obj = [table])
+        result = query.execute()
         assert result is not None
 
         extension_id_list = []
         for row in result:
-            extension_id_list.append(row['id'])
+            extension_id_list.append(row[table.c.extension_id])
         return extension_id_list
+
+
+if __name__ == '__main__':
+    import unittest
+    import MySQLdb
+    from ConfigParser import RawConfigParser
+
+    class ExtensionDBTest(unittest.TestCase):
+        def test_with_db(self, db):
+            assert db is not None
+            #FIXME
+            #acldb = libspiffacl_python.DB(db)
+            #extdb = DB(acldb)
+            #assert db.uninstall()
+            #assert db.install()
+
+            # Clean up.
+            #assert db.clear_database()
+            #assert db.uninstall()
+
+
+        def runTest(self):
+            # Read config.
+            cfg = RawConfigParser()
+            cfg.read('unit_test.cfg')
+            host     = cfg.get('database', 'host')
+            db_name  = cfg.get('database', 'db_name')
+            user     = cfg.get('database', 'user')
+            password = cfg.get('database', 'password')
+
+            # Connect to MySQL.
+            auth = user + ':' + password
+            dbn  = 'mysql://' + auth + '@' + host + '/' + db_name
+            #print dbn
+            db   = create_engine(dbn)
+            self.test_with_db(db)
+
+    testcase = ExtensionDBTest()
+    runner   = unittest.TextTestRunner()
+    runner.run(testcase)

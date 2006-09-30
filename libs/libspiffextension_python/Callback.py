@@ -13,16 +13,16 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 class Callback:
-    def  __init__(self, name, context = None):
+    def  __init__(self, name, event_uri = None):
         assert name is not None
-        self.__name    = name
-        self.__context = context
+        self.__name      = name
+        self.__event_uri = event_uri
 
     def get_name(self):
         return self.__name
 
-    def get_context(self):
-        return self.__context
+    def get_event_uri(self):
+        return self.__event_uri
 
 
 if __name__ == '__main__':
@@ -30,15 +30,15 @@ if __name__ == '__main__':
 
     class CallbackTest(unittest.TestCase):
         def runTest(self):
-            name     = 'Test Callback'
-            context  = 'Test Context'
+            name      = 'Test Callback'
+            event_uri = 'test:/my/uri/should/work/'
             callback = Callback(name)
-            assert callback.get_name()    == name
-            assert callback.get_context() == None
+            assert callback.get_name()      == name
+            assert callback.get_event_uri() == None
             
-            callback = Callback(name, context)
-            assert callback.get_name()    == name
-            assert callback.get_context() == context
+            callback = Callback(name, event_uri)
+            assert callback.get_name()      == name
+            assert callback.get_event_uri() == event_uri
 
     testcase = CallbackTest()
     runner   = unittest.TextTestRunner()
