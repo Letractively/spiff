@@ -31,7 +31,65 @@ class Manager:
 
     def __parse_header(self, filename):
         assert os.path.is_file(filename)
-        #FIXME
+        file = open(file, 'r')
+
+        # Skip first two lines.
+        file.readline()
+        file.readline()
+
+        # Pre-compile all regular expressions.
+        header_fields = [
+            'extension',
+            'handle',
+            'version',
+            'author',
+            'description',
+            'runtime_dependency',
+            'install_time_dependency']
+        header_end = re.compile('^\s*\*\/$')
+        line_notag = re.compile('^\s+(.*)$',       re.S)
+        line_tag   = re.compile('^(\S+):\s+(.+)$', re.S)
+
+        # Walk through the header lines.
+        header   = {}
+        last_tag = ''
+        for line in file:
+            # Find a closing tag of the header.
+            if header_end.match(line):
+                break
+            
+            # Parse a line that contains a string, but no field name.
+            match = line_notag.match(line)
+            if match is not None:
+                assert last_tag is not None
+                assert header.has_key(last_tag)
+                header[last_tag] += match.group(1)
+                continue
+
+            # Parse a line that contains a field name.
+            match = line_tag.match(line)
+            if match is None:
+                continue
+
+            # Make sure that the extracted tag is valid.
+            last_tag = match.group(1).lower()
+            assert last_tag in header_fields
+            header[last_tag] = match.group(2)
+
+        # Make sure that the header is complete.
+        for field in header_fields:
+            # Skip optional fields.
+            if field == 'install_time_dependency':
+                continue
+            assert header.has_key(field)
+
+        # Split the dependencies into a list.
+        list = header['runtime_dependency'].split(' ')
+        header['runtime_dependency'] = list
+        if header.has_key('install_time_dependency'):
+            list = header['install_time_dependency'].split(' ')
+        header['install_time_dependency'] = list
+        return header
 
 
     def __install_directory(self, dirname):
@@ -57,6 +115,19 @@ class Manager:
         """
         Installs the given extension.
         
+        If the extension wants to subscribe to a potentially fancy
+        hook (=event bus signal) that requires permission, the given
+        permission_request_func() is called to inquire about whether
+        permission should be granted. If permission_request_func is not
+        specified, the extension is by default granted any requested
+        permission.
+        
+        The permission_request_func() has the following signature:
+          permission_request(extension, event_uri)
+        where
+          extension: is the extension that is to be registered
+          uri:       is an URI addressing the event that the extension
+                     would like to catch.
         @type  filename: os.path
         @param filename: Path to the file containing the extension.
         @type  permission_request_func: function
