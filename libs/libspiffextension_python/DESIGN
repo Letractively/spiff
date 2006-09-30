@@ -1,0 +1,81 @@
+# This file contains ideas, design plans, mindmap, ... you name it,
+# for libspiffextension_python.
+
+Overall Design
+--------------
+
+* We have one core class, the extension manager.
+
+* The extension manager performs the following actions:
+   - Installs plugins.
+   - Deletes plugins.
+   - Ensures that dependencies between plugins are consistent at
+     any given time.
+   - Loads plugins when they are needed.
+   - Unloads plugins when they are no longer needed.
+   - Provides a facility over which plugins can communicate with
+     each other.
+   - Provides a facility that controls which kind of communication
+     may or may not be taken between plugins.
+
+
+Extension Manager Design
+------------------------
+
+* The extension handler has an event bus.
+* Every extension can send and retrieve events via that event bus.
+* Before an extension is installed, the extension manager determines
+  the dependencies of the extension and ensures that they are
+  fullfilled.
+* Before an extension is installed, the extension manager retrieves
+  a list of all events to which the extension would like to subscribe.
+  It then delegates the decision of whether permission to access the
+  events is granted to the client (=whoever owns the manager).
+
+API:
+
+add_extension(extension : Extension, permission_request = None : func)
+ 1. Create extension.
+ 2. Check runtime dependencies and reference dependencies of the extension.
+ 3. Retrieve callback requests from the extension.
+ 4. Call the permission_request function (if passed to add_extension) to
+    determine whether permission to the requested callback/event is granted.
+    The permission_request function has the following signature:
+      permission_request(extension, cb_name, context)
+    where
+      extension: is the extension that is to be registered
+      uri:       is URI addressing the event that the extension would like
+                 to catch.
+ 5. Register the extension in DB.
+ 6. Add the list of dependencies into the DB.
+ 7. Add a list of all callbacks into the DB.
+
+emit(name)
+ 1. Find out which extensions are registered against that callback.
+ 2. Load them, including runtime dependencies.
+ 3. Call the callbacks.
+
+
+Extension Design
+----------------
+
+* Extensions have headers consisting out of comments.
+* Fields in the header:
+   - extension name
+   - extension handle (ascii name without special chars)
+   - extension version
+   - extension author
+   - extension description
+   - a list of all runtime dependencies
+   - a list of all install time dependencies
+   - a list of all event URIs that the extension might want to subscribe to.
+
+Events to which the extension might want to subscribe:
+
+- Any time any page is opened, regardless of whether the extension
+  is integrated into that site.
+  event_uri: "always", cb: on_page_open
+- Any time a specified page is opened.
+  event_uri: "site:/path/to/page/*", cb: on_page_open
+- Any time a page is opened that loads a specified extension.
+  event_uri: "extension:handle=version", cb: on_page_open

@@ -90,12 +90,11 @@ class Manager:
                     return __unmet_dependency_error
 
         # Check whether the extension has permission to listen to the
-        # requested callbacks.
+        # requested events.
         if permission_request_func is not None:
             for callback in header['callbacks']:
-                cb_name = callback.get_name()
-                context = callback.get_context()
-                permit = permission_request_func(extension, cb_name, context)
+                event_uri = callback.get_context()
+                permit    = permission_request_func(extension, event_uri)
                 if not permit: return __permission_denied_error
             
         # Create instance (or resource).
@@ -110,9 +109,9 @@ class Manager:
 
         # Append callbacks.
         for callback in header['callbacks']:
-            cb_name = callback.get_name()
-            context = callback.get_context()
-            extension.add_listener(cb_name, context)
+            cb_name   = callback.get_name()
+            event_uri = callback.get_context()
+            extension.add_listener(cb_name, event_uri)
 
         # Register the extension in the database, including dependencies and
         # callbacks.
