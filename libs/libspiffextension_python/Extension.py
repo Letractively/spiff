@@ -14,7 +14,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import sys
 sys.path.append('..')
-from functions          import descriptor_is_valid
+from functions          import descriptor_parse
 from libspiffacl_python import Resource
 
 class Extension(Resource):
@@ -65,7 +65,8 @@ class Extension(Resource):
     def add_dependency(self, descriptor, context = 'default'):
         assert descriptor is not None and descriptor is not ''
         assert context    is not None and context    is not ''
-        assert descriptor_is_valid(descriptor)
+        matches = descriptor_parse(descriptor)
+        assert matches is not None
         if not self.__dependencies.has_key(context):
             self.__dependencies[context] = [descriptor]
         else:

@@ -19,7 +19,7 @@ operator_re   = '(?:=|>=)'
 version_re    = '\d+(?:\.\d+)*'
 descriptor_re = '^' + handle_re + '(?:' + operator_re + version_re + ')?$'
 
-def descriptor_is_valid(descriptor):
+def descriptor_parse(descriptor):
     regexp = re.compile(descriptor_re)
     return regexp.match(descriptor)
 
@@ -54,7 +54,7 @@ if __name__ == '__main__':
     import unittest
 
     class FunctionTest(unittest.TestCase):
-        def descriptor_is_valid_test(self):
+        def descriptor_parse_test(self):
             valid = [ 'spiff',
                       'spiff1',
                       'spiff=1',
@@ -78,10 +78,10 @@ if __name__ == '__main__':
                         'spiff1.0=1' ]
             for descriptor in valid:
                 #print 'Testing', descriptor
-                assert descriptor_is_valid(descriptor)
+                assert descriptor_parse(descriptor)
             for descriptor in invalid:
                 #print 'Testing', descriptor
-                assert not descriptor_is_valid(descriptor)
+                assert not descriptor_parse(descriptor)
 
         def version_is_greater_test(self):
             versions = [
@@ -107,7 +107,7 @@ if __name__ == '__main__':
                         assert version_is_greater(versions[b], versions[a])
 
         def runTest(self):
-            self.descriptor_is_valid_test()
+            self.descriptor_parse_test()
             self.version_is_greater_test()
 
     testcase = FunctionTest()
