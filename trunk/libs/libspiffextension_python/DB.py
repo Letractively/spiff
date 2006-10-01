@@ -144,7 +144,17 @@ class DB:
 
     def __get_dependency_id_list_from_id(self, extension_id):
         assert extension_id >= 0
-        #FIXME
+        table  = self._table_map['extension_dependency_map']
+        query  = select([table.c.dependency_id],
+                        table.c.extension_id == extension_id,
+                        from_obj = [table])
+        result = query.execute()
+        assert result is not None
+
+        dependency_id_list = []
+        for row in result:
+            dependency_id_list.append(row[table.c.extension_id])
+        return dependency_id_list
 
 
     def __get_dependency_id_list(self, extension):
@@ -276,11 +286,11 @@ class DB:
         returns the one with the highest version number.
 
         The descriptor is defined as follows:
-          [handle][operator][version]
+          [handle][descriptor][version]
         where
-          handle is the handle of the extension.
-          operator is one of '>=', '='.
-          version is a version number.
+          handle     is the handle of the extension.
+          descriptor is one of '>=', '='.
+          version    is a version number.
         
         Descriptor examples:
           spiff>=0.1
@@ -291,9 +301,29 @@ class DB:
         @rtype:  Extension
         @return: The extension on success, None if none was found.
         """
-        assert operator is not None
-        #FIXME
-        return extension
+        assert descriptor is not None
+        matches = descriptor_parse(descriptor)
+        assert matches is not None
+        handle   = matches.group(1)
+        operator = matches.group(2)
+        version  = matches.group(3)
+        if operator == '=':
+            return self.get_extension_from_handle(handle, version)
+
+        # Ending up here, the operator is '>='.
+        # Select the dependency with the version number that
+        # matches the version requirement.
+        version_list = self.get_version_list_from_handle(handle)
+        best_version = '0'
+        for cur_version in version_list:
+            if version_is_greater(version, cur_version):
+                continue
+            if version_is_greater(cur_version, best_version):
+                best_version = cur_version
+
+        if best_version == '0':
+            return None
+        return self.get_extension_from_handle(handle, best_version)
 
 
     def get_version_list_from_handle(self, handle):
@@ -307,8 +337,8 @@ class DB:
         @return: A list containing version numbers.
         """
         assert handle is not None
-        #FIXME
-        return version_list
+        parent = self._acldb.get_resource_from_handle(handle)
+        return self._acldb.get_resource_children(parent, 'Extension')
 
 
     def link_extension_to_callback(self, extension_id, callback):
