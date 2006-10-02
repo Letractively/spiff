@@ -33,6 +33,7 @@ class DBReader:
 
     def __init__(self, db):
         self.db            = db
+        self.db_metadata   = BoundMetaData(self.db)
         self._table_prefix = ''
         self._table_map    = {}
         self._table_list   = []
@@ -45,8 +46,8 @@ class DBReader:
 
 
     def __update_table_names(self):
-        metadata = BoundMetaData(self.db)
-        pfx = self._table_prefix
+        metadata = self.db_metadata
+        pfx      = self._table_prefix
         self.__add_table(Table(pfx + 'action_section', metadata,
             Column('id',     Integer,     primary_key = True),
             Column('handle', String(230), unique = True),
@@ -145,6 +146,10 @@ class DBReader:
         self.__update_table_names()
 
 
+    def get_table_prefix(self):
+        return self._table_prefix
+
+
     def __get_action_from_query(self, query):
         assert query is not None
         result = query.execute()
@@ -189,30 +194,44 @@ class DBReader:
 
 
     def __get_resource_from_query(self, query, type = None):
+        """May return a resource list, a single resource, or None"""
         assert query is not None
         result = query.execute()
         assert result is not None
         row = result.fetchone()
         if not row: return None
-        resource = self.__get_resource_from_row(row, type)
-        if not resource: return None
 
-        # Append all attributes.
-        tbl_a = self._table_map['resource_attribute']
-        while 1:
-            # Determine attribute type.
-            if row[tbl_a.c.type] is self.attrib_type_int:
-                value = int(row[tbl_a.c.attr_int])
-            elif row[tbl_a.c.type] is self.attrib_type_string:
-                value = row[tbl_a.c.attr_string]
-
-            # Append attribute.
-            if row[tbl_a.c.name] is not None:
-                resource.set_attribute(row[tbl_a.c.name], value)
-            row = result.fetchone()
+        tbl_r         = self._table_map['resource']
+        tbl_a         = self._table_map['resource_attribute']
+        last_id       = None
+        resource_list = []
+        while True:
             if not row: break
-            
-        return resource
+            last_id  = row[tbl_r.c.id]
+            resource = self.__get_resource_from_row(row, type)
+            resource_list.append(resource)
+            if not resource: break
+
+            # Append all attributes.
+            while 1:
+                # Determine attribute type.
+                if row[tbl_a.c.type] is self.attrib_type_int:
+                    value = int(row[tbl_a.c.attr_int])
+                elif row[tbl_a.c.type] is self.attrib_type_string:
+                    value = row[tbl_a.c.attr_string]
+
+                # Append attribute.
+                if row[tbl_a.c.name] is not None:
+                    resource.set_attribute(row[tbl_a.c.name], value)
+                row = result.fetchone()
+
+                if not row: break
+                if last_id != row[tbl_r.c.id]:
+                    break
+
+        if len(resource_list) == 1:
+            return resource
+        return resource_list
 
 
     def get_resource_from_id(self, id, type = None):
@@ -245,6 +264,20 @@ class DBReader:
                                    tbl_r.c.section_handle == section_handle))
         return self.__get_resource_from_query(select, type)
 
+
+    def get_resource_list_from_id_list(self, id_list, type = None):
+        assert id_list is not None
+        tbl_r  = self._table_map['resource']
+        tbl_a  = self._table_map['resource_attribute']
+        table  = outerjoin(tbl_r, tbl_a, tbl_r.c.id == tbl_a.c.resource_id)
+        for id in id_list:
+            if where_clause is None:
+                where_clause = (tbl_r.c.id == id)
+            else:
+                where_clause = or_(tbl_r.c.id == id)
+        select = table.select(where_clause, use_labels = True)
+        return self.__get_resource_from_query(select, type)
+        
 
     def get_resource_children_from_id(self,
                                       resource_id,
