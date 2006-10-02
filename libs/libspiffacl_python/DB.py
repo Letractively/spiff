@@ -437,6 +437,7 @@ class DB(DBReader):
             self.__resource_add_attribute(resource_id, attrib_name, value)
             
         transaction.commit()
+        connection.close()
         resource.set_id(resource_id)
         return True
 

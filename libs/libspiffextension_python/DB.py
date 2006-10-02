@@ -17,13 +17,13 @@ sys.path.append('..')
 from sqlalchemy import *
 
 class DB:
-    def __init__(self, acldb, section_handle):
+    def __init__(self, acldb, section_handle = 'extensions'):
         self.db            = acldb.db
         self._acldb        = acldb
         self._table_prefix = ''
         self._table_map    = {}
         self._table_list   = []
-        self._acl_section  = libspiffacl_python.ActionSection(section_handle)
+        self._acl_section  = libspiffacl_python.ResourceSection(section_handle)
         self.__update_table_names()
 
 
@@ -33,41 +33,38 @@ class DB:
 
 
     def __update_table_names(self):
-        metadata = BoundMetaData(self.db)
-        pfx = self._table_prefix
+        metadata  = self._acldb.db_metadata
+        pfx       = self._table_prefix
+        acldb_pfx = self._acldb.get_table_prefix()
         self.__add_table(Table(pfx + 'extension_dependency', metadata,
             Column('id',                  Integer,    primary_key = True),
-            Column('extension_id',        Integer),
+            Column('extension_id',        Integer,    index = True),
             Column('dependency_handle',   String(20), index = True),
             Column('dependency_operator', String(3),  index = True),
             Column('dependency_version',  String(20), index = True),
-            #FIXME: Request the name of the destination table from self._acldb.
             ForeignKeyConstraint(['extension_id'],
-                                 ['resource.id'],
+                                 [acldb_pfx + 'resource.id'],
                                  ondelete = 'CASCADE'),
             mysql_engine='INNODB'
         ))
         self.__add_table(Table(pfx + 'extension_dependency_map', metadata,
-            Column('extension_id',  Integer),
-            Column('dependency_id', Integer),
-            #FIXME: Request the name of the destination table from self._acldb.
+            Column('extension_id',  Integer, index = True),
+            Column('dependency_id', Integer, index = True),
             ForeignKeyConstraint(['extension_id'],
-                                 ['resource.id'],
+                                 [acldb_pfx + 'resource.id'],
                                  ondelete = 'CASCADE'),
-            #FIXME: Request the name of the destination table from self._acldb.
             ForeignKeyConstraint(['dependency_id'],
-                                 ['resource.id'],
+                                 [acldb_pfx + 'resource.id'],
                                  ondelete = 'CASCADE'),
             mysql_engine='INNODB'
         ))
         self.__add_table(Table(pfx + 'extension_callback', metadata,
             Column('id',           Integer,     primary_key = True),
-            Column('extension_id', Integer),
+            Column('extension_id', Integer,     index = True),
             Column('name',         String(200)),
             Column('event_uri',    String(255), index = True),
-            #FIXME: Request the name of the destination table from self._acldb.
             ForeignKeyConstraint(['extension_id'],
-                                 ['resource.id'],
+                                 [acldb_pfx + 'resource.id'],
                                  ondelete = 'CASCADE'),
             mysql_engine='INNODB'
         ))
@@ -114,7 +111,7 @@ class DB:
         @rtype:  Boolean
         @return: True on success, False otherwise.
         """
-        return self.acldb.clear_section(self._acl_section)
+        return self._acldb.delete_resource_section(self._acl_section)
 
 
     def __has_dependency_link_from_id(self, extension_id, dependency_id):
@@ -164,12 +161,26 @@ class DB:
 
     def __get_dependency_list_from_id(self, extension_id):
         assert extension_id >= 0
-        #FIXME
+        id_list = self.__get_dependency_id_list_from_id(extension_id)
+        return self._acldb.get_resource_list_from_id_list(id_list)
+
+        dependency_id_list = []
+        for row in result:
+            dependency_id_list.append(row[table.c.extension_id])
+        return dependency_id_list
 
 
     def __get_dependency_list(self, extension):
         assert extension is not None
         return self.__get_dependency_list_from_id(extension.get_id())
+
+
+    def __load_dependency_list(self, extension):
+        assert extension is not None
+        list = self.__get_dependency_list(extension)
+        for dependency in list:
+            extension.add_dependency(dependency.get_handle())
+        return True
 
 
     def check_dependencies(self, extension):
@@ -185,7 +196,10 @@ class DB:
         @return: True if all dependency requirements are met, False otherwise.
         """
         assert extension is not None
-        #FIXME
+        dependency_list = extension.get_dependency_list()
+        for descriptor in dependency_list:
+            if not self.get_extension_from_descriptor(descriptor):
+                return False
         return True
 
 
@@ -202,13 +216,113 @@ class DB:
         @return: True on success, False otherwise.
         """
         assert extension is not None
-        #FIXME
+
+        # Check whether the extension is already registered.
+        if self.get_extension_from_handle(extension.get_handle(),
+                                          extension.get_version()):
+            return True
+
+        # Make sure that all dependencies are registered.
+        assert self.check_dependencies(extension)
+
+        # Start transaction.
+        connection  = self.db.connect()
+        transaction = connection.begin()
+
+        # Create a group that holds all versions of the extension.
+        handle   = extension.get_handle()
+        s_handle = self._acl_section.get_handle()
+        if self._acldb.get_resource_from_handle(handle, s_handle) is None:
+            parent = ResourceGroup(extension.get_name(), handle)
+            self._acldb.add_resource(None, parent, self._acl_section)
+        else:
+            parent = self._acldb.get_resource_from_handle(handle, s_handle)
+
+        # Insert the extension into the ACL resource table.
+        old_handle = extension.get_handle()
+        new_handle = old_handle + extension.get_version()
+        handle     = make_handle_from_string(new_handle)
+        extension.set_handle(handle)
+        self._acldb.add_resource(parent.get_id(), extension, self._acl_section)
+        extension.set_handle(old_handle)
+        
+        # Walk through all requested dependencies.
+        for descriptor in extension.get_dependency_list():
+            matches = descriptor_parse(descriptor)
+            assert matches is not None
+            dependency_handle   = matches.group(1)
+            dependency_operator = matches.group(2)
+            dependency_version  = matches.group(3)
+            if dependency_operator is None:
+                dependency_operator = '>='
+                dependency_version  = 0
+
+            # Add the dependency request into the database.
+            table  = self._table_map['extension_dependency_map']
+            query  = table.insert()
+            result = query.execute(extension_id        = extension.get_id(),
+                                   dependency_handle   = dependency_handle,
+                                   dependency_operator = dependency_operator,
+                                   dependency_version  = dependency_version)
+            assert result is not None
+
+            # And link the extension with the best matching dependency.
+            best = self.get_extension_from_descriptor(descriptor)
+
+            # Retrieve a list of all dependencies of that dependency.
+            dependency_id = dependency.get_id()
+            list          = self.get_dependency_id_list_from_id(dependency_id)
+            list.append(dependency_id)
+
+            # Add a link to all of the dependencies.
+            for id in list:
+                self.__add_dependency_link_from_id(extension.get_id(), id)
+
+        # Walk through all extensions that currently depend on another
+        # version of the recently registered extension.
+        handle  = extension.get_handle()
+        version = extension.get_version()
+        table   = self._table_map['extension_dependency']
+        query   = select([table],
+                         and_(table.c.dependency_handle  == handle,
+                              table.c.dependency_version == version),
+                        from_obj = [table])
+        result = query.execute()
+        assert result is not None
+        for row in result:
+            dep_handle   = handle
+            dep_operator = row[table.c.dependency_operator]
+            dep_version  = row[table.c.dependency_version]
+            dependency   = self.get_extension_from_descriptor(dep_handle,
+                                                              dep_operator,
+                                                              dep_version)
+            
+            # No need to do anything if the registered link is already the
+            # best one.
+            dep_id = dependency.get_id()
+            if self.__has_dependency_link_from_id(extension.get_id(), dep_id):
+                continue
+
+            # Delete the old dependency links.
+            self.__delete_dependency_link_from_id(extension.get_id())
+
+            # Retrieve a list of all dependencies of that dependency.
+            dep_list = self.__get_dependency_id_list_from_id(dep_id)
+            dep_list.append(dep_id)
+
+            for id in dep_list:
+                self.__add_dependency_link_from_id(extension.get_id(), dep_id)
+
+        # Transaction finish.
+        transaction.commit()
+        connection.close()
         return True
 
 
     def unregister_extension_from_id(self, id):
         """
-        Removes the given Extension from the database.
+        Removes the given Extension from the database. Warning: Also removes
+        any extension that requires the given Extension.
 
         @type  id: int
         @param id: The id of the extension to remove.
@@ -216,7 +330,11 @@ class DB:
         @return: False if the extension did not exist, True otherwise.
         """
         assert extension_id >= 0
-        #FIXME
+        dependency_list = self.get_dependency_id_list_from_id(id)
+        self._acldb.delete_resource_from_id(id)
+        # Unregister all extensions that require this extension.
+        for dependency_id in dependency_list:
+            self._acldb.delete_resource_from_id(id)
         return True
 
 
@@ -230,8 +348,8 @@ class DB:
         @return: False if the extension did not exist, True otherwise.
         """
         assert handle is not None
-        #FIXME
-        return True
+        extension = self.get_extension_from_handle(handle)
+        return self.unregister_extension_from_id(extension.get_id())
 
 
     def unregister_extension(self, extension):
@@ -244,7 +362,7 @@ class DB:
         @return: False if the extension did not exist, True otherwise.
         """
         assert extension is not None
-        #FIXME
+        self.unregister_extension_from_id(extension.get_id())
         return True
 
 
@@ -258,7 +376,10 @@ class DB:
         @return: The extension on success, None if it does not exist.
         """
         assert id >= 0
-        #FIXME
+        extension = db.get_resource_from_id(id, 'Extension')
+        if extension is None:
+            return None
+        self.__load_dependency_list(extension)
         return extension
 
 
@@ -273,8 +394,17 @@ class DB:
         @rtype:  Extension
         @return: The extension on success, None if none was found.
         """
-        assert handle is not None
-        #FIXME
+        assert handle  is not None
+        assert version is not None
+        version_handle = make_handle_from_string(handle + version)
+        section_handle = self._acl_section.get_handle()
+        extension      = db.get_resource_from_handle(version_handle,
+                                                     section_handle,
+                                                     'Extension')
+        if extension is None:
+            return None
+        extension.set_handle(handle)
+        self.__load_dependency_list(extension)
         return extension
 
 
@@ -361,7 +491,7 @@ class DB:
                                callback_name = callback.get_name(),
                                event_uri     = callback.get_event_uri())
         assert result is not None
-        return self._db.last_insert_id
+        return self.db.last_insert_id
 
 
     def get_extension_id_list_from_callback(self, callback):
@@ -393,20 +523,23 @@ class DB:
 if __name__ == '__main__':
     import unittest
     import MySQLdb
+    import libspiffacl_python
     from ConfigParser import RawConfigParser
 
     class ExtensionDBTest(unittest.TestCase):
-        def test_with_db(self, db):
-            assert db is not None
-            #FIXME
-            #acldb = libspiffacl_python.DB(db)
-            #extdb = DB(acldb)
-            #assert db.uninstall()
-            #assert db.install()
+        def test_with_db(self, acldb):
+            assert acldb is not None
+
+            # Install.
+            db = DB(acldb)
+            assert db.uninstall()
+            assert acldb.uninstall()
+            assert acldb.install()
+            assert db.install()
 
             # Clean up.
-            #assert db.clear_database()
-            #assert db.uninstall()
+            assert db.clear_database()
+            assert db.uninstall()
 
 
         def runTest(self):
@@ -419,11 +552,11 @@ if __name__ == '__main__':
             password = cfg.get('database', 'password')
 
             # Connect to MySQL.
-            auth = user + ':' + password
-            dbn  = 'mysql://' + auth + '@' + host + '/' + db_name
-            #print dbn
-            db   = create_engine(dbn)
-            self.test_with_db(db)
+            auth  = user + ':' + password
+            dbn   = 'mysql://' + auth + '@' + host + '/' + db_name
+            db    = create_engine(dbn)
+            acldb = libspiffacl_python.DB(db)
+            self.test_with_db(acldb)
 
     testcase = ExtensionDBTest()
     runner   = unittest.TextTestRunner()
