@@ -14,16 +14,21 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import sys
 sys.path.append('..')
-from sqlalchemy import *
+from sqlalchemy                   import *
+from Extension                    import Extension
+from libspiffacl_python.functions import make_handle_from_string
+from libspiffacl_python           import *
+from functions                    import *
 
 class DB:
     def __init__(self, acldb, section_handle = 'extensions'):
-        self.db            = acldb.db
-        self._acldb        = acldb
-        self._table_prefix = ''
-        self._table_map    = {}
-        self._table_list   = []
-        self._acl_section  = libspiffacl_python.ResourceSection(section_handle)
+        self.db                  = acldb.db
+        self._acldb              = acldb
+        self._table_prefix       = ''
+        self._table_map          = {}
+        self._table_list         = []
+        self._acl_section_handle = section_handle
+        self._acl_section        = None
         self.__update_table_names()
 
 
@@ -79,6 +84,10 @@ class DB:
         self.__update_table_names()
 
 
+    def get_table_prefix(self):
+        return self._table_prefix
+
+
     def install(self):
         """
         Installs (or upgrades) database tables.
@@ -111,7 +120,11 @@ class DB:
         @rtype:  Boolean
         @return: True on success, False otherwise.
         """
-        return self._acldb.delete_resource_section(self._acl_section)
+        handle  = self._acl_section_handle
+        success = self._acldb.delete_resource_section_from_handle(handle)
+        if success:
+            self._acl_section = None
+        return success
 
 
     def __has_dependency_link_from_id(self, extension_id, dependency_id):
@@ -162,12 +175,7 @@ class DB:
     def __get_dependency_list_from_id(self, extension_id):
         assert extension_id >= 0
         id_list = self.__get_dependency_id_list_from_id(extension_id)
-        return self._acldb.get_resource_list_from_id_list(id_list)
-
-        dependency_id_list = []
-        for row in result:
-            dependency_id_list.append(row[table.c.extension_id])
-        return dependency_id_list
+        return self._acldb.get_resource_list_from_id_list(id_list, 'Extension')
 
 
     def __get_dependency_list(self, extension):
@@ -216,7 +224,7 @@ class DB:
         @return: True on success, False otherwise.
         """
         assert extension is not None
-
+        
         # Check whether the extension is already registered.
         if self.get_extension_from_handle(extension.get_handle(),
                                           extension.get_version()):
@@ -228,6 +236,15 @@ class DB:
         # Start transaction.
         connection  = self.db.connect()
         transaction = connection.begin()
+
+        # Make sure that a resource section already exists.
+        if not self._acl_section:
+            s_handle = self._acl_section_handle
+            section  = self._acldb.get_resource_section_from_handle(s_handle)
+            if not section:
+                section = libspiffacl_python.ResourceSection(s_handle)
+                self._acldb.add_resource_section(section)
+            self._acl_section = section
 
         # Create a group that holds all versions of the extension.
         handle   = extension.get_handle()
@@ -329,8 +346,8 @@ class DB:
         @rtype:  Boolean
         @return: False if the extension did not exist, True otherwise.
         """
-        assert extension_id >= 0
-        dependency_list = self.get_dependency_id_list_from_id(id)
+        assert id >= 0
+        dependency_list = self.__get_dependency_id_list_from_id(id)
         self._acldb.delete_resource_from_id(id)
         # Unregister all extensions that require this extension.
         for dependency_id in dependency_list:
@@ -338,7 +355,7 @@ class DB:
         return True
 
 
-    def unregister_extension_from_handle(self, handle):
+    def unregister_extension_from_handle(self, handle, version):
         """
         Removes the given Extension from the database.
 
@@ -348,7 +365,7 @@ class DB:
         @return: False if the extension did not exist, True otherwise.
         """
         assert handle is not None
-        extension = self.get_extension_from_handle(handle)
+        extension = self.get_extension_from_handle(handle, version)
         return self.unregister_extension_from_id(extension.get_id())
 
 
@@ -397,10 +414,10 @@ class DB:
         assert handle  is not None
         assert version is not None
         version_handle = make_handle_from_string(handle + version)
-        section_handle = self._acl_section.get_handle()
-        extension      = db.get_resource_from_handle(version_handle,
-                                                     section_handle,
-                                                     'Extension')
+        section_handle = self._acl_section_handle
+        extension      = self._acldb.get_resource_from_handle(version_handle,
+                                                              section_handle,
+                                                              'Extension')
         if extension is None:
             return None
         extension.set_handle(handle)
@@ -432,6 +449,7 @@ class DB:
         @return: The extension on success, None if none was found.
         """
         assert descriptor is not None
+        #print "Descriptor:", descriptor
         matches = descriptor_parse(descriptor)
         assert matches is not None
         handle   = matches.group(1)
@@ -444,16 +462,19 @@ class DB:
         # Select the dependency with the version number that
         # matches the version requirement.
         version_list = self.get_version_list_from_handle(handle)
-        best_version = '0'
+        best_version = None
         for cur_version in version_list:
-            if version_is_greater(version, cur_version):
+            if version_is_greater(version, cur_version.get_version()):
                 continue
-            if version_is_greater(cur_version, best_version):
+            if best_version is None:
                 best_version = cur_version
-
-        if best_version == '0':
+                continue
+            if version_is_greater(cur_version.get_version(),
+                                  best_version.get_version()):
+                best_version = cur_version
+        if best_version is None:
             return None
-        return self.get_extension_from_handle(handle, best_version)
+        return best_version
 
 
     def get_version_list_from_handle(self, handle):
@@ -463,12 +484,17 @@ class DB:
 
         @type  handle: string
         @param handle: The handle of the wanted extension versions.
-        @rtype:  list[string]
-        @return: A list containing version numbers.
+        @rtype:  list[Extension]
+        @return: A list containing all versions of the requested extension.
         """
         assert handle is not None
-        parent = self._acldb.get_resource_from_handle(handle)
-        return self._acldb.get_resource_children(parent, 'Extension')
+        section  = self._acl_section.get_handle()
+        parent   = self._acldb.get_resource_from_handle(handle, section)
+        if parent is None: return []
+        children = self._acldb.get_resource_children(parent, 'Extension')
+        for child in children:
+            child.set_handle(handle)
+        return children
 
 
     def link_extension_to_callback(self, extension_id, callback):
@@ -526,22 +552,54 @@ if __name__ == '__main__':
     import libspiffacl_python
     from ConfigParser import RawConfigParser
 
-    class ExtensionDBTest(unittest.TestCase):
-        def test_with_db(self, acldb):
-            assert acldb is not None
-
-            # Install.
-            db = DB(acldb)
-            assert db.uninstall()
-            assert acldb.uninstall()
-            assert acldb.install()
-            assert db.install()
-
-            # Clean up.
+    class DBTest(unittest.TestCase):
+        def set_table_prefix_test(self, db):
             assert db.clear_database()
-            assert db.uninstall()
+            assert db.get_table_prefix() == ''
+            db.set_table_prefix('test')
+            assert db.get_table_prefix() == 'test'
+            
+        def check_dependencies_test(self, db):
+            assert db.clear_database()
+            extension = Extension('Spiff')
+            extension.set_version('0.2')
+            db.register_extension(extension)
+            
+            extension = Extension('Depends on Spiff')
+            assert db.check_dependencies(extension)
+            extension.add_dependency('spiff>=0.1')
+            assert db.check_dependencies(extension)
+            extension.add_dependency('spiff=0.2')
+            assert db.check_dependencies(extension)
+            extension.add_dependency('spuff>=0.1')
+            assert not db.check_dependencies(extension)
+            extension.add_dependency('spiff>=0.3')
+            assert not db.check_dependencies(extension)
 
+        def register_extension_test(self, db):
+            assert db.clear_database()
+            extension = Extension('Spiff')
+            extension.set_version('0.2')
+            db.register_extension(extension)
 
+        def unregister_extension_test(self, db):
+            assert db.clear_database()
+            extension = Extension('Spiff')
+            extension.set_version('0.1.2')
+            db.register_extension(extension)
+            assert db.unregister_extension_from_id(extension.get_id())
+
+            extension = Extension('Spiff')
+            extension.set_version('0.1.2')
+            db.register_extension(extension)
+            assert db.unregister_extension_from_handle(extension.get_handle(),
+                                                       extension.get_version())
+            
+            extension = Extension('Spiff')
+            extension.set_version('0.1.2')
+            db.register_extension(extension)
+            assert db.unregister_extension(extension)
+            
         def runTest(self):
             # Read config.
             cfg = RawConfigParser()
@@ -556,8 +614,25 @@ if __name__ == '__main__':
             dbn   = 'mysql://' + auth + '@' + host + '/' + db_name
             db    = create_engine(dbn)
             acldb = libspiffacl_python.DB(db)
-            self.test_with_db(acldb)
 
-    testcase = ExtensionDBTest()
+            # Install.
+            extdb = DB(acldb)
+            assert extdb.uninstall()
+            assert acldb.uninstall()
+            assert acldb.install()
+            assert extdb.install()
+
+            # Test.
+            self.set_table_prefix_test(extdb)
+            self.register_extension_test(extdb)
+            self.check_dependencies_test(extdb)
+            self.unregister_extension_test(extdb)
+
+            # Clean up.
+            assert extdb.clear_database()
+            assert extdb.uninstall()
+
+
+    testcase = DBTest()
     runner   = unittest.TextTestRunner()
     runner.run(testcase)

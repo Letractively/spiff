@@ -98,14 +98,61 @@ class DB(DBReader):
         return True
 
 
+    def __delete_object_section_from_handle(self, table, section_handle):
+        assert table is 'action_section' or table is 'resource_section'
+        assert section_handle is not None
+        delete = self._table_map[table].delete()
+        result = delete.execute(handle = section_handle)
+        assert result is not None
+        return True
+
+
     def __delete_object_section(self, table, section):
         assert table is 'action_section' or table is 'resource_section'
         assert section is not None
-        delete = self._table_map[table].delete()
-        result = delete.execute(handle = section.get_handle())
-        assert result is not None
+        handle  = section.get_handle()
+        success = self.__delete_object_section_from_handle(table, handle)
+        if not success: return success
         section.set_id(-1)
         return True
+
+
+    def __get_db_object_from_row(self, table, row, type):
+        assert table is not None
+        assert type  is not None
+        if not row: return None
+        if type not in ['Resource', 'Actor', 'ResourceGroup', 'ActorGroup']:
+            module = __import__(type)
+            obj    = getattr(module, type)
+        else:
+            obj    = globals().get(type)
+        object = obj(row[table.c.name], row[table.c.handle])
+        object.set_id(row[table.c.id])
+        return object
+
+
+    def __get_object_section_from_id(self, table, id, type):
+        assert table is 'action_section' or table is 'resource_section'
+        assert id >= 0
+        assert type is not None
+        table  = self._table_map[table]
+        query  = table.select(table.c.id == id)
+        result = query.execute()
+        assert result is not None
+        row = result.fetchone()
+        return self.__get_db_object_from_row(table, row, type)
+
+
+    def __get_object_section_from_handle(self, table, handle, type):
+        assert table  is 'action_section' or table is 'resource_section'
+        assert handle is not None
+        assert type   is not None
+        table  = self._table_map[table]
+        query  = table.select(table.c.handle == handle)
+        result = query.execute()
+        assert result is not None
+        row = result.fetchone()
+        return self.__get_db_object_from_row(table, row, type)
 
 
     def add_action_section(self, section):
@@ -174,6 +221,21 @@ class DB(DBReader):
         return self.__save_object_section('resource_section', section)
 
 
+    def delete_resource_section_from_handle(self, section_handle):
+        """
+        Deletes the resource section with the given handle from the database.
+        All associated resources and ACLs will be deleted. Use with care!
+
+        @type  section: ResourceSection
+        @param section: The section to be deleted.
+        @rtype:  Boolean
+        @return: True on success, False otherwise.
+        """
+        assert section_handle is not None
+        return self.__delete_object_section_from_handle('resource_section',
+                                                        section_handle)
+
+
     def delete_resource_section(self, section):
         """
         Deletes the given resource section from the database.
@@ -186,6 +248,35 @@ class DB(DBReader):
         """
         assert section is not None
         return self.__delete_object_section('resource_section', section)
+
+
+    def get_resource_section_from_id(self, id):
+        """
+        Returns the resource section with the given id from the database.
+
+        @type  id: int
+        @param id: The id of the section to be returned.
+        @rtype:  ResourceSection
+        @return: The resource section on success, None otherwise.
+        """
+        assert id >= 0
+        type = 'ResourceSection'
+        return self.__get_object_section_from_id('resource_section', id, type)
+
+
+    def get_resource_section_from_handle(self, handle):
+        """
+        Returns the resource section with the given handle from the database.
+
+        @type  handle: string
+        @param handle: The handle of the section to be returned.
+        @rtype:  ResourceSection
+        @return: The resource section on success, None otherwise.
+        """
+        assert handle is not None
+        table = 'resource_section'
+        type  = 'ResourceSection'
+        return self.__get_object_section_from_handle(table, handle, type)
 
 
     def add_action(self, action, section):
@@ -321,7 +412,7 @@ class DB(DBReader):
         else:
             result = insert.execute(resource_id = resource_id,
                                     name        = name,
-                                    type        = self.attrib_type_int,
+                                    type        = self.attrib_type_string,
                                     attr_string = value)
         assert result is not None
         return result.last_inserted_ids()[0]
@@ -813,6 +904,9 @@ if __name__ == '__main__':
             assert website.get_id() >= 0
             website.set_name('Homepage')
             assert db.save_resource(website, resource_section)
+            assert db.get_resource_from_id(website.get_id())
+            assert db.get_resource_from_handle(website.get_handle(),
+                                               resource_section.get_handle())
             assert db.delete_resource_from_id(website.get_id())
 
             assert db.add_resource(None, website, resource_section)

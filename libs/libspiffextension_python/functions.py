@@ -17,7 +17,13 @@ import re
 handle_re     = '\w+'
 operator_re   = '(?:=|>=)'
 version_re    = '\d+(?:\.\d+)*'
-descriptor_re = '^' + handle_re + '(?:' + operator_re + version_re + ')?$'
+descriptor_re = '^('          \
+              + handle_re     \
+              + ')(?:('       \
+              + operator_re   \
+              + ')('          \
+              + version_re    \
+              + '))?$'
 
 def descriptor_parse(descriptor):
     regexp = re.compile(descriptor_re)
