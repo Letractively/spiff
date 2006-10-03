@@ -532,7 +532,7 @@ class DB:
         table  = self._table_map['extension_callback']
         query  = table.insert()
         result = query.execute(extension_id  = extension_id,
-                               callback_name = callback.get_name(),
+                               name          = callback.get_name(),
                                event_uri     = callback.get_event_uri())
         assert result is not None
         return result.last_inserted_ids()[0]
@@ -676,7 +676,9 @@ if __name__ == '__main__':
             callback = Callback('my_func_name', 'always')
             assert db.link_extension_id_to_callback(extension.get_id(),
                                                     callback)
-            #FIXME
+
+            list = db.get_extension_id_list_from_callback(callback)
+            assert len(list) == 1
             
 
         def runTest(self):
