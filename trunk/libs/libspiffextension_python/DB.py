@@ -16,6 +16,7 @@ import sys
 sys.path.append('..')
 from sqlalchemy                   import *
 from Extension                    import Extension
+from Callback                     import Callback
 from libspiffacl_python.functions import make_handle_from_string
 from libspiffacl_python           import *
 from functions                    import *
@@ -163,7 +164,7 @@ class DB:
 
         dependency_id_list = []
         for row in result:
-            dependency_id_list.append(row[table.c.extension_id])
+            dependency_id_list.append(row[table.c.dependency_id])
         return dependency_id_list
 
 
@@ -172,22 +173,36 @@ class DB:
         return self.__get_dependency_id_list_from_id(extension.get_id())
 
 
-    def __get_dependency_list_from_id(self, extension_id):
+    def __get_dependency_descriptor_list_from_id(self, extension_id):
         assert extension_id >= 0
-        id_list = self.__get_dependency_id_list_from_id(extension_id)
-        return self._acldb.get_resource_list_from_id_list(id_list, 'Extension')
+        table  = self._table_map['extension_dependency']
+        query  = select([table.c.dependency_handle,
+                         table.c.dependency_operator,
+                         table.c.dependency_version],
+                        table.c.extension_id == extension_id,
+                        from_obj = [table])
+        result = query.execute()
+        assert result is not None
+
+        dependency_list = []
+        for row in result:
+            handle   = row[table.c.dependency_handle]
+            operator = row[table.c.dependency_operator]
+            version  = row[table.c.dependency_version]
+            dependency_list.append(handle + operator + version)
+        return dependency_list
 
 
-    def __get_dependency_list(self, extension):
+    def __get_dependency_descriptor_list(self, extension):
         assert extension is not None
-        return self.__get_dependency_list_from_id(extension.get_id())
+        return self.__get_dependency_descriptor_list_from_id(extension.get_id())
 
 
-    def __load_dependency_list(self, extension):
+    def __load_dependency_descriptor_list(self, extension):
         assert extension is not None
-        list = self.__get_dependency_list(extension)
+        list = self.__get_dependency_descriptor_list(extension)
         for dependency in list:
-            extension.add_dependency(dependency.get_handle())
+            extension.add_dependency(dependency)
         return True
 
 
@@ -275,7 +290,7 @@ class DB:
                 dependency_version  = 0
 
             # Add the dependency request into the database.
-            table  = self._table_map['extension_dependency_map']
+            table  = self._table_map['extension_dependency']
             query  = table.insert()
             result = query.execute(extension_id        = extension.get_id(),
                                    dependency_handle   = dependency_handle,
@@ -287,9 +302,9 @@ class DB:
             best = self.get_extension_from_descriptor(descriptor)
 
             # Retrieve a list of all dependencies of that dependency.
-            dependency_id = dependency.get_id()
-            list          = self.get_dependency_id_list_from_id(dependency_id)
-            list.append(dependency_id)
+            best_id = best.get_id()
+            list    = self.__get_dependency_id_list_from_id(best_id)
+            list.append(best_id)
 
             # Add a link to all of the dependencies.
             for id in list:
@@ -393,10 +408,13 @@ class DB:
         @return: The extension on success, None if it does not exist.
         """
         assert id >= 0
-        extension = db.get_resource_from_id(id, 'Extension')
+        extension = self._acldb.get_resource_from_id(id, 'Extension')
         if extension is None:
             return None
-        self.__load_dependency_list(extension)
+        handle  = extension.get_handle()
+        version = extension.get_version()
+        extension.set_handle(handle[0:len(version) * -1])
+        self.__load_dependency_descriptor_list(extension)
         return extension
 
 
@@ -421,7 +439,7 @@ class DB:
         if extension is None:
             return None
         extension.set_handle(handle)
-        self.__load_dependency_list(extension)
+        self.__load_dependency_descriptor_list(extension)
         return extension
 
 
@@ -497,14 +515,14 @@ class DB:
         return children
 
 
-    def link_extension_to_callback(self, extension_id, callback):
+    def link_extension_id_to_callback(self, extension_id, callback):
         """
         Associates the given extension with the given callback.
 
         @type  extension_id: int
-        @param extension_id: The id of the extension to associate.
+        @param extension_id: The id of the extension to be associated.
         @type  callback: Callback
-        @param callback: The callback to associate.
+        @param callback: The callback to be associated.
         @rtype:  int
         @return: The id of the callback, or <0 if an error occured.
         """
@@ -517,7 +535,21 @@ class DB:
                                callback_name = callback.get_name(),
                                event_uri     = callback.get_event_uri())
         assert result is not None
-        return self.db.last_insert_id
+        return result.last_inserted_ids()[0]
+
+
+    def link_extension_to_callback(self, extension, callback):
+        """
+        Convenience wrapper around link_extension_id_to_callback().
+
+        @type  extension: Extension
+        @param extension: The extension to be associated.
+        @type  callback: Callback
+        @param callback: The callback to be associated.
+        @rtype:  int
+        @return: The id of the callback, or <0 if an error occured.
+        """
+        return self.link_extension_id_to_callback(extension.get_id(), callback)
 
 
     def get_extension_id_list_from_callback(self, callback):
@@ -600,6 +632,53 @@ if __name__ == '__main__':
             db.register_extension(extension)
             assert db.unregister_extension(extension)
             
+        def get_extension_test(self, db):
+            assert db.clear_database()
+            extension = Extension('Spiff')
+            extension.set_version('0.1')
+            db.register_extension(extension)
+
+            extension = Extension('Spiff')
+            extension.set_version('0.2')
+            extension.add_dependency('spiff=0.1')
+            db.register_extension(extension)
+
+            result = db.get_extension_from_id(extension.get_id())
+            assert result.get_handle()  == extension.get_handle()
+            assert result.get_version() == extension.get_version()
+            assert len(result.get_dependency_list()) == 1
+            assert result.get_dependency_list()[0]   == 'spiff=0.1'
+            
+            result = db.get_extension_from_handle('spiff', '0.2')
+            assert result.get_id() == extension.get_id()
+
+            result = db.get_extension_from_descriptor('spiff>=0.1')
+            assert result.get_id()      == extension.get_id()
+            assert result.get_handle()  == extension.get_handle()
+            assert result.get_version() == extension.get_version()
+
+            result = db.get_extension_from_descriptor('spiff=0.2')
+            assert result.get_id()      == extension.get_id()
+            assert result.get_handle()  == extension.get_handle()
+            assert result.get_version() == extension.get_version()
+
+            list = db.get_version_list_from_handle('spiff')
+            assert len(list) == 2
+            assert list[0].get_handle() == 'spiff'
+            assert list[1].get_handle() == 'spiff'
+
+        def callback_test(self, db):
+            assert db.clear_database()
+            extension = Extension('Spiff')
+            extension.set_version('0.1.2')
+            db.register_extension(extension)
+
+            callback = Callback('my_func_name', 'always')
+            assert db.link_extension_id_to_callback(extension.get_id(),
+                                                    callback)
+            #FIXME
+            
+
         def runTest(self):
             # Read config.
             cfg = RawConfigParser()
@@ -627,10 +706,13 @@ if __name__ == '__main__':
             self.register_extension_test(extdb)
             self.check_dependencies_test(extdb)
             self.unregister_extension_test(extdb)
+            self.get_extension_test(extdb)
+            self.callback_test(extdb)
 
             # Clean up.
             assert extdb.clear_database()
             assert extdb.uninstall()
+            assert acldb.uninstall()
 
 
     testcase = DBTest()
