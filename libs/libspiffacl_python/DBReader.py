@@ -197,8 +197,12 @@ class DBReader:
         return resource
 
 
-    def __get_resource_from_query(self, query, type = None):
-        """May return a resource list, a single resource, or None"""
+    def __get_resource_from_query(self, query, type = None, always_list = False):
+        """
+        May return a resource list, a single resource, or None.
+        If always_list is True, a list is returned even if only a single
+        result was produced.
+        """
         assert query is not None
         result = query.execute()
         assert result is not None
@@ -232,6 +236,8 @@ class DBReader:
                 if last_id != row[tbl_r.c.id]:
                     break
 
+        if always_list:
+            return resource_list
         if len(resource_list) == 1:
             return resource
         return resource_list
@@ -269,7 +275,7 @@ class DBReader:
         return self.__get_resource_from_query(select, type)
 
 
-    def get_resource_list_from_id_list(self, id_list, type = None):
+    def get_resource_list_from_id_list(self, id_list, my_type = None):
         assert id_list is not None
         if len(id_list) == 0: return []
         tbl_r  = self._table_map['resource']
@@ -285,7 +291,7 @@ class DBReader:
             select = table.select(use_labels = True)
         else:
             select = table.select(where_clause, use_labels = True)
-        return self.__get_resource_from_query(select, type)
+        return self.__get_resource_from_query(select, my_type, True)
         
 
     def get_resource_children_from_id(self,

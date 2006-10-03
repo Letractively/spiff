@@ -455,8 +455,8 @@ if __name__ == '__main__':
             assert chunk.get_data() == in_str
 
             # Clean up.
-            #assert db.clear_database()
-            #assert db.uninstall()
+            assert db.clear_database()
+            assert db.uninstall()
 
 
         def runTest(self):
