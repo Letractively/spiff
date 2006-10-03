@@ -65,6 +65,7 @@ class Extension(Resource):
     def add_dependency(self, descriptor, context = 'default'):
         assert descriptor is not None and descriptor is not ''
         assert context    is not None and context    is not ''
+        #print "Descriptor:", descriptor
         matches = descriptor_parse(descriptor)
         assert matches is not None
         if not self.__dependencies.has_key(context):
@@ -77,8 +78,13 @@ class Extension(Resource):
         return self.__dependencies.keys()
 
 
-    def get_dependency_list(self, context):
-        return self.__dependencies[context]
+    def get_dependency_list(self, context = None):
+        if context is not None:
+            return self.__dependencies[context]
+        dependency_list = []
+        for context in self.__dependencies:
+            dependency_list += self.__dependencies[context]
+        return dependency_list
 
 
 if __name__ == '__main__':

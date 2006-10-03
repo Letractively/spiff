@@ -73,8 +73,8 @@ class DBReader:
         self.__add_table(Table(pfx + 'resource', metadata,
             Column('id',             Integer,     primary_key = True),
             Column('section_handle', String(230), index = True),
-            Column('handle',         String(230), unique = True),
-            Column('name',           String(230), unique = True),
+            Column('handle',         String(230)),
+            Column('name',           String(230)),
             Column('is_actor',       Boolean,     index = True),
             Column('is_group',       Boolean,     index = True),
             ForeignKeyConstraint(['section_handle'],
@@ -186,8 +186,12 @@ class DBReader:
             type = 'Resource'
         if row[tbl_r.c.is_group]:
             type += 'Group'
-        #print 'Type', type
-        obj      = eval(type) #FIXME: eval sucks
+        #print "Type:", type
+        if type not in ['Resource', 'Actor', 'ResourceGroup', 'ActorGroup']:
+            module = __import__(type)
+            obj    = getattr(module, type)
+        else:
+            obj    = globals().get(type)
         resource = obj(row[tbl_r.c.name], row[tbl_r.c.handle])
         resource.set_id(row[tbl_r.c.id])
         return resource
@@ -205,8 +209,7 @@ class DBReader:
         tbl_a         = self._table_map['resource_attribute']
         last_id       = None
         resource_list = []
-        while True:
-            if not row: break
+        while row is not None:
             last_id  = row[tbl_r.c.id]
             resource = self.__get_resource_from_row(row, type)
             resource_list.append(resource)
@@ -215,13 +218,13 @@ class DBReader:
             # Append all attributes.
             while 1:
                 # Determine attribute type.
-                if row[tbl_a.c.type] is self.attrib_type_int:
+                if row[tbl_a.c.type] == self.attrib_type_int:
                     value = int(row[tbl_a.c.attr_int])
-                elif row[tbl_a.c.type] is self.attrib_type_string:
+                elif row[tbl_a.c.type] == self.attrib_type_string:
                     value = row[tbl_a.c.attr_string]
 
                 # Append attribute.
-                if row[tbl_a.c.name] is not None:
+                if row[tbl_a.c.type] is not None:
                     resource.set_attribute(row[tbl_a.c.name], value)
                 row = result.fetchone()
 
@@ -250,7 +253,8 @@ class DBReader:
         tbl_a  = self._table_map['resource_attribute']
         table  = outerjoin(tbl_r, tbl_a, tbl_r.c.id == tbl_a.c.resource_id)
         select = table.select(and_(tbl_r.c.handle         == handle,
-                                   tbl_r.c.section_handle == section_handle))
+                                   tbl_r.c.section_handle == section_handle),
+                              use_labels = True)
         return self.__get_resource_from_query(select, type)
 
 
@@ -267,15 +271,20 @@ class DBReader:
 
     def get_resource_list_from_id_list(self, id_list, type = None):
         assert id_list is not None
+        if len(id_list) == 0: return []
         tbl_r  = self._table_map['resource']
         tbl_a  = self._table_map['resource_attribute']
         table  = outerjoin(tbl_r, tbl_a, tbl_r.c.id == tbl_a.c.resource_id)
+        where_clause = None
         for id in id_list:
             if where_clause is None:
                 where_clause = (tbl_r.c.id == id)
             else:
                 where_clause = or_(tbl_r.c.id == id)
-        select = table.select(where_clause, use_labels = True)
+        if where_clause is None:
+            select = table.select(use_labels = True)
+        else:
+            select = table.select(where_clause, use_labels = True)
         return self.__get_resource_from_query(select, type)
         
 
@@ -322,10 +331,10 @@ class DBReader:
 
             # Append attribute (if any).
             if row[tbl_a.c.name] is None: continue
-            if row[tbl_a.c.type] is attrib_type_int:
+            if row[tbl_a.c.type] == self.attrib_type_int:
                 resource.set_attribute(row[tbl_a.c.name],
                                        int(row[tbl_a.c.attr_int]))
-            elif row[tbl_a.c.type] is attrib_type_string:
+            elif row[tbl_a.c.type] == self.attrib_type_string:
                 resource.set_attribute(row[tbl_a.c.name],
                                        row[tbl_a.c.attr_string])
 
@@ -372,10 +381,10 @@ class DBReader:
 
             # Append attribute (if any).
             if row[tbl_a.c.name] is None: continue
-            if row[tbl_a.c.type] is attrib_type_int:
+            if row[tbl_a.c.type] is self.attrib_type_int:
                 resource.set_attribute(row[tbl_a.c.name],
                                        int(row[tbl_a.c.attr_int]))
-            elif row[tbl_a.c.type] is attrib_type_string:
+            elif row[tbl_a.c.type] is self.attrib_type_string:
                 resource.set_attribute(row[tbl_a.c.name],
                                        row[tbl_a.c.attr_string])
 
