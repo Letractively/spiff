@@ -1,36 +1,55 @@
 # This file contains ideas, design plans, mindmap, ... you name it,
 # for libspiffextension_python.
 
-Overall Design
---------------
+Background
+-----------
+libspiffextension is the most important part of the Spiff platform.
+Because most of Spiff's functionality is built around this component,
+it is very important to get it right.
+The library performs the following tasks:
 
-* We have one core class, the extension manager.
-
-* The extension manager performs the following actions:
-   - Installs plugins.
-   - Deletes plugins.
-   - Ensures that dependencies between plugins are consistent at
+   - Installing plugins.
+   - Deleting plugins.
+   - Ensuring that dependencies between plugins are consistent at
      any given time.
-   - Loads plugins when they are needed.
-   - Unloads plugins when they are no longer needed.
-   - Provides a facility over which plugins can communicate with
+   - Loading plugins when they are needed.
+   - Unloading plugins when they are no longer needed.
+   - It provides a facility over which plugins can communicate with
      each other.
-   - Provides a facility that controls which kind of communication
+   - It provides a facility that controls which kind of communication
      may or may not be taken between plugins.
 
+libspiffextension may also run plugins inside of a sandbox, and apply
+permission restrictions to them. This functionality will only be added
+at a later point, however.
 
-Extension Manager Design
-------------------------
 
-* The extension handler has an event bus.
-* Every extension can send and retrieve events via that event bus.
-* Before an extension is installed, the extension manager determines
-  the dependencies of the extension and ensures that they are
-  fullfilled.
-* Before an extension is installed, the extension manager retrieves
-  a list of all events to which the extension would like to subscribe.
-  It then delegates the decision of whether permission to access the
-  events is granted to the client (=whoever owns the manager).
+Design
+-------
+* Extension class: Type for any plugin. An extension has a list of
+  dependencies. Dependencies may be grouped into contexts, such as "runtime"
+  or "install_time" dependencies. libspiffextension only ever checks the
+  dependencies within each context, dependencies accross multiple contexts are
+  unchecked.
+  Extensions may also send signals, or listen to signals emitted by the
+  EventBus, if the have the permission to do so.
+
+* Callback class: A callback is a function owned by an Extension that is hooked
+  into a specific EventBus signal.
+
+* DB class: The list of installed plugins, dependencies, callbacks and other
+  properties are stored within the database. This class abstracts the database
+  from the rest of the library.
+
+* Manager class: This is the core public API, providing the client with methods
+  for installing and uninstalling plugins, and configuring any options of them.
+  It also provides secure (authenticated) access to the EventBus.
+  Before an extension is installed, the Manager determines the dependencies of
+  the extension and ensures that they are fullfilled.
+  It also retrieves a list of all EventBus signals to which the extension would
+  like to subscribe. It then delegates the decision of whether permission to
+  access the events is granted to the client (=whoever owns the manager).
+
 
 API:
 
