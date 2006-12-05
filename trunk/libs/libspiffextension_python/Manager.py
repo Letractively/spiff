@@ -15,6 +15,7 @@
 from Callback import *
 from DB       import *
 from tempfile import *
+import Parser
 
 class Manager:
     __no_such_file_error,     \
@@ -27,69 +28,6 @@ class Manager:
     def  __init__(self, db):
         self.db             = db
         self.__extension_db = DB(self.db)
-
-
-    def __parse_header(self, filename):
-        assert os.path.is_file(filename)
-        file = open(file, 'r')
-
-        # Skip first two lines.
-        file.readline()
-        file.readline()
-
-        # Pre-compile all regular expressions.
-        header_fields = [
-            'extension',
-            'handle',
-            'version',
-            'author',
-            'description',
-            'runtime_dependency',
-            'install_time_dependency']
-        header_end = re.compile('^\s*\*\/$')
-        line_notag = re.compile('^\s+(.*)$',       re.S)
-        line_tag   = re.compile('^(\S+):\s+(.+)$', re.S)
-
-        # Walk through the header lines.
-        header   = {}
-        last_tag = ''
-        for line in file:
-            # Find a closing tag of the header.
-            if header_end.match(line):
-                break
-            
-            # Parse a line that contains a string, but no field name.
-            match = line_notag.match(line)
-            if match is not None:
-                assert last_tag is not None
-                assert header.has_key(last_tag)
-                header[last_tag] += match.group(1)
-                continue
-
-            # Parse a line that contains a field name.
-            match = line_tag.match(line)
-            if match is None:
-                continue
-
-            # Make sure that the extracted tag is valid.
-            last_tag = match.group(1).lower()
-            assert last_tag in header_fields
-            header[last_tag] = match.group(2)
-
-        # Make sure that the header is complete.
-        for field in header_fields:
-            # Skip optional fields.
-            if field == 'install_time_dependency':
-                continue
-            assert header.has_key(field)
-
-        # Split the dependencies into a list.
-        list = header['runtime_dependency'].split(' ')
-        header['runtime_dependency'] = list
-        if header.has_key('install_time_dependency'):
-            list = header['install_time_dependency'].split(' ')
-        header['install_time_dependency'] = list
-        return header
 
 
     def __install_directory(self, dirname):
@@ -151,7 +89,7 @@ class Manager:
             return __install_error
 
         # Read the extension header.
-        header = self.__parse_header(install_dir)
+        header = Parser.parse_header(install_dir)
         if not header: return __parse_error
 
         # Check dependencies.
@@ -167,7 +105,7 @@ class Manager:
                 event_uri = callback.get_context()
                 permit    = permission_request_func(extension, event_uri)
                 if not permit: return __permission_denied_error
-            
+
         # Create instance (or resource).
         modulename = install_dir.replace('/', '.')
         module     = __import__(modulename)
@@ -206,4 +144,3 @@ class Manager:
     def emit(name):
         #FIXME
         pass
-        
