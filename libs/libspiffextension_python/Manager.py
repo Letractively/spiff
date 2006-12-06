@@ -16,6 +16,7 @@ from Callback import *
 from DB       import *
 from tempfile import *
 import Parser
+import os.path
 
 class Manager:
     __no_such_file_error,     \
@@ -25,9 +26,9 @@ class Manager:
     __database_error,         \
     __permission_denied_error = range(6)
     
-    def  __init__(self, db):
-        self.db             = db
-        self.__extension_db = DB(self.db)
+    def  __init__(self, acldb):
+        self.db             = acldb.db
+        self.__extension_db = DB(acldb)
 
 
     def __install_directory(self, dirname):
@@ -40,10 +41,9 @@ class Manager:
 
 
     def __install_archive(self, filename):
-        assert os.path.is_file(filename)
-        dirname = os.path.dirname(filename)
-        prefix  = os.path.basename(filename).sub('.')
-        target  = mkdtemp('', prefix, dirname)
+        assert os.path.isfile(filename)
+        dirname, prefix = os.path.split(filename)
+        target          = mkdtemp('', prefix, dirname)
         if not unzip(filename, target):
             return None
         return target
@@ -139,8 +139,47 @@ class Manager:
         @rtype:  Boolean
         @return: True on success, False otherwise.
         """
+        #FIXME: Delete the extension from the hard drive?
+        return unregister_extension_from_id(id)
 
 
     def emit(name):
         #FIXME
         pass
+
+
+if __name__ == '__main__':
+    import unittest
+    import MySQLdb
+    import libspiffacl_python
+    from ConfigParser import RawConfigParser
+
+    class ManagerTest(unittest.TestCase):
+        def runTest(self):
+            # Read config.
+            cfg = RawConfigParser()
+            cfg.read('unit_test.cfg')
+            host     = cfg.get('database', 'host')
+            db_name  = cfg.get('database', 'db_name')
+            user     = cfg.get('database', 'user')
+            password = cfg.get('database', 'password')
+
+            # Connect to MySQL.
+            auth  = user + ':' + password
+            dbn   = 'mysql://' + auth + '@' + host + '/' + db_name
+            db    = create_engine(dbn)
+            acldb = libspiffacl_python.DB(db)
+
+            # Install an extension.
+            manager  = Manager(acldb)
+            filename = 'HelloWorldExtension.zip'
+            id = manager.add_extension(filename)
+            print 'Return value:', id
+            assert id is not None
+
+            # Remove the extension.
+            assert manager.remove_extension_from_id(id)
+            
+    testcase = ManagerTest()
+    runner   = unittest.TextTestRunner()
+    runner.run(testcase)
