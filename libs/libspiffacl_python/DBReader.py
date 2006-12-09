@@ -46,21 +46,20 @@ class DBReader:
 
 
     def __update_table_names(self):
-        metadata = self.db_metadata
-        pfx      = self._table_prefix
-        self.__add_table(Table(pfx + 'action_section', metadata,
+        pfx = self._table_prefix
+        self.__add_table(Table(pfx + 'action_section', self.db_metadata,
             Column('id',     Integer,     primary_key = True),
             Column('handle', String(230), unique = True),
             Column('name',   String(230), unique = True),
             mysql_engine='INNODB'
         ))
-        self.__add_table(Table(pfx + 'resource_section', metadata,
+        self.__add_table(Table(pfx + 'resource_section', self.db_metadata,
             Column('id',     Integer,     primary_key = True),
             Column('handle', String(230), unique = True),
             Column('name',   String(230), unique = True),
             mysql_engine='INNODB'
         ))
-        self.__add_table(Table(pfx + 'action', metadata,
+        self.__add_table(Table(pfx + 'action', self.db_metadata,
             Column('id',             Integer,     primary_key = True),
             Column('section_handle', String(230), index = True),
             Column('handle',         String(230), unique = True),
@@ -70,7 +69,7 @@ class DBReader:
                                  ondelete = 'CASCADE'),
             mysql_engine='INNODB'
         ))
-        self.__add_table(Table(pfx + 'resource', metadata,
+        self.__add_table(Table(pfx + 'resource', self.db_metadata,
             Column('id',             Integer,     primary_key = True),
             Column('section_handle', String(230), index = True),
             Column('handle',         String(230)),
@@ -82,7 +81,7 @@ class DBReader:
                                  ondelete = 'CASCADE'),
             mysql_engine='INNODB'
         ))
-        self.__add_table(Table(pfx + 'resource_attribute', metadata,
+        self.__add_table(Table(pfx + 'resource_attribute', self.db_metadata,
             Column('id',             Integer,     primary_key = True),
             Column('resource_id',    Integer,     index = True),
             Column('name',           String(50)),
@@ -94,7 +93,7 @@ class DBReader:
                                  ondelete = 'CASCADE'),
             mysql_engine='INNODB'
         ))
-        self.__add_table(Table(pfx + 'resource_path', metadata,
+        self.__add_table(Table(pfx + 'resource_path', self.db_metadata,
             Column('id',             Integer,     primary_key = True),
             Column('path',           Binary(255), index = True),
             Column('depth',          Integer,     index = True),
@@ -106,7 +105,7 @@ class DBReader:
                                  ondelete = 'CASCADE'),
             mysql_engine='INNODB'
         ))
-        self.__add_table(Table(pfx + 'path_ancestor_map', metadata,
+        self.__add_table(Table(pfx + 'path_ancestor_map', self.db_metadata,
             Column('resource_path_id',  Integer, index = True),
             Column('ancestor_path_id',  Integer, index = True),
             ForeignKeyConstraint(['resource_path_id'],
@@ -117,7 +116,7 @@ class DBReader:
                                  ondelete = 'CASCADE'),
             mysql_engine='INNODB'
         ))
-        self.__add_table(Table(pfx + 'acl', metadata,
+        self.__add_table(Table(pfx + 'acl', self.db_metadata,
             Column('id',             Integer, primary_key = True),
             Column('actor_id',       Integer, index = True),
             Column('action_id',      Integer, index = True),

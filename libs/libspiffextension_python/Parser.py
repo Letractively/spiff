@@ -78,7 +78,7 @@ if __name__ == '__main__':
 
     class ParserTest(unittest.TestCase):
         def runTest(self):
-            filename = 'HelloWorldExtension.py'
+            filename = 'HelloWorldExtension/HelloWorldExtension.py'
             header   = parse_header(filename)
             assert header is not None
             assert len(header) == 8

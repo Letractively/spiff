@@ -1,0 +1,10 @@
+* The unit test for the Manager class does not yet check whether installation
+  works properly. It currently tries to install HelloWorldExtension, which
+  triggers a dependency_not_met error, because HelloWorldExtension specifies
+  "spiff" and "spoff" as dependencies.
+  To test the complete installation process, the dependencies specified by
+  HelloWorldExtension need to be made available.
+* The test should clean up after itself, removing the installed plugin if the
+  installation was unsuccessful. It should also delete the installation
+  directory when remove_extension_from_id() is called.
+-Samuel
