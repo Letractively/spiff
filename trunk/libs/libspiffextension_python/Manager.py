@@ -17,6 +17,7 @@ from DB       import *
 from tempfile import *
 import Parser
 import os.path
+import zipfile
 
 class Manager:
     __no_such_file_error,     \
@@ -27,7 +28,6 @@ class Manager:
     __permission_denied_error = range(6)
     
     def  __init__(self, acldb):
-        self.db             = acldb.db
         self.__extension_db = DB(acldb)
 
 
@@ -42,10 +42,21 @@ class Manager:
 
     def __install_archive(self, filename):
         assert os.path.isfile(filename)
+        # Create a temporary directory.
         dirname, prefix = os.path.split(filename)
         target          = mkdtemp('', prefix, dirname)
-        if not unzip(filename, target):
+
+        # Unzip into the directory.
+        zfobj = zipfile.ZipFile(filename)
+        if zfobj is None:
             return None
+        for name in zfobj.namelist():
+            if name.endswith('/'):
+                os.mkdir(os.path.join(target, name))
+            else:
+                outfile = open(os.path.join(target, name), 'wb')
+                outfile.write(zfobj.read(name))
+                outfile.close()
         return target
 
 
@@ -76,7 +87,7 @@ class Manager:
                  installed, <0 otherwise.
         """
         if not os.path.exists(filename):
-            return __no_such_file_error
+            return self.__no_such_file_error
 
         # Install files.
         if os.path.isdir(filename):
@@ -86,17 +97,17 @@ class Manager:
             # Unpack the extension into the target directory.
             install_dir = self.__install_archive(filename)
         if not install_dir:
-            return __install_error
+            return self.__install_error
 
         # Read the extension header.
-        header = Parser.parse_header(install_dir)
-        if not header: return __parse_error
+        class_file = os.path.join(install_dir, 'Extension.py')
+        header     = Parser.parse_header(class_file)
+        if not header: return self.__parse_error
 
         # Check dependencies.
-        for context in header['dependencies']:
-            for descriptor in header['dependencies']['context']:
-                if not __extension_db.has_extension_from_descriptor(descriptor):
-                    return __unmet_dependency_error
+        for descriptor in header['runtime_dependency']:
+            if not self.__extension_db.get_extension_from_descriptor(descriptor):
+                return self.__unmet_dependency_error
 
         # Check whether the extension has permission to listen to the
         # requested events.
@@ -104,7 +115,7 @@ class Manager:
             for callback in header['callbacks']:
                 event_uri = callback.get_context()
                 permit    = permission_request_func(extension, event_uri)
-                if not permit: return __permission_denied_error
+                if not permit: return self.__permission_denied_error
 
         # Create instance (or resource).
         modulename = install_dir.replace('/', '.')
@@ -125,7 +136,7 @@ class Manager:
         # Register the extension in the database, including dependencies and
         # callbacks.
         id = self.__extension_db.register_extension(extension)
-        if not id: return __database_error
+        if not id: return self.__database_error
 
         return id
 
@@ -140,7 +151,7 @@ class Manager:
         @return: True on success, False otherwise.
         """
         #FIXME: Delete the extension from the hard drive?
-        return unregister_extension_from_id(id)
+        return self.__extension_db.unregister_extension_from_id(id)
 
 
     def emit(name):
@@ -170,6 +181,13 @@ if __name__ == '__main__':
             db    = create_engine(dbn)
             acldb = libspiffacl_python.DB(db)
 
+            # Install dependencies.
+            extdb = DB(acldb)
+            assert extdb.uninstall()
+            assert acldb.uninstall()
+            assert acldb.install()
+            assert extdb.install()
+
             # Install an extension.
             manager  = Manager(acldb)
             filename = 'HelloWorldExtension.zip'
@@ -179,6 +197,11 @@ if __name__ == '__main__':
 
             # Remove the extension.
             assert manager.remove_extension_from_id(id)
+
+            # Clean up.
+            assert extdb.clear_database()
+            assert extdb.uninstall()
+            assert acldb.uninstall()
             
     testcase = ManagerTest()
     runner   = unittest.TextTestRunner()

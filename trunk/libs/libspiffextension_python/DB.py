@@ -51,6 +51,7 @@ class DB:
             ForeignKeyConstraint(['extension_id'],
                                  [acldb_pfx + 'resource.id'],
                                  ondelete = 'CASCADE'),
+            useexisting = True,
             mysql_engine='INNODB'
         ))
         self.__add_table(Table(pfx + 'extension_dependency_map', metadata,
@@ -62,6 +63,7 @@ class DB:
             ForeignKeyConstraint(['dependency_id'],
                                  [acldb_pfx + 'resource.id'],
                                  ondelete = 'CASCADE'),
+            useexisting = True,
             mysql_engine='INNODB'
         ))
         self.__add_table(Table(pfx + 'extension_callback', metadata,
@@ -72,6 +74,7 @@ class DB:
             ForeignKeyConstraint(['extension_id'],
                                  [acldb_pfx + 'resource.id'],
                                  ondelete = 'CASCADE'),
+            useexisting = True,
             mysql_engine='INNODB'
         ))
 
@@ -205,6 +208,16 @@ class DB:
             extension.add_dependency(dependency)
         return True
 
+    
+    def __lookup_section(self):
+        s_handle = self._acl_section_handle
+        section  = self._acldb.get_resource_section_from_handle(s_handle)
+        if not section:
+            section = ResourceSection(s_handle)
+            self._acldb.add_resource_section(section)
+        self._acl_section = section
+        
+
 
     def check_dependencies(self, extension):
         """
@@ -254,12 +267,7 @@ class DB:
 
         # Make sure that a resource section already exists.
         if not self._acl_section:
-            s_handle = self._acl_section_handle
-            section  = self._acldb.get_resource_section_from_handle(s_handle)
-            if not section:
-                section = libspiffacl_python.ResourceSection(s_handle)
-                self._acldb.add_resource_section(section)
-            self._acl_section = section
+            self.__lookup_section()
 
         # Create a group that holds all versions of the extension.
         handle   = extension.get_handle()
@@ -506,6 +514,10 @@ class DB:
         @return: A list containing all versions of the requested extension.
         """
         assert handle is not None
+        # Make sure that a resource section already exists.
+        if not self._acl_section:
+            self.__lookup_section()
+
         section  = self._acl_section.get_handle()
         parent   = self._acldb.get_resource_from_handle(handle, section)
         if parent is None: return []
