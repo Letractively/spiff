@@ -9,15 +9,14 @@ required_fields = [
     'version',
     'author',
     'author-email',
-    'description',
-    'runtime_dependency' ]
-optional_fields = ['install_time_dependency']
+    'description']
+optional_fields = ['runtime_dependency', 'install_time_dependency']
 
 # Pre-compile regular expressions.
 header_start = re.compile('^\s*"""$')
 header_end   = header_start
 line_notag   = re.compile('^\s+(.*)$',       re.S)
-line_tag     = re.compile('^(\S+):\s+(.+)$')
+line_tag     = re.compile('^(\S+):\s*(.+)$')
 
 # Given the filename of an extension file, this function reads the file and
 # parses the comment that is embedded in the header.
@@ -65,10 +64,15 @@ def parse_header(filename):
         assert header.has_key(field)
 
     # Split the dependencies into a list.
-    list = header['runtime_dependency'].split(' ')
+    if header.has_key('runtime_dependency'):
+        list = header['runtime_dependency'].split(' ')
+    else:
+        list = []
     header['runtime_dependency'] = list
     if header.has_key('install_time_dependency'):
         list = header['install_time_dependency'].split(' ')
+    else:
+        list = []
     header['install_time_dependency'] = list
     return header
 

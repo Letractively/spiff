@@ -17,6 +17,7 @@ from DB       import *
 from tempfile import *
 import Parser
 import os.path
+import shutil
 import zipfile
 
 class Manager:
@@ -29,22 +30,33 @@ class Manager:
     
     def  __init__(self, acldb):
         self.__extension_db = DB(acldb)
+        self.__install_dir  = None
+
+    
+    def set_install_dir(self, dirname):
+        assert os.path.isdir(dirname)
+        self.__install_dir = dirname
 
 
     def __install_directory(self, dirname):
-        assert os.path.is_dir(dirname)
+        assert os.path.isdir(dirname)
         prefix = os.path.basename(dirname)
-        target = mkdtemp('', prefix, dirname)
+        target = mkdtemp('', prefix, self.__install_dir)
         if not target: return None
-        os.path.copy(dirname, target)
+        for item in os.listdir(dirname):
+            item = os.path.join(dirname, item)
+            if os.path.isdir(item):
+                shutil.copytree(item, target)
+            else:
+                shutil.copy(item, target)
         return target
 
 
     def __install_archive(self, filename):
         assert os.path.isfile(filename)
         # Create a temporary directory.
-        dirname, prefix = os.path.split(filename)
-        target          = mkdtemp('', prefix, dirname)
+        prefix = os.path.basename(filename)
+        target = mkdtemp('', prefix, self.__install_dir)
 
         # Unzip into the directory.
         zfobj = zipfile.ZipFile(filename)
@@ -107,6 +119,7 @@ class Manager:
         # Check dependencies.
         for descriptor in header['runtime_dependency']:
             if not self.__extension_db.get_extension_from_descriptor(descriptor):
+                shutil.rmtree(install_dir)
                 return self.__unmet_dependency_error
 
         # Check whether the extension has permission to listen to the
@@ -115,7 +128,9 @@ class Manager:
             for callback in header['callbacks']:
                 event_uri = callback.get_context()
                 permit    = permission_request_func(extension, event_uri)
-                if not permit: return self.__permission_denied_error
+                if not permit:
+                    shutil.rmtree(install_dir)
+                    return self.__permission_denied_error
 
         # Create instance (or resource).
         modulename = install_dir.replace('/', '.')
@@ -136,7 +151,19 @@ class Manager:
         # Register the extension in the database, including dependencies and
         # callbacks.
         id = self.__extension_db.register_extension(extension)
-        if not id: return self.__database_error
+        if not id:
+            shutil.rmtree(install_dir)
+            return self.__database_error
+
+        # Rename the directory so that the id can be used to look the
+        # extension up.
+        try:
+            new_install_dir = os.path.join(self.__install_dir, str(id))
+            os.rename(install_dir, new_install_dir)
+        except:
+            shutil.rmtree(install_dir)
+            self.remove_extension_from_id(id)
+            return self.__install_error
 
         return id
 
@@ -150,8 +177,11 @@ class Manager:
         @rtype:  Boolean
         @return: True on success, False otherwise.
         """
-        #FIXME: Delete the extension from the hard drive?
-        return self.__extension_db.unregister_extension_from_id(id)
+        res         = self.__extension_db.unregister_extension_from_id(id)
+        install_dir = os.path.join(self.__install_dir, str(id))
+        if os.path.isdir(install_dir):
+            shutil.rmtree(install_dir)
+        return res
 
 
     def emit(name):
@@ -188,9 +218,18 @@ if __name__ == '__main__':
             assert acldb.install()
             assert extdb.install()
 
-            # Install an extension.
+            # Set up.
             manager  = Manager(acldb)
-            filename = 'HelloWorldExtension.zip'
+            manager.set_install_dir('tmp')
+            
+            # Install first extension.
+            filename = 'samples/SpiffExtension'
+            id = manager.add_extension(filename)
+            print 'Return value:', id
+            assert id is not None
+
+            # Install second extension.
+            filename = 'samples/HelloWorldExtension.zip'
             id = manager.add_extension(filename)
             print 'Return value:', id
             assert id is not None
