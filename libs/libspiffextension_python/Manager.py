@@ -26,16 +26,20 @@ class Manager:
     __parse_error,            \
     __unmet_dependency_error, \
     __database_error,         \
-    __permission_denied_error = range(6)
+    __permission_denied_error = range(-1, -7, -1)
     
     def  __init__(self, acldb):
-        self.__extension_db = DB(acldb)
-        self.__install_dir  = None
+        self.__extension_db  = DB(acldb)
+        self.__install_dir   = None
+        self.__extension_api = None #FIXME
 
     
     def set_install_dir(self, dirname):
         assert os.path.isdir(dirname)
+        if dirname in sys.path:
+            sys.path.remove(self.__install_dir)
         self.__install_dir = dirname
+        sys.path.append(self.__install_dir)
 
 
     def __install_directory(self, dirname):
@@ -114,10 +118,12 @@ class Manager:
         # Read the extension header.
         class_file = os.path.join(install_dir, 'Extension.py')
         header     = Parser.parse_header(class_file)
-        if not header: return self.__parse_error
+        if not header:
+            return self.__parse_error
 
         # Check dependencies.
         for descriptor in header['runtime_dependency']:
+            #print "Descriptor:", descriptor
             if not self.__extension_db.get_extension_from_descriptor(descriptor):
                 shutil.rmtree(install_dir)
                 return self.__unmet_dependency_error
@@ -125,7 +131,7 @@ class Manager:
         # Check whether the extension has permission to listen to the
         # requested events.
         if permission_request_func is not None:
-            for callback in header['callbacks']:
+            for callback in header['callback']:
                 event_uri = callback.get_context()
                 permit    = permission_request_func(extension, event_uri)
                 if not permit:
@@ -133,27 +139,26 @@ class Manager:
                     return self.__permission_denied_error
 
         # Create instance (or resource).
-        modulename = install_dir.replace('/', '.')
-        module     = __import__(modulename)
-        extension  = module.Extension(self.__extension_api)
+        #modulename = os.path.basename(install_dir).replace('/', '.')
+        #module     = __import__(modulename)
+        #extension  = module.Extension(self.__extension_api)
+        extension = Extension(header['extension'],
+                              header['handle'],
+                              header['version'])
 
         # Append dependencies.
-        for context in header['dependencies']:
-            for descriptor in header['dependencies']['context']:
+        context_list = ['runtime_dependency', 'install_time_dependency']
+        for context in context_list:
+            for descriptor in header[context]:
                 extension.add_dependency(descriptor, context)
 
-        # Append callbacks.
-        for callback in header['callbacks']:
-            cb_name   = callback.get_name()
-            event_uri = callback.get_context()
-            extension.add_listener(cb_name, event_uri)
-
-        # Register the extension in the database, including dependencies and
-        # callbacks.
-        id = self.__extension_db.register_extension(extension)
-        if not id:
+        # Register the extension in the database, including dependencies.
+        result = self.__extension_db.register_extension(extension)
+        if not result:
             shutil.rmtree(install_dir)
             return self.__database_error
+        id = extension.get_id()
+        assert id > 0
 
         # Rename the directory so that the id can be used to look the
         # extension up.
@@ -165,7 +170,7 @@ class Manager:
             self.remove_extension_from_id(id)
             return self.__install_error
 
-        return id
+        return extension.get_id()
 
 
     def remove_extension_from_id(self, id):
@@ -224,18 +229,17 @@ if __name__ == '__main__':
             
             # Install first extension.
             filename = 'samples/SpiffExtension'
-            id = manager.add_extension(filename)
-            print 'Return value:', id
-            assert id is not None
+            id1      = manager.add_extension(filename)
+            assert id1 > 0
 
             # Install second extension.
-            filename = 'samples/HelloWorldExtension.zip'
-            id = manager.add_extension(filename)
-            print 'Return value:', id
-            assert id is not None
+            filename = 'samples/HelloWorldExtension'
+            id2      = manager.add_extension(filename)
+            assert id2 > 0
 
             # Remove the extension.
-            assert manager.remove_extension_from_id(id)
+            assert manager.remove_extension_from_id(id2)
+            assert manager.remove_extension_from_id(id1)
 
             # Clean up.
             assert extdb.clear_database()

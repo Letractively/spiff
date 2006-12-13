@@ -1,6 +1,6 @@
 """
 extension:    HelloWorldExtension
-handle:       hello_world_extension
+handle:       hello_world
 version:      0.1
 author:       Samuel Abels
 author-email: spam2@debain.org
@@ -11,6 +11,6 @@ runtime_dependency: spiff>=0.5
 install_time_dependency: spiff>=0.1
 """
 
-class HelloWorldExtension:
-   def __init__(self):
+class Extension:
+   def __init__(self, api):
       pass

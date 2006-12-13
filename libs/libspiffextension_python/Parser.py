@@ -64,16 +64,13 @@ def parse_header(filename):
         assert header.has_key(field)
 
     # Split the dependencies into a list.
-    if header.has_key('runtime_dependency'):
-        list = header['runtime_dependency'].split(' ')
-    else:
-        list = []
-    header['runtime_dependency'] = list
-    if header.has_key('install_time_dependency'):
-        list = header['install_time_dependency'].split(' ')
-    else:
-        list = []
-    header['install_time_dependency'] = list
+    context_list = ['runtime_dependency', 'install_time_dependency']
+    for context in context_list:
+        if header.has_key(context):
+            header[context] = header[context].split(' ')
+        else:
+            header[context] = []
+
     return header
 
 
