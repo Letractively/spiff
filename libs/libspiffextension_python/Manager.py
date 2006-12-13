@@ -44,11 +44,11 @@ class Manager:
         target = mkdtemp('', prefix, self.__install_dir)
         if not target: return None
         for item in os.listdir(dirname):
-            item = os.path.join(dirname, item)
-            if os.path.isdir(item):
-                shutil.copytree(item, target)
+            src = os.path.join(dirname, item)
+            if os.path.isdir(src):
+                shutil.copytree(src, os.path.join(target, item))
             else:
-                shutil.copy(item, target)
+                shutil.copy(src, target)
         return target
 
 
