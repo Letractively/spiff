@@ -14,8 +14,8 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import sys
 sys.path.append('..')
-from functions          import descriptor_parse
-from libspiffacl_python import Resource
+from functions import descriptor_parse
+from Guard     import Resource
 
 class ExtensionInfo(Resource):
     def __init__(self, name, handle = None, version = '0'):
