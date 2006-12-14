@@ -10,7 +10,7 @@ required_fields = [
     'author',
     'author-email',
     'description']
-optional_fields = ['runtime_dependency', 'install_time_dependency']
+optional_fields = ['dependency', 'signal', 'listener']
 
 # Pre-compile regular expressions.
 header_start = re.compile('^\s*"""$')
@@ -64,7 +64,7 @@ def parse_header(filename):
         assert header.has_key(field)
 
     # Split the dependencies into a list.
-    context_list = ['runtime_dependency', 'install_time_dependency']
+    context_list = ['dependency', 'signal', 'listener']
     for context in context_list:
         if header.has_key(context):
             header[context] = header[context].split(' ')
@@ -79,10 +79,10 @@ if __name__ == '__main__':
 
     class ParserTest(unittest.TestCase):
         def runTest(self):
-            filename = 'HelloWorldExtension/HelloWorldExtension.py'
+            filename = 'samples/HelloWorldExtension/Extension.py'
             header   = parse_header(filename)
             assert header is not None
-            assert len(header) == 8
+            assert len(header) == 9
             #for field in required_fields:
             #    print field + ':', header[field]
 

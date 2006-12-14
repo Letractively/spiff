@@ -69,7 +69,7 @@ class DB:
         self.__add_table(Table(pfx + 'extension_callback', metadata,
             Column('id',           Integer,     primary_key = True),
             Column('extension_id', Integer,     index = True),
-            Column('name',         String(200)),
+            #Column('name',         String(200)),
             Column('event_uri',    String(255), index = True),
             ForeignKeyConstraint(['extension_id'],
                                  [acldb_pfx + 'resource.id'],
@@ -527,59 +527,61 @@ class DB:
         return children
 
 
-    def link_extension_id_to_callback(self, extension_id, callback):
+    def link_extension_id_to_callback(self, extension_id, uri):
         """
         Associates the given extension with the given callback.
 
         @type  extension_id: int
         @param extension_id: The id of the extension to be associated.
-        @type  callback: Callback
-        @param callback: The callback to be associated.
+        @type  uri: Callback
+        @param uri: The callback to be associated.
         @rtype:  int
         @return: The id of the callback, or <0 if an error occured.
         """
         assert extension_id >= 0
-        assert callback is not None
+        assert uri is not None
         
         table  = self._table_map['extension_callback']
         query  = table.insert()
-        result = query.execute(extension_id  = extension_id,
-                               name          = callback.get_name(),
-                               event_uri     = callback.get_event_uri())
+        result = query.execute(extension_id  = extension_id, event_uri = uri)
+          #                     name          = callback.get_name(),
+          #                     event_uri     = callback.get_event_uri())
         assert result is not None
         return result.last_inserted_ids()[0]
 
 
-    def link_extension_to_callback(self, extension, callback):
+    def link_extension_to_callback(self, extension, uri):
         """
         Convenience wrapper around link_extension_id_to_callback().
 
         @type  extension: Extension
         @param extension: The extension to be associated.
-        @type  callback: Callback
-        @param callback: The callback to be associated.
+        @type  uri: Callback
+        @param uri: The callback to be associated.
         @rtype:  int
         @return: The id of the callback, or <0 if an error occured.
         """
-        return self.link_extension_id_to_callback(extension.get_id(), callback)
+        return self.link_extension_id_to_callback(extension.get_id(), uri)
 
 
-    def get_extension_id_list_from_callback(self, callback):
+    def get_extension_id_list_from_callback(self, uri):
         """
         Returns a list of all extensions that are associated with the given
-        callback.
+        uri.
 
-        @type  callback: Callback
-        @param callback: The callback to look for.
+        @type  uri: Callback
+        @param uri: The callback to look for.
         @rtype:  list[int]
         @return: A list containing all associated extension ids, None on error.
         """
-        assert callback is not None
+        assert uri is not None
         
         table  = self._table_map['extension_callback']
+        #FIXME: Handle regexp callbacks.
         query  = select([table.c.extension_id],
-                        and_(table.c.name      == callback.get_name(),
-                             table.c.event_uri == callback.get_event_uri()),
+                        table.c.event_uri == uri,
+                        #and_(table.c.name      == callback.get_name(),
+                        #     table.c.event_uri == callback.get_event_uri()),
                         from_obj = [table])
         result = query.execute()
         assert result is not None
@@ -679,17 +681,20 @@ if __name__ == '__main__':
             assert list[0].get_handle() == 'spiff'
             assert list[1].get_handle() == 'spiff'
 
+        def dummy_callback(self, args):
+            pass
+            
         def callback_test(self, db):
             assert db.clear_database()
             extension = Extension('Spiff')
             extension.set_version('0.1.2')
             db.register_extension(extension)
 
-            callback = Callback('my_func_name', 'always')
+            #callback = Callback(self.dummy_callback, 'always')
             assert db.link_extension_id_to_callback(extension.get_id(),
-                                                    callback)
+                                                    'always')
 
-            list = db.get_extension_id_list_from_callback(callback)
+            list = db.get_extension_id_list_from_callback('always')
             assert len(list) == 1
             
 

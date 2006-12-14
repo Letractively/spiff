@@ -76,27 +76,42 @@ class Manager:
         return target
 
 
-    def add_extension(self, filename, permission_request_func = None):
+    def add_extension(self,
+                      filename,
+                      event_request_func  = None,
+                      signal_request_func = None):
         """
         Installs the given extension.
         
-        If the extension wants to subscribe to a potentially fancy
-        hook (=event bus signal) that requires permission, the given
-        permission_request_func() is called to inquire about whether
-        permission should be granted. If permission_request_func is not
-        specified, the extension is by default granted any requested
-        permission.
+        If the extension wants to subscribe to an event bus signal
+        that requires permission, the given event_request_func() is
+        called to inquire about whether permission should be granted.
+        If event_request_func is not specified, the extension is by
+        default granted any requested permission.
         
-        The permission_request_func() has the following signature:
+        The event_request_func() has the following signature:
           permission_request(extension, event_uri)
         where
           extension: is the extension that is to be registered
           uri:       is an URI addressing the event that the extension
                      would like to catch.
+        
+        If the extension wants to emit an event bus signal
+        that requires permission, the given signal_request_func() is
+        called to inquire about whether permission should be granted.
+        If signal_request_func is not specified, the extension is by
+        default granted any requested permission.
+        
+        The signal_request_func() has the following signature:
+          permission_request(extension, event_uri)
+        where
+          extension: is the extension that is to be registered
+          uri:       is an URI addressing the event that the extension
+                     would like to emit.
         @type  filename: os.path
         @param filename: Path to the file containing the extension.
-        @type  permission_request_func: function
-        @param permission_request_func: Invoked when requesting permission to
+        @type  event_request_func: function
+        @param event_request_func: Invoked when requesting permission to
                                         add a new callback.
         @rtype:  int
         @return: The extension id (>=0) if the extension was successfully
@@ -122,18 +137,39 @@ class Manager:
             return self.__parse_error
 
         # Check dependencies.
-        for descriptor in header['runtime_dependency']:
+        for descriptor in header['dependency']:
             #print "Descriptor:", descriptor
             if not self.__extension_db.get_extension_from_descriptor(descriptor):
                 shutil.rmtree(install_dir)
                 return self.__unmet_dependency_error
 
+        # Create the extension.
+        extension = Extension(header['extension'],
+                              header['handle'],
+                              header['version'])
+
+        # Append dependencies.
+        context_list = ['dependency']
+        for context in context_list:
+            for descriptor in header[context]:
+                extension.add_dependency(descriptor, context)
+
         # Check whether the extension has permission to listen to the
         # requested events.
-        if permission_request_func is not None:
-            for callback in header['callback']:
-                event_uri = callback.get_context()
-                permit    = permission_request_func(extension, event_uri)
+        if event_request_func is not None:
+            for uri in header['listener']:
+                # event_request_func() may modify the signal URI.
+                permit = event_request_func(extension, uri)
+                if not permit:
+                    shutil.rmtree(install_dir)
+                    return self.__permission_denied_error
+
+        # Check whether the extension has permission to send the
+        # requested events.
+        if signal_request_func is not None:
+            for uri in header['signal']:
+                # signal_request_func() may modify the signal URI.
+                permit = signal_request_func(extension, uri)
                 if not permit:
                     shutil.rmtree(install_dir)
                     return self.__permission_denied_error
@@ -142,15 +178,6 @@ class Manager:
         #modulename = os.path.basename(install_dir).replace('/', '.')
         #module     = __import__(modulename)
         #extension  = module.Extension(self.__extension_api)
-        extension = Extension(header['extension'],
-                              header['handle'],
-                              header['version'])
-
-        # Append dependencies.
-        context_list = ['runtime_dependency', 'install_time_dependency']
-        for context in context_list:
-            for descriptor in header[context]:
-                extension.add_dependency(descriptor, context)
 
         # Register the extension in the database, including dependencies.
         result = self.__extension_db.register_extension(extension)
@@ -159,6 +186,13 @@ class Manager:
             return self.__database_error
         id = extension.get_id()
         assert id > 0
+
+        for uri in header['listener']:
+            try:
+                self.__extension_db.link_extension_id_to_callback(id, uri)
+            except:
+                shutil.rmtree(install_dir)
+                return self.__database_error
 
         # Rename the directory so that the id can be used to look the
         # extension up.
@@ -187,11 +221,6 @@ class Manager:
         if os.path.isdir(install_dir):
             shutil.rmtree(install_dir)
         return res
-
-
-    def emit(name):
-        #FIXME
-        pass
 
 
 if __name__ == '__main__':
