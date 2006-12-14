@@ -1,7 +1,7 @@
-__all__ = ['Extension',
+__all__ = ['ExtensionInfo',
            'DB',
            'Manager']
 
-from Extension import Extension
-from DB        import DB
-from Manager   import Manager
+from ExtensionInfo import ExtensionInfo
+from DB            import DB
+from Manager       import Manager

@@ -12,8 +12,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-from Callback import *
+from Api      import Api
 from DB       import *
+from EventBus import EventBus
 from tempfile import *
 import Parser
 import os.path
@@ -29,19 +30,13 @@ class Manager:
     __permission_denied_error = range(-1, -7, -1)
     
     def  __init__(self, acldb):
-        self.__extension_db  = DB(acldb)
-        self.__install_dir   = None
-        self.__extension_api = None #FIXME
+        self.__extension_db    = DB(acldb)
+        self.__event_bus       = EventBus()
+        self.__extension_api   = Api(self, self.__event_bus)
+        self.__install_dir     = None
+        self.__extension_cache = {}
 
     
-    def set_install_dir(self, dirname):
-        assert os.path.isdir(dirname)
-        if dirname in sys.path:
-            sys.path.remove(self.__install_dir)
-        self.__install_dir = dirname
-        sys.path.append(self.__install_dir)
-
-
     def __install_directory(self, dirname):
         assert os.path.isdir(dirname)
         prefix = os.path.basename(dirname)
@@ -76,6 +71,20 @@ class Manager:
         return target
 
 
+    def set_extension_dir(self, dirname):
+        """
+        Defines the directory into which new extensions are installed, and
+        from which they are loaded.
+        @type  dirname: os.path
+        @param dirname: The extension directory.
+        """
+        assert os.path.isdir(dirname)
+        if dirname in sys.path:
+            sys.path.remove(self.__install_dir)
+        self.__install_dir = dirname
+        sys.path.append(self.__install_dir)
+
+
     def add_extension(self,
                       filename,
                       event_request_func  = None,
@@ -90,11 +99,11 @@ class Manager:
         default granted any requested permission.
         
         The event_request_func() has the following signature:
-          permission_request(extension, event_uri)
+          permission_request(extension_info, event_uri)
         where
-          extension: is the extension that is to be registered
-          uri:       is an URI addressing the event that the extension
-                     would like to catch.
+          extension_info: is the ExtensionInfo that is to be registered
+          uri:            is an URI addressing the event that the extension
+                          would like to catch.
         
         If the extension wants to emit an event bus signal
         that requires permission, the given signal_request_func() is
@@ -103,16 +112,19 @@ class Manager:
         default granted any requested permission.
         
         The signal_request_func() has the following signature:
-          permission_request(extension, event_uri)
+          permission_request(extension_info, event_uri)
         where
-          extension: is the extension that is to be registered
-          uri:       is an URI addressing the event that the extension
-                     would like to emit.
+          extension_info: is the ExtensionInfo that is to be registered
+          uri:            is an URI addressing the event that the extension
+                          would like to emit.
         @type  filename: os.path
         @param filename: Path to the file containing the extension.
         @type  event_request_func: function
         @param event_request_func: Invoked when requesting permission to
-                                        add a new callback.
+                                   add a new listener.
+        @type  signal_request_func: function
+        @param signal_request_func: Invoked when requesting permission to
+                                    add a new signal.
         @rtype:  int
         @return: The extension id (>=0) if the extension was successfully
                  installed, <0 otherwise.
@@ -143,23 +155,23 @@ class Manager:
                 shutil.rmtree(install_dir)
                 return self.__unmet_dependency_error
 
-        # Create the extension.
-        extension = Extension(header['extension'],
-                              header['handle'],
-                              header['version'])
+        # Create the ExtensionInfo.
+        info = ExtensionInfo(header['extension'],
+                             header['handle'],
+                             header['version'])
 
         # Append dependencies.
         context_list = ['dependency']
         for context in context_list:
             for descriptor in header[context]:
-                extension.add_dependency(descriptor, context)
+                info.add_dependency(descriptor, context)
 
         # Check whether the extension has permission to listen to the
         # requested events.
         if event_request_func is not None:
             for uri in header['listener']:
                 # event_request_func() may modify the signal URI.
-                permit = event_request_func(extension, uri)
+                permit = event_request_func(info, uri)
                 if not permit:
                     shutil.rmtree(install_dir)
                     return self.__permission_denied_error
@@ -169,22 +181,18 @@ class Manager:
         if signal_request_func is not None:
             for uri in header['signal']:
                 # signal_request_func() may modify the signal URI.
-                permit = signal_request_func(extension, uri)
+                permit = signal_request_func(info, uri)
                 if not permit:
                     shutil.rmtree(install_dir)
                     return self.__permission_denied_error
-
-        # Create instance (or resource).
-        #modulename = os.path.basename(install_dir).replace('/', '.')
-        #module     = __import__(modulename)
-        #extension  = module.Extension(self.__extension_api)
+                #FIXME: Store list of permitted signals in the database.
 
         # Register the extension in the database, including dependencies.
-        result = self.__extension_db.register_extension(extension)
+        result = self.__extension_db.register_extension(info)
         if not result:
             shutil.rmtree(install_dir)
             return self.__database_error
-        id = extension.get_id()
+        id = info.get_id()
         assert id > 0
 
         for uri in header['listener']:
@@ -197,14 +205,15 @@ class Manager:
         # Rename the directory so that the id can be used to look the
         # extension up.
         try:
-            new_install_dir = os.path.join(self.__install_dir, str(id))
+            subdir          = 'extension' + str(id)
+            new_install_dir = os.path.join(self.__install_dir, subdir)
             os.rename(install_dir, new_install_dir)
         except:
             shutil.rmtree(install_dir)
             self.remove_extension_from_id(id)
             return self.__install_error
 
-        return extension.get_id()
+        return info.get_id()
 
 
     def remove_extension_from_id(self, id):
@@ -217,10 +226,47 @@ class Manager:
         @return: True on success, False otherwise.
         """
         res         = self.__extension_db.unregister_extension_from_id(id)
-        install_dir = os.path.join(self.__install_dir, str(id))
+        subdir      = 'extension' + str(id)
+        install_dir = os.path.join(self.__install_dir, subdir)
         if os.path.isdir(install_dir):
             shutil.rmtree(install_dir)
         return res
+
+
+    def load_extension_from_id(self, id):
+        assert id > 0
+        
+        # Use cache if applicable.
+        if self.__extension_cache.has_key(str(id)):
+            return self.__extension_cache[str(id)]
+
+        # Create instance (or resource).
+        subdir     = 'extension' + str(id)
+        modulename = self.__install_dir + '.' + subdir
+        try:
+            module     = __import__(modulename)
+            extension  = module.Extension(self.__extension_api)
+        except:
+            return None
+
+        # Store in cache and return.
+        self.__extension_cache[str(id)] = extension
+        return extension
+
+
+    def load_extension_from_event(self, uri):
+        list = self.__extension_db.get_extension_id_list_from_callback(uri)
+        for id in list:
+            self.load_extension_from_id(id)
+
+
+    def load_extension_from_descriptor(self, descriptor):
+        assert descriptor is not None
+
+        # Look the extension info up in the db.
+        db   = self.__extension_db
+        info = db.get_extension_from_descriptor(descriptor)
+        return self.load_extension_from_id(info.get_id())
 
 
 if __name__ == '__main__':
@@ -253,8 +299,8 @@ if __name__ == '__main__':
             assert extdb.install()
 
             # Set up.
-            manager  = Manager(acldb)
-            manager.set_install_dir('tmp')
+            manager = Manager(acldb)
+            manager.set_extension_dir('tmp')
             
             # Install first extension.
             filename = 'samples/SpiffExtension'

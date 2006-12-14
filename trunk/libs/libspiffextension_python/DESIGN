@@ -29,11 +29,10 @@ Use Case: User installs one extra extension
 * Spiff finds the extension that renders that page.
 * Spiff calls Manager.load(InstallPageRenderer)
 * ...
-* PageRenderer shows an installation form.
+* InstallPageRenderer shows an installation form.
 * User uploads a new extension through that form.
 * Extension emits "InstallPageRenderer:install_request/filename"
-* Spiff fetches the signal, calls Manager.install(MyExtension), but
-  installs into a private directory of the user's web space.
+* Spiff fetches the signal, calls Manager.install(MyExtension).
 * Manager parses the header of MyExtension. The header contains:
    - a list of dependencies.
    - a list of possible signals.
