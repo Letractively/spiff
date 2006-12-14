@@ -15,7 +15,7 @@
 import sys
 sys.path.append('..')
 from sqlalchemy                   import *
-from Extension                    import Extension
+from ExtensionInfo                import ExtensionInfo
 from Callback                     import Callback
 from libspiffacl_python.functions import make_handle_from_string
 from libspiffacl_python           import *
@@ -226,7 +226,7 @@ class DB:
         Returns True if all dependencies needed to register the given
         extension are registered, False otherwise.
 
-        @type  extension: Extension
+        @type  extension: ExtensionInfo
         @param extension: The extension whose dependencies will be checked.
         @rtype:  Boolean
         @return: True if all dependency requirements are met, False otherwise.
@@ -243,10 +243,10 @@ class DB:
         """
         Register an extension.
 
-        Inserts the given Extension into the database.
+        Inserts the given ExtensionInfo into the database.
         The method takes no action if the extension is already registered.
 
-        @type  extension: Extension
+        @type  extension: ExtensionInfo
         @param extension: The extension to install.
         @rtype:  Boolean
         @return: True on success, False otherwise.
@@ -361,8 +361,8 @@ class DB:
 
     def unregister_extension_from_id(self, id):
         """
-        Removes the given Extension from the database. Warning: Also removes
-        any extension that requires the given Extension.
+        Removes the given ExtensionInfo from the database. Warning: Also
+        removes any extension that requires the given ExtensionInfo.
 
         @type  id: int
         @param id: The id of the extension to remove.
@@ -380,7 +380,7 @@ class DB:
 
     def unregister_extension_from_handle(self, handle, version):
         """
-        Removes the given Extension from the database.
+        Removes the given ExtensionInfo from the database.
 
         @type  handle: string
         @param handle: The handle of the extension to remove.
@@ -394,9 +394,9 @@ class DB:
 
     def unregister_extension(self, extension):
         """
-        Removes the given Extension from the database.
+        Removes the given ExtensionInfo from the database.
 
-        @type  extension: Extension
+        @type  extension: ExtensionInfo
         @param extension: The extension to remove.
         @rtype:  Boolean
         @return: False if the extension did not exist, True otherwise.
@@ -412,11 +412,11 @@ class DB:
 
         @type  id: int
         @param id: The id of the wanted extension.
-        @rtype:  Extension
+        @rtype:  ExtensionInfo
         @return: The extension on success, None if it does not exist.
         """
         assert id >= 0
-        extension = self._acldb.get_resource_from_id(id, 'Extension')
+        extension = self._acldb.get_resource_from_id(id, 'ExtensionInfo')
         if extension is None:
             return None
         handle  = extension.get_handle()
@@ -434,8 +434,8 @@ class DB:
         @param handle:  The handle of the wanted extension.
         @type  version: string
         @param version: The version number of the wanted extension.
-        @rtype:  Extension
-        @return: The extension on success, None if none was found.
+        @rtype:  ExtensionInfo
+        @return: The ExtensionInfo on success, None if none was found.
         """
         assert handle  is not None
         assert version is not None
@@ -443,7 +443,7 @@ class DB:
         section_handle = self._acl_section_handle
         extension      = self._acldb.get_resource_from_handle(version_handle,
                                                               section_handle,
-                                                              'Extension')
+                                                              'ExtensionInfo')
         if extension is None:
             return None
         extension.set_handle(handle)
@@ -471,8 +471,8 @@ class DB:
 
         @type  descriptor: string
         @param descriptor: The descriptor as specified above.
-        @rtype:  Extension
-        @return: The extension on success, None if none was found.
+        @rtype:  ExtensionInfo
+        @return: The ExtensionInfo on success, None if none was found.
         """
         assert descriptor is not None
         #print "Descriptor:", descriptor
@@ -510,7 +510,7 @@ class DB:
 
         @type  handle: string
         @param handle: The handle of the wanted extension versions.
-        @rtype:  list[Extension]
+        @rtype:  list[ExtensionInfo]
         @return: A list containing all versions of the requested extension.
         """
         assert handle is not None
@@ -521,7 +521,7 @@ class DB:
         section  = self._acl_section.get_handle()
         parent   = self._acldb.get_resource_from_handle(handle, section)
         if parent is None: return []
-        children = self._acldb.get_resource_children(parent, 'Extension')
+        children = self._acldb.get_resource_children(parent, 'ExtensionInfo')
         for child in children:
             child.set_handle(handle)
         return children
@@ -554,7 +554,7 @@ class DB:
         """
         Convenience wrapper around link_extension_id_to_callback().
 
-        @type  extension: Extension
+        @type  extension: ExtensionInfo
         @param extension: The extension to be associated.
         @type  uri: Callback
         @param uri: The callback to be associated.
@@ -607,11 +607,11 @@ if __name__ == '__main__':
             
         def check_dependencies_test(self, db):
             assert db.clear_database()
-            extension = Extension('Spiff')
+            extension = ExtensionInfo('Spiff')
             extension.set_version('0.2')
             db.register_extension(extension)
             
-            extension = Extension('Depends on Spiff')
+            extension = ExtensionInfo('Depends on Spiff')
             assert db.check_dependencies(extension)
             extension.add_dependency('spiff>=0.1')
             assert db.check_dependencies(extension)
@@ -624,35 +624,35 @@ if __name__ == '__main__':
 
         def register_extension_test(self, db):
             assert db.clear_database()
-            extension = Extension('Spiff')
+            extension = ExtensionInfo('Spiff')
             extension.set_version('0.2')
             db.register_extension(extension)
 
         def unregister_extension_test(self, db):
             assert db.clear_database()
-            extension = Extension('Spiff')
+            extension = ExtensionInfo('Spiff')
             extension.set_version('0.1.2')
             db.register_extension(extension)
             assert db.unregister_extension_from_id(extension.get_id())
 
-            extension = Extension('Spiff')
+            extension = ExtensionInfo('Spiff')
             extension.set_version('0.1.2')
             db.register_extension(extension)
             assert db.unregister_extension_from_handle(extension.get_handle(),
                                                        extension.get_version())
             
-            extension = Extension('Spiff')
+            extension = ExtensionInfo('Spiff')
             extension.set_version('0.1.2')
             db.register_extension(extension)
             assert db.unregister_extension(extension)
             
         def get_extension_test(self, db):
             assert db.clear_database()
-            extension = Extension('Spiff')
+            extension = ExtensionInfo('Spiff')
             extension.set_version('0.1')
             db.register_extension(extension)
 
-            extension = Extension('Spiff')
+            extension = ExtensionInfo('Spiff')
             extension.set_version('0.2')
             extension.add_dependency('spiff=0.1')
             db.register_extension(extension)
@@ -686,7 +686,7 @@ if __name__ == '__main__':
             
         def callback_test(self, db):
             assert db.clear_database()
-            extension = Extension('Spiff')
+            extension = ExtensionInfo('Spiff')
             extension.set_version('0.1.2')
             db.register_extension(extension)
 

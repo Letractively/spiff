@@ -1,3 +1,5 @@
-* Implement SpiffAPI, providing the functionality to extensions.
-* Implement the URI based event bus.
+* Fix all FIXMEs.
+* Implement test for Api class.
+* Manager: Add support so that exceptions may be stored in
+  multiple directories.
 -Samuel

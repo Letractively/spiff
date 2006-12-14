@@ -17,7 +17,7 @@ sys.path.append('..')
 from functions          import descriptor_parse
 from libspiffacl_python import Resource
 
-class Extension(Resource):
+class ExtensionInfo(Resource):
     def __init__(self, name, handle = None, version = '0'):
         assert name    is not None
         assert version is not None
@@ -90,7 +90,7 @@ class Extension(Resource):
 if __name__ == '__main__':
     import unittest
 
-    class ExtensionTest(unittest.TestCase):
+    class ExtensionInfoTest(unittest.TestCase):
         def runTest(self):
             name      = 'Test Extension'
             handle    = 'Test Handle'
@@ -99,12 +99,12 @@ if __name__ == '__main__':
             descr     = 'let me test this'
             filename  = '/my/filename.tgz'
             context   = 'Test Context'
-            extension = Extension(name, handle, version)
+            extension = ExtensionInfo(name, handle, version)
             assert extension.get_name()    == name
             assert extension.get_handle()  == handle
             assert extension.get_version() == version
 
-            extension = Extension(name)
+            extension = ExtensionInfo(name)
             assert extension.get_name()    == name
             assert extension.get_handle()  == 'test_extension'
             assert extension.get_version() == '0'
@@ -153,6 +153,6 @@ if __name__ == '__main__':
             assert dep_list[1] == descriptor2
             assert len(dep_list) == 2
             
-    testcase = ExtensionTest()
+    testcase = ExtensionInfoTest()
     runner   = unittest.TextTestRunner()
     runner.run(testcase)
