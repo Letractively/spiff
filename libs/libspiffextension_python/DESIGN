@@ -23,56 +23,96 @@ libspiffextension may also run plugins inside of a sandbox, and apply
 permission restrictions to them. This functionality will only be added
 at a later point, however.
 
+Use Case: User installs one extra extension
+-------------------------------------------
+* User opens a sub-page.
+* Spiff finds the extension that renders that page.
+* Spiff calls Manager.load(InstallPageRenderer)
+* ...
+* PageRenderer shows an installation form.
+* User uploads a new extension through that form.
+* Extension emits "InstallPageRenderer:install_request/filename"
+* Spiff fetches the signal, calls Manager.install(MyExtension), but
+  installs into a private directory of the user's web space.
+* Manager parses the header of MyExtension. The header contains:
+   - a list of dependencies.
+   - a list of possible signals.
+   - a list of events that it needs to retrieve.
+* Manager makes sure all dependencies exist. (they do)
+* Manager passes the URI of all events to Spiff, requesting whether
+  the URI might be retrieved by MyExtension.
+* Spiff decides that MyExtension may fetch any signals that were emitted
+  from within the users own web space. So it manipulates the event URIs in
+  a way that only permit that, e.g. it prefixes the URI with
+  "user_123_web_space:".
+* Manager registers the callbacks.
+
+
+Use Case: Web page consisting of multiple plugins
+-------------------------------------------------
+- A user opens a Spiff web page in his browser.
+- Spiff looks up the handle of the extension that is to be displayed.
+- Spiff instantiates the libspiffextension.Manager.
+- Spiff calls Manager.load(extension_handle) 
+- Manager looks up the dependencies of the extension.
+- Manager loads the extension and all dependencies in the right order.
+- Manager instantiates the extension, passing the ExtensionApi to the
+  constructor.
+- Manager returns a reference to the extension instance.
+- Spiff requests the extension instance to render a web page.
+- The extension emits a "handle:i/have/rendered" signal through the
+  ExtensionApi.
+- Manager delegates the decision of whether the signal is permitted
+  to Spiff.
+- Spiff permits the signal, possibly prefixing the URI with
+  "user_123_web_space:".
+- Manager looks up which extensions are subscribed to that signal, finds
+  one.
+- Manager loads the extension, if not done already.
+- Manager emits the signal on the EventBus.
+- The extension fetches the signal, does something.
+- ...
+
 
 Design
 -------
-* Extension class: Type for any plugin. An extension has a list of
-  dependencies. Dependencies may be grouped into contexts, such as "runtime"
-  or "install_time" dependencies. libspiffextension only ever checks the
-  dependencies within each context, dependencies accross multiple contexts are
-  unchecked.
-  Extensions may also send signals, or listen to signals emitted by the
-  EventBus, if the have the permission to do so.
-
-* Callback class: A callback is a function owned by an Extension that is hooked
-  into a specific EventBus signal.
-
-* DB class: The list of installed plugins, dependencies, callbacks and other
-  properties are stored within the database. This class abstracts the database
-  from the rest of the library.
-
 * Manager class: This is the core public API, providing the client with methods
   for installing and uninstalling plugins, and configuring any options of them.
-  It also provides secure (authenticated) access to the EventBus.
   Before an extension is installed, the Manager determines the dependencies of
   the extension and ensures that they are fullfilled.
   It also retrieves a list of all EventBus signals to which the extension would
   like to subscribe. It then delegates the decision of whether permission to
   access the events is granted to the client (=whoever owns the manager).
 
+* DB class: The list of installed plugins, dependencies, callbacks and other
+  properties are stored within the database. This class abstracts the database
+  from the rest of the library.
 
-API:
+* Extension class: Represents any plugin. An extension has a list of
+  dependencies. Dependencies may be grouped into contexts, such as "runtime"
+  or "install_time" dependencies. libspiffextension only ever checks the
+  dependencies within each context, dependencies accross multiple contexts are
+  unchecked.
 
-add_extension(extension : Extension, permission_request = None : func)
- 1. Create extension.
- 2. Check runtime dependencies and reference dependencies of the extension.
- 3. Retrieve callback requests from the extension.
- 4. Call the permission_request function (if passed to add_extension) to
-    determine whether permission to the requested callback/event is granted.
-    The permission_request function has the following signature:
-      permission_request(extension, cb_name, context)
-    where
-      extension: is the extension that is to be registered
-      uri:       is URI addressing the event that the extension would like
-                 to catch.
- 5. Register the extension in DB.
- 6. Add the list of dependencies into the DB.
- 7. Add a list of all callbacks into the DB.
+  Extensions need a way to interface with libspiffextension, and they also
+  need a way to interface with other extensions. That's where the ExtensionApi
+  object comes in.
 
-emit(name)
- 1. Find out which extensions are registered against that callback.
- 2. Load them, including runtime dependencies.
- 3. Call the callbacks.
+* ExtensionApi class: This defines the interface that may be used by extensions.
+  It also provides secure (authenticated) access to the EventBus.
+  An object of this type is passed to the constructor of the plugin, and any
+  interaction with libspiffextension or other plugins should be done through
+  this API. The following is provided:
+  
+  - Controlled, secure access to the global EventBus.
+  - ...
+
+* EventBus class: Extensions may send signals, or listen to signals emitted by
+  the EventBus, if the have the permission to do so. The EventBus does not
+  provide authentication mechanisms that prevent
+
+* Callback class: A callback is a function owned by an Extension that is hooked
+  into a specific EventBus signal.
 
 
 Extension Design
