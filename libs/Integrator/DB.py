@@ -14,12 +14,12 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import sys
 sys.path.append('..')
-from sqlalchemy                   import *
-from ExtensionInfo                import ExtensionInfo
-from Callback                     import Callback
-from libspiffacl_python.functions import make_handle_from_string
-from libspiffacl_python           import *
-from functions                    import *
+from sqlalchemy      import *
+from ExtensionInfo   import ExtensionInfo
+from Callback        import Callback
+from Guard.functions import make_handle_from_string
+from Guard           import *
+from functions       import *
 
 class DB:
     def __init__(self, acldb, section_handle = 'extensions'):
@@ -595,7 +595,7 @@ class DB:
 if __name__ == '__main__':
     import unittest
     import MySQLdb
-    import libspiffacl_python
+    import Guard
     from ConfigParser import RawConfigParser
 
     class DBTest(unittest.TestCase):
@@ -711,7 +711,7 @@ if __name__ == '__main__':
             auth  = user + ':' + password
             dbn   = 'mysql://' + auth + '@' + host + '/' + db_name
             db    = create_engine(dbn)
-            acldb = libspiffacl_python.DB(db)
+            acldb = Guard.DB(db)
 
             # Install.
             extdb = DB(acldb)

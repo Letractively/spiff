@@ -272,7 +272,7 @@ class Manager:
 if __name__ == '__main__':
     import unittest
     import MySQLdb
-    import libspiffacl_python
+    import Guard
     from ConfigParser import RawConfigParser
 
     class ManagerTest(unittest.TestCase):
@@ -289,7 +289,7 @@ if __name__ == '__main__':
             auth  = user + ':' + password
             dbn   = 'mysql://' + auth + '@' + host + '/' + db_name
             db    = create_engine(dbn)
-            acldb = libspiffacl_python.DB(db)
+            acldb = Guard.DB(db)
 
             # Install dependencies.
             extdb = DB(acldb)
