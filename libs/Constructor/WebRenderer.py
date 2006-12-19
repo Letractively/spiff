@@ -62,9 +62,10 @@ class WebRenderer(Renderer):
             self.__flush_template()
 
 
-    def task_done(self, message, result):
+    def task_done(self, message, result, hint = ''):
         task = dict(level   = self.__level,
                     type    = self.__type_task,
                     message = message,
-                    result  = result)
+                    result  = result,
+                    hint    = hint)
         self.__tmpl_data['data'].append(task)

@@ -34,8 +34,8 @@ class CliRenderer(Renderer):
         print 'Section end.'
 
 
-    def task_done(self, message, result):
+    def task_done(self, message, result, hint = ''):
         for i in range(self.__level):
             print ' ',
-        print 'Task:', message, '-', result
+        print 'Task:', message, '-', result, '(' + hint + ')'
 

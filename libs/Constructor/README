@@ -1,0 +1,11 @@
+Spiff Constructor
+-----------------
+This library is part of the Spiff platform.
+
+Spiff Constructor is a library making it easy to write installers for web and
+desktop applications in Python.
+
+
+Dependencies
+-------------
+- Genshi (only when the WebRenderer is used)
