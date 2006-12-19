@@ -16,7 +16,7 @@
 class Constructor:
     def __init__(self, renderer):
         assert renderer is not None
-        self.__queue = []
+        self.__queue    = []
         self.__renderer = renderer
 
 
@@ -40,9 +40,19 @@ class Constructor:
         return self.__app_version
 
 
-    def enqueue(self, task):
+    def append(self, task):
         assert task is not None
         self.__queue.append(task)
+
+
+    def start(self):
+        self.__renderer.start()
+        for task in self.__queue:
+            if not task.execute(self.__renderer):
+                self.__renderer.end()
+                return False
+        self.__renderer.end()
+        return True
 
 
 if __name__ == '__main__':

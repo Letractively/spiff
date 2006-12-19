@@ -13,46 +13,58 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 from Renderer import Renderer
+import sys
+import os.path
+sys.path.append('..')
+from genshi.template import TextTemplate
+from genshi.template import TemplateLoader
 
 class WebRenderer(Renderer):
-    def __init__(self, genshi = None):
+    __type_section, \
+    __type_task = range(2)
+
+    def __init__(self, genshi_template = None):
         Renderer.__init__(self)
-        # FIXME: if not genshi:
-        self.__genshi = genshi
-        self.__level  = 1
+        self.__level     = 1
+        self.__tmpl      = genshi_template
+        self.__tmpl_data = {'data': []}
+        if not genshi_template:
+            # Load default template from a file.
+            loader = TemplateLoader([os.path.dirname(__file__)])
+            self.__tmpl = loader.load('setup.tmpl', None, TextTemplate)
 
 
-    def __open_table(self):
-        genshi.append('<table>')
-        self.__table_open = True
+    def __flush_template(self):
+        if len(self.__tmpl_data['data']) == 0:
+            return
+        stream = self.__tmpl.generate(app_name    = self._app_name,
+                                      app_version = self._app_version,
+                                      **self.__tmpl_data)
+        print stream.render('text')
+        self.__tmpl_data = {'data': []}
 
 
-    def __close_table(self):
-        genshi.append('</table>')
-        self.__table_open = False
+    def end(self):
+        self.__flush_template()
 
 
-    def section_start(self, message):
-        if self.__table_open:
-            self.__close_table()
+    def section_start(self, name):
+        section = dict(level = self.__level,
+                       type  = self.__type_section,
+                       name  = name)
+        self.__tmpl_data['data'].append(section)
         self.__level += 1
-        tag_name = 'h' + self.__level + ''
-        genshi.append('<' + tag_name + '>' + message + '</' + tag_name + '>')
-        genshi.append('<p>')
 
 
     def section_end(self):
-        if self.__table_open:
-            self.__close_table()
         self.__level -= 1
-        genshi.append('</p>')
+        if self.__level == 1:
+            self.__flush_template()
 
 
     def task_done(self, message, result):
-        if not self.__table_open:
-            self.__open_table()
-        genshi.append('<tr>')
-        genshi.append('<td>' + message + '</td>')
-        genshi.append('<td>' + result  + '</td>')
-        genshi.append('</tr>')
-
+        task = dict(level   = self.__level,
+                    type    = self.__type_task,
+                    message = message,
+                    result  = result)
+        self.__tmpl_data['data'].append(task)
