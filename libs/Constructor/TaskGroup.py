@@ -38,10 +38,12 @@ class TaskGroup(Task):
 if __name__ == '__main__':
     import unittest
     from CliRenderer import CliRenderer
+    from WebRenderer import WebRenderer
 
     class TaskGroupTest(unittest.TestCase):
         def runTest(self):
             renderer = CliRenderer()
+            renderer = WebRenderer()
             task1    = Task('Subtask 1', 'True')
             task2    = Task('Subtask 2', 'False')
             gname    = 'Test Task Group'

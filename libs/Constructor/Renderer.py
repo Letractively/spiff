@@ -15,26 +15,34 @@
 
 class Renderer:
     def __init__(self):
-        self.__app_name    = 'Spiff Application'
-        self.__app_version = '0.1'
+        self._app_name    = 'Spiff Application'
+        self._app_version = '0.1'
 
 
     def set_app_name(self, app_name):
         assert app_name is not None
-        self.__app_name = app_name
+        self._app_name = app_name
 
 
     def get_app_name(self):
-        return self.__app_name
+        return self._app_name
 
 
     def set_app_version(self, app_version):
         assert app_version is not None
-        self.__app_version = app_version
+        self._app_version = app_version
 
 
     def get_app_version(self):
-        return self.__app_version
+        return self._app_version
+
+
+    def start(self):
+        pass
+
+
+    def end(self):
+        pass
 
 
     def section_start(self, message):

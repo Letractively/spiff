@@ -1,0 +1,11 @@
+<h1>$app_name $app_version</h1>
+#for item in data
+  #choose item.type
+    #when 0
+      <h${item.level}>${item.name}</h${item.level}>
+    #end
+    #when 1
+      * ${item.message}: ${item.result}
+    #end
+  #end
+#end

@@ -37,5 +37,5 @@ class CliRenderer(Renderer):
     def task_done(self, message, result):
         for i in range(self.__level):
             print ' ',
-        print 'Task:', message, ' - ', result
+        print 'Task:', message, '-', result
 

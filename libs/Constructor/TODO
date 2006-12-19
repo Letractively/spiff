@@ -1,4 +1,4 @@
-* Make the WebRenderer work using Genshi.
+* Add support for showing a useful error message related to a task.
 * Implement useful tasks.
 * Implement unit tests for every renderer.
 -Samuel
