@@ -25,26 +25,31 @@ class TaskGroup(Task):
             self.__child_task = [child_task]
 
 
-    def execute(self):
+    def execute(self, renderer):
+        renderer.section_start(self._name)
         for task in self.__child_task:
-            if not task.execute():
+            if not task.execute(renderer):
+                renderer.section_end()
                 return False
+        renderer.section_end()
         return True
 
 
 if __name__ == '__main__':
     import unittest
+    from CliRenderer import CliRenderer
 
     class TaskGroupTest(unittest.TestCase):
         def runTest(self):
-            task1 = Task('Subtask 1', 'True')
-            task2 = Task('Subtask 2', 'False')
-            gname = 'Test Task Group'
-            group = TaskGroup(gname, [task1, task2])
-            assert group.get_name() == gname
-            assert task1.execute()  == True
-            assert task2.execute()  == False
-            assert group.execute()  == False
+            renderer = CliRenderer()
+            task1    = Task('Subtask 1', 'True')
+            task2    = Task('Subtask 2', 'False')
+            gname    = 'Test Task Group'
+            group    = TaskGroup(gname, [task1, task2])
+            assert group.get_name()        == gname
+            assert task1.execute(renderer) == True
+            assert task2.execute(renderer) == False
+            assert group.execute(renderer) == False
 
     testcase = TaskGroupTest()
     runner   = unittest.TextTestRunner()
