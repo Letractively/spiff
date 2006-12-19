@@ -32,9 +32,11 @@ class Task:
         ret = eval(self.__command)
         if ret:
             result = self.__success
+            hint   = ''
         else:
             result = self.__failure
-        renderer.task_done(self._name, self.__result_msg[result])
+            hint   = '"' + self.__command + '" failed'
+        renderer.task_done(self._name, self.__result_msg[result], hint)
         return ret
 
 

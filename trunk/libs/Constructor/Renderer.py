@@ -59,5 +59,5 @@ class Renderer:
         assert False  # Must be implemented!
 
 
-    def task_done(self, message, result):
+    def task_done(self, message, result, hint = ''):
         assert False  # Must be implemented!

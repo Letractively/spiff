@@ -5,7 +5,12 @@
       <h${item.level}>${item.name}</h${item.level}>
     #end
     #when 1
-      * ${item.message}: ${item.result}
+      <table width='100%'>
+        <tr><td>${item.message}</td><td>${item.result}</td></tr>
+      #if item.hint
+        <tr><td colspan=2 align='right'>${item.hint}</td></tr>
+      #end
+      </table>
     #end
   #end
 #end
