@@ -13,17 +13,15 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-class Constructor:
-    def __init__(self, renderer):
-        assert renderer is not None
-        self.__queue = []
-        self.__renderer = renderer
+class Renderer:
+    def __init__(self):
+        self.__app_name    = 'Spiff Application'
+        self.__app_version = '0.1'
 
 
     def set_app_name(self, app_name):
         assert app_name is not None
         self.__app_name = app_name
-        self.__renderer.set_app_name(app_name)
 
 
     def get_app_name(self):
@@ -33,33 +31,25 @@ class Constructor:
     def set_app_version(self, app_version):
         assert app_version is not None
         self.__app_version = app_version
-        self.__renderer.set_app_version(app_version)
 
 
     def get_app_version(self):
         return self.__app_version
 
 
-    def enqueue(self, task):
-        assert task is not None
-        self.__queue.append(task)
+    def section_start(self, message):
+        """
+        Increases paragraph depth.
+        """
+        assert False  # Must be implemented!
 
 
-if __name__ == '__main__':
-    import unittest
-    from CliRenderer import CliRenderer
+    def section_end(self):
+        """
+        Decreases paragraph depth.
+        """
+        assert False  # Must be implemented!
 
-    class ConstructorTest(unittest.TestCase):
-        def runTest(self):
-            name        = 'Test Application'
-            version     = '0.1.2'
-            renderer    = CliRenderer()
-            constructor = Constructor(renderer)
-            constructor.set_app_name(name)
-            constructor.set_app_version(version)
-            assert constructor.get_app_name()    == name
-            assert constructor.get_app_version() == version
 
-    testcase = ConstructorTest()
-    runner   = unittest.TextTestRunner()
-    runner.run(testcase)
+    def task_done(self, message, result):
+        assert False  # Must be implemented!

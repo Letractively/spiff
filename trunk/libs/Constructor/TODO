@@ -1,0 +1,4 @@
+* Make the WebRenderer work using Genshi.
+* Implement useful tasks.
+* Implement unit tests for every renderer.
+-Samuel

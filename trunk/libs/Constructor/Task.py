@@ -14,34 +14,45 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 class Task:
+    __success, __failure = range(2)
+    __result_msg = {__success: 'Success', __failure: 'Failed'}
+    
     def __init__(self, name, command):
         assert name    is not None
         assert command is not None
-        self.__name    = name
+        self._name     = name
         self.__command = command
 
 
     def get_name(self):
-        return self.__name
+        return self._name
 
 
-    def execute(self):
-        return eval(self.__command)
+    def execute(self, renderer):
+        ret = eval(self.__command)
+        if ret:
+            result = self.__success
+        else:
+            result = self.__failure
+        renderer.task_done(self._name, self.__result_msg[result])
+        return ret
 
 
 if __name__ == '__main__':
     import unittest
+    from CliRenderer import CliRenderer
 
     class TaskTest(unittest.TestCase):
         def runTest(self):
-            name1 = 'Task 1'
-            name2 = 'Task 2'
-            task1 = Task(name1, 'True')
-            task2 = Task(name2, 'False')
-            assert task1.get_name() == name1
-            assert task2.get_name() == name2
-            assert task1.execute()  == True
-            assert task2.execute()  == False
+            renderer = CliRenderer()
+            name1    = 'Task 1'
+            name2    = 'Task 2'
+            task1    = Task(name1, 'True')
+            task2    = Task(name2, 'False')
+            assert task1.get_name()        == name1
+            assert task2.get_name()        == name2
+            assert task1.execute(renderer) == True
+            assert task2.execute(renderer) == False
 
 
     testcase = TaskTest()
