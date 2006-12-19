@@ -18,17 +18,27 @@ class TaskGroup(Task):
     def __init__(self, name, child_task):
         assert name       is not None
         assert child_task is not None
-        Task.__init__(self, name, '')
+        Task.__init__(self, name)
         if type(child_task) == type([]):
             self.__child_task = child_task
         else:
             self.__child_task = [child_task]
 
 
-    def execute(self, renderer):
+    def install(self, renderer):
         renderer.section_start(self._name)
         for task in self.__child_task:
-            if not task.execute(renderer):
+            if not task.install(renderer):
+                renderer.section_end()
+                return False
+        renderer.section_end()
+        return True
+
+
+    def uninstall(self, renderer):
+        renderer.section_start(self._name)
+        for task in self.__child_task:
+            if not task.uninstall(renderer):
                 renderer.section_end()
                 return False
         renderer.section_end()
@@ -39,19 +49,23 @@ if __name__ == '__main__':
     import unittest
     from CliRenderer import CliRenderer
     from WebRenderer import WebRenderer
+    from CommandTask import CommandTask
 
     class TaskGroupTest(unittest.TestCase):
         def runTest(self):
             renderer = CliRenderer()
             renderer = WebRenderer()
-            task1    = Task('Subtask 1', 'True')
-            task2    = Task('Subtask 2', 'False')
+            task1    = CommandTask('Subtask 1', 'True',  'True')
+            task2    = CommandTask('Subtask 2', 'False', 'False')
             gname    = 'Test Task Group'
             group    = TaskGroup(gname, [task1, task2])
-            assert group.get_name()        == gname
-            assert task1.execute(renderer) == True
-            assert task2.execute(renderer) == False
-            assert group.execute(renderer) == False
+            assert group.get_name()          == gname
+            assert task1.install(renderer)   == True
+            assert task2.install(renderer)   == False
+            assert task1.uninstall(renderer) == True
+            assert task2.uninstall(renderer) == False
+            assert group.install(renderer)   == False
+            assert group.uninstall(renderer) == False
 
     testcase = TaskGroupTest()
     runner   = unittest.TextTestRunner()

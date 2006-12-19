@@ -45,10 +45,20 @@ class Constructor:
         self.__queue.append(task)
 
 
-    def start(self):
+    def install(self):
         self.__renderer.start()
         for task in self.__queue:
-            if not task.execute(self.__renderer):
+            if not task.install(self.__renderer):
+                self.__renderer.end()
+                return False
+        self.__renderer.end()
+        return True
+
+
+    def uninstall(self):
+        self.__renderer.start()
+        for task in self.__queue:
+            if not task.uninstall(self.__renderer):
                 self.__renderer.end()
                 return False
         self.__renderer.end()
