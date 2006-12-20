@@ -27,13 +27,13 @@ class CommandTask(Task):
     def __do_command(self, renderer, cmd):
         ret = eval(cmd)
         if ret:
-            result = self._success
+            result = self.success
             hint   = ''
         else:
-            result = self._failure
+            result = self.failure
             hint   = '"' + cmd + '" failed'
         renderer.task_done(self._name, self._result_msg[result], hint)
-        return ret
+        return result
 
 
     def install(self, renderer):
@@ -46,11 +46,11 @@ class CommandTask(Task):
 
 if __name__ == '__main__':
     import unittest
-    from CliRenderer import CliRenderer
+    from WebRenderer import WebRenderer
 
     class CommandTaskTest(unittest.TestCase):
         def runTest(self):
-            renderer = CliRenderer()
+            renderer = WebRenderer()
             name1    = 'Task 1'
             name2    = 'Task 2'
             task1    = CommandTask(name1,
@@ -61,10 +61,10 @@ if __name__ == '__main__':
                                    'True  #uninstall')
             assert task1.get_name()          == name1
             assert task2.get_name()          == name2
-            assert task1.install(renderer)   == True
-            assert task2.install(renderer)   == False
-            assert task1.uninstall(renderer) == False
-            assert task2.uninstall(renderer) == True
+            assert task1.install(renderer)   == Task.success
+            assert task2.install(renderer)   == Task.failure
+            assert task1.uninstall(renderer) == Task.failure
+            assert task2.uninstall(renderer) == Task.success
 
     testcase = CommandTaskTest()
     runner   = unittest.TextTestRunner()

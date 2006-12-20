@@ -1,3 +1,5 @@
+* Add better support for forms to the Form class, using Genshi's
+  template support.
 * Implement useful tasks.
 * Implement unit tests for every renderer.
 * Implement unit tests for every task.

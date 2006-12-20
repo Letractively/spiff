@@ -12,46 +12,39 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+from Task import Task
+from Form import Form
 
-class Task:
-    success, failure, interact = range(3)
-    _result_msg = {
-      success: 'Success',
-      failure: 'Failed',
-      interact: 'Ineraction required'
-    }
-    
-    def __init__(self, name):
-        assert name is not None
-        self._name = name
-
-
-    def get_name(self):
-        return self._name
-
-
-    def get(self, n):
-        return None
+class LicenseAgreementTask(Task):
+    def __init__(self, license_text):
+        assert license_text is not None
+        Task.__init__(self, 'License Agreement')
+        self.__license_text = license_text
 
 
     def install(self, renderer):
-        assert False  # Must be implemented!
+        form = Form(self.__license_text, [Form.cancel_button])
+        renderer.show_form(form)
+        return Task.interact
 
 
     def uninstall(self, renderer):
-        assert False  # Must be implemented!
+        return True
 
 
 if __name__ == '__main__':
     import unittest
+    from WebRenderer import WebRenderer
 
-    class TaskTest(unittest.TestCase):
+    class LicenseAgreementTaskTest(unittest.TestCase):
         def runTest(self):
-            name = 'Task 1'
-            task = Task(name)
-            assert task.get_name() == name
+            renderer = WebRenderer()
+            license  = 'Give me your soul'
+            task     = LicenseAgreementTask(license)
+            assert task.install(renderer)   == Task.interact
+            assert task.uninstall(renderer) == True
 
-
-    testcase = TaskTest()
+    testcase = LicenseAgreementTaskTest()
     runner   = unittest.TextTestRunner()
     runner.run(testcase)
+

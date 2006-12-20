@@ -12,30 +12,27 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-from Renderer import Renderer
 
-class CliRenderer(Renderer):
-    def __init__(self):
-        Renderer.__init__(self)
-        self.__level = 1
-
-
-    def section_start(self, message):
-        for i in range(self.__level):
-            print ' ',
-        print 'Section', message, 'start.'
-        self.__level += 1
+class Form:
+    next_button, \
+    cancel_button = range(2)
+    caption = {
+      next_button:   'Next',
+      cancel_button: 'Cancel'
+    }
 
 
-    def section_end(self):
-        self.__level -= 1
-        for i in range(self.__level):
-            print ' ',
-        print 'Section end.'
+    def __init__(self, markup, buttons):
+        assert markup  is not None
+        assert buttons is not None
+        assert type(buttons) == type([])
+        self.__markup  = markup
+        self.__buttons = buttons
 
 
-    def task_done(self, message, result, hint = ''):
-        for i in range(self.__level):
-            print ' ',
-        print 'Task:', message, '-', result, '(' + hint + ')'
+    def get_markup(self):
+        return self.__markup
 
+
+    def get_buttons(self):
+        return self.__buttons

@@ -12,12 +12,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+from TaskGroup    import TaskGroup
+from TaskIterator import TaskIterator
 
 class Constructor:
-    def __init__(self, renderer):
+    def __init__(self, renderer, initial_path = []):
         assert renderer is not None
-        self.__queue    = []
-        self.__renderer = renderer
+        self.__root_task = TaskGroup()
+        self.__task_iter = TaskIterator(self.__root_task, initial_path)
+        self.__renderer  = renderer
 
 
     def set_app_name(self, app_name):
@@ -42,43 +45,46 @@ class Constructor:
 
     def append(self, task):
         assert task is not None
-        self.__queue.append(task)
+        return self.__root_task.append(task)
 
 
     def install(self):
         self.__renderer.start()
-        for task in self.__queue:
-            if not task.install(self.__renderer):
-                self.__renderer.end()
-                return False
+        #FIXME: Call the install() method of whatever the iterator points at, not the root node.
+        result = self.__root_task.install(self.__renderer)
         self.__renderer.end()
-        return True
+        return result
 
 
     def uninstall(self):
         self.__renderer.start()
-        for task in self.__queue:
-            if not task.uninstall(self.__renderer):
-                self.__renderer.end()
-                return False
+        #FIXME: Call the install() method of whatever the iterator points at, not the root node.
+        result = self.__root_task.uninstall(self.__renderer)
         self.__renderer.end()
-        return True
+        return result
 
 
 if __name__ == '__main__':
     import unittest
-    from CliRenderer import CliRenderer
+    from WebRenderer          import WebRenderer
+    from LicenseAgreementTask import LicenseAgreementTask
+    from Task                 import Task
 
     class ConstructorTest(unittest.TestCase):
         def runTest(self):
             name        = 'Test Application'
             version     = '0.1.2'
-            renderer    = CliRenderer()
+            renderer    = WebRenderer()
             constructor = Constructor(renderer)
             constructor.set_app_name(name)
             constructor.set_app_version(version)
             assert constructor.get_app_name()    == name
             assert constructor.get_app_version() == version
+
+            # Test running some tasks.
+            la_task = LicenseAgreementTask('SERVE ME!')
+            constructor.append(la_task)
+            assert constructor.install() == Task.interact
 
     testcase = ConstructorTest()
     runner   = unittest.TextTestRunner()
