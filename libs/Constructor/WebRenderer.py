@@ -13,6 +13,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 from Renderer import Renderer
+from Form     import Form
 import sys
 import os.path
 sys.path.append('..')
@@ -25,23 +26,30 @@ class WebRenderer(Renderer):
 
     def __init__(self, genshi_template = None):
         Renderer.__init__(self)
-        self.__level     = 1
-        self.__tmpl      = genshi_template
-        self.__tmpl_data = {'data': []}
+        self.__level = 1
+        self.__tmpl  = genshi_template
+        self.__init_data()
         if not genshi_template:
             # Load default template from a file.
             loader = TemplateLoader([os.path.dirname(__file__)])
             self.__tmpl = loader.load('setup.tmpl', None, TextTemplate)
 
 
-    def __flush_template(self):
-        if len(self.__tmpl_data['data']) == 0:
+    def __init_data(self):
+        self.__tmpl_data = {
+          'data':    [],
+          'buttons': [Form.caption[Form.next_button]]
+        }
+
+
+    def __flush_template(self, force = False):
+        if len(self.__tmpl_data['data']) == 0 and not force:
             return
         stream = self.__tmpl.generate(app_name    = self._app_name,
                                       app_version = self._app_version,
                                       **self.__tmpl_data)
         print stream.render('text')
-        self.__tmpl_data = {'data': []}
+        self.__init_data()
 
 
     def end(self):
@@ -69,3 +77,17 @@ class WebRenderer(Renderer):
                     result  = result,
                     hint    = hint)
         self.__tmpl_data['data'].append(task)
+
+
+    def show_form(self, form):
+        tmpl   = TextTemplate(form.get_markup())
+        stream = tmpl.generate()
+        self.__tmpl_data['content'] = stream.render('text')
+        for button in form.get_buttons():
+            self.__tmpl_data['buttons'].append(Form.caption[button])
+        self.__flush_template(True)
+        return True
+
+
+    def get_form_data(self):
+        return False #FIXME

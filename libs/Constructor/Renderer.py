@@ -61,3 +61,20 @@ class Renderer:
 
     def task_done(self, message, result, hint = ''):
         assert False  # Must be implemented!
+
+
+    def show_form(self, form):
+        """
+        This function renders the given form.
+        The result of the interaction can only be given asynchronously,
+        so the Task that triggered the method needs to defer any further action.
+        
+        This is especially important for stateless protocols like in a Web UI,
+        where the result of a form can only be retrieved when the client
+        contacts the server for another web page.
+        """
+        assert False  # Must be implemented!
+
+
+    def get_form_data(self):
+        assert False  # Must be implemented!
