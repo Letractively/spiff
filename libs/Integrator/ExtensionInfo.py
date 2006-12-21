@@ -13,9 +13,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import sys
-sys.path.append('..')
-from functions import descriptor_parse
+import os.path
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from Guard     import Resource
+from functions import descriptor_parse
 
 class ExtensionInfo(Resource):
     def __init__(self, name, handle = None, version = '0'):

@@ -13,8 +13,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import sys
-sys.path.append('..')
-from sqlalchemy      import *
+import os.path
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from sqlalchemy import *
+
 from ExtensionInfo   import ExtensionInfo
 from Callback        import Callback
 from Guard.functions import make_handle_from_string

@@ -12,6 +12,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+from TaskIterator import TaskIterator
 
 class Task:
     success, failure, interact = range(3)
@@ -32,6 +33,10 @@ class Task:
 
     def get(self, n):
         return None
+
+
+    def get_child_iter(self):
+        return TaskIterator(self)
 
 
     def install(self, renderer):
