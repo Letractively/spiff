@@ -12,22 +12,24 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-from Renderer import Renderer
-from Form     import Form
+from Environment import Environment
+from Form        import Form
 import sys
 import os.path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from genshi.template import TextTemplate
 from genshi.template import TemplateLoader
 
-class WebRenderer(Renderer):
+class WebEnvironment(Environment):
     __type_section, \
     __type_task = range(2)
 
-    def __init__(self, genshi_template = None):
-        Renderer.__init__(self)
-        self.__level = 1
-        self.__tmpl  = genshi_template
+    def __init__(self, cgi_form_data, genshi_template = None):
+        assert cgi_form_data is not None
+        Environment.__init__(self)
+        self.__cgi_form_data = cgi_form_data
+        self.__level         = 1
+        self.__tmpl          = genshi_template
         self.__init_data()
         if not genshi_template:
             # Load default template from a file.
@@ -37,8 +39,9 @@ class WebRenderer(Renderer):
 
     def __init_data(self):
         self.__tmpl_data = {
-          'data':    [],
-          'buttons': [Form.caption[Form.next_button]]
+          'data':      [],
+          'buttons':   [Form.caption[Form.next_button]],
+          'task_path': self.get_initial_task_path()
         }
 
 
@@ -50,6 +53,15 @@ class WebRenderer(Renderer):
                                       **self.__tmpl_data)
         print stream.render('text')
         self.__init_data()
+
+
+    def get_initial_task_path(self):
+        if not self.__cgi_form_data.has_key('task_path'):
+            return [0]
+        path = []
+        for item in self.__cgi_form_data['task_path'].value.split('.'):
+            path.append(int(item))
+        return path
 
 
     def end(self):

@@ -13,10 +13,14 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-class Renderer:
+class Environment:
     def __init__(self):
         self._app_name    = 'Spiff Application'
         self._app_version = '0.1'
+
+
+    def get_initial_task_path(self):
+        return [0]
 
 
     def set_app_name(self, app_name):

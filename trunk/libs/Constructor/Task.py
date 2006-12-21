@@ -39,11 +39,11 @@ class Task:
         return TaskIterator(self)
 
 
-    def install(self, renderer):
+    def install(self, environment):
         assert False  # Must be implemented!
 
 
-    def uninstall(self, renderer):
+    def uninstall(self, environment):
         assert False  # Must be implemented!
 
 

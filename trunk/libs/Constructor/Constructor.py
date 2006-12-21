@@ -12,25 +12,23 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+from Task         import Task
 from TaskGroup    import TaskGroup
 from TaskIterator import TaskIterator
 
 class Constructor:
-    def __init__(self, renderer, cgi_form_data = None):
-        assert renderer is not None
-        if cgi_form_data and cgi_form_data.has_key('task_path'):
-            initial_path = cgi_form_data['task_path'].split('.')
-        else:
-            initial_path = [0]
-        self.__root_task = TaskGroup()
-        self.__task_iter = TaskIterator(self.__root_task, initial_path)
-        self.__renderer  = renderer
+    def __init__(self, environment):
+        assert environment is not None
+        initial_path         = environment.get_initial_task_path()
+        self.__root_task     = TaskGroup()
+        self.__task_iter     = TaskIterator(self.__root_task, initial_path)
+        self.__environment   = environment
 
 
     def set_app_name(self, app_name):
         assert app_name is not None
         self.__app_name = app_name
-        self.__renderer.set_app_name(app_name)
+        self.__environment.set_app_name(app_name)
 
 
     def get_app_name(self):
@@ -40,7 +38,7 @@ class Constructor:
     def set_app_version(self, app_version):
         assert app_version is not None
         self.__app_version = app_version
-        self.__renderer.set_app_version(app_version)
+        self.__environment.set_app_version(app_version)
 
 
     def get_app_version(self):
@@ -53,28 +51,31 @@ class Constructor:
 
 
     def install(self):
-        self.__renderer.start()
+        self.__environment.start()
+        result = Task.success
         for task in self.__task_iter:
-            result = self.__root_task.install(self.__renderer)
+            result = self.__root_task.install(self.__environment)
             if not result:
                 break
-        self.__renderer.end()
+        self.__environment.end()
         return result
 
 
     def uninstall(self):
-        self.__renderer.start()
+        self.__environment.start()
+        result = Task.success
         for task in self.__task_iter:
-            result = self.__root_task.uninstall(self.__renderer)
+            result = self.__root_task.uninstall(self.__environment)
             if not result:
                 break
-        self.__renderer.end()
+        self.__environment.end()
         return result
 
 
 if __name__ == '__main__':
     import unittest
-    from WebRenderer          import WebRenderer
+    import cgi
+    from WebEnvironment       import WebEnvironment
     from LicenseAgreementTask import LicenseAgreementTask
     from Task                 import Task
 
@@ -82,8 +83,8 @@ if __name__ == '__main__':
         def runTest(self):
             name        = 'Test Application'
             version     = '0.1.2'
-            renderer    = WebRenderer()
-            constructor = Constructor(renderer)
+            environment = WebEnvironment(cgi.FieldStorage())
+            constructor = Constructor(environment)
             constructor.set_app_name(name)
             constructor.set_app_version(version)
             assert constructor.get_app_name()    == name

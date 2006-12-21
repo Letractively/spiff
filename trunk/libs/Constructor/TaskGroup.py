@@ -34,56 +34,60 @@ class TaskGroup(Task):
         """
         Returns the child task at the given index.
         """
+        assert n >= 0
         if n + 1 > len(self.__child_task):
             return None
         return self.__child_task[n]
 
 
-    def install(self, renderer):
+    def install(self, environment):
+        assert environment is not None
         if self._name != '':
-            renderer.section_start(self._name)
+            environment.section_start(self._name)
         result = Task.success
         for task in self.__child_task:
-            result = task.install(renderer)
+            result = task.install(environment)
             if result is not Task.success:
                 break
         if self._name != '':
-            renderer.section_end()
+            environment.section_end()
         return result
 
 
-    def uninstall(self, renderer):
+    def uninstall(self, environment):
+        assert environment is not None
         if self._name != '':
-            renderer.section_start(self._name)
+            environment.section_start(self._name)
         result = Task.success
         for task in self.__child_task:
-            result = task.uninstall(renderer)
+            result = task.uninstall(environment)
             if result is not Task.success:
                 break
         if self._name != '':
-            renderer.section_end()
+            environment.section_end()
         return result
 
 
 if __name__ == '__main__':
     import unittest
-    from WebRenderer import WebRenderer
-    from CommandTask import CommandTask
+    import cgi
+    from WebEnvironment import WebEnvironment
+    from CommandTask    import CommandTask
 
     class TaskGroupTest(unittest.TestCase):
         def runTest(self):
-            renderer = WebRenderer()
-            task1    = CommandTask('Subtask 1', 'True',  'True')
-            task2    = CommandTask('Subtask 2', 'False', 'False')
-            gname    = 'Test Task Group'
-            group    = TaskGroup(gname, [task1, task2])
-            assert group.get_name()          == gname
-            assert task1.install(renderer)   == Task.success
-            assert task2.install(renderer)   == Task.failure
-            assert task1.uninstall(renderer) == Task.success
-            assert task2.uninstall(renderer) == Task.failure
-            assert group.install(renderer)   == Task.failure
-            assert group.uninstall(renderer) == Task.failure
+            environment = WebEnvironment(cgi.FieldStorage())
+            task1       = CommandTask('Subtask 1', 'True',  'True')
+            task2       = CommandTask('Subtask 2', 'False', 'False')
+            gname       = 'Test Task Group'
+            group       = TaskGroup(gname, [task1, task2])
+            assert group.get_name()             == gname
+            assert task1.install(environment)   == Task.success
+            assert task2.install(environment)   == Task.failure
+            assert task1.uninstall(environment) == Task.success
+            assert task2.uninstall(environment) == Task.failure
+            assert group.install(environment)   == Task.failure
+            assert group.uninstall(environment) == Task.failure
 
     testcase = TaskGroupTest()
     runner   = unittest.TextTestRunner()
