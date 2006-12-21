@@ -12,41 +12,54 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-from Task import Task
-from Form import Form
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from TaskIterator import TaskIterator
 
-class InstallationCompletedTask(Task):
-    def __init__(self, text = None):
-        Task.__init__(self, 'Installation completed.')
-        if text is None:
-            self.__text = 'Your installation is now complete!'
-        else:
-            self.__text = text
+class Task:
+    success, failure, interact = range(3)
+    _result_msg = {
+      success: 'Success',
+      failure: 'Failed',
+      interact: 'Ineraction required'
+    }
+    
+    def __init__(self, name):
+        assert name is not None
+        self._name = name
+
+
+    def get_name(self):
+        return self._name
+
+
+    def get(self, n):
+        return None
+
+
+    def get_child_iter(self):
+        return TaskIterator(self)
 
 
     def install(self, environment):
-        form = Form(self.__text, [])
-        environment.show_form(form)
-        return Task.success
+        assert False  # Must be implemented!
 
 
     def uninstall(self, environment):
-        return True
+        assert False  # Must be implemented!
 
 
 if __name__ == '__main__':
     import unittest
-    import cgi
-    from WebEnvironment import WebEnvironment
 
-    class InstallationCompletedTaskTest(unittest.TestCase):
+    class TaskTest(unittest.TestCase):
         def runTest(self):
-            environment = WebEnvironment(cgi.FieldStorage())
-            license     = 'Give me your soul'
-            task        = InstallationCompletedTask(license)
-            assert task.install(environment)   == Task.success
-            assert task.uninstall(environment) == True
+            name = 'Task 1'
+            task = Task(name)
+            assert task.get_name() == name
 
-    testcase = InstallationCompletedTaskTest()
+
+    testcase = TaskTest()
     runner   = unittest.TextTestRunner()
     runner.run(testcase)

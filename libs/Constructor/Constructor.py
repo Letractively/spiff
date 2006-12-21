@@ -13,14 +13,14 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 from Task         import Task
-from TaskGroup    import TaskGroup
+from Task         import Group
 from TaskIterator import TaskIterator
 
 class Constructor:
     def __init__(self, environment):
         assert environment is not None
         initial_path         = environment.get_task_path()
-        self.__root_task     = TaskGroup()
+        self.__root_task     = Group()
         self.__task_iter     = TaskIterator(self.__root_task, initial_path)
         self.__environment   = environment
 
@@ -103,9 +103,9 @@ class Constructor:
 if __name__ == '__main__':
     import unittest
     import cgi
-    from WebEnvironment       import WebEnvironment
-    from LicenseAgreementTask import LicenseAgreementTask
-    from Task                 import Task
+    from WebEnvironment import WebEnvironment
+    from Task           import Task
+    from Task           import LicenseAgreement
 
     class ConstructorTest(unittest.TestCase):
         def runTest(self):
@@ -119,7 +119,7 @@ if __name__ == '__main__':
             assert constructor.get_app_version() == version
 
             # Test running some tasks.
-            la_task = LicenseAgreementTask('SERVE ME!')
+            la_task = LicenseAgreement('SERVE ME!')
             constructor.append(la_task)
             assert constructor.install() == Task.interact
 

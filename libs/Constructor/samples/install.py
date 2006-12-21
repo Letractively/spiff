@@ -1,7 +1,8 @@
 #!/usr/bin/python
 import sys
 sys.path.append('../..')
-from Constructor import *
+from Constructor      import *
+from Constructor.Task import *
 import cgi
 
 print 'Content-Type: text/html'
@@ -17,7 +18,7 @@ assert constructor.get_app_name()    == name
 assert constructor.get_app_version() == version
 
 # Test running some tasks.
-constructor.append(LicenseAgreementTask('SERVE ME!'))
-constructor.append(InstallationCompletedTask())
+constructor.append(LicenseAgreement('SERVE ME!'))
+constructor.append(InstallationCompleted())
 result = constructor.install()
 print 'Result:', result

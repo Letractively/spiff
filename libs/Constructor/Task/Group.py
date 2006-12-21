@@ -14,7 +14,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 from Task import Task
 
-class TaskGroup(Task):
+class Group(Task):
     def __init__(self, name = '', child_task = []):
         assert name       is not None
         assert child_task is not None
@@ -66,15 +66,15 @@ if __name__ == '__main__':
     import unittest
     import cgi
     from WebEnvironment import WebEnvironment
-    from CommandTask    import CommandTask
+    from ExecCommand    import ExecCommand
 
-    class TaskGroupTest(unittest.TestCase):
+    class GroupTest(unittest.TestCase):
         def runTest(self):
             environment = WebEnvironment(cgi.FieldStorage())
-            task1       = CommandTask('Subtask 1', 'True',  'True')
-            task2       = CommandTask('Subtask 2', 'False', 'False')
+            task1       = ExecCommand('Subtask 1', 'True',  'True')
+            task2       = ExecCommand('Subtask 2', 'False', 'False')
             gname       = 'Test Task Group'
-            group       = TaskGroup(gname, [task1, task2])
+            group       = Group(gname, [task1, task2])
             assert group.get_name()             == gname
             assert task1.install(environment)   == Task.success
             assert task2.install(environment)   == Task.failure
@@ -83,6 +83,6 @@ if __name__ == '__main__':
             assert group.install(environment)   == Task.success
             assert group.uninstall(environment) == Task.success
 
-    testcase = TaskGroupTest()
+    testcase = GroupTest()
     runner   = unittest.TextTestRunner()
     runner.run(testcase)

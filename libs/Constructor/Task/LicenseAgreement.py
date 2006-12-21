@@ -15,7 +15,7 @@
 from Task import Task
 from Form import Form
 
-class LicenseAgreementTask(Task):
+class LicenseAgreement(Task):
     def __init__(self, license_text):
         assert license_text is not None
         Task.__init__(self, 'License Agreement')
@@ -40,15 +40,15 @@ if __name__ == '__main__':
     import cgi
     from WebEnvironment import WebEnvironment
 
-    class LicenseAgreementTaskTest(unittest.TestCase):
+    class LicenseAgreementTest(unittest.TestCase):
         def runTest(self):
             environment = WebEnvironment(cgi.FieldStorage())
             license     = 'Give me your soul'
-            task        = LicenseAgreementTask(license)
+            task        = LicenseAgreement(license)
             assert task.install(environment)   == Task.interact
             assert task.uninstall(environment) == True
 
-    testcase = LicenseAgreementTaskTest()
+    testcase = LicenseAgreementTest()
     runner   = unittest.TextTestRunner()
     runner.run(testcase)
 
