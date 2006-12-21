@@ -19,7 +19,7 @@ from TaskIterator import TaskIterator
 class Constructor:
     def __init__(self, environment):
         assert environment is not None
-        initial_path         = environment.get_initial_task_path()
+        initial_path         = environment.get_task_path()
         self.__root_task     = TaskGroup()
         self.__task_iter     = TaskIterator(self.__root_task, initial_path)
         self.__environment   = environment
@@ -52,10 +52,24 @@ class Constructor:
 
     def install(self):
         self.__environment.start()
-        result = Task.success
+        result        = Task.success
+        last_path_len = 0
         for task in self.__task_iter:
-            result = self.__root_task.install(self.__environment)
-            if not result:
+            # If we decreased the depth, decrease indent:
+            change = last_path_len - self.__task_iter.current_depth()
+            if change > 0:
+                for i in range(change):
+                    self.__environment.section_end()
+            last_path_len = self.__task_iter.current_depth()
+
+            # If the task has children, increase indent.
+            if task.get(0) is not None:
+                self.__environment.section_start(task.get_name())
+
+            # Execute the task.
+            self.__environment.set_task_path(self.__task_iter.current_path())
+            result = task.install(self.__environment)
+            if result != Task.success:
                 break
         self.__environment.end()
         return result
@@ -63,10 +77,24 @@ class Constructor:
 
     def uninstall(self):
         self.__environment.start()
-        result = Task.success
+        result        = Task.success
+        last_path_len = 0
         for task in self.__task_iter:
+            # If we decreased the depth, decrease indent:
+            change = last_path_len - self.__task_iter.current_depth()
+            if change > 0:
+                for i in range(change):
+                    self.__environment.section_end()
+            last_path_len = self.__task_iter.current_depth()
+
+            # If the task has children, increase indent.
+            if task.get(0) is not None:
+                self.__environment.section_start(task.get_name())
+
+            # Execute the task.
+            self.__environment.set_task_path(self.__task_iter.current_path())
             result = self.__root_task.uninstall(self.__environment)
-            if not result:
+            if result != Task.success:
                 break
         self.__environment.end()
         return result

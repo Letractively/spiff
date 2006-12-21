@@ -12,13 +12,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-from Environment import Environment
-from Form        import Form
 import sys
 import os.path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from genshi.template import TextTemplate
 from genshi.template import TemplateLoader
+
+from Environment       import Environment
+from Form              import Form
+from InteractionResult import InteractionResult
 
 class WebEnvironment(Environment):
     __type_section, \
@@ -41,7 +43,7 @@ class WebEnvironment(Environment):
         self.__tmpl_data = {
           'data':      [],
           'buttons':   [Form.caption[Form.next_button]],
-          'task_path': self.get_initial_task_path()
+          'task_path': self.get_task_path()
         }
 
 
@@ -55,7 +57,19 @@ class WebEnvironment(Environment):
         self.__init_data()
 
 
-    def get_initial_task_path(self):
+    def set_task_path(self, path):
+        if not self.__cgi_form_data.has_key('task_path'):
+            return
+        if len(path) == 0:
+            self.__cgi_form_data['task_path'].value = '0'
+            return
+        #print "Setting path:", path
+        path = '.'.join([repr(i) for i in path])
+        self.__cgi_form_data['task_path'].value = path
+        self.__tmpl_data['task_path'] = path
+
+
+    def get_task_path(self):
         if not self.__cgi_form_data.has_key('task_path'):
             return [0]
         path = []
@@ -102,4 +116,9 @@ class WebEnvironment(Environment):
 
 
     def get_form_data(self):
-        return False #FIXME
+        if len(self.__cgi_form_data.keys()) == 0:
+            return None
+        result = InteractionResult()
+        for key in self.__cgi_form_data.keys():
+            result.set(key, self.__cgi_form_data[key].value)
+        return result

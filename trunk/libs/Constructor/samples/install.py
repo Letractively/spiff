@@ -17,7 +17,7 @@ assert constructor.get_app_name()    == name
 assert constructor.get_app_version() == version
 
 # Test running some tasks.
-la_task = LicenseAgreementTask('SERVE ME!')
-constructor.append(la_task)
+constructor.append(LicenseAgreementTask('SERVE ME!'))
+constructor.append(InstallationCompletedTask())
 result = constructor.install()
 print 'Result:', result

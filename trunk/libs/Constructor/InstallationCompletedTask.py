@@ -15,19 +15,18 @@
 from Task import Task
 from Form import Form
 
-class LicenseAgreementTask(Task):
-    def __init__(self, license_text):
-        assert license_text is not None
-        Task.__init__(self, 'License Agreement')
-        self.__license_text = license_text
+class InstallationCompletedTask(Task):
+    def __init__(self, text = None):
+        Task.__init__(self, 'Installation completed.')
+        if text is None:
+            self.__text = 'Your installation is now complete!'
+        else:
+            self.__text = text
 
 
     def install(self, environment):
-        data = environment.get_form_data()
-        if not data:
-            form = Form(self.__license_text, [Form.cancel_button])
-            environment.show_form(form)
-            return Task.interact
+        form = Form(self.__text, [])
+        environment.show_form(form)
         return Task.success
 
 
@@ -40,15 +39,14 @@ if __name__ == '__main__':
     import cgi
     from WebEnvironment import WebEnvironment
 
-    class LicenseAgreementTaskTest(unittest.TestCase):
+    class InstallationCompletedTaskTest(unittest.TestCase):
         def runTest(self):
             environment = WebEnvironment(cgi.FieldStorage())
             license     = 'Give me your soul'
-            task        = LicenseAgreementTask(license)
-            assert task.install(environment)   == Task.interact
+            task        = InstallationCompletedTask(license)
+            assert task.install(environment)   == Task.success
             assert task.uninstall(environment) == True
 
-    testcase = LicenseAgreementTaskTest()
+    testcase = InstallationCompletedTaskTest()
     runner   = unittest.TextTestRunner()
     runner.run(testcase)
-

@@ -19,7 +19,11 @@ class Environment:
         self._app_version = '0.1'
 
 
-    def get_initial_task_path(self):
+    def set_task_path(self, path):
+        pass
+
+
+    def get_task_path(self):
         return [0]
 
 
@@ -63,6 +67,13 @@ class Environment:
         assert False  # Must be implemented!
 
 
+    def show_message(self, text):
+        """
+        Displays the given text.
+        """
+        assert False  # Must be implemented!
+
+
     def task_done(self, message, result, hint = ''):
         assert False  # Must be implemented!
 
@@ -84,4 +95,7 @@ class Environment:
 
 
     def get_form_data(self):
+        """
+        Returns None if no data is available, InteractionResult otherwise.
+        """
         assert False  # Must be implemented!

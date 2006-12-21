@@ -24,7 +24,7 @@ class CommandTask(Task):
         self.__uninstall_cmd = uninstall_cmd
 
 
-    def __do_command(self, renderer, cmd):
+    def __do_command(self, environment, cmd):
         ret = eval(cmd)
         if ret:
             result = self.success
@@ -32,39 +32,40 @@ class CommandTask(Task):
         else:
             result = self.failure
             hint   = '"' + cmd + '" failed'
-        renderer.task_done(self._name, self._result_msg[result], hint)
+        environment.task_done(self._name, self._result_msg[result], hint)
         return result
 
 
-    def install(self, renderer):
-        return self.__do_command(renderer, self.__install_cmd)
+    def install(self, environment):
+        return self.__do_command(environment, self.__install_cmd)
 
 
-    def uninstall(self, renderer):
-        return self.__do_command(renderer, self.__uninstall_cmd)
+    def uninstall(self, environment):
+        return self.__do_command(environment, self.__uninstall_cmd)
 
 
 if __name__ == '__main__':
     import unittest
-    from WebRenderer import WebRenderer
+    import cgi
+    from WebEnvironment import WebEnvironment
 
     class CommandTaskTest(unittest.TestCase):
         def runTest(self):
-            renderer = WebRenderer()
-            name1    = 'Task 1'
-            name2    = 'Task 2'
-            task1    = CommandTask(name1,
-                                   'True  #install',
-                                   'False #uninstall')
-            task2    = CommandTask(name2,
-                                   'False #install',
-                                   'True  #uninstall')
-            assert task1.get_name()          == name1
-            assert task2.get_name()          == name2
-            assert task1.install(renderer)   == Task.success
-            assert task2.install(renderer)   == Task.failure
-            assert task1.uninstall(renderer) == Task.failure
-            assert task2.uninstall(renderer) == Task.success
+            environment = WebEnvironment(cgi.FieldStorage())
+            name1       = 'Task 1'
+            name2       = 'Task 2'
+            task1       = CommandTask(name1,
+                                      'True  #install',
+                                      'False #uninstall')
+            task2       = CommandTask(name2,
+                                      'False #install',
+                                      'True  #uninstall')
+            assert task1.get_name()             == name1
+            assert task2.get_name()             == name2
+            assert task1.install(environment)   == Task.success
+            assert task2.install(environment)   == Task.failure
+            assert task1.uninstall(environment) == Task.failure
+            assert task2.uninstall(environment) == Task.success
 
     testcase = CommandTaskTest()
     runner   = unittest.TextTestRunner()

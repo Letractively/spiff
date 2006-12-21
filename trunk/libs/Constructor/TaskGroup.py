@@ -40,31 +40,25 @@ class TaskGroup(Task):
         return self.__child_task[n]
 
 
-    def install(self, environment):
+    def install(self, environment, recursive = False):
         assert environment is not None
-        if self._name != '':
-            environment.section_start(self._name)
         result = Task.success
-        for task in self.__child_task:
-            result = task.install(environment)
-            if result is not Task.success:
-                break
-        if self._name != '':
-            environment.section_end()
+        if recursive == True:
+            for task in self.__child_task:
+                result = task.install(environment)
+                if result is not Task.success:
+                    break
         return result
 
 
-    def uninstall(self, environment):
+    def uninstall(self, environment, recursive = False):
         assert environment is not None
-        if self._name != '':
-            environment.section_start(self._name)
         result = Task.success
-        for task in self.__child_task:
-            result = task.uninstall(environment)
-            if result is not Task.success:
-                break
-        if self._name != '':
-            environment.section_end()
+        if recursive == True:
+            for task in self.__child_task:
+                result = task.uninstall(environment)
+                if result is not Task.success:
+                    break
         return result
 
 
@@ -86,8 +80,8 @@ if __name__ == '__main__':
             assert task2.install(environment)   == Task.failure
             assert task1.uninstall(environment) == Task.success
             assert task2.uninstall(environment) == Task.failure
-            assert group.install(environment)   == Task.failure
-            assert group.uninstall(environment) == Task.failure
+            assert group.install(environment)   == Task.success
+            assert group.uninstall(environment) == Task.success
 
     testcase = TaskGroupTest()
     runner   = unittest.TextTestRunner()
