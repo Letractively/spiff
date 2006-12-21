@@ -75,19 +75,18 @@ class TaskIterator:
 
 if __name__ == '__main__':
     import unittest
-    from TaskGroup   import TaskGroup
-    from CommandTask import CommandTask
+    from Task import *
 
     class TaskIteratorTest(unittest.TestCase):
         def runTest(self):
-            task2_2_2 = CommandTask('2.2.2', '', '')
-            task2_2_1 = TaskGroup('2.2.1')
-            task2_2   = TaskGroup('2.2', [task2_2_1, task2_2_2])
-            task2_1   = TaskGroup('2.1')
-            task3     = TaskGroup('3')
-            task2     = TaskGroup('2', [task2_1, task2_2])
-            task1     = TaskGroup('1')
-            root_task = TaskGroup('root', [task1, task2, task3])
+            task2_2_2 = ExecCommand('2.2.2', '', '')
+            task2_2_1 = Group('2.2.1')
+            task2_2   = Group('2.2', [task2_2_1, task2_2_2])
+            task2_1   = Group('2.1')
+            task3     = Group('3')
+            task2     = Group('2', [task2_1, task2_2])
+            task1     = Group('1')
+            root_task = Group('root', [task1, task2, task3])
             iterator  = TaskIterator(root_task)
             count     = 0
             for task in iterator:

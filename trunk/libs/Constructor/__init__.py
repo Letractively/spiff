@@ -1,13 +1,7 @@
 __all__ = ['Constructor',
            'WebEnvironment',
-           'Task',
-           'CommandTask',
-           'InstallationCompletedTask',
-           'LicenseAgreementTask']
+           'Task']
 
-from Constructor               import *
-from WebEnvironment            import *
-from Task                      import *
-from CommandTask               import *
-from InstallationCompletedTask import *
-from LicenseAgreementTask      import *
+from Constructor    import *
+from WebEnvironment import *
+from Task           import *

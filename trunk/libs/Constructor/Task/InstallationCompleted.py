@@ -12,51 +12,41 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-from TaskIterator import TaskIterator
+from Task import Task
+from Form import Form
 
-class Task:
-    success, failure, interact = range(3)
-    _result_msg = {
-      success: 'Success',
-      failure: 'Failed',
-      interact: 'Ineraction required'
-    }
-    
-    def __init__(self, name):
-        assert name is not None
-        self._name = name
-
-
-    def get_name(self):
-        return self._name
-
-
-    def get(self, n):
-        return None
-
-
-    def get_child_iter(self):
-        return TaskIterator(self)
+class InstallationCompleted(Task):
+    def __init__(self, text = None):
+        Task.__init__(self, 'Installation completed.')
+        if text is None:
+            self.__text = 'Your installation is now complete!'
+        else:
+            self.__text = text
 
 
     def install(self, environment):
-        assert False  # Must be implemented!
+        form = Form(self.__text, [])
+        environment.show_form(form)
+        return Task.success
 
 
     def uninstall(self, environment):
-        assert False  # Must be implemented!
+        return True
 
 
 if __name__ == '__main__':
     import unittest
+    import cgi
+    from WebEnvironment import WebEnvironment
 
-    class TaskTest(unittest.TestCase):
+    class InstallationCompletedTest(unittest.TestCase):
         def runTest(self):
-            name = 'Task 1'
-            task = Task(name)
-            assert task.get_name() == name
+            environment = WebEnvironment(cgi.FieldStorage())
+            license     = 'Give me your soul'
+            task        = InstallationCompleted(license)
+            assert task.install(environment)   == Task.success
+            assert task.uninstall(environment) == True
 
-
-    testcase = TaskTest()
+    testcase = InstallationCompletedTest()
     runner   = unittest.TextTestRunner()
     runner.run(testcase)

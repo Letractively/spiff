@@ -14,7 +14,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 from Task import Task
 
-class CommandTask(Task):
+class ExecCommand(Task):
     def __init__(self, name, install_cmd, uninstall_cmd):
         assert name          is not None
         assert install_cmd   is not None
@@ -49,15 +49,15 @@ if __name__ == '__main__':
     import cgi
     from WebEnvironment import WebEnvironment
 
-    class CommandTaskTest(unittest.TestCase):
+    class ExecCommandTest(unittest.TestCase):
         def runTest(self):
             environment = WebEnvironment(cgi.FieldStorage())
             name1       = 'Task 1'
             name2       = 'Task 2'
-            task1       = CommandTask(name1,
+            task1       = ExecCommand(name1,
                                       'True  #install',
                                       'False #uninstall')
-            task2       = CommandTask(name2,
+            task2       = ExecCommand(name2,
                                       'False #install',
                                       'True  #uninstall')
             assert task1.get_name()             == name1
@@ -67,6 +67,6 @@ if __name__ == '__main__':
             assert task1.uninstall(environment) == Task.failure
             assert task2.uninstall(environment) == Task.success
 
-    testcase = CommandTaskTest()
+    testcase = ExecCommandTest()
     runner   = unittest.TextTestRunner()
     runner.run(testcase)
