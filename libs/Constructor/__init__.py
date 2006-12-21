@@ -1,11 +1,11 @@
 __all__ = ['Constructor',
-           'WebRenderer',
-           'LicenseAgreementTask',
-           'Task']
+           'WebEnvironment',
+           'Task',
+           'CommandTask',
+           'LicenseAgreementTask']
 
 from Constructor          import *
-from WebRenderer          import *
-from LicenseAgreementTask import *
+from WebEnvironment       import *
 from Task                 import *
-#for module in __all__:
-#    __import__(module, globals(), locals())
+from CommandTask          import *
+from LicenseAgreementTask import *

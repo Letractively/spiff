@@ -16,12 +16,13 @@
 #end
 ${content}
 <hr/>
-<form method='POST' action='?task_path=${current_path}'>
+<form method='POST' action='?task_path=${task_path}'>
 <table width='100%'>
   <tr>
     <td width='100%'></td>
 #for caption in buttons
-    <td><input type='button' value='${caption}'/></td>
+    <td><input type='submit' value='${caption}'/></td>
 #end
   </tr>
+</table>
 </form>

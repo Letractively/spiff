@@ -1,4 +1,5 @@
-* Make resuming an interactive task work.
+* Create an InteractionResponse object that encapsulates environment specifics
+  like POST data.
 * Add better support for forms to the Form class, using Genshi's
   template support.
 * Implement useful tasks.
