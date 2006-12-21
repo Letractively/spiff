@@ -66,8 +66,11 @@ class Renderer:
     def show_form(self, form):
         """
         This function renders the given form.
-        The result of the interaction can only be given asynchronously,
-        so the Task that triggered the method needs to defer any further action.
+        Returns True if the result is already available (=the method is
+        synchronous), False otherwise (=the method is asynchronous).
+        If the result is asynchronous, the Task that triggered the method
+        needs to defer any further action until the Constructor is
+        re-instantiated at a time where the result can be taken.
         
         This is especially important for stateless protocols like in a Web UI,
         where the result of a form can only be retrieved when the client

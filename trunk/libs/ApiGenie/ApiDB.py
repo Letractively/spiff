@@ -13,10 +13,12 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import sys
-sys.path.append('..')
+import os.path
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from sqlalchemy import *
+
 from DocumentModel import *
 from functions     import *
-from sqlalchemy    import *
 
 class ApiDB:
     def __init__(self, db):

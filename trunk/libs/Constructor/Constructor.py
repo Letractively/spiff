@@ -16,8 +16,12 @@ from TaskGroup    import TaskGroup
 from TaskIterator import TaskIterator
 
 class Constructor:
-    def __init__(self, renderer, initial_path = []):
+    def __init__(self, renderer, cgi_form_data = None):
         assert renderer is not None
+        if cgi_form_data and cgi_form_data.has_key('task_path'):
+            initial_path = cgi_form_data['task_path'].split('.')
+        else:
+            initial_path = [0]
         self.__root_task = TaskGroup()
         self.__task_iter = TaskIterator(self.__root_task, initial_path)
         self.__renderer  = renderer
@@ -50,16 +54,20 @@ class Constructor:
 
     def install(self):
         self.__renderer.start()
-        #FIXME: Call the install() method of whatever the iterator points at, not the root node.
-        result = self.__root_task.install(self.__renderer)
+        for task in self.__task_iter:
+            result = self.__root_task.install(self.__renderer)
+            if not result:
+                break
         self.__renderer.end()
         return result
 
 
     def uninstall(self):
         self.__renderer.start()
-        #FIXME: Call the install() method of whatever the iterator points at, not the root node.
-        result = self.__root_task.uninstall(self.__renderer)
+        for task in self.__task_iter:
+            result = self.__root_task.uninstall(self.__renderer)
+            if not result:
+                break
         self.__renderer.end()
         return result
 

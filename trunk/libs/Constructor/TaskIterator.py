@@ -12,22 +12,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-from Task import Task
 
 class TaskIterator:
-    def __init__(self, root_task, path = []):
+    def __init__(self, root_task, path = [0]):
         assert root_task is not None
-        self.__current_path = path
+        self.__initial_path = path
         self.__root_task    = root_task
 
 
     def __iter__(self):
+        self.__current_path = self.__initial_path[:]
         return self 
 
 
     def __get_task_from_path(self, path):
         task = self.__root_task
-        for index in self.path:
+        for index in path:
             task = task.get(index)
             if not task:
                 return None
@@ -35,8 +35,11 @@ class TaskIterator:
 
 
     def next(self):
+        if len(self.__current_path) == 0:
+            raise StopIteration
+
         # Fetch the current task.
-        task = self.__get_task_from_path(self, self.__current_path)
+        task = self.__get_task_from_path(self.__current_path)
         if not task:
             raise StopIteration
 
@@ -50,7 +53,7 @@ class TaskIterator:
         # Otherwise, select the next item from the path.
         while len(self.__current_path) > 0:
             self.__current_path[-1] += 1
-            task = self.__get_task_from_path(self, self.__current_path)
+            task = self.__get_task_from_path(self.__current_path)
             if task is not None:
                 break
             self.__current_path.pop()
@@ -59,3 +62,35 @@ class TaskIterator:
 
     def reset(self):
         self.__current_path = []
+
+
+if __name__ == '__main__':
+    import unittest
+    from TaskGroup   import TaskGroup
+    from CommandTask import CommandTask
+
+    class TaskIteratorTest(unittest.TestCase):
+        def runTest(self):
+            task2_2_2 = CommandTask('2.2.2', '', '')
+            task2_2_1 = TaskGroup('2.2.1')
+            task2_2   = TaskGroup('2.2', [task2_2_1, task2_2_2])
+            task2_1   = TaskGroup('2.1')
+            task3     = TaskGroup('3')
+            task2     = TaskGroup('2', [task2_1, task2_2])
+            task1     = TaskGroup('1')
+            root_task = TaskGroup('root', [task1, task2, task3])
+            iterator  = TaskIterator(root_task)
+            count     = 0
+            for task in iterator:
+                count += 1
+                #print "Name:", task.get_name()
+            assert count == 7
+            count     = 0
+            for task in iterator:
+                count += 1
+                #print "Name:", task.get_name()
+            assert count == 7
+
+    testcase = TaskIteratorTest()
+    runner   = unittest.TextTestRunner()
+    runner.run(testcase)

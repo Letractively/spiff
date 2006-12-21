@@ -16,7 +16,7 @@ from Renderer import Renderer
 from Form     import Form
 import sys
 import os.path
-sys.path.append('..')
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from genshi.template import TextTemplate
 from genshi.template import TemplateLoader
 
@@ -86,7 +86,7 @@ class WebRenderer(Renderer):
         for button in form.get_buttons():
             self.__tmpl_data['buttons'].append(Form.caption[button])
         self.__flush_template(True)
-        return True
+        return False
 
 
     def get_form_data(self):
