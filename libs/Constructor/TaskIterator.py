@@ -18,6 +18,7 @@ class TaskIterator:
         assert root_task is not None
         self.__initial_path = path
         self.__root_task    = root_task
+        self.__current_path = self.__initial_path[:]
 
 
     def __iter__(self):
@@ -32,6 +33,14 @@ class TaskIterator:
             if not task:
                 return None
         return task
+
+
+    def current_path(self):
+        return self.__current_path
+
+
+    def current_depth(self):
+        return len(self.__current_path)
 
 
     def next(self):
