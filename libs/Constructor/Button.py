@@ -13,18 +13,25 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-class Form:
-    def __init__(self, markup, buttons):
-        assert markup  is not None
-        assert buttons is not None
-        assert type(buttons) == type([])
-        self.__markup  = markup
-        self.__buttons = buttons
+class Button:
+    def __init__(self, name, caption):
+        assert name    is not None
+        assert caption is not None
+        self.__name    = name
+        self.__caption = caption
 
 
-    def get_markup(self):
-        return self.__markup
+    def set_name(self, name):
+        self.__name = name
 
 
-    def get_buttons(self):
-        return self.__buttons
+    def get_name(self):
+        return self.__name
+
+
+    def set_caption(self, caption):
+        self.__caption = caption
+
+
+    def get_caption(self):
+        return self.__caption

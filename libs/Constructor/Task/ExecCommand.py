@@ -25,15 +25,12 @@ class ExecCommand(Task):
 
 
     def __do_command(self, environment, cmd):
-        ret = eval(cmd)
+        ret        = eval(cmd)
+        self.error = None
         if ret:
-            result = self.success
-            hint   = ''
-        else:
-            result = self.failure
-            hint   = '"' + cmd + '" failed'
-        environment.task_done(self._name, self._result_msg[result], hint)
-        return result
+            return Task.success
+        self.error = '"' + cmd + '" failed'
+        return Task.failure
 
 
     def install(self, environment):

@@ -18,10 +18,12 @@ class TaskIterator:
         assert root_task is not None
         self.__initial_path = path
         self.__root_task    = root_task
+        self.__next_path    = self.__initial_path[:]
         self.__current_path = self.__initial_path[:]
 
 
     def __iter__(self):
+        self.__next_path    = self.__initial_path[:]
         self.__current_path = self.__initial_path[:]
         return self 
 
@@ -44,33 +46,31 @@ class TaskIterator:
 
 
     def next(self):
+        # Fetch the task.
+        self.__current_path = self.__next_path[:]
+        current_task = self.__get_task_from_path(self.__current_path)
         if len(self.__current_path) == 0:
             raise StopIteration
 
-        # Fetch the current task.
-        task = self.__get_task_from_path(self.__current_path)
-        if not task:
-            raise StopIteration
-
         # If the current task has children, select the first one.
-        last_task = task
-        task = task.get(0)
-        if task is not None:
-            self.__current_path.append(0)
-            return last_task
+        next_task = current_task.get(0)
+        if next_task is not None:
+            self.__next_path.append(0)
+            return current_task
         
         # Otherwise, select the next item from the path.
-        while len(self.__current_path) > 0:
-            self.__current_path[-1] += 1
-            task = self.__get_task_from_path(self.__current_path)
-            if task is not None:
+        while len(self.__next_path) > 0:
+            self.__next_path[-1] += 1
+            next_task = self.__get_task_from_path(self.__next_path)
+            if next_task is not None:
                 break
-            self.__current_path.pop()
-        return last_task
+            self.__next_path.pop()
+        return current_task
 
 
     def reset(self):
         self.__current_path = []
+        self.__next_path    = []
 
 
 if __name__ == '__main__':

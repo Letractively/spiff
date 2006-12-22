@@ -19,6 +19,6 @@ assert constructor.get_app_version() == version
 
 # Test running some tasks.
 constructor.append(LicenseAgreement('SERVE ME!'))
+constructor.append(CollectDBInfo(['mysql4']))
 constructor.append(InstallationCompleted())
 result = constructor.install()
-print 'Result:', result
