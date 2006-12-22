@@ -12,25 +12,23 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-from Task        import Task
-from Form        import Form
-from StockButton import StockButton
+import sys
+from Task import Task
 
-class LicenseAgreement(Task):
-    def __init__(self, license_text):
-        assert license_text is not None
-        Task.__init__(self, 'License Agreement')
-        self.__license_text = license_text
+class CheckPythonVersion(Task):
+    def __init__(self, min_version_tuple, max_version_tuple):
+        assert min_version_tuple is not None
+        assert max_version_tuple is not None
+        Task.__init__(self, "Checking Python version")
+        self.__min_version_tuple = min_version_tuple
+        self.__max_version_tuple = max_version_tuple
 
 
     def install(self, environment):
-        result = environment.get_interaction_result()
-        if not result:
-            buttons = [StockButton('cancel_button'),
-                       StockButton('next_button')]
-            form    = Form(self.__license_text, buttons)
-            environment.render_markup(form)
-            return Task.interact
+        if sys.version_info < self.__min_version_tuple or \
+           sys.version_info > self.__max_version_tuple:
+            self.error = 'Python version ' + sys.version + ' is not supported.'
+            return Task.failure
         return Task.success
 
 
@@ -43,15 +41,14 @@ if __name__ == '__main__':
     import cgi
     from WebEnvironment import WebEnvironment
 
-    class LicenseAgreementTest(unittest.TestCase):
+    class CheckPythonVersionTest(unittest.TestCase):
         def runTest(self):
             environment = WebEnvironment(cgi.FieldStorage())
-            license     = 'Give me your soul'
-            task        = LicenseAgreement(license)
-            assert task.install(environment)   == Task.interact
+            task        = CheckPythonVersion((2, 3, 0, '', 0),
+                                             (2, 5, 0, '', 0))
+            assert task.install(environment)   == Task.success
             assert task.uninstall(environment) == Task.success
 
-    testcase = LicenseAgreementTest()
+    testcase = CheckPythonVersionTest()
     runner   = unittest.TextTestRunner()
     runner.run(testcase)
-

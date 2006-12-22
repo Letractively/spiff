@@ -1,28 +1,13 @@
 <h1>$app_name $app_version</h1>
-#for item in data
-  #choose item.type
-    #when 0
-      <h${item.level}>${item.name}</h${item.level}>
-    #end
-    #when 1
-      <table width='100%'>
-        <tr><td>${item.message}</td><td>${item.result}</td></tr>
-      #if item.hint
-        <tr><td colspan=2 align='right'>${item.hint}</td></tr>
-      #end
-      </table>
-    #end
-  #end
-#end
+<form method='POST' action='?'>
 ${content}
 <hr/>
-<form method='POST' action='?'>
 <input type='hidden' name='task_path' value=${task_path} />
 <table width='100%'>
   <tr>
     <td width='100%'></td>
-#for caption in buttons
-    <td><input type='submit' value='${caption}'/></td>
+#for button in buttons
+    <td><input type='submit' name='${button.get_name()}' value='${button.get_caption()}'/></td>
 #end
   </tr>
 </table>

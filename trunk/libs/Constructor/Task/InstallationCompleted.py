@@ -26,12 +26,12 @@ class InstallationCompleted(Task):
 
     def install(self, environment):
         form = Form(self.__text, [])
-        environment.show_form(form)
+        environment.render_markup(form)
         return Task.success
 
 
     def uninstall(self, environment):
-        return True
+        return Task.success
 
 
 if __name__ == '__main__':
@@ -45,7 +45,7 @@ if __name__ == '__main__':
             license     = 'Give me your soul'
             task        = InstallationCompleted(license)
             assert task.install(environment)   == Task.success
-            assert task.uninstall(environment) == True
+            assert task.uninstall(environment) == Task.success
 
     testcase = InstallationCompletedTest()
     runner   = unittest.TextTestRunner()

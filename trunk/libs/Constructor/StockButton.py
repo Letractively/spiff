@@ -12,19 +12,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+from Button import Button
 
-class Form:
-    def __init__(self, markup, buttons):
-        assert markup  is not None
-        assert buttons is not None
-        assert type(buttons) == type([])
-        self.__markup  = markup
-        self.__buttons = buttons
+class StockButton(Button):
+    __stock_items = {
+      'next_button':   'Next',
+      'cancel_button': 'Cancel'
+    }
 
-
-    def get_markup(self):
-        return self.__markup
-
-
-    def get_buttons(self):
-        return self.__buttons
+    def __init__(self, type):
+        assert self.__stock_items.has_key(type)
+        Button.__init__(self, type, self.__stock_items[type])

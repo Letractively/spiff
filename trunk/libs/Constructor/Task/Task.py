@@ -20,18 +20,28 @@ from TaskIterator import TaskIterator
 class Task:
     success, failure, interact = range(3)
     _result_msg = {
-      success: 'Success',
-      failure: 'Failed',
-      interact: 'Ineraction required'
+      success:  'Success',
+      failure:  'Failed',
+      interact: 'Interaction required'
     }
     
     def __init__(self, name):
         assert name is not None
         self._name = name
+        self.error = None
 
 
     def get_name(self):
         return self._name
+
+
+    def get_error(self):
+        """
+        If intall() or uninstall() returned False, this method should return
+        a human readable error message.
+        @return string
+        """
+        return self.error
 
 
     def get(self, n):

@@ -8,4 +8,4 @@ desktop applications in Python.
 
 Dependencies
 -------------
-- Genshi (only when the WebRenderer is used)
+- Genshi (only when WebEnvironment is used)
