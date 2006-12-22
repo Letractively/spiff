@@ -89,14 +89,33 @@ class WebEnvironment(Environment):
 
     def __compile_markup_tag(self, match):
         tag_name = match.group(1)
+
+        # Label tags.
+        if tag_name == 'label':
+            return match.group(2)[1:-1]
+        if tag_name == 'title':
+            return '<h2>' + match.group(2)[1:-1] + '</h2>'
+
+        # Text fields.
+        if tag_name == 'entry':
+            entry_name = match.group(2)
+            return '<input type="text" name="%s" value="" />' % entry_name
+
+        # Hidden fields.
+        if tag_name == 'variable':
+            var_name  = match.group(2)
+            var_value = match.group(3)[1:-1]
+            return '<input type="hidden" name="%s" value="%s" />' % (var_name,
+                                                                     var_value)
+
+        # Select box tags.
         if tag_name == 'select':
             select_name = match.group(2)
             return '<select name="%s">' % select_name
         if tag_name == 'item':
-            item_name  = match.group(2)
-            try:
-                item_value = match.group(3)
-            except:
+            item_name = match.group(2)
+            item_value = match.group(3)
+            if item_value is None:
                 item_value = item_name
             return '<option name="%s">%s</option>' % (item_name, item_value)
         if tag_name == 'end_select':
@@ -105,10 +124,15 @@ class WebEnvironment(Environment):
 
 
     def render_markup(self, markup):
-        tag_re = re.compile('{(\w+)(?: (\w+))*}')
-        data   = tag_re.sub(self.__compile_markup_tag, markup.get_markup())
-        tmpl   = TextTemplate(data)
-        stream = tmpl.generate()
+        word_re = '[\w_]+'
+        arg_re  = '(?:' + word_re + '|\"[^\"]+\")'
+        tag_re  = re.compile('{(\w+)' +               
+                             '(?: (' + arg_re + '))?' + 
+                             '(?: (' + arg_re + '))*}')
+        data    = tag_re.sub(self.__compile_markup_tag, markup.get_markup())
+        data    = data.replace('\n', '<br/>\n')
+        tmpl    = TextTemplate(data)
+        stream  = tmpl.generate()
         self.__tmpl_data['content'] = stream.render('text')
         self.__tmpl_data['buttons'] = markup.get_buttons()
         self.__flush_template()

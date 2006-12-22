@@ -47,19 +47,46 @@ class CollectDBInfo(Task):
             if supported_db_types is None or db_type in supported_db_types:
                 self.__supported_db_types[db_type] = self.__db_config[db_type]
 
-        # Generate a form for selecting the database.
-        self.__markup = '{select db_type}\n'
-        for db_type in self.__supported_db_types.keys():
-            self.__markup += '  {item %s}\n' % db_type
-        self.__markup += '{end_select}\n'
-
 
     def install(self, environment):
         result = environment.get_interaction_result()
         if not result:
-            form = Form(self.__markup, [StockButton('next_button')])
+            # Generate a form for selecting the database.
+            markup  = '{title "Please select your database type."}'
+            markup += '{variable db_type_sent "True"}'
+            markup += '{label "Database Type:"} {select db_type}'
+            for db_type in self.__supported_db_types.keys():
+                markup += '  {item %s}' % db_type
+            markup += '{end_select}'
+            form = Form(markup, [StockButton('next_button')])
             environment.render_markup(form)
             return Task.interact
+
+        elif result.get('db_type_sent') is not None:
+            # Show a form for entering the database details.
+            db_type = result.get('db_type')
+            assert self.__supported_db_types.has_key(db_type)
+            markup  = '{title "Please enter your database details."}'
+            markup += '{variable db_details_sent "True"}'
+            markup += '{variable db_type "%s"}' % db_type
+            for key in self.__supported_db_types[db_type]:
+                caption = self.__supported_db_types[db_type][key]
+                markup += '{label "%s"} {entry %s}\n' % (caption, key)
+            form = Form(markup, [StockButton('next_button')])
+            environment.render_markup(form)
+            return Task.interact
+
+        elif result.get('db_details_sent') is not None:
+            # Store the data in the environment so other tasks can access it.
+            db_type    = result.get('db_type')
+            db_details = {'db_type': db_type}
+            for key in self.__supported_db_types[db_type]:
+                db_details[key] = result.get(key)
+            environment.set_attribute('db_details', db_details)
+
+        else:
+            assert False # Invalid response
+
         return Task.success
 
 

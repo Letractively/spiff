@@ -16,9 +16,8 @@ import sys
 from Task import Task
 
 class CheckPythonVersion(Task):
-    def __init__(self, min_version_tuple, max_version_tuple):
+    def __init__(self, min_version_tuple, max_version_tuple = None):
         assert min_version_tuple is not None
-        assert max_version_tuple is not None
         Task.__init__(self, "Checking Python version")
         self.__min_version_tuple = min_version_tuple
         self.__max_version_tuple = max_version_tuple
@@ -26,7 +25,8 @@ class CheckPythonVersion(Task):
 
     def install(self, environment):
         if sys.version_info < self.__min_version_tuple or \
-           sys.version_info > self.__max_version_tuple:
+           (self.__max_version_tuple is not None and
+            sys.version_info > self.__max_version_tuple):
             self.error = 'Python version ' + sys.version + ' is not supported.'
             return Task.failure
         return Task.success
