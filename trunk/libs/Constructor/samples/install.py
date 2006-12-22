@@ -18,6 +18,7 @@ assert constructor.get_app_name()    == name
 assert constructor.get_app_version() == version
 
 # Test running some tasks.
+constructor.append(CheckPythonVersion((2, 3, 0, '', 0)))
 constructor.append(LicenseAgreement('SERVE ME!'))
 constructor.append(CollectDBInfo(['mysql4']))
 constructor.append(InstallationCompleted())

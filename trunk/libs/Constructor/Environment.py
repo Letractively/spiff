@@ -17,6 +17,7 @@ class Environment:
     def __init__(self):
         self._app_name    = 'Spiff Application'
         self._app_version = '0.1'
+        self.__attributes = {}
 
 
     def set_app_name(self, app_name):
@@ -53,6 +54,36 @@ class Environment:
         @return string
         """
         return self._app_version
+
+
+    def set_attribute(self, name, value):
+        """
+        This method lets tasks provide arbitrary data to have it carried
+        along. This is a way in which multiple tasks may share data.
+
+        The livetime of this data is the same as the lifetime of the
+        Environment.
+        @type  name string
+        @param name An arbitrary attribute name.
+        @type  value object
+        @param value Anything.
+        """
+        assert name is not None
+        self.__attributes[name] = value
+
+
+    def get_attribute(self, name):
+        """
+        Returns an attribute that was previously defined using
+        set_attribute().
+        @type  name string
+        @param name An arbitrary attribute name.
+        @return The value of the attribute with the given name.
+        """
+        assert name is not None
+        if not self.__attributes.has_key(name):
+            return None
+        return self.__attributes[name]
 
 
     def start(self):

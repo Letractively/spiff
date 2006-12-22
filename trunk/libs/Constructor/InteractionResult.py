@@ -25,6 +25,8 @@ class InteractionResult:
     
     def get(self, key):
         assert key is not None
+        if not self.__values.has_key(key):
+            return None
         return self.__values[key]
 
 
