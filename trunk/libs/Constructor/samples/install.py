@@ -8,18 +8,16 @@ import cgi
 print 'Content-Type: text/html'
 print
 
-name        = 'Test Application'
-version     = '0.1.2'
+# Set Spiff Constructor up.
 environment = WebEnvironment(cgi.FieldStorage())
 constructor = Constructor(environment)
-constructor.set_app_name(name)
-constructor.set_app_version(version)
-assert constructor.get_app_name()    == name
-assert constructor.get_app_version() == version
+constructor.set_app_name('Test Application')
+constructor.set_app_version('0.1.2')
 
-# Test running some tasks.
+# Test some installation tasks.
 constructor.append(CheckPythonVersion((2, 3, 0, '', 0)))
 constructor.append(LicenseAgreement('SERVE ME!'))
 constructor.append(CollectDBInfo(['mysql4']))
+constructor.append(CheckDBConnection())
 constructor.append(InstallationCompleted())
 result = constructor.install()
