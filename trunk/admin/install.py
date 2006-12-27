@@ -17,12 +17,10 @@ loader      = TemplateLoader(['.'])
 template    = loader.load('install.tmpl', None, TextTemplate)
 environment = WebEnvironment(cgi.FieldStorage(), template)
 constructor = Constructor(environment)
-constructor.set_app_name('Test Application')
-constructor.set_app_version('0.1.2')
+constructor.set_app_version('0.1')
 
 # Test some installation tasks.
 constructor.append(CheckPythonVersion((2, 3, 0, '', 0)))
-constructor.append(LicenseAgreement('SERVE ME!'))
 constructor.append(CollectDBInfo(['mysql4']))
 constructor.append(CheckDBConnection())
 #FIXME: Check whether InnoDB is supported.
