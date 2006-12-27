@@ -1,4 +1,5 @@
 __all__ = ['Task',
+           'CheckList',
            'CreateDir',
            'DirExists',
            'FileExists',
@@ -12,6 +13,7 @@ __all__ = ['Task',
            'LicenseAgreement']
 
 from Task                      import *
+from CheckList                 import *
 from CreateDir                 import *
 from DirExists                 import *
 from FileExists                import *

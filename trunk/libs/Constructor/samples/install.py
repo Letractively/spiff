@@ -15,7 +15,8 @@ constructor.set_app_name('Test Application')
 constructor.set_app_version('0.1.2')
 
 # Test some installation tasks.
-constructor.append(CheckPythonVersion((2, 3, 0, '', 0)))
+pyver =  CheckPythonVersion((2, 3, 0, '', 0))
+constructor.append(CheckList('Checking Requirements', [pyver]))
 constructor.append(LicenseAgreement('SERVE ME!'))
 constructor.append(CollectDBInfo(['mysql4']))
 constructor.append(CheckDBConnection())
