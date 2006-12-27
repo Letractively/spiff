@@ -1,3 +1,21 @@
+* Create login extension.
+
+* Check string escaping in HTML templates.
+
+* Create Admin Center extension.
+
+* Create default users and groups using the installer.
+
+* Assign default permissions to users/groups.
+
+* Install default plugins using the installer.
+
+* Create default user actions using the installer.
+
+* Create default content setup using the installer.
+
+* Create Spiff core extension.
+
 * Check permissions of user actions in the admin UI.
 
 * Gettextify the admin interface.

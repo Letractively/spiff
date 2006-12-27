@@ -14,33 +14,31 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 from Task       import Task
 from sqlalchemy import *
-import Guard
+import Integrator
 
-class InstallGuard(Task):
+class InstallIntegrator(Task):
     def __init__(self):
-        Task.__init__(self, 'Installing Spiff Guard.')
+        Task.__init__(self, 'Installing Spiff Integrator.')
 
 
     def install(self, environment):
-        dbn = environment.get_attribute('dbn')
-        assert dbn is not None
-        engine = create_engine(dbn)
-        guard  = Guard.DB(engine)
+        guard = environment.get_attribute('guard_db')
+        assert guard is not None
+        integrator = Integrator.DB(guard)
         try:
-            guard.install()
+            integrator.install()
         except:
             return Task.failure
-        environment.set_attribute('guard_db', guard)
+        environment.set_attribute('integrator_db', integrator)
         return Task.success
 
 
     def uninstall(self, environment):
-        dbn = environment.get_attribute('dbn')
-        assert dbn is not None
-        engine = create_engine(dbn)
-        guard  = Guard.DB(engine)
+        guard = environment.get_attribute('guard_db')
+        assert guard is not None
+        integrator = Integrator.DB(guard)
         try:
-            guard.uninstall()
+            integrator.uninstall()
         except:
             pass
         return Task.success
@@ -52,13 +50,13 @@ if __name__ == '__main__':
     from ConfigParser import RawConfigParser
     from WebEnvironment import WebEnvironment
 
-    class InstallGuardTest(unittest.TestCase):
+    class InstallIntegratorTest(unittest.TestCase):
         def runTest(self):
             environment = WebEnvironment(cgi.FieldStorage())
-            task        = InstallGuard()
+            task        = InstallIntegrator()
             assert task.install(environment)   == Task.success
             assert task.uninstall(environment) == Task.success
 
-    testcase = InstallGuardTest()
+    testcase = InstallIntegratorTest()
     runner   = unittest.TextTestRunner()
     runner.run(testcase)
