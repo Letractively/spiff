@@ -18,7 +18,7 @@ from Task import Task
 class FileExists(Task):
     def __init__(self, filename):
         assert filename is not None
-        Task.__init__(self, 'Checking whether ' + filename + ' exists.')
+        Task.__init__(self, 'Checking whether ' + filename + ' exists')
         self.__filename = filename
 
 

@@ -12,9 +12,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-from Task        import Task
-from Form        import Form
-from StockButton import StockButton
+from Task   import Task
+from Form   import Form
+from Button import Button
 
 class LicenseAgreement(Task):
     def __init__(self, license_text):
@@ -26,8 +26,7 @@ class LicenseAgreement(Task):
     def install(self, environment):
         result = environment.get_interaction_result()
         if not result:
-            buttons = [StockButton('cancel_button'),
-                       StockButton('next_button')]
+            buttons = [Button('agree_button', 'I Agree To The Above License')]
             form    = Form(self.__license_text, buttons)
             environment.render_markup(form)
             return Task.interact

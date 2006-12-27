@@ -18,7 +18,7 @@ from Task import Task
 class FileIsWritable(Task):
     def __init__(self, filename):
         assert filename is not None
-        Task.__init__(self, 'Checking whether ' + filename + ' is writable.')
+        Task.__init__(self, 'Checking whether ' + filename + ' is writable')
         self.__filename = filename
 
 

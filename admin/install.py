@@ -20,12 +20,13 @@ constructor = Constructor(environment)
 constructor.set_app_version('0.1')
 
 # Test some installation tasks.
-constructor.append(CheckPythonVersion((2, 3, 0, '', 0)))
+checks = [CheckPythonVersion((2, 3, 0, '', 0)),
+          DirExists('../data/'),
+          FileIsWritable('../data/')]
+constructor.append(CheckList('Checking installation requirements', checks))
 constructor.append(CollectDBInfo(['mysql4']))
 constructor.append(CheckDBConnection())
 #FIXME: Check whether InnoDB is supported.
-constructor.append(DirExists('../data/'))
-constructor.append(FileIsWritable('../data/'))
 constructor.append(CreateDir('../data/repo'))
 constructor.append(CreateDir('../data/uploads'))
 constructor.append(InstallGuard())

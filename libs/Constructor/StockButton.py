@@ -17,7 +17,8 @@ from Button import Button
 class StockButton(Button):
     __stock_items = {
       'next_button':   'Next',
-      'cancel_button': 'Cancel'
+      'cancel_button': 'Cancel',
+      'retry_button':  'Retry'
     }
 
     def __init__(self, type):

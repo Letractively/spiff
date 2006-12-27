@@ -20,14 +20,14 @@ class Group(Task):
         assert child_task is not None
         Task.__init__(self, name)
         if type(child_task) == type([]):
-            self.__child_task = child_task
+            self._child_task = child_task
         else:
-            self.__child_task = [child_task]
+            self._child_task = [child_task]
 
 
     def append(self, task):
         assert task is not None
-        self.__child_task.append(task)
+        self._child_task.append(task)
 
 
     def get(self, n):
@@ -35,31 +35,17 @@ class Group(Task):
         Returns the child task at the given index.
         """
         assert n >= 0
-        if n + 1 > len(self.__child_task):
+        if n + 1 > len(self._child_task):
             return None
-        return self.__child_task[n]
+        return self._child_task[n]
 
 
-    def install(self, environment, recursive = False):
-        assert environment is not None
-        result = Task.success
-        if recursive == True:
-            for task in self.__child_task:
-                result = task.install(environment)
-                if result is not Task.success:
-                    break
-        return result
+    def install(self, environment):
+        return Task.success
 
 
-    def uninstall(self, environment, recursive = False):
-        assert environment is not None
-        result = Task.success
-        if recursive == True:
-            for task in self.__child_task:
-                result = task.uninstall(environment)
-                if result is not Task.success:
-                    break
-        return result
+    def uninstall(self, environment):
+        return Task.success
 
 
 if __name__ == '__main__':
