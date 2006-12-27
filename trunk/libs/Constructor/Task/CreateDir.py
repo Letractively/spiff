@@ -15,20 +15,30 @@
 import os.path
 from Task import Task
 
-class FileExists(Task):
-    def __init__(self, filename):
-        assert filename is not None
-        Task.__init__(self, 'Checking whether ' + filename + ' exists.')
-        self.__filename = filename
+class CreateDir(Task):
+    def __init__(self, dirname, mode = 0777):
+        assert dirname is not None
+        assert mode    is not None
+        Task.__init__(self, 'Creating directory ' + dirname)
+        self.__dirname = dirname
+        self.__mode    = mode
 
 
     def install(self, environment):
-        if os.path.exists(self.__filename):
+        if os.path.exists(self.__dirname):
             return Task.success
-        return Task.failure
+        try:
+            os.makedirs(self.__dirname, self.__mode)
+        except:
+            return Task.failure
+        return Task.success
 
 
     def uninstall(self, environment):
+        try:
+            os.rmdir(self.__dirname)
+        except:
+            return Task.success
         return Task.success
 
 
@@ -38,17 +48,18 @@ if __name__ == '__main__':
     from ConfigParser import RawConfigParser
     from WebEnvironment import WebEnvironment
 
-    class FileExistsTest(unittest.TestCase):
+    class CreateDirTest(unittest.TestCase):
         def runTest(self):
             environment = WebEnvironment(cgi.FieldStorage())
-            task        = FileExists('FileExists.py')
+            task        = CreateDir('CreateDir')
             assert task.install(environment)   == Task.success
             assert task.uninstall(environment) == Task.success
 
-            task        = FileExists('FileExistsDefinitelyNot.py')
+            task        = CreateDir('/CreateDirDefinitelyNot')
             assert task.install(environment)   == Task.failure
             assert task.uninstall(environment) == Task.success
 
-    testcase = FileExistsTest()
+    testcase = CreateDirTest()
     runner   = unittest.TextTestRunner()
     runner.run(testcase)
+

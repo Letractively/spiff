@@ -12,23 +12,36 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-import os.path
-from Task import Task
+from Task       import Task
+from sqlalchemy import *
+import Guard
 
-class FileExists(Task):
-    def __init__(self, filename):
-        assert filename is not None
-        Task.__init__(self, 'Checking whether ' + filename + ' exists.')
-        self.__filename = filename
+class InstallGuard(Task):
+    def __init__(self):
+        Task.__init__(self, 'Installing Spiff Guard.')
 
 
     def install(self, environment):
-        if os.path.exists(self.__filename):
-            return Task.success
-        return Task.failure
+        dbn = environment.get_attribute('dbn')
+        assert dbn is not None
+        engine = create_engine(dbn)
+        guard  = Guard.DB(engine)
+        try:
+            guard.install()
+        except:
+            return Task.failure
+        return Task.success
 
 
     def uninstall(self, environment):
+        dbn = environment.get_attribute('dbn')
+        assert dbn is not None
+        engine = create_engine(dbn)
+        guard  = Guard.DB(engine)
+        try:
+            guard.install()
+        except:
+            pass
         return Task.success
 
 
@@ -38,17 +51,17 @@ if __name__ == '__main__':
     from ConfigParser import RawConfigParser
     from WebEnvironment import WebEnvironment
 
-    class FileExistsTest(unittest.TestCase):
+    class InstallGuardTest(unittest.TestCase):
         def runTest(self):
             environment = WebEnvironment(cgi.FieldStorage())
-            task        = FileExists('FileExists.py')
+            task        = InstallGuard('InstallGuard.py')
             assert task.install(environment)   == Task.success
             assert task.uninstall(environment) == Task.success
 
-            task        = FileExists('FileExistsDefinitelyNot.py')
+            task        = InstallGuard('InstallGuardDefinitelyNot.py')
             assert task.install(environment)   == Task.failure
             assert task.uninstall(environment) == Task.success
 
-    testcase = FileExistsTest()
+    testcase = InstallGuardTest()
     runner   = unittest.TextTestRunner()
     runner.run(testcase)

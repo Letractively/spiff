@@ -12,17 +12,12 @@ Installation Instructions
 
     chmod 777 data/
   
-04. Copy spiff/config.inc.php.tmpl to spiff/config.inc.php.
-
-05. Edit spiff/config.inc.php according to your webserver configuration.
-    The file should be self explaining.
-
-06. Open spiff/admin/setup.php in your web browser and follow the instructions.
+06. Open spiff/admin/install.py in your web browser and follow the instructions.
     Make sure that no error message appears.
     !!! WARNING: This step will erase the content of the database that
-        was configured in spiff/admin/config.inc.php !!!
+        is configured in spiff/data/config.txt !!!
 
 07. If you encountered any bugs, please report them at
     http://code.google.com/p/spiff/issues/list
 
-08. Done! You should now be able to open spiff/index.php in your web browser.
+08. Done! You should now be able to open spiff/index.py in your web browser.

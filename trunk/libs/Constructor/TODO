@@ -1,6 +1,5 @@
+* Add a CheckList task.
 * Add better support for forms to the Form class, using Genshi's
   template support.
-* Implement useful tasks.
 * Implement unit tests for Environment and WebEnvironment.
-* Implement unit tests for every task.
 -Samuel

@@ -25,24 +25,15 @@ class CheckDBConnection(Task):
 
 
     def install(self, environment):
-        db_details = environment.get_attribute('db_details')
-        assert db_details.has_key('db_type')
-        assert db_details.has_key('hostname')
-        assert db_details.has_key('db_name')
-        assert db_details.has_key('user')
-        assert db_details.has_key('password')
-        if db_details['db_type'] in ['mysql3', 'mysql4']:
-            auth    = db_details['user'] + ':' + db_details['password']
-            host    = db_details['hostname']
-            db_name = db_details['db_name']
-            dbn     = 'mysql://%s@%s/%s' % (auth, host, db_name)
-            engine  = create_engine(dbn)
-            try:
-                conn = engine.connect()
-            except:
-                conn = None
-            if conn is not None:
-                return Task.success
+        dbn = environment.get_attribute('dbn')
+        assert dbn is not None
+        engine = create_engine(dbn)
+        try:
+            conn = engine.connect()
+        except:
+            conn = None
+        if conn is not None:
+            return Task.success
         return Task.failure
 
 
@@ -61,18 +52,17 @@ if __name__ == '__main__':
             # Read db config.
             cfg = RawConfigParser()
             cfg.read('../unit_test.cfg')
-            db_details  = {
-              'db_type':  'mysql4',
-              'hostname': cfg.get('database', 'host'),
-              'db_name':  cfg.get('database', 'db_name'),
-              'user':     cfg.get('database', 'user'),
-              'password': cfg.get('database', 'password')
-            }
+            host     = cfg.get('database', 'host')
+            db_name  = cfg.get('database', 'db_name')
+            user     = cfg.get('database', 'user')
+            password = cfg.get('database', 'password')
+            auth     = user + ':' + password
+            dbn      = 'mysql://' + auth + '@' + host + '/' + db_name
 
             # Set up task.
             environment = WebEnvironment(cgi.FieldStorage())
             task        = CheckDBConnection()
-            environment.set_attribute('db_details', db_details)
+            environment.set_attribute('dbn', dbn)
 
             # Run.
             assert task.install(environment)   == Task.success

@@ -48,6 +48,20 @@ class CollectDBInfo(Task):
                 self.__supported_db_types[db_type] = self.__db_config[db_type]
 
 
+    def __build_dbn(self, db_details):
+        assert db_details.has_key('db_type')
+        assert db_details.has_key('hostname')
+        assert db_details.has_key('db_name')
+        assert db_details.has_key('user')
+        assert db_details.has_key('password')
+        if db_details['db_type'] in ['mysql3', 'mysql4']:
+            auth    = db_details['user'] + ':' + db_details['password']
+            host    = db_details['hostname']
+            db_name = db_details['db_name']
+            return 'mysql://%s@%s/%s' % (auth, host, db_name)
+        assert False # DB type not yet implemented.
+        
+
     def install(self, environment):
         result = environment.get_interaction_result()
         if not result:
@@ -82,7 +96,8 @@ class CollectDBInfo(Task):
             db_details = {'db_type': db_type}
             for key in self.__supported_db_types[db_type]:
                 db_details[key] = result.get(key)
-            environment.set_attribute('db_details', db_details)
+            dbn = self.__build_dbn(db_details)
+            environment.set_attribute('dbn', dbn)
 
         else:
             assert False # Invalid response
