@@ -1,11 +1,12 @@
 #!/usr/bin/python
 import sys
 sys.path.append('../libs/')
-from genshi.template  import TextTemplate
-from genshi.template  import TemplateLoader
-from Constructor      import *
-from Constructor.Task import *
-from InstallGuard     import InstallGuard
+from genshi.template   import TextTemplate
+from genshi.template   import TemplateLoader
+from Constructor       import *
+from Constructor.Task  import *
+from InstallGuard      import InstallGuard
+from InstallIntegrator import InstallIntegrator
 import cgi
 
 print 'Content-Type: text/html'
@@ -30,5 +31,6 @@ constructor.append(FileIsWritable('../data/'))
 constructor.append(CreateDir('../data/repo'))
 constructor.append(CreateDir('../data/uploads'))
 constructor.append(InstallGuard())
+constructor.append(InstallIntegrator())
 constructor.append(InstallationCompleted())
 result = constructor.install()
