@@ -63,7 +63,7 @@ class DBReader:
         self.__add_table(Table(pfx + 'action', self.db_metadata,
             Column('id',             Integer,     primary_key = True),
             Column('section_handle', String(230), index = True),
-            Column('handle',         String(230), unique = True),
+            Column('handle',         String(230)),
             Column('name',           String(230), unique = True),
             ForeignKeyConstraint(['section_handle'],
                                  ['action_section.handle'],

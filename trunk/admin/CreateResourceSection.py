@@ -12,20 +12,30 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-import os.path
 from Task import Task
+from Guard import ResourceSection
 
-class FileExists(Task):
-    def __init__(self, filename):
-        assert filename is not None
-        Task.__init__(self, 'Checking whether \'%s\' exists' % filename)
-        self.__filename = filename
+class CreateResourceSection(Task):
+    def __init__(self, section_name, section_handle):
+        Task.__init__(self, 'Creating resource section \'%s\'' % section_name)
+        self.__section_name   = section_name
+        self.__section_handle = section_handle
 
 
     def install(self, environment):
-        if os.path.exists(self.__filename):
-            return Task.success
-        return Task.failure
+        guard = environment.get_attribute('guard_db')
+        assert guard is not None
+        try:
+            handle  = self.__section_handle
+            section = guard.get_resource_section_from_handle(handle)
+            if section is None:
+                section = ResourceSection(self.__section_name, handle)
+                guard.add_resource_section(section)
+        except:
+            return Task.failure
+        environment.set_attribute('resource_section_' + self.__section_handle,
+                                  section)
+        return Task.success
 
 
     def uninstall(self, environment):
@@ -38,17 +48,13 @@ if __name__ == '__main__':
     from ConfigParser import RawConfigParser
     from WebEnvironment import WebEnvironment
 
-    class FileExistsTest(unittest.TestCase):
+    class CreateResourceSectionTest(unittest.TestCase):
         def runTest(self):
             environment = WebEnvironment(cgi.FieldStorage())
-            task        = FileExists('FileExists.py')
-            assert task.install(environment)   == Task.success
+            task        = CreateResourceSection()
+            #FIXME:assert task.install(environment)   == Task.success
             assert task.uninstall(environment) == Task.success
 
-            task        = FileExists('FileExistsDefinitelyNot.py')
-            assert task.install(environment)   == Task.failure
-            assert task.uninstall(environment) == Task.success
-
-    testcase = FileExistsTest()
+    testcase = CreateResourceSectionTest()
     runner   = unittest.TextTestRunner()
     runner.run(testcase)

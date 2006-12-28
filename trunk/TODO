@@ -1,10 +1,8 @@
-* Create login extension.
+* Make the login extension work.
 
 * Check string escaping in HTML templates.
 
-* Create Admin Center extension.
-
-* Create default users and groups using the installer.
+* Port Admin Center extension to Python.
 
 * Assign default permissions to users/groups.
 
