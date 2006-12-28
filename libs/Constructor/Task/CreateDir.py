@@ -19,7 +19,7 @@ class CreateDir(Task):
     def __init__(self, dirname, mode = 0777):
         assert dirname is not None
         assert mode    is not None
-        Task.__init__(self, 'Creating directory ' + dirname)
+        Task.__init__(self, 'Creating directory \'%s\'' % dirname)
         self.__dirname = dirname
         self.__mode    = mode
 
