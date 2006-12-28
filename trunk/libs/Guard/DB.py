@@ -121,7 +121,12 @@ class DB(DBReader):
         assert table is not None
         assert type  is not None
         if not row: return None
-        if type not in ['Resource', 'Actor', 'ResourceGroup', 'ActorGroup']:
+        if type not in ['Resource',
+                        'Actor',
+                        'ResourceGroup',
+                        'ActorGroup',
+                        'ActionSection',
+                        'ResourceSection']:
             module = __import__(type)
             obj    = getattr(module, type)
         else:
@@ -193,6 +198,21 @@ class DB(DBReader):
         """
         assert section is not None
         return self.__delete_object_section('action_section', section)
+
+
+    def get_action_section_from_handle(self, handle):
+        """
+        Returns the action section with the given handle from the database.
+
+        @type  handle: string
+        @param handle: The handle of the section to be returned.
+        @rtype:  ActionSection
+        @return: The action section on success, None otherwise.
+        """
+        assert handle is not None
+        table = 'action_section'
+        type  = 'ActionSection'
+        return self.__get_object_section_from_handle(table, handle, type)
 
 
     def add_resource_section(self, section):

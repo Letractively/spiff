@@ -12,35 +12,33 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-from Task       import Task
-from sqlalchemy import *
-import Integrator
+from Task import Task
+from Guard import ActionSection
 
-class InstallIntegrator(Task):
-    def __init__(self):
-        Task.__init__(self, 'Installing Spiff Integrator')
+class CreateActionSection(Task):
+    def __init__(self, section_name, section_handle):
+        Task.__init__(self, 'Creating action section \'%s\'' % section_name)
+        self.__section_name   = section_name
+        self.__section_handle = section_handle
 
 
     def install(self, environment):
         guard = environment.get_attribute('guard_db')
         assert guard is not None
-        integrator = Integrator.DB(guard)
         try:
-            integrator.install()
+            handle  = self.__section_handle
+            section = guard.get_action_section_from_handle(handle)
+            if section is None:
+                section = ActionSection(self.__section_name, handle)
+                guard.add_action_section(section)
         except:
             return Task.failure
-        environment.set_attribute('integrator_db', integrator)
+        environment.set_attribute('action_section_' + self.__section_handle,
+                                  section)
         return Task.success
 
 
     def uninstall(self, environment):
-        guard = environment.get_attribute('guard_db')
-        assert guard is not None
-        integrator = Integrator.DB(guard)
-        try:
-            integrator.uninstall()
-        except:
-            pass
         return Task.success
 
 
@@ -50,13 +48,13 @@ if __name__ == '__main__':
     from ConfigParser import RawConfigParser
     from WebEnvironment import WebEnvironment
 
-    class InstallIntegratorTest(unittest.TestCase):
+    class CreateActionSectionTest(unittest.TestCase):
         def runTest(self):
             environment = WebEnvironment(cgi.FieldStorage())
-            task        = InstallIntegrator()
-            assert task.install(environment)   == Task.success
+            task        = CreateActionSection()
+            #FIXME:assert task.install(environment)   == Task.success
             assert task.uninstall(environment) == Task.success
 
-    testcase = InstallIntegratorTest()
+    testcase = CreateActionSectionTest()
     runner   = unittest.TextTestRunner()
     runner.run(testcase)
