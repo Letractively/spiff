@@ -18,7 +18,7 @@ import Guard
 
 class InstallGuard(Task):
     def __init__(self):
-        Task.__init__(self, 'Installing Spiff Guard.')
+        Task.__init__(self, 'Installing Spiff Guard')
 
 
     def install(self, environment):
