@@ -251,7 +251,7 @@ class Manager:
             extension = module.Extension(self.__extension_api)
         except:
             print 'Ooops... a broken extension.'
-            return None
+            raise
 
         # Store in cache and return.
         self.__extension_cache[str(id)] = extension
