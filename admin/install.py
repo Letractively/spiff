@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import sys, cgi
+import sys, cgi, os.path
 sys.path.append('../libs/')
 from genshi.template       import TextTemplate
 from genshi.template       import TemplateLoader
@@ -11,6 +11,8 @@ from CreateDefaultSetup    import CreateDefaultSetup
 
 print 'Content-Type: text/html'
 print
+
+db_config_file = os.path.join(os.path.dirname(__file__), '../data/spiff.cfg')
 
 # Set Spiff Constructor up.
 loader      = TemplateLoader(['.'])
@@ -28,6 +30,7 @@ constructor.append(CheckList('Checking installation requirements', checks))
 # Database setup.
 constructor.append(CollectDBInfo(['mysql4']))
 constructor.append(CheckDBConnection())
+constructor.append(SaveDBConfig(db_config_file))
 #FIXME: Check whether InnoDB is supported.
 #sql = 'SHOW VARIABLES LIKE "have_innodb"'
 

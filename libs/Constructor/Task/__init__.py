@@ -8,6 +8,7 @@ __all__ = ['Task',
            'CheckPythonVersion',
            'CheckDBConnection',
            'CollectDBInfo',
+           'SaveDBConfig',
            'ExecCommand',
            'InstallationCompleted',
            'LicenseAgreement']
@@ -22,6 +23,7 @@ from Group                     import *
 from CheckPythonVersion        import *
 from CheckDBConnection         import *
 from CollectDBInfo             import *
+from SaveDBConfig              import *
 from ExecCommand               import *
 from InstallationCompleted     import *
 from LicenseAgreement          import *
