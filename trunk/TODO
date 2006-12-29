@@ -1,14 +1,14 @@
+* Create Spiff's main function that instantiates the Integrator and
+  instructs it to load the appropriate extensions.
+
 * Make the login extension work.
 
 * Check string escaping in HTML templates.
 
 * Port Admin Center extension to Python.
 
-* Assign default permissions to users/groups.
-
-* Install default plugins using the installer.
-
-* Create default content setup using the installer.
+* Install default plugins using the installer, and assign them to
+  the default pages.
 
 * Create Spiff core extension.
 

@@ -23,34 +23,45 @@ class CheckList(Group):
         if name is None:
             name = 'Checklist'
         Group.__init__(self, name, child_task)
+        self._result_markup = ''
 
 
     def get(self, n):
         return None
 
 
+    def _add_result(self, name, result):
+        result = self._result_msg[result]
+        self._result_markup += '{label "%s:"} {label "%s"}\n' % (name, result)
+
+
+    def _print_result(self, environment, done, allow_retry = True):
+        markup = '{title "%s"}' % self._name
+        if done:
+            markup += '{variable check_done "True"}'
+            markup += self._result_markup
+            form = Form(markup, [StockButton('next_button')])
+        elif allow_retry:
+            form = Form(markup, [StockButton('retry_button')])
+        else:
+            form = Form(markup, [])
+        environment.render_markup(form)
+
+
     def install(self, environment):
         result = environment.get_interaction_result()
         if result is not None and result.get('check_done') is not None:
             return Task.success
-        result  = Task.success
-        markup  = '{title "%s"}' % self._name
+        result = Task.success
         for task in self._child_task:
             result = task.install(environment)
-            label  = task.get_name()
+            self._add_result(task.get_name(), result)
             if result is not Task.success:
-                markup += '{label "%s:"} {label "%s"}\n' % (label, 'Failed')
                 break
-            markup += '{label "%s:"} {label "%s"}\n' % (label, 'Success')
-        if result == Task.success:
-            markup += '{variable check_done "True"}'
-            form = Form(markup, [StockButton('next_button')])
-        else:
-            form = Form(markup, [StockButton('retry_button')])
-        environment.render_markup(form)
+        self._print_result(environment, result == Task.success)
         return Task.interact
 
-
+    
     def uninstall(self, environment):
         return Task.success
 

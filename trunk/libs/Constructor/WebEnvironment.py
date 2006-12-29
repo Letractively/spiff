@@ -95,6 +95,8 @@ class WebEnvironment(Environment):
             return match.group(2)[1:-1]
         if tag_name == 'title':
             return '<h2>' + match.group(2)[1:-1] + '</h2>'
+        if tag_name == 'subtitle':
+            return '<h3>' + match.group(2)[1:-1] + '</h3>'
 
         # Text fields.
         if tag_name == 'entry':
