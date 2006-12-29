@@ -1,7 +1,6 @@
-* Assign default plugins to pages in the installer.
-
-* Create Spiff's main function that instantiates the Integrator and
-  instructs it to load the appropriate extensions.
+* Figure out a sane and safe way to send the on_page_open signal:
+  - From global context?
+  - From a core extension? How is control handed to that extension?
 
 * Make the login extension work.
 

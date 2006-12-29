@@ -262,7 +262,7 @@ class CreateDefaultSetup(CheckList):
             return Task.failure
 
         # Assign an extension to the system/login page.
-        caption = 'Assign login extension to a system page.'
+        caption = 'Assign login extension to a system page'
         content_system_login.set_attribute('extension', 'spiff_core_login')
         if not self.guard.save_resource(content_system_login, section_content):
             self._add_result(caption, Task.failure)
@@ -273,13 +273,13 @@ class CreateDefaultSetup(CheckList):
 
         content_system_admin = self.__create_content(content_system,
                                                      'Admin Center',
-                                                     'spiff_core_admin_center')
+                                                     'system/admin')
         if content_system_admin is None:
             return Task.failure
 
         # Assign an extension to the system/admin page.
-        caption = 'Assign login extension to a system page.'
-        content_system_admin.set_attribute('extension', 'admin_center')
+        caption = 'Assign login extension to a system page'
+        content_system_admin.set_attribute('extension', 'spiff_core_admin')
         if not self.guard.save_resource(content_system_admin, section_content):
             self._add_result(caption, Task.failure)
             self._print_result(environment, False)

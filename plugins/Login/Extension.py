@@ -18,7 +18,7 @@ class Extension:
     login_done,     \
     login_success,  \
     login_failure,  \
-    login_open = range(3)
+    login_open = range(4)
 
     def __init__(self, api):
         self.api    = api

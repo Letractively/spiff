@@ -10,13 +10,13 @@ print 'Content-Type: text/html'
 print
 
 if not os.path.exists('data/spiff.cfg'):
-    print 'You need to configure Spiff before you can access this site.<br/>'
-    print 'Plase refer to the INSTALL file shipped with the Spiff'
-    print 'installation.'
+    print 'Please configure Spiff before you access this site.<br/>'
+    print 'The INSTALL file shipped with the Spiff installation contains'
+    print 'instructions on how this can be done.'
     sys.exit()
 
 if os.path.exists('install'):
-    print 'Out of security reasons, please delete the admin/ directory before'
+    print 'Out of security reasons, please delete the install/ directory before'
     print 'accessing this page.'
     sys.exit()
 
@@ -46,7 +46,6 @@ if page_res is None:
     sys.exit()
 
 # Load the appended plugins.
-print page_res.get_attribute_list()
 descriptor = page_res.get_attribute('extension')
 extension  = integrator.load_extension_from_descriptor(descriptor)
 if extension is None:
