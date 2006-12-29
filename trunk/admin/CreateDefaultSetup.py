@@ -108,9 +108,9 @@ class CreateDefaultSetup(CheckList):
                 resource = Resource(name, handle)
             try:
                 if parent is None:
-                    parent_id = parent.get_id()
-                else:
                     parent_id = None
+                else:
+                    parent_id = parent.get_id()
                 self.guard.add_resource(parent_id, resource, section)
             except:
                 self._add_result(caption, Task.failure)
