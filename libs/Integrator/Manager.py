@@ -245,11 +245,12 @@ class Manager:
 
         # Create instance (or resource).
         subdir     = 'extension' + str(id)
-        modulename = self.__install_dir + '.' + subdir
+        modulename = subdir.replace('/', '.')
         try:
-            module     = __import__(modulename)
-            extension  = module.Extension(self.__extension_api)
+            module = __import__(modulename)
+            extension = module.Extension(self.__extension_api)
         except:
+            print 'Ooops... a broken extension.'
             return None
 
         # Store in cache and return.
@@ -269,6 +270,8 @@ class Manager:
         # Look the extension info up in the db.
         db   = self.__extension_db
         info = db.get_extension_from_descriptor(descriptor)
+        if info is None:
+            return None
         return self.load_extension_from_id(info.get_id())
 
 

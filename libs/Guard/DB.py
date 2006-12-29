@@ -418,6 +418,9 @@ class DB(DBReader):
     def __resource_add_attribute(self, resource_id, name, value):
         assert resource_id >= 0
         assert name is not None
+        if self.__resource_has_attribute(resource_id, name):
+            self.__resource_update_attribute(resource_id, name, value)
+            return None
         insert = self._table_map['resource_attribute'].insert()
         try:
             int(value)
@@ -450,13 +453,13 @@ class DB(DBReader):
         except:
             is_int = False
         if is_int:
-            result = update.execute(type  = self.attrib_type_int,
-                                    name  = name,
-                                    value = value)
+            result = update.execute(type        = self.attrib_type_int,
+                                    name        = name,
+                                    attr_int    = value)
         else:
-            result = update.execute(type  = self.attrib_type_string,
-                                    name  = name,
-                                    value = value)
+            result = update.execute(type        = self.attrib_type_string,
+                                    name        = name,
+                                    attr_string = value)
         assert result is not None
         return True
 
@@ -546,7 +549,7 @@ class DB(DBReader):
         for attrib_name in attrib_list.keys():
             value = attrib_list[attrib_name]
             self.__resource_add_attribute(resource_id, attrib_name, value)
-            
+        
         transaction.commit()
         connection.close()
         resource.set_id(resource_id)
@@ -588,6 +591,7 @@ class DB(DBReader):
                                           value)
             
         transaction.commit()
+        connection.close()
         return True
 
 

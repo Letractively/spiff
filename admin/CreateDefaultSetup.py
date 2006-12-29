@@ -260,14 +260,31 @@ class CreateDefaultSetup(CheckList):
                                                      'system/login')
         if content_system_login is None:
             return Task.failure
-        #FIXME: Assign an extension to the page.
+
+        # Assign an extension to the system/login page.
+        caption = 'Assign login extension to a system page.'
+        content_system_login.set_attribute('extension', 'spiff_core_login')
+        if not self.guard.save_resource(content_system_login, section_content):
+            self._add_result(caption, Task.failure)
+            self._print_result(environment, False)
+            return Task.failure
+        self._add_result(caption, Task.success)
+
 
         content_system_admin = self.__create_content(content_system,
                                                      'Admin Center',
-                                                     'system/admin')
+                                                     'spiff_core_admin_center')
         if content_system_admin is None:
             return Task.failure
-        #FIXME: Assign an extension to the page.
+
+        # Assign an extension to the system/admin page.
+        caption = 'Assign login extension to a system page.'
+        content_system_admin.set_attribute('extension', 'admin_center')
+        if not self.guard.save_resource(content_system_admin, section_content):
+            self._add_result(caption, Task.failure)
+            self._print_result(environment, False)
+            return Task.failure
+        self._add_result(caption, Task.success)
 
         #########
         # Create content permissions.
