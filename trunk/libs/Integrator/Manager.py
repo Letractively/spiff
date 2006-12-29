@@ -79,7 +79,8 @@ class Manager:
         @param dirname: The extension directory.
         """
         assert os.path.isdir(dirname)
-        if dirname in sys.path:
+        if dirname in sys.path and self.__install_dir in sys.path:
+            # This is a little evil. But soo easy.
             sys.path.remove(self.__install_dir)
         self.__install_dir = dirname
         sys.path.append(self.__install_dir)
@@ -207,6 +208,8 @@ class Manager:
         try:
             subdir          = 'extension' + str(id)
             new_install_dir = os.path.join(self.__install_dir, subdir)
+            if os.path.exists(new_install_dir):
+                shutil.rmtree(new_install_dir)
             os.rename(install_dir, new_install_dir)
         except:
             shutil.rmtree(install_dir)

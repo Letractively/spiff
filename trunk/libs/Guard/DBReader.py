@@ -180,19 +180,17 @@ class DBReader:
     def __get_resource_from_row(self, row, type = None):
         if not row: return None
         tbl_r = self._table_map['resource']
-        if not type and row[tbl_r.c.is_actor]:
-            type = 'Actor'
-        elif not type and not row[tbl_r.c.is_actor]:
-            type = 'Resource'
-        if row[tbl_r.c.is_group]:
-            type += 'Group'
+        if not type:
+            if row[tbl_r.c.is_actor] and row[tbl_r.c.is_group]:
+                type = ActorGroup
+            elif row[tbl_r.c.is_actor]:
+                type = Actor
+            elif row[tbl_r.c.is_group]:
+                type = ResourceGroup
+            else:
+                type = Resource
         #print "Type:", type
-        if type not in ['Resource', 'Actor', 'ResourceGroup', 'ActorGroup']:
-            module = __import__(type)
-            obj    = getattr(module, type)
-        else:
-            obj    = globals().get(type)
-        resource = obj(row[tbl_r.c.name], row[tbl_r.c.handle])
+        resource = type(row[tbl_r.c.name], row[tbl_r.c.handle])
         resource.set_id(row[tbl_r.c.id])
         return resource
 

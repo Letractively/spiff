@@ -7,6 +7,7 @@ from Constructor           import *
 from Constructor.Task      import *
 from InstallGuard          import InstallGuard
 from InstallIntegrator     import InstallIntegrator
+from InstallExtension      import InstallExtension
 from CreateDefaultSetup    import CreateDefaultSetup
 
 print 'Content-Type: text/html'
@@ -42,5 +43,12 @@ tasks = [
     InstallIntegrator()
 ]
 constructor.append(CreateDefaultSetup('Creating default setup', tasks))
+
+# Install core extensions.
+tasks = [
+    InstallExtension('../plugins/Spiff'),
+    InstallExtension('../plugins/Login')
+]
+constructor.append(CheckList('Installing core extensions', tasks))
 constructor.append(InstallationCompleted())
 result = constructor.install()
