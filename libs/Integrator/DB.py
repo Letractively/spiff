@@ -256,8 +256,10 @@ class DB:
         assert extension is not None
         
         # Check whether the extension is already registered.
-        if self.get_extension_from_handle(extension.get_handle(),
-                                          extension.get_version()):
+        installed = self.get_extension_from_handle(extension.get_handle(),
+                                                   extension.get_version())
+        if installed is not None:
+            extension.set_id(installed.get_id())
             return True
 
         # Make sure that all dependencies are registered.
@@ -418,7 +420,7 @@ class DB:
         @return: The extension on success, None if it does not exist.
         """
         assert id >= 0
-        extension = self._acldb.get_resource_from_id(id, 'ExtensionInfo')
+        extension = self._acldb.get_resource_from_id(id, ExtensionInfo)
         if extension is None:
             return None
         handle  = extension.get_handle()
@@ -445,7 +447,7 @@ class DB:
         section_handle = self._acl_section_handle
         extension      = self._acldb.get_resource_from_handle(version_handle,
                                                               section_handle,
-                                                              'ExtensionInfo')
+                                                              ExtensionInfo)
         if extension is None:
             return None
         extension.set_handle(handle)
@@ -492,10 +494,11 @@ class DB:
         version_list = self.get_version_list_from_handle(handle)
         best_version = None
         for cur_version in version_list:
-            if version_is_greater(version, cur_version.get_version()):
-                continue
             if best_version is None:
                 best_version = cur_version
+                continue
+            if version_is_greater(best_version.get_version(),
+                                  cur_version.get_version()):
                 continue
             if version_is_greater(cur_version.get_version(),
                                   best_version.get_version()):
@@ -523,7 +526,7 @@ class DB:
         section  = self._acl_section.get_handle()
         parent   = self._acldb.get_resource_from_handle(handle, section)
         if parent is None: return []
-        children = self._acldb.get_resource_children(parent, 'ExtensionInfo')
+        children = self._acldb.get_resource_children(parent, ExtensionInfo)
         for child in children:
             child.set_handle(handle)
         return children

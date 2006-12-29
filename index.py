@@ -18,6 +18,6 @@ dbn = cfg.get('database', 'dbn')
 db         = create_engine(dbn)
 acldb      = Guard.DB(db)
 integrator = Integrator.Manager(acldb)
-integrator.set_extension_dir('data/installed_plugins')
+integrator.set_extension_dir('data/repo')
 
 #TODO: Lookup page from the given cgi variables and load the appended plugins.
