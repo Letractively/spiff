@@ -20,11 +20,10 @@ if os.path.exists('install'):
     print 'accessing this page.'
     sys.exit()
 
-def requested_page():
-    vars = cgi.FieldStorage()
-    if not vars.has_key('page'):
+def requested_page(form_data):
+    if not form_data.has_key('page'):
         return 'system/login'
-    return vars['page'].value
+    return form_data['page'].value
 
 
 # Read config.
@@ -35,11 +34,12 @@ dbn = cfg.get('database', 'dbn')
 # Connect to MySQL and set up.
 db         = create_engine(dbn)
 acldb      = Guard.DB(db)
-integrator = Integrator.Manager(acldb)
+form_data  = cgi.FieldStorage()
+integrator = Integrator.Manager(acldb, form_data)
 integrator.set_extension_dir('data/repo')
 
 # Lookup page from the given cgi variables.
-page     = requested_page()
+page     = requested_page(form_data)
 page_res = acldb.get_resource_from_handle(page, 'content')
 if page_res is None:
     print 'error 404'
@@ -50,3 +50,6 @@ descriptor = page_res.get_attribute('extension')
 extension  = integrator.load_extension_from_descriptor(descriptor)
 if extension is None:
     print 'Page "%s" refers to unknown extension "%s"' % (page, descriptor)
+
+integrator.extension_api.emit_sync('spiff:page_open')
+extension.on_render_request()
