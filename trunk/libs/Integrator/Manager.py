@@ -29,10 +29,10 @@ class Manager:
     __database_error,         \
     __permission_denied_error = range(-1, -7, -1)
     
-    def  __init__(self, acldb):
+    def  __init__(self, acldb, form_data):
         self.__extension_db    = DB(acldb)
         self.__event_bus       = EventBus()
-        self.__extension_api   = Api(self, self.__event_bus)
+        self.extension_api     = Api(self, acldb, self.__event_bus, form_data)
         self.__install_dir     = None
         self.__extension_cache = {}
 
@@ -247,8 +247,8 @@ class Manager:
         subdir     = 'extension' + str(id)
         modulename = subdir.replace('/', '.')
         try:
-            module = __import__(modulename)
-            extension = module.Extension(self.__extension_api)
+            module    = __import__(modulename)
+            extension = module.Extension(self.extension_api)
         except:
             print 'Ooops... a broken extension.'
             raise
