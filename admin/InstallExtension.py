@@ -13,7 +13,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import MySQLdb, Integrator
-import os.path
+import os.path, cgi
 from sqlalchemy   import *
 from ConfigParser import RawConfigParser
 from Task         import Task
@@ -37,7 +37,7 @@ class InstallExtension(Task):
         # Connect to MySQL and set up.
         db              = create_engine(dbn)
         acldb           = Guard.DB(db)
-        self.integrator = Integrator.Manager(acldb)
+        self.integrator = Integrator.Manager(acldb, cgi.FieldStorage())
         self.integrator.set_extension_dir('../data/repo')
 
 

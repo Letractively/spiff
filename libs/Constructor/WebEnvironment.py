@@ -93,34 +93,37 @@ class WebEnvironment(Environment):
         # Label tags.
         if tag_name == 'label':
             return match.group(2)[1:-1]
-        if tag_name == 'title':
+        elif tag_name == 'title':
             return '<h2>' + match.group(2)[1:-1] + '</h2>'
-        if tag_name == 'subtitle':
+        elif tag_name == 'subtitle':
             return '<h3>' + match.group(2)[1:-1] + '</h3>'
 
         # Text fields.
-        if tag_name == 'entry':
+        elif tag_name == 'entry':
             entry_name = match.group(2)
             return '<input type="text" name="%s" value="" />' % entry_name
+        elif tag_name == 'pass_entry':
+            entry_name = match.group(2)
+            return '<input type="password" name="%s" value="" />' % entry_name
 
         # Hidden fields.
-        if tag_name == 'variable':
+        elif tag_name == 'variable':
             var_name  = match.group(2)
             var_value = match.group(3)[1:-1]
             return '<input type="hidden" name="%s" value="%s" />' % (var_name,
                                                                      var_value)
 
         # Select box tags.
-        if tag_name == 'select':
+        elif tag_name == 'select':
             select_name = match.group(2)
             return '<select name="%s">' % select_name
-        if tag_name == 'item':
+        elif tag_name == 'item':
             item_name = match.group(2)
             item_value = match.group(3)
             if item_value is None:
                 item_value = item_name
             return '<option name="%s">%s</option>' % (item_name, item_value)
-        if tag_name == 'end_select':
+        elif tag_name == 'end_select':
             return '</select>'
         return match.group()
 

@@ -9,6 +9,7 @@ from InstallGuard          import InstallGuard
 from InstallIntegrator     import InstallIntegrator
 from InstallExtension      import InstallExtension
 from CreateDefaultSetup    import CreateDefaultSetup
+from SetUserPassword       import SetUserPassword
 
 print 'Content-Type: text/html'
 print
@@ -43,6 +44,7 @@ tasks = [
     InstallIntegrator()
 ]
 constructor.append(CreateDefaultSetup('Creating default setup', tasks))
+constructor.append(SetUserPassword('admin'))
 
 # Install core extensions.
 tasks = [

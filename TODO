@@ -1,3 +1,11 @@
+* Fix Integrator.Api design: The object should contain ONLY the EventBus
+  objects/methods. Everyting else may be made accessible only if a client
+  adds those objects to the Api. So we need to figure out a way how to do
+  that:
+    - Allow the client to derive from Integrator.Api?
+    - Would Integrator.Api.(get|add)_attribute() suffice? Probably not.
+    - ...
+
 * Figure out a sane and safe way to send the on_page_open signal:
   - From global context?
   - From a core extension? How is control handed to that extension?
