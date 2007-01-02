@@ -12,7 +12,7 @@ Installation Instructions
 
     chmod 777 data/
   
-06. Open spiff/admin/install.py in your web browser and follow the instructions.
+06. Open spiff/installer/ in your web browser and follow the instructions.
     Make sure that no error message appears.
     !!! WARNING: This step will erase the content of the database that
         is configured in spiff/data/config.txt !!!
