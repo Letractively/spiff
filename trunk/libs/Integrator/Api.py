@@ -44,6 +44,8 @@ class Api:
         return self.__acldb
 
 
+    #FIXME: This does not belong here. Integrator should rather provide
+    #a way for clients to register attributes and methods to the plugin Api.
     def get_form_value(self, name):
         if not self.__form_data.has_key(name):
             return None
