@@ -29,10 +29,14 @@ class Manager:
     __database_error,         \
     __permission_denied_error = range(-1, -7, -1)
     
-    def  __init__(self, acldb, form_data):
-        self.__extension_db    = DB(acldb)
-        self.__event_bus       = EventBus()
-        self.extension_api     = Api(self, acldb, self.__event_bus, form_data)
+    def  __init__(self, acldb, extension_api_obj, *api_args, **api_kwargs):
+        assert acldb             is not None
+        assert extension_api_obj is not None
+        self.__extension_db = DB(acldb)
+        self.__event_bus    = EventBus()
+        self.extension_api  = extension_api_obj(self,
+                                                self.__event_bus,
+                                                **api_kwargs)
         self.__install_dir     = None
         self.__extension_cache = {}
 
