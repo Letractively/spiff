@@ -12,44 +12,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-import os, sys
 from Callback import Callback
-from Cookie import SimpleCookie
-from genshi.template import TemplateLoader
-from genshi.template import MarkupTemplate
 
 class Api:
-    def __init__(self, manager, acldb, event_bus, form_data):
+    def __init__(self, manager, event_bus):
         assert manager   is not None
-        assert acldb     is not None
         assert event_bus is not None
-        assert form_data is not None
         self.__manager   = manager
-        self.__acldb     = acldb
         self.__event_bus = event_bus
-        self.__form_data = form_data
-
-
-    def __get_caller(self):
-        frame = sys._getframe(2)
-        try:
-            caller = frame.f_locals['self']
-        finally:
-            del frame
-        return caller
-
-
-    def get_acldb(self):
-        #FIXME: Check permission of the caller!
-        return self.__acldb
-
-
-    #FIXME: This does not belong here. Integrator should rather provide
-    #a way for clients to register attributes and methods to the plugin Api.
-    def get_form_value(self, name):
-        if not self.__form_data.has_key(name):
-            return None
-        return self.__form_data[name].value
 
 
     def add_listener(self, func, uri = None):
@@ -75,21 +45,6 @@ class Api:
 
     def emit_sync(self, uri, args = None):
         return self.__emit(uri, args, True)
-
-
-    def render(self, filename, *args, **kwargs):
-        assert filename is not None
-        # Find the object that made the API call.
-        extension = self.__get_caller()
-        assert extension
-        # Set dirname to plugin path.
-        classname  = '%s' % extension.__class__
-        subdirname = '/'.join(classname.split('.')[:-2])
-        dirname    = os.path.join('data/repo/', subdirname)
-        loader     = TemplateLoader([dirname])
-        # Load and display the template.
-        tmpl       = loader.load(filename, None, MarkupTemplate)
-        print tmpl.generate(**kwargs)
 
 
 if __name__ == '__main__':

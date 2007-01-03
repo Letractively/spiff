@@ -273,7 +273,7 @@ class DBReader:
         return self.__get_resource_from_query(select, type)
 
 
-    def get_resource_list_from_id_list(self, id_list, my_type = None):
+    def get_resource_list_from_id_list(self, id_list, type = None):
         assert id_list is not None
         if len(id_list) == 0: return []
         tbl_r  = self._table_map['resource']
@@ -284,13 +284,37 @@ class DBReader:
             if where_clause is None:
                 where_clause = (tbl_r.c.id == id)
             else:
-                where_clause = or_(tbl_r.c.id == id)
+                where_clause = or_(where_clause, tbl_r.c.id == id)
         if where_clause is None:
             select = table.select(use_labels = True)
         else:
             select = table.select(where_clause, use_labels = True)
-        return self.__get_resource_from_query(select, my_type, True)
+        return self.__get_resource_from_query(select, type, True)
         
+
+    def get_resource_list_from_attribute(self, name, value, type = None):
+        assert name  is not None
+        assert value is not None
+        tbl_a  = self._table_map['resource_attribute']
+        tbl_r  = self._table_map['resource']
+        table  = outerjoin(tbl_a, tbl_r, tbl_r.c.id == tbl_a.c.resource_id)
+        try:
+            int(value)
+            attr_type = self.attrib_type_int
+        except:
+            attr_type = self.attrib_type_string
+        if attr_type == self.attrib_type_int:
+            select = table.select(and_(tbl_a.c.name        == name,
+                                       tbl_a.c.type        == attr_type,
+                                       tbl_a.c.attr_int    == value),
+                                  use_labels = True)
+        else:
+            select = table.select(and_(tbl_a.c.name        == name,
+                                       tbl_a.c.type        == attr_type,
+                                       tbl_a.c.attr_string == value),
+                                  use_labels = True)
+        return self.__get_resource_from_query(select, type, True)
+
 
     def get_resource_children_from_id(self,
                                       resource_id,

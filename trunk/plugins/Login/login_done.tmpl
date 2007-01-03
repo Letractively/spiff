@@ -1,1 +1,3 @@
-<font class='notice'>{if $user}{$user->get_name()} {/if}{gettext text="Logged in."}</font>
+<div xmlns:py="http://genshi.edgewall.org/">
+<font py:if='user' class='notice'>Hello ${user.get_name()}</font>
+</div>
