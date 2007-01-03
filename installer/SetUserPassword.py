@@ -13,13 +13,15 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import MySQLdb, Integrator
-import os.path, cgi
+import sys, cgi, os.path
+sys.path.append('..')
 from sqlalchemy   import *
 from ConfigParser import RawConfigParser
 from Task         import Task
 from Form         import Form
 from StockButton  import StockButton
 from Guard        import ResourceSection
+from ExtensionApi import ExtensionApi
 import Guard
 
 class SetUserPassword(Task):
@@ -39,7 +41,11 @@ class SetUserPassword(Task):
         # Connect to MySQL and set up.
         db              = create_engine(dbn)
         self.guard      = Guard.DB(db)
-        self.integrator = Integrator.Manager(self.guard, cgi.FieldStorage())
+        form_data       = cgi.FieldStorage()
+        self.integrator = Integrator.Manager(self.guard,
+                                             ExtensionApi,
+                                             guard     = self.guard,
+                                             form_data = form_data)
         self.integrator.set_extension_dir('../data/repo')
 
 
