@@ -1,0 +1,14 @@
+<div xmlns:py="http://genshi.edgewall.org/" py:strip="True">
+  <!-- breadcrumbs -->
+  <table width='100%' cellspacing='0' cellpadding='5' border='0'>
+   <tr>
+    <td align='left'>
+    <py:for="i, (url, text) in enumerate(breadcrumbs)">
+       <a href="${url}">${text}</a>
+       <py:if="i != len(breadcrumbs) - 1" py:strip="True">&gt;</py:if>
+    </py:for> 
+    </td>
+   </tr>
+  </table>
+  <!-- end breadcrumbs -->
+</div>

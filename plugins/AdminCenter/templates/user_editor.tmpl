@@ -1,0 +1,77 @@
+<div xmlns:py="http://genshi.edgewall.org/" py:strip="True">
+  <form action="${url}&amp;manage_users=1&amp;parent_id=${parent_id}&amp;id=${user.get_id()}" method="post">
+  <table class="container" width="100%" border="0" cellpadding="0" cellspacing="0">
+    <tr>
+      <td width='230' valign="top">
+      <table class="menu" cellpadding="0">
+        <tr><td align='center'><i>Member Of:</i></td></tr>
+        <tr py:for="current in groups">
+          <td><a href="${url}&amp;manage_users=1&amp;id=${current.get_id()}"><img src="${plugin_dir}/img/group.png" alt="Group:" /> ${current.get_name()}</a></td>
+        </tr>
+      </table>
+      </td>
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+      <td width='100%'>
+      <div py:choose="user.get_id()" py:strip="True">
+        <h2 py:when="0">Create A New User</h2>
+        <h2 py:otherwise="">${user.get_name()}</h2>
+      </div>
+      <h3>Public User Information</h3>
+      <table class="indent" width="100%" cellpadding="0" cellspacing="5">
+        <tr><td class="nowrap">User Name:</td><td width="100%"><input type="text" class="field" name="name" value="${user.get_name()}" /></td></tr>
+        <tr><td class="nowrap" valign="top">Description:</td><td width="100%"><textarea name="description">${user.get_attribute('description')}</textarea></td></tr>
+      </table>
+
+      <h3>Defaults</h3>
+      <table class="indent" cellpadding="0">
+        <tr>
+          <td>Content created this user is by default owned by:</td>
+          <td>
+          <select name="use_group_rights">
+            <div py:choose="user.get_attribute('use_group_rights')" py:strip="True">
+              <div py:when="1">
+                <option value=1 selected>Group</option>
+                <option value=0>User</option>
+              </div>
+              <div py:otherwise="">
+                <option value=1>Group</option>
+                <option value=0 selected>User</option>
+              </div>
+            </div>
+          </select>
+          </td>
+        </tr>
+      </table>
+
+      <h3>Things This User May Do</h3>
+      <iframe id='permission_tree' src="${url}&amp;permission_tree=1&amp;actor_id=${user.get_id()}" style='border: 0' width="100%" height="30">
+      </iframe>
+
+      <h3>Unconfirmed Permission Changes</h3>
+      <div id='changelog'><i>No permissions changed.</i></div>
+      </td>
+    </tr>
+    <tr>
+      <td>
+      <table py:if="user.get_id() != 0" width="100%">
+        <tr>
+          <td><input type="submit" class="button" name="cancel_membership" value="Cancel Membership" /></td>
+          <td>&nbsp;</td>
+          <td><input type="submit" class="button" name="add_membership" value="Add Membership" /></td>
+        </tr>
+      </table>
+      </td>
+      <td></td>
+      <td align="right">
+      <table>
+        <tr>
+          <td><input type="submit" class="button" name="delete" value="Delete User" /></td>
+          <td>&nbsp;</td>
+          <td><input type="submit" class="button" name="save" value="Apply Changes" /></td>
+        </tr>
+      </table>
+      </td>
+    </tr>
+  </table>
+  </form>
+</div>
