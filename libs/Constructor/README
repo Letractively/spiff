@@ -9,3 +9,8 @@ desktop applications in Python.
 Dependencies
 -------------
 - Genshi (only when WebEnvironment is used)
+
+
+Usage
+------
+For examples please look into the samples/ directory.

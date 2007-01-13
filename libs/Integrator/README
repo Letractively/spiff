@@ -1,9 +1,11 @@
 # This file contains ideas, design plans, mindmap, ... you name it,
-# for libspiffextension_python.
+# for Spiff Integrator.
 
-Background
------------
-libspiffextension is the most important part of the Spiff platform.
+Spiff Integrator
+-----------------
+This library is part of the Spiff platform.
+
+Spiff Integrator is the most important part of the Spiff platform.
 Because most of Spiff's functionality is built around this component,
 it is very important to get it right.
 The library performs the following tasks:
@@ -19,9 +21,16 @@ The library performs the following tasks:
    - It provides a facility that controls which kind of communication
      may or may not be taken between plugins.
 
-libspiffextension may also run plugins inside of a sandbox, and apply
+Spiff Integrator may also run plugins inside of a sandbox, and apply
 permission restrictions to them. This functionality will only be added
 at a later point, however.
+
+
+Dependencies
+-------------
+- sqlalchemy
+- Spiff Guard
+
 
 Use Case: User installs one extra extension
 -------------------------------------------
@@ -51,7 +60,7 @@ Use Case: Web page consisting of multiple plugins
 -------------------------------------------------
 - A user opens a Spiff web page in his browser.
 - Spiff looks up the handle of the extension that is to be displayed.
-- Spiff instantiates the libspiffextension.Manager.
+- Spiff instantiates the Spiff Integrator.Manager.
 - Spiff calls Manager.load(extension_handle) 
 - Manager looks up the dependencies of the extension.
 - Manager loads the extension and all dependencies in the right order.
@@ -89,18 +98,18 @@ Design
 
 * Extension class: Represents any plugin. An extension has a list of
   dependencies. Dependencies may be grouped into contexts, such as "runtime"
-  or "install_time" dependencies. libspiffextension only ever checks the
+  or "install_time" dependencies. Spiff Integrator only ever checks the
   dependencies within each context, dependencies accross multiple contexts are
   unchecked.
 
-  Extensions need a way to interface with libspiffextension, and they also
+  Extensions need a way to interface with Spiff Integrator, and they also
   need a way to interface with other extensions. That's where the ExtensionApi
   object comes in.
 
 * ExtensionApi class: This defines the interface that may be used by extensions.
   It also provides secure (authenticated) access to the EventBus.
   An object of this type is passed to the constructor of the plugin, and any
-  interaction with libspiffextension or other plugins should be done through
+  interaction with Spiff Integrator or other plugins should be done through
   this API. The following is provided:
   
   - Controlled, secure access to the global EventBus.
@@ -137,3 +146,11 @@ Events to which the extension might want to subscribe:
   event_uri: "site:/path/to/page/*", cb: on_page_open
 - Any time a page is opened that loads a specified extension.
   event_uri: "extension:handle=version", cb: on_page_open
+
+
+Examples
+---------
+For example plugins please refer to the files in the samples/ directory.
+There is also inline API documentation embedded into all Spiff Integrator
+source files. The unit test at the bottom of each source file can also be
+a useful reference.

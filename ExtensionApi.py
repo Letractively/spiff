@@ -22,8 +22,8 @@ class ExtensionApi(Api):
     def __init__(self, manager, event_bus, *args, **kwargs):
         assert manager             is not None
         assert event_bus           is not None
-        assert kwargs['guard']     is not None
-        assert kwargs['form_data'] is not None
+        assert kwargs.has_key('guard')
+        assert kwargs.has_key('form_data')
         Api.__init__(self, manager, event_bus)
         self.__guard        = kwargs['guard']
         self.__form_data    = kwargs['form_data']
