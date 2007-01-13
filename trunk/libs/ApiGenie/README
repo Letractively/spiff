@@ -1,0 +1,22 @@
+Spiff ApiGenie
+--------------
+This library is part of the Spiff platform.
+
+Spiff ApiGenie is a library for parsing, editing, and storing inline
+API documentation embedded into source code. It can also be used to
+convert documentation from one format into another.
+
+ApiGenie works by parsing the documentation into a generic data
+model. It then provides methods for editing the documentation, as
+well as filters for exporting the model back into the source file.
+
+
+Dependencies
+-------------
+- Plex
+
+
+Usage
+------
+For examples on how to use ApiGenie, look into test.py in the source
+directory and into the unit tests at the bottom of all source files.
