@@ -37,7 +37,7 @@ class Generator:
         output = ''
         for line in text.split("\n"):
             output += indent + line + "\n"
-        return output
+        return output + indent
         
     def get_data(self, api_doc_chunk):
         indent   = self._find_indent(api_doc_chunk.data)
@@ -73,4 +73,4 @@ class Generator:
             param = '@return: ' + return_var.get_docs() + "\n"
             output += wrap(type,  wrap_pos)
             output += wrap(param, wrap_pos)
-        return self._indent(indent, output.strip())
+        return "\n" + self._indent(indent, output.strip())
