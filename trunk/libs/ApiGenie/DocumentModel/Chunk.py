@@ -13,7 +13,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 class Chunk:
-    def __init__(self, type, data, name = ''):
+    def __init__(self, type, data = '', name = ''):
         self.id          = -1
         self.type        = type
         self.data        = data
