@@ -538,8 +538,8 @@ class DB:
 
         @type  extension_id: int
         @param extension_id: The id of the extension to be associated.
-        @type  uri: Callback
-        @param uri: The callback to be associated.
+        @type  uri: URI of an event.
+        @param uri: The event to be associated.
         @rtype:  int
         @return: The id of the callback, or <0 if an error occured.
         """
@@ -549,8 +549,6 @@ class DB:
         table  = self._table_map['extension_callback']
         query  = table.insert()
         result = query.execute(extension_id  = extension_id, event_uri = uri)
-          #                     name          = callback.get_name(),
-          #                     event_uri     = callback.get_event_uri())
         assert result is not None
         return result.last_inserted_ids()[0]
 
@@ -561,8 +559,8 @@ class DB:
 
         @type  extension: ExtensionInfo
         @param extension: The extension to be associated.
-        @type  uri: Callback
-        @param uri: The callback to be associated.
+        @type  uri: URI of an event.
+        @param uri: The event to be associated.
         @rtype:  int
         @return: The id of the callback, or <0 if an error occured.
         """
@@ -574,19 +572,16 @@ class DB:
         Returns a list of all extensions that are associated with the given
         uri.
 
-        @type  uri: Callback
-        @param uri: The callback to look for.
+        @type  uri: URI of an event. % wildcard allowed.
+        @param uri: The event to look for.
         @rtype:  list[int]
         @return: A list containing all associated extension ids, None on error.
         """
         assert uri is not None
         
         table  = self._table_map['extension_callback']
-        #FIXME: Handle regexp callbacks.
         query  = select([table.c.extension_id],
-                        table.c.event_uri == uri,
-                        #and_(table.c.name      == callback.get_name(),
-                        #     table.c.event_uri == callback.get_event_uri()),
+                        table.c.event_uri.like(uri),
                         from_obj = [table])
         result = query.execute()
         assert result is not None

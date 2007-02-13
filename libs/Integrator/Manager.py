@@ -283,6 +283,7 @@ if __name__ == '__main__':
     import unittest
     import MySQLdb
     import Guard
+    from Api          import Api
     from ConfigParser import RawConfigParser
 
     class ManagerTest(unittest.TestCase):
@@ -309,7 +310,7 @@ if __name__ == '__main__':
             assert extdb.install()
 
             # Set up.
-            manager = Manager(acldb)
+            manager = Manager(acldb, Api)
             manager.set_extension_dir('tmp')
             
             # Install first extension.

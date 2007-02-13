@@ -12,7 +12,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-from Callback import Callback
+from Callback  import Callback
+from functions import is_valid_uri
 
 class Api:
     def __init__(self, manager, event_bus):
@@ -23,14 +24,14 @@ class Api:
 
 
     def add_listener(self, func, uri = None):
-        #FIXME: Check uri syntax
+        assert is_valid_uri(uri)
         #FIXME: Check permissions!
         callback = Callback(func, uri)
         return self.__event_bus.add_listener(callback)
 
         
     def __emit(self, uri, args, synchronous):
-        #FIXME: Check uri syntax
+        assert is_valid_uri(uri)
         #FIXME: Check signal permissions!
         self.__manager.load_extension_from_event(uri)
         if synchronous:
@@ -49,12 +50,22 @@ class Api:
 
 if __name__ == '__main__':
     import unittest
+    from Manager  import Manager
+    from EventBus import EventBus
 
     class ApiTest(unittest.TestCase):
-        def runTest(self):
-            #FIXME: Implement test.
+        def dummy(self):
             pass
-            
+
+        def runTest(self):
+            eb  = EventBus()
+            api = Api(eb, eb) # Passing eb as manager because it doesn't matter
+            assert api.add_listener(self.dummy, "test:some/event/uri") >= 0
+
+            #Note: The other functions are not tested here, but in the
+            #test of the Manager class, whose constructor instantiates an
+            #Api object.
+
     testcase = ApiTest()
     runner   = unittest.TextTestRunner()
     runner.run(testcase)

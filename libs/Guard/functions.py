@@ -51,7 +51,6 @@ def int2hex(n, len):
 
 
 def make_handle_from_string(name):
-    #FIXME: Return something that can be used to reproduce the original string.
     name   = name.lower().replace(' ', '_')
     regexp = re.compile('[^\w\-_\/\.]+')
     return regexp.sub('', name)

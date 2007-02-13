@@ -12,6 +12,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+import sys
 from Event     import Event
 from Callback  import Callback
 from threading import Thread
@@ -40,7 +41,8 @@ class EventBus(Thread):
         """
         assert callback is not None
         self.__callbacks[str(self.__next_id)] = callback
-        self.__next_id += 1  #FIXME: Should care about overflow.
+        assert self.__next_id < sys.maxint
+        self.__next_id += 1
         return self.__next_id - 1
 
     def remove_listener_from_id(self, id):

@@ -17,13 +17,14 @@ import re
 handle_re     = '\w+'
 operator_re   = '(?:=|>=)'
 version_re    = '\d+(?:\.\d+)*'
-descriptor_re = '^('          \
-              + handle_re     \
-              + ')(?:('       \
-              + operator_re   \
-              + ')('          \
-              + version_re    \
-              + '))?$'
+descriptor_re = '^(%s)(?:(%s)(%s))?$' % (handle_re, operator_re, version_re)
+uri_re        = '%s(?::%s(:?/%s)*)?$'  % (handle_re, handle_re, handle_re)
+
+
+def is_valid_uri(uri):
+    regexp = re.compile(uri_re)
+    return regexp.match(uri)
+
 
 def descriptor_parse(descriptor):
     regexp = re.compile(descriptor_re)
@@ -60,6 +61,21 @@ if __name__ == '__main__':
     import unittest
 
     class FunctionTest(unittest.TestCase):
+        def is_valid_uri_test(self):
+            valid = [ 'spiff',
+                      'spiff:bla',
+                      'spiff:bla/blah',
+                      'spiff:bla/blah/blah' ]
+            invalid = [ 'spiff:',
+                        'spiff/',
+                        'spiff:/' ]
+            for uri in valid:
+                #print 'Testing', uri
+                assert is_valid_uri(uri)
+            for uri in invalid:
+                #print 'Testing', uri
+                assert not is_valid_uri(uri)
+
         def descriptor_parse_test(self):
             valid = [ 'spiff',
                       'spiff1',
@@ -113,6 +129,7 @@ if __name__ == '__main__':
                         assert version_is_greater(versions[b], versions[a])
 
         def runTest(self):
+            self.is_valid_uri_test()
             self.descriptor_parse_test()
             self.version_is_greater_test()
 

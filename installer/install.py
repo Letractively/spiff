@@ -33,8 +33,7 @@ constructor.append(CheckList('Checking installation requirements', checks))
 constructor.append(CollectDBInfo(['mysql4']))
 constructor.append(CheckDBConnection())
 constructor.append(SaveDBConfig(db_config_file))
-#FIXME: Check whether InnoDB is supported.
-#sql = 'SHOW VARIABLES LIKE "have_innodb"'
+constructor.append(CheckDBSupportsConstraints())
 
 # Other installation tasks.
 tasks = [
