@@ -1,14 +1,14 @@
 Installation Instructions
 -------------------------
 
-01. Unpack the spiff archive.
+01. Unpack the Spiff archive.
 
-02. Copy spiff to your webserver.
+02. Copy the contents of the spiff/ directory to your webserver.
 
 03. Grant all permissions on data/ to the webserver.
     This is done by either using your FTP client (refer to the documentation
-    of the client in that case), or with shell access by issuing the following
-    command:
+    of the client in that case), or with shell access by executing the
+    following command:
 
     chmod 777 data/
   
@@ -20,4 +20,4 @@ Installation Instructions
 07. If you encountered any bugs, please report them at
     http://code.google.com/p/spiff/issues/list
 
-08. Done! You should now be able to open spiff/index.py in your web browser.
+08. Done! You should now be able to open the index.py file in your web browser.

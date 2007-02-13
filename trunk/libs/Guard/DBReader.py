@@ -553,7 +553,7 @@ class DBReader:
         # * same action but has a shorter resource path.
         # * A side effect of this way of doing it is that ACLs are
         # * added even if they were not defined for the right resource,
-        # * so we need to filter them out in the next step (see 3.).
+        # * so we need to filter them out in the next step (see 5.).
         # **************************************************************
         # Get all ACLs that control the same action as the ACL above.
         tbl_ac3 = self._table_map['acl'].alias('ac3')
