@@ -13,10 +13,10 @@ multiple lines/.
 A table is a little more sophisticated:
 #Table
   #Heading
-    | *Row number*
-    | *Heading 1*
-    | *Heading 2*
-    | *Heading 3*
+    | Row number
+    | Heading 1
+    | Heading /with/ markup
+    | Heading 3
   #Row
     | #
     | So this is something that goes into the first column.
@@ -32,18 +32,18 @@ A table is a little more sophisticated:
     | More text 3
 
 Now let's test some form controls:
-| {stop-button: Hey, stop that!} | {ok-button: Ok} |
+| {stop-button: Hey, stop that!} | {ok-button: Ok}
 
 Some entry fields:
 #Table
   #Row
-    | # | Name:         | {login-field}       |
+    | # | Name:         | {login-field}
   #Row
-    | # | Password:     | {password-password} |
+    | # | Password:     | {password-password}
   #Row
-    | # | Hidden field: | {anything-variable} |
+    | # | Hidden field: | {anything-variable}
   #Row
-    | # | Text area:    | {mytext-textarea}   |
+    | # | Text area:    | {mytext-textarea}
 
 A simple numbered list:
 # Line 1
