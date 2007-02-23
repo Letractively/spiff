@@ -335,7 +335,7 @@ if __name__ == '__main__':
                     content += token[1]
 
             # Make sure that every single string was extracted.
-            print content
+            #print content
             assert content == in_text
 
     testcase = ParserTest()
