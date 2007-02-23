@@ -30,6 +30,7 @@ slash       = Str('/')
 o_bracket   = Str('{')
 c_bracket   = Str('}')
 underscore  = Str('_')
+punctuation = Any('.!?,;')
 
 # Single word definitions.
 name        = letter + Rep(letter | digit)
@@ -42,7 +43,7 @@ blank_line    = indentation + nl
 words         = Rep1(letter | digit | spaces)
 list_item     = Bol + Alt(hash, star) + Str(' ')
 italic_start  = Alt(Bol, spaces) + slash
-italic_end    = slash + Alt(Eol, spaces)
+italic_end    = slash + Alt(Eol, spaces, punctuation)
 title1        = equal + words + equal
 title2        = equal + equal + words + equal + equal
 title3        = equal + equal + equal + words + equal + equal + equal
@@ -96,11 +97,12 @@ class WikiParser(Scanner):
 
     def _indent_to(self, new_level):
         self.indentation_stack.append(new_level)
+        self.produce('indent', new_level)
 
     def _dedent_to(self, new_level):
         while new_level < self._get_current_indent_level():
             self.indentation_stack.pop()
-            self.produce('DEDENT_ACTION', '')
+        self.produce('dedent', self._get_current_indent_level())
 
     def _get_current_indent_level(self):
         return self.indentation_stack[-1]
@@ -108,17 +110,26 @@ class WikiParser(Scanner):
     def _title1(self, text):
         #print '_title1: ' + text
         self._buffer_flush()
-        self.produce('title1', text)
+        self.produce('title1_start', text[0])
+        self.my_buffer += text[1:-1]
+        self._buffer_flush()
+        self.produce('title1_end', text[-1])
 
     def _title2(self, text):
         #print '_title2: ' + text
         self._buffer_flush()
-        self.produce('title2', text)
+        self.produce('title2_start', text[0:2])
+        self.my_buffer += text[2:-2]
+        self._buffer_flush()
+        self.produce('title2_end', text[-2:])
 
     def _title3(self, text):
         #print '_title3: ' + text
         self._buffer_flush()
-        self.produce('title3', text)
+        self.produce('title3_start', text[0:3])
+        self.my_buffer += text[3:-3]
+        self._buffer_flush()
+        self.produce('title3_end', text[-3:])
 
     def _italic_start(self, text):
         #print '_italic_start'
@@ -178,45 +189,44 @@ class WikiParser(Scanner):
         self.produce('list_end', '')
 
     def _table_start(self, text):
-        self.my_buffer += text
         self._buffer_flush()
-        self.produce('table_start', self.my_buffer)
-        self.in_table = True
+        self.produce('table_start', text[:-1])
+        self._newline_action(text[-1])
+        self.in_table   = True
 
     def _heading_start(self, text):
-        self.my_buffer += text
         self._buffer_flush()
         if not self.in_table:
+            self._text(text)
             return
         if self.in_heading:
             self._heading_end()
-        else:
-            self.in_heading = True
-            self.produce('heading_start', self.my_buffer)
+        self.in_heading = True
+        self.produce('heading_start', text[:-1])
+        self._newline_action(text[-1])
 
     def _row_start(self, text):
-        self.my_buffer += text
         self._buffer_flush()
         if not self.in_table:
+            self._text(text)
             return
         if self.in_heading:
             self._heading_end()
         if self.in_row:
             self._row_end()
-        else:
-            self.in_row = True
-            self.produce('row_start', self.my_buffer)
+        self.in_row = True
+        self.produce('row_start', text[:-1])
+        self._newline_action(text[-1])
 
     def _cell_start(self, text):
-        self.my_buffer += text
         self._buffer_flush()
         if not self.in_heading and not self.in_row:
+            self._text(text)
             return
         if self.in_cell:
             self._cell_end()
-        else:
-            self.in_cell = True
-        self.produce('cell_start', self.my_buffer)
+        self.in_cell = True
+        self.produce('cell_start')
 
     def _cell_end(self):
         self.in_cell = False
@@ -253,6 +263,7 @@ class WikiParser(Scanner):
         self.bracket_nesting_level = self.bracket_nesting_level - 1
 
     def _blank_line(self, text):
+        self._dedent_to(0)
         self.my_buffer += text
         if self.in_list:
             self._list_end()
@@ -261,13 +272,11 @@ class WikiParser(Scanner):
         self._buffer_flush()
 
     def _text(self, text):
-        #print "Char:", text
+        #print "Char: '%s'" % text
         self.my_buffer += text
 
     def eof(self):
-        self._dedent_to(0)
         self._blank_line('')
-        pass
 
     lexicon = Lexicon([
         # Handle whitespace and indentation.
@@ -298,7 +307,7 @@ class WikiParser(Scanner):
         (cell,    _cell_start),
 
         # Other.
-        (AnyChar,       _text),
+        (AnyChar, _text)
     ])
 
 
@@ -322,10 +331,11 @@ if __name__ == '__main__':
                 position = scanner.position()
                 if token[0] is None: break
                 #print "Token type: %s, Token: '%s'" % (token[0], token[1])
-                content += token[1]
+                if not token[0] in ['indent', 'dedent']:
+                    content += token[1]
 
             # Make sure that every single string was extracted.
-            #print content
+            print content
             assert content == in_text
 
     testcase = ParserTest()
