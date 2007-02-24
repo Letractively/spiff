@@ -1,5 +1,5 @@
 #!/bin/sh
-find . -name "*.py" -a ! -name "distrib.py" | while read i; do
+find . -name "*.py" -a ! -name "setup.py" | while read i; do
   echo $i
   cd `dirname $i`
   python2.3 `basename $i`

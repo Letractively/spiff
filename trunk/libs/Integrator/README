@@ -23,7 +23,7 @@ The library performs the following tasks:
 
 Spiff Integrator may also run plugins inside of a sandbox, and apply
 permission restrictions to them. This functionality will only be added
-at a later point, however.
+at a later time, however.
 
 
 Dependencies

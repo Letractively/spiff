@@ -39,16 +39,6 @@ class Html2Wiki(HTMLParser.HTMLParser):
         self.wiki  += self.buffer
         self.buffer = ''
         
-    def __generate(self, text):
-        if len(self.cells) is 0:
-            if self.in_ul or self.in_ol:
-                if self.in_li:
-                    self.buffer += text.strip() + '\n'
-            elif not self.in_table:
-                self.buffer += text
-            return
-        self.cells[-1].data += text
-
     def handle_starttag(self, tag, attrs):
         if   tag == 'table':  self.start_table()
         elif tag == 'tr':     self.start_tr()
