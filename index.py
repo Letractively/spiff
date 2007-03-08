@@ -22,7 +22,7 @@ if os.path.exists('install'):
     print 'accessing this page.'
     sys.exit()
 
-def requested_page(form_data):
+def find_requested_page(form_data):
     if not form_data.has_key('page'):
         return 'system/login'
     return form_data['page'].value
@@ -44,7 +44,7 @@ integrator    = Integrator.Manager(acldb,
 integrator.set_extension_dir('data/repo')
 
 # Lookup page from the given cgi variables.
-page     = requested_page(form_data)
+page     = find_requested_page(form_data)
 page_res = acldb.get_resource_from_handle(page, 'content')
 if page_res is None:
     print 'Content-Type: text/html'

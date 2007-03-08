@@ -17,6 +17,7 @@ from DB       import *
 from EventBus import EventBus
 from tempfile import *
 import Parser
+import os
 import os.path
 import shutil
 import zipfile
@@ -52,6 +53,7 @@ class Manager:
                 shutil.copytree(src, os.path.join(target, item))
             else:
                 shutil.copy(src, target)
+                os.chmod(target, 0755)
         return target
 
 
@@ -67,7 +69,9 @@ class Manager:
             return None
         for name in zfobj.namelist():
             if name.endswith('/'):
-                os.mkdir(os.path.join(target, name))
+                dest = os.path.join(target, name)
+                os.mkdir(dest)
+                os.chmod(dest, 0755)
             else:
                 outfile = open(os.path.join(target, name), 'wb')
                 outfile.write(zfobj.read(name))

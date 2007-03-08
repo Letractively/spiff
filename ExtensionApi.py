@@ -13,10 +13,13 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import os.path, sys
+from functions       import request_uri,gettext
 from Integrator      import Api
 from Cookie          import SimpleCookie
 from genshi.template import TemplateLoader
+from genshi.template import TextTemplate
 from genshi.template import MarkupTemplate
+
 
 class ExtensionApi(Api):
     def __init__(self, manager, event_bus, *args, **kwargs):
@@ -54,11 +57,17 @@ class ExtensionApi(Api):
     def send_headers(self, content_type = 'text/html', headers = {}):
         if self.__headers_sent:
             return
+        # Print the HTTP header.
         print 'Content-Type: %s' % content_type
         for k, v in headers.items():
             print '%s: %s\n' % (k, v)
         print
         self.__headers_sent = True
+        
+        # Load and display the HTML header.
+        loader = TemplateLoader(['web'])
+        tmpl   = loader.load('header.tmpl', None, TextTemplate)
+        print tmpl.generate().render('text')
 
 
     def headers_sent(self):
@@ -66,19 +75,27 @@ class ExtensionApi(Api):
 
         
     def render(self, filename, *args, **kwargs):
+        if not self.__headers_sent:
+            self.send_headers()
+
         #FIXME: Do we need to check the permission of the caller?
         assert filename is not None
         # Find the object that made the API call.
         extension = self.__get_caller()
         assert extension
-        # Set dirname to plugin path.
+
+        # Point dirname to the path of the plugin that made the call.
         classname  = '%s' % extension.__class__
         subdirname = '/'.join(classname.split('.')[:-2])
         dirname    = os.path.join('data/repo/', subdirname)
-        loader     = TemplateLoader([dirname])
+
         # Load and display the template.
-        tmpl       = loader.load(filename, None, MarkupTemplate)
-        print tmpl.generate(**kwargs)
+        loader = TemplateLoader([dirname])
+        tmpl   = loader.load(filename, None, MarkupTemplate)
+        print tmpl.generate(plugin_dir  = dirname,
+                            request_uri = request_uri,
+                            txt         = gettext,
+                            **kwargs)
 
 
 if __name__ == '__main__':

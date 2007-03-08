@@ -279,7 +279,7 @@ class CreateDefaultSetup(CheckList):
 
         # Assign an extension to the system/admin page.
         caption = 'Assign login extension to a system page'
-        content_system_admin.set_attribute('extension', 'spiff_core_admin')
+        content_system_admin.set_attribute('extension', 'spiff_core_admin_center')
         if not self.guard.save_resource(content_system_admin, section_content):
             self._add_result(caption, Task.failure)
             self._print_result(environment, False)
