@@ -15,7 +15,7 @@
 import os
 
 
-def request_uri(vars = ''):
+def get_request_uri(vars = ''):
     """
     Returns the URL string that the client requested. Also appends the given
     variables to the argument list.

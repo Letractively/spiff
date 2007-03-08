@@ -30,12 +30,12 @@
           <select name="use_group_rights">
             <div py:choose="user.get_attribute('use_group_rights')" py:strip="True">
               <div py:when="1">
-                <option value=1 selected>Group</option>
-                <option value=0>User</option>
+                <option value="1" selected="selected">Group</option>
+                <option value="0">User</option>
               </div>
               <div py:otherwise="">
-                <option value=1>Group</option>
-                <option value=0 selected>User</option>
+                <option value="1">Group</option>
+                <option value="0" selected="selected">User</option>
               </div>
             </div>
           </select>
