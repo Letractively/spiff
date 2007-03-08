@@ -13,7 +13,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import os.path, sys
-from functions       import request_uri,gettext
+from functions       import get_request_uri,gettext
 from Integrator      import Api
 from Cookie          import SimpleCookie
 from genshi.template import TemplateLoader
@@ -93,9 +93,9 @@ class ExtensionApi(Api):
         loader = TemplateLoader([dirname])
         tmpl   = loader.load(filename, None, MarkupTemplate)
         print tmpl.generate(plugin_dir  = dirname,
-                            request_uri = request_uri,
+                            request_uri = get_request_uri,
                             txt         = gettext,
-                            **kwargs)
+                            **kwargs).render('xhtml')
 
 
 if __name__ == '__main__':

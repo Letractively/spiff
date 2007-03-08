@@ -241,6 +241,7 @@ if __name__ == '__main__':
 
             # Make sure that the model is complete.
             assert len(in_str) > 10
+            assert len(html1)  > 10
             assert html1 == html2
 
     testcase = Wiki2HtmlTest()
