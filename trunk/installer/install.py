@@ -48,7 +48,8 @@ constructor.append(SetUserPassword('admin'))
 # Install core extensions.
 tasks = [
     InstallExtension('../plugins/Spiff'),
-    InstallExtension('../plugins/Login')
+    InstallExtension('../plugins/Login'),
+    InstallExtension('../plugins/AdminCenter')
 ]
 constructor.append(CheckList('Installing core extensions', tasks))
 constructor.append(InstallationCompleted())

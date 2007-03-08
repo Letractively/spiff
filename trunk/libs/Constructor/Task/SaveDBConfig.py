@@ -34,6 +34,7 @@ class SaveDBConfig(Task):
             fd.write('[database]\n')
             fd.write('dbn: %s\n' % dbn)
             fd.close()
+            os.chmod(self.__filename, 0700)
         except:
             return Task.failure
         return Task.success

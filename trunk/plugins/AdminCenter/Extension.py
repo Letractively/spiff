@@ -9,7 +9,6 @@ dependency:   spiff spiff_core_login
 signal:       render_start
               render_end
 """
-
 class Extension:
     def __init__(self, api):
         self.api = api
@@ -20,5 +19,6 @@ class Extension:
         self.api.send_headers()
 
         #FIXME
+        self.api.render('templates/admin.tmpl')
 
         self.api.emit('render_end')

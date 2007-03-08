@@ -18,7 +18,7 @@ from Task import Task
 class DirExists(Task):
     def __init__(self, dirname):
         assert dirname is not None
-        Task.__init__(self, 'Checking whether ' + dirname + ' is a directory')
+        Task.__init__(self, "Checking whether '%s' is a directory" % dirname)
         self.__dirname = dirname
 
 
