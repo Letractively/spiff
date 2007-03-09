@@ -95,8 +95,7 @@
           <td width="100%">
             <textarea name="viewable_actors"
                       rows="2"
-                      cols="80"
-                      py:content="group.get_attribute('viewable_actors')" />
+                      cols="80"><py:for each="actor in viewable_actors">${actor.get_name()}, </py:for></textarea>
           </td>
         </tr>
         <tr>
@@ -105,17 +104,15 @@
           <td width="100%">
             <textarea name="editable_actors"
                       rows="2"
-                      cols="80"
-                      py:content="group.get_attribute('editable_actors')" />
+                      cols="80"><py:for each="actor in editable_actors">${actor.get_name()}, </py:for></textarea>
           </td>
         <tr>
           <td></td>
           <td class="nowrap" valign="top" py:content="txt('Delete:')" />
           <td width="100%">
-            <textarea name="deleteable_actors"
+            <textarea name="deletable_actors"
                       rows="2"
-                      cols="80"
-                      py:content="group.get_attribute('deleteable_actors')" />
+                      cols="80"><py:for each="actor in deletable_actors">${actor.get_name()}, </py:for></textarea>
           </td>
         </tr>
         </tr>

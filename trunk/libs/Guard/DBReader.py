@@ -70,6 +70,8 @@ class DBReader:
                                  ondelete = 'CASCADE'),
             mysql_engine='INNODB'
         ))
+        #FIXME: Figure out how to create a unique key over multiple columns
+        # and add one over section_handle+handle and section_handle+name.
         self.__add_table(Table(pfx + 'resource', self.db_metadata,
             Column('id',             Integer,     primary_key = True),
             Column('section_handle', String(230), index = True),
@@ -470,9 +472,15 @@ class DBReader:
         return self.has_permission_from_id(actor_id, action_id, resource_id)
 
 
-    def get_permission_list_from_id(self, actor_id, resource_id):
-        assert actor_id    is not None
-        assert resource_id is not None
+    def get_permission_list_from_id(self, *args, **kwargs):
+        """
+        Returns a list of ACLs that match the given criteria. Allowed argument
+        keywords include: actor_id, action_id, resource_id, permit,
+        actor_section_handle, action_section_handle and
+        resource_section_handle.
+        All arguments are optional; if no arguments are given all ACLs are
+        returned.
+        """
 
         # **************************************************************
         # * 1. Get all ACLs that match the given resource.
@@ -512,6 +520,14 @@ class DBReader:
         tbl = tbl.outerjoin(tbl_a1, tbl_a1.c.id == tbl_ac1.c.action_id)
         tbl_s1 = self._table_map['action_section'].alias('s1')
         tbl = tbl.outerjoin(tbl_s1, tbl_a1.c.section_handle == tbl_s1.c.handle)
+        
+        if kwargs.has_key('resource_section_handle'):
+            tbl_r1 = self._table_map['resource'].alias('r1')
+            tbl = tbl.outerjoin(tbl_r1, tbl_r1.c.id == tbl_p1.c.resource_id)
+
+        if kwargs.has_key('actor_section_handle'):
+            tbl_r4 = self._table_map['resource'].alias('r4')
+            tbl = tbl.outerjoin(tbl_r4, tbl_r4.c.id == tbl_p4.c.resource_id)
 
         # **************************************************************
         # * 2. We want to filter out any ACL that is defined for the
@@ -548,6 +564,9 @@ class DBReader:
         tbl = tbl.outerjoin(tbl_p7, or_(tbl_p6.c.id == tbl_p7.c.id,
                                         tbl_m3.c.resource_path_id == tbl_p7.c.id))
 
+        if kwargs.has_key('actor_section_handle'):
+            tbl_r7 = self._table_map['resource'].alias('r7')
+            tbl = tbl.outerjoin(tbl_r7, tbl_r7.c.id == tbl_p7.c.resource_id)
 
         # **************************************************************
         # * 4. We want to filter out any ACL that is defined for the
@@ -585,9 +604,58 @@ class DBReader:
         tbl = tbl.outerjoin(tbl_p10, or_(tbl_p9.c.id == tbl_p10.c.id,
                                          tbl_m4.c.resource_path_id == tbl_p10.c.id))
 
+        if kwargs.has_key('resource_section_handle'):
+            tbl_r10 = self._table_map['resource'].alias('r10')
+            tbl = tbl.outerjoin(tbl_r10, tbl_r10.c.id == tbl_p10.c.resource_id)
+
         #print 'Get: %i,%i' % (actor_id, resource_id)
         p2_max_depth = func.max(tbl_p2.c.depth).label('p2_max_depth')
         p3_max_depth = func.max(tbl_p3.c.depth).label('p3_max_depth')
+        
+        where = and_(tbl_p5.c.id == None,         # See 2.
+                     tbl_p8.c.id == None)         # See 4.
+
+        if kwargs.has_key('actor_id'):
+            actor_id = kwargs['actor_id']
+            where = and_(where,
+                         tbl_p4.c.resource_id == actor_id,     # See 1.
+                         tbl_p7.c.resource_id == actor_id)     # See 3.
+
+        if kwargs.has_key('action_id'):
+            action_id = kwargs['action_id']
+            where = and_(where,
+                        tbl_a1.c.id == action_id)   # See 1.
+
+        if kwargs.has_key('resource_id'):
+            resource_id = kwargs['resource_id']
+            where = and_(where,
+                         tbl_p1.c.resource_id  == resource_id,  # See 1.
+                         tbl_p10.c.resource_id == resource_id)  # See 5.
+
+        if kwargs.has_key('permit'):
+            permit = kwargs['permit']
+            where = and_(where,
+                         tbl_ac1.c.permit == permit,
+                         tbl_ac2.c.permit == permit,
+                         tbl_ac3.c.permit == permit)
+
+        if kwargs.has_key('actor_section_handle'):
+            handle = kwargs['actor_section_handle']
+            where = and_(where,
+                         tbl_r4.c.section_handle == handle,
+                         tbl_r7.c.section_handle == handle)
+
+        if kwargs.has_key('action_section_handle'):
+            handle = kwargs['action_section_handle']
+            where = and_(where,
+                         tbl_a1.c.section_handle == handle)
+
+        if kwargs.has_key('resource_section_handle'):
+            handle = kwargs['resource_section_handle']
+            where = and_(where,
+                         tbl_r1.c.section_handle  == handle,
+                         tbl_r10.c.section_handle == handle)
+
         sel = select([tbl_ac1.c.actor_id,
                       tbl_ac1.c.resource_id,
                       tbl_ac1.c.permit,
@@ -599,12 +667,7 @@ class DBReader:
                       tbl_p3.c.depth.label('p3_depth'),
                       p2_max_depth,
                       p3_max_depth],
-                     and_(tbl_p1.c.resource_id  == resource_id,  # See 1.
-                          tbl_p4.c.resource_id  == actor_id,     # See 1.
-                          tbl_p5.c.id           == None,         # See 2.
-                          tbl_p7.c.resource_id  == actor_id,     # See 3.
-                          tbl_p8.c.id           == None,         # See 4.
-                          tbl_p10.c.resource_id == resource_id), # See 5.
+                     where,
                      from_obj   = [tbl],
                      use_labels = True,
                      group_by   = [tbl_p2.c.id,
@@ -612,6 +675,7 @@ class DBReader:
                                    tbl_ac1.c.action_id],
                      having = and_('p2_depth = p2_max_depth',
                                    'p3_depth = p3_max_depth'))
+
         #print sel
         result = sel.execute()
         assert result is not None
@@ -619,7 +683,7 @@ class DBReader:
         # Collect all permissions.
         acl_list = [];
         for row in result:
-            action  = Action(row[tbl_a1.c.name], row[tbl_a1.c.handle])
+            action = Action(row[tbl_a1.c.name], row[tbl_a1.c.handle])
             action.set_id(row[tbl_a1.c.id])
             acl = Acl(row[tbl_ac1.c.actor_id],
                       action,
@@ -630,12 +694,35 @@ class DBReader:
         return acl_list
 
 
-    def get_permission_list(self, actor, resource):
-        assert actor    is not None
-        assert resource is not None
-        actor_id    = actor.get_id()
-        resource_id = resource.get_id()
-        return self.get_permission_list_from_id(actor_id, resource_id)
+    def get_permission_list(self, *args, **kwargs):
+        """
+        Returns a list of ACLs that match the given criteria. Allowed argument
+        keywords include: actor, action, resource, permit, actor_section,
+        action_section and resource_section.
+        All arguments are optional.
+        """
+        if kwargs.has_key('actor'):
+            kwargs['actor_id'] = kwargs['actor'].get_id()
+
+        if kwargs.has_key('action'):
+            kwargs['action_id'] = kwargs['action'].get_id()
+
+        if kwargs.has_key('resource'):
+            kwargs['resource_id'] = kwargs['resource'].get_id()
+
+        if kwargs.has_key('actor_section'):
+            handle = kwargs['actor_section'].get_handle()
+            kwargs['actor_section_handle'] = handle
+
+        if kwargs.has_key('action_section'):
+            handle = kwargs['action_section'].get_handle()
+            kwargs['action_section_handle'] = handle
+
+        if kwargs.has_key('resource_section'):
+            handle = kwargs['resource_section'].get_handle()
+            kwargs['resource_section_handle'] = handle
+
+        return self.get_permission_list_from_id(**kwargs)
 
 
 if __name__ == '__main__':

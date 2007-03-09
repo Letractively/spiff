@@ -34,6 +34,8 @@ class Extension:
     def __show_group(self, group):
         assert group is not None
         assert group.is_group()
+
+        # Collect information for the browser.
         children = self.guard.get_resource_children(group)
         users    = []
         groups   = []
@@ -42,10 +44,35 @@ class Extension:
                 groups.append(child)
             else:
                 users.append(child)
+
+        # Collect permissions.
+        search = {'actor': group, 'resource_section_handle': 'users'}
+        acls        = self.guard.get_permission_list(**search)
+        acls_view   = []
+        acls_edit   = []
+        acls_delete = []
+        for acl in acls:
+            handle = acl.get_action().get_handle()
+            if handle == 'view':
+                acls_view.append(acl.get_resource_id())
+            elif handle == 'edit':
+                acls_edit.append(acl.get_resource_id())
+            elif handle == 'delete':
+                acls_delete.append(acl.get_resource_id())
+
+        # Collect more permission info.
+        viewable  = self.guard.get_resource_list_from_id_list(acls_view)
+        editable  = self.guard.get_resource_list_from_id_list(acls_edit)
+        deletable = self.guard.get_resource_list_from_id_list(acls_delete)
+
+        # Render the template.
         self.api.render('templates/group_editor.tmpl',
-                        group  = group,
-                        users  = users,
-                        groups = groups)
+                        group            = group,
+                        users            = users,
+                        groups           = groups,
+                        viewable_actors  = viewable,
+                        editable_actors  = editable,
+                        deletable_actors = deletable)
 
 
     def __user_editor(self):
