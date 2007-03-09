@@ -22,21 +22,48 @@ class Extension:
             self.api.render('templates/content_editor.tmpl')
 
 
+    def __show_user(self, user):
+        assert user is not None
+        assert not user.is_group()
+        parents = self.guard.get_resource_parents(user)
+        self.api.render('templates/user_editor.tmpl',
+                        user   = user,
+                        groups = parents)
+
+
+    def __show_group(self, group):
+        assert group is not None
+        assert group.is_group()
+        children = self.guard.get_resource_children(group)
+        users    = []
+        groups   = []
+        for child in children:
+            if child.is_group():
+                groups.append(child)
+            else:
+                users.append(child)
+        self.api.render('templates/group_editor.tmpl',
+                        group  = group,
+                        users  = users,
+                        groups = groups)
+
+
     def __user_editor(self):
-        gid = self.api.get_form_value('gid')
-        uid = self.api.get_form_value('uid')
-        if uid is not None:
-            user = self.guard.get_resource_from_id(uid)
-            self.api.render('templates/user_editor.tmpl', user = user)
-        elif gid is not None:
-            group = self.guard.get_resource_from_id(gid)
-            self.api.render('templates/group_editor.tmpl', group = group)
+        id = self.api.get_form_value('id')
+
+        # If no id was given, display the root group.
+        if id is None:
+            group = self.guard.get_resource_from_handle('everybody', 'users')
+            self.__show_group(group)
+            return
+
+        # Ending up here, we have an id.
+        # Fetch the requested user or group info and display it.
+        resource = self.guard.get_resource_from_id(id)
+        if resource.is_group():
+            self.__show_group(resource)
         else:
-            group  = self.guard.get_resource_from_handle('everybody', 'users')
-            groups = self.guard.get_resource_children_from_id(group.get_id())
-            self.api.render('templates/group_editor.tmpl',
-                            group  = group,
-                            groups = groups)
+            self.__show_user(resource)
 
 
     def on_render_request(self):

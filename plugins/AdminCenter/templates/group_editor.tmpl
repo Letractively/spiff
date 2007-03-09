@@ -1,5 +1,5 @@
 <div xmlns:py="http://genshi.edgewall.org/"
-     py:with="action_url = request_uri('parent_id=%i' % group.get_id());
+     py:with="action_url = request_uri(parent_id = [group.get_id()]);
               img_dir    = plugin_dir + '/img/'"
      py:strip="True">
 <form action="${action_url}" method="post">
@@ -10,7 +10,8 @@
         <tr><td align='center'><i py:content="txt('Members')" /></td></tr>
         <py:for each="item in groups">
           <tr>
-            <td py:with="url = request_uri('parent_id=%i&amp;id=%i' % (group.get_id(), item.get_id()))">
+            <td py:with="url = request_uri(parent_id = [group.get_id()],
+                                           id        = [item.get_id()])">
             <a href="$url"><img src="${img_dir}/group.png" alt="Group:" /><span py:content="item.get_name()" /></a>
             <span py:content="'(%i)' % item.get_n_children()" />
             </td>
@@ -19,9 +20,9 @@
         <div py:if="groups and users" class='seperator'></div>
         <py:for each="item in users">
           <tr>
-            <td py:with="url = request_uri('parent_id=%i&amp;id=%i' % (group.get_id(), item.get_id()))">
+            <td py:with="url = request_uri(parent_id = [group.get_id()],
+                                           id        = [item.get_id()])">
             <a href="$url"><img src="${img_dir}/user.png" alt="User:" /><span py:content="item.get_name()" /></a>
-            <span py:content="'(%i)' % item.get_n_children()" />
             </td>
           </tr>
         </py:for>
