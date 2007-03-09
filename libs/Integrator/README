@@ -1,6 +1,3 @@
-# This file contains ideas, design plans, mindmap, ... you name it,
-# for Spiff Integrator.
-
 Spiff Integrator
 -----------------
 This library is part of the Spiff platform.
@@ -99,7 +96,7 @@ Design
 * Extension class: Represents any plugin. An extension has a list of
   dependencies. Dependencies may be grouped into contexts, such as "runtime"
   or "install_time" dependencies. Spiff Integrator only ever checks the
-  dependencies within each context, dependencies accross multiple contexts are
+  dependencies within each context, dependencies across multiple contexts are
   unchecked.
 
   Extensions need a way to interface with Spiff Integrator, and they also

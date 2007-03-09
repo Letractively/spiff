@@ -467,9 +467,12 @@ class DB(DBReader):
     def __resource_add_n_children(self, resource_id, n_children):
         assert resource_id >= 0
         assert n_children  >= 0
-        table  = self._table_map['resource_path']
-        update = table.update(table.c.resource_id == resource_id)
-        result = update.execute(n_children = table.c.n_children + n_children)
+        table  = self._table_map['resource']
+        update = table.update(table.c.id == resource_id,
+                              values = {
+                                  table.c.n_children:
+                                    table.c.n_children + n_children})
+        result = update.execute()
         assert result is not None
 
 
@@ -495,6 +498,8 @@ class DB(DBReader):
         connection  = self.db.connect()
         transaction = connection.begin()
 
+        # Retrieve information about the parent, if any. Also, increase the
+        # child counter of the parent.
         if parent_id is None:
             parent_path = ''
         else:
@@ -505,16 +510,33 @@ class DB(DBReader):
             assert parent.is_group()
             self.__resource_add_n_children(parent_id, 1)
 
-        # Create the resource.
-        table  = self._table_map['resource']
-        insert = table.insert()
-        result = insert.execute(section_handle = section.get_handle(),
-                                handle         = resource.get_handle(),
-                                name           = resource.get_name(),
-                                is_actor       = resource.is_actor(),
-                                is_group       = resource.is_group())
-        assert result is not None
-        resource_id = result.last_inserted_ids()[0]
+        # If the resource already has an ID, it *should* exist in the database
+        # most of the time - but we want to forgive the user even if it does
+        # not.
+        resource_id = resource.get_id()
+        existing    = None
+        if resource_id > 0:
+            existing = self.get_resource_from_id(resource_id)
+        
+        # Create or update the resource.
+        if existing is not None:
+            assert self.save_resource(resource, section)
+        else:
+            table  = self._table_map['resource']
+            insert = table.insert()
+            result = insert.execute(section_handle = section.get_handle(),
+                                    handle         = resource.get_handle(),
+                                    name           = resource.get_name(),
+                                    is_actor       = resource.is_actor(),
+                                    is_group       = resource.is_group())
+            assert result is not None
+            resource_id = result.last_inserted_ids()[0]
+
+            # Save the attributes.
+            attrib_list = resource.get_attribute_list()
+            for attrib_name in attrib_list.keys():
+                value = attrib_list[attrib_name]
+                self.__resource_add_attribute(resource_id, attrib_name, value)
 
         # Add a new node into the tree.
         table    = self._table_map['resource_path']
@@ -544,12 +566,6 @@ class DB(DBReader):
             assert result is not None
             parent_path = parent_path[0:len(parent_path) - 8]
 
-        # Save the attributes.
-        attrib_list = resource.get_attribute_list()
-        for attrib_name in attrib_list.keys():
-            value = attrib_list[attrib_name]
-            self.__resource_add_attribute(resource_id, attrib_name, value)
-        
         transaction.commit()
         connection.close()
         resource.set_id(resource_id)
@@ -567,8 +583,9 @@ class DB(DBReader):
         @rtype:  Boolean
         @return: True on success, False otherwise.
         """
-        assert resource is not None
-        assert section  is not None
+        assert resource          is not None
+        assert resource.get_id() is not None
+        assert section           is not None
 
         connection  = self.db.connect()
         transaction = connection.begin()
@@ -1033,7 +1050,7 @@ if __name__ == '__main__':
             assert db.add_resource(sub_page_1_1.get_id(),
                                    sub_page_1_1_1,
                                    content_section)
-            assert db.add_resource(sub_page_1_1.get_id(),
+            assert db.add_resource(sub_page_1_1_1.get_id(),
                                    sub_page_1_1_1_1,
                                    content_section)
             assert db.add_resource(sub_page_1.get_id(),
@@ -1042,6 +1059,14 @@ if __name__ == '__main__':
             assert db.add_resource(homepage.get_id(),
                                    sub_page_2,
                                    content_section)
+            
+            # Test child counter.
+            page = db.get_resource_from_id(sub_page_1.get_id())
+            assert page.get_n_children() == 2
+            page = db.get_resource_from_id(sub_page_1_1_1.get_id())
+            assert page.get_n_children() == 1
+            page = db.get_resource_from_id(sub_page_1_1_1_1.get_id())
+            assert page.get_n_children() == 0
 
             # Set up groups.
             users  = ActorGroup('Users')
