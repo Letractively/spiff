@@ -6,83 +6,163 @@
 <table class="container" width="100%" border="0" cellpadding="0" cellspacing="0">
   <tr>
     <td width='230' valign="top">
-    <table class="menu" cellpadding="0">
-      <tr><td align='center'><i py:content="txt('Members')" /></td></tr>
-      <py:for each="item in groups">
-        <tr>
-          <td py:with="url = request_uri('parent_id=%i&amp;id=%i' % (group.get_id(), item.get_id()))">
-          <a href="$url"><img src="${img_dir}/group.png" alt="Group:" /><span py:content="item.get_name()" /></a>
-          <span py:content="'(%i)' % item.get_n_children()" />
-          </td>
-        </tr>
-      </py:for>
-      <div py:if="groups and users" class='seperator'></div>
-      <py:for each="item in users">
-        <tr>
-          <td py:with="url = request_uri('parent_id=%i&amp;id=%i' % (group.get_id(), item.get_id()))">
-          <a href="$url"><img src="${img_dir}/user.png" alt="User:" /><span py:content="item.get_name()" /></a>
-          <span py:content="'(%i)' % item.get_n_children()" />
-          </td>
-        </tr>
-      </py:for>
-    </table>
+      <table class="menu" cellpadding="0">
+        <tr><td align='center'><i py:content="txt('Members')" /></td></tr>
+        <py:for each="item in groups">
+          <tr>
+            <td py:with="url = request_uri('parent_id=%i&amp;id=%i' % (group.get_id(), item.get_id()))">
+            <a href="$url"><img src="${img_dir}/group.png" alt="Group:" /><span py:content="item.get_name()" /></a>
+            <span py:content="'(%i)' % item.get_n_children()" />
+            </td>
+          </tr>
+        </py:for>
+        <div py:if="groups and users" class='seperator'></div>
+        <py:for each="item in users">
+          <tr>
+            <td py:with="url = request_uri('parent_id=%i&amp;id=%i' % (group.get_id(), item.get_id()))">
+            <a href="$url"><img src="${img_dir}/user.png" alt="User:" /><span py:content="item.get_name()" /></a>
+            <span py:content="'(%i)' % item.get_n_children()" />
+            </td>
+          </tr>
+        </py:for>
+      </table>
     </td>
     <td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
     <td width='100%'>
-    <py:choose>
-      <h2 py:when="group.get_id() == 0" py:content="txt('Create A New Group')" />
-      <h2 py:otherwise="" py:content="group.get_name()" />
-    </py:choose>
-    <h3 py:content="txt('Public Group Information')" />
-    <table class="indent" width="100%" cellpadding="0" cellspacing="5">
-      <tr>
-        <td class="nowrap" py:content="txt('Group Name:')" />
-        <td width="100%"><input type="text" class="field" name="name" value="${group.get_name()}" /></td>
-      </tr>
-      <tr>
-        <td class="nowrap" valign="top" py:content="txt('Description:')" />
-        <td width="100%">
-          <textarea name="description"
-                    rows="3"
-                    cols="80"
-                    py:content="group.get_attribute('description')" />
-        </td>
-      </tr>
-    </table>
+      <py:choose>
+        <h2 py:when="group.get_id() == 0" py:content="txt('Create A New Group')" />
+        <h2 py:otherwise="" py:content="group.get_name()" />
+      </py:choose>
+      <table width="100%" cellpadding="0" cellspacing="5">
+        <!-- Public information -->
+        <tr>
+          <td class="nowrap" colspan="3"><h3 py:content="txt('Public Group Information')" /></td>
+        </tr>
+        <tr>
+          <td><img src="$img_dir/null.png" height="1" width="20" alt="" /></td>
+          <td class="nowrap" py:content="txt('Group Name:')" />
+          <td width="100%"><input type="text" class="field" name="name" value="${group.get_name()}" /></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="nowrap" valign="top" py:content="txt('Description:')" />
+          <td width="100%">
+            <textarea name="description"
+                      rows="3"
+                      cols="80"
+                      py:content="group.get_attribute('description')" />
+          </td>
+        </tr>
 
-    <h3 py:content="txt('Defaults')" />
-    <table class="indent" cellpadding="0">
-      <tr>
-        <td py:content="txt('Content created by users in this group is by default owned by:')" />
-        <td>
-        <select name="use_group_rights"
-                py:with="group_rights = group.get_attribute('use_group_rights')">
-          <option py:attrs="dict(selected=(None, 'selected')[group_rights])"
-                  value="1"
-                  py:content="txt('Group')" />
-          <option py:attrs="dict(selected=(None, 'selected')[not group_rights])"
-                  value="0"
-                  py:content="txt('User')" />
-        </select>
-        </td>
-      </tr>
-    </table>
+        <!-- Defaults -->
+        <tr>
+          <td class="nowrap" colspan="3"><h3 py:content="txt('Defaults')" /></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td colspan="2">
+            <table cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td py:content="txt('Homepage of this user:')" />
+                <td>&nbsp;<input type="text" name="homepage" value="${group.get_attribute('homepage')}" /></td>
+              </tr>
+              <tr>
+                <td py:content="txt('Content created by users in this group is by default owned by:')" />
+                <td colspan="2">
+                  &nbsp;<select name="use_group_rights"
+                          py:with="group_rights = group.get_attribute('use_group_rights')">
+                    <option selected="${group_rights or None}"
+                            value="1"
+                            py:content="txt('Group')" />
+                    <option selected="${not group_rights or None}"
+                            value="0"
+                            py:content="txt('User')" />
+                  </select>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
 
-    <h3 py:content="txt('Things That The Users In This Group May Do')" />
-    <iframe id='permission_tree' src="$url" style='border: 0' width="100%" height="30">
-    </iframe>
+        <!-- Granted Permissions -->
+        <tr>
+          <td class="nowrap" colspan="3"><h3 py:content="txt('Granted User and Group Permissions')" /></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="nowrap" valign="top" py:content="txt('View:')" />
+          <td width="100%">
+            <textarea name="viewable_actors"
+                      rows="2"
+                      cols="80"
+                      py:content="group.get_attribute('viewable_actors')" />
+          </td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="nowrap" valign="top" py:content="txt('Edit:')" />
+          <td width="100%">
+            <textarea name="editable_actors"
+                      rows="2"
+                      cols="80"
+                      py:content="group.get_attribute('editable_actors')" />
+          </td>
+        <tr>
+          <td></td>
+          <td class="nowrap" valign="top" py:content="txt('Delete:')" />
+          <td width="100%">
+            <textarea name="deleteable_actors"
+                      rows="2"
+                      cols="80"
+                      py:content="group.get_attribute('deleteable_actors')" />
+          </td>
+        </tr>
+        </tr>
 
-    <h3 py:content="txt('Unconfirmed Permission Changes')" />
-    <div id='changelog'><i py:content="txt('No permissions changed.')" /></div>
+        <!-- Denied Permissions -->
+        <tr>
+          <td class="nowrap" colspan="3"><h3 py:content="txt('Denied User and Group Permissions')" /></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="nowrap" valign="top" py:content="txt('View:')" />
+          <td width="100%">
+            <textarea name="non_viewable_actors"
+                      rows="2"
+                      cols="80"
+                      py:content="group.get_attribute('non_viewable_actors')" />
+          </td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="nowrap" valign="top" py:content="txt('Edit:')" />
+          <td width="100%">
+            <textarea name="non_editable_actors"
+                      rows="2"
+                      cols="80"
+                      py:content="group.get_attribute('non_editable_actors')" />
+          </td>
+        <tr>
+          <td></td>
+          <td class="nowrap" valign="top" py:content="txt('Delete:')" />
+          <td width="100%">
+            <textarea name="non_deleteable_actors"
+                      rows="2"
+                      cols="80"
+                      py:content="group.get_attribute('non_deleteable_actors')" />
+          </td>
+        </tr>
+        </tr>
+      </table>
     </td>
   </tr>
   <tr>
     <td>
     <table py:if="group.get_id() >  0" width="100%">
       <tr>
-        <td><input type="submit" class="button" name="group_add" value="Add New Group" /></td>
+        <td><input type="submit" class="button" name="group_add" value="${txt('Add New Group')}" /></td>
         <td>&nbsp;</td>
-        <td><input type="submit" class="button" name="user_add" value="Add New User" /></td>
+        <td><input type="submit" class="button" name="user_add" value="${txt('Add New User')}" /></td>
       </tr>
     </table>
     </td>
@@ -90,9 +170,9 @@
     <td align="right">
     <table>
       <tr>
-        <td><input type="submit" class="button" name="delete" value="Delete Group" /></td>
+        <td><input type="submit" class="button" name="delete" value="${txt('Delete Group')}" /></td>
         <td>&nbsp;</td>
-        <td><input type="submit" class="button" name="save" value="Apply Changes" /></td>
+        <td><input type="submit" class="button" name="save" value="${txt('Apply Changes')}" /></td>
       </tr>
     </table>
     </td>

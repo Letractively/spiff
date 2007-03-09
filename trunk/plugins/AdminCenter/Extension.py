@@ -32,8 +32,11 @@ class Extension:
             group = self.guard.get_resource_from_id(gid)
             self.api.render('templates/group_editor.tmpl', group = group)
         else:
-            group = self.guard.get_resource_from_handle('everybody', 'users')
-            self.api.render('templates/group_editor.tmpl', group = group)
+            group  = self.guard.get_resource_from_handle('everybody', 'users')
+            groups = self.guard.get_resource_children_from_id(group.get_id())
+            self.api.render('templates/group_editor.tmpl',
+                            group  = group,
+                            groups = groups)
 
 
     def on_render_request(self):

@@ -75,6 +75,7 @@ class DBReader:
             Column('section_handle', String(230), index = True),
             Column('handle',         String(230)),
             Column('name',           String(230)),
+            Column('n_children',     Integer,     index = True, default = 0),
             Column('is_actor',       Boolean,     index = True),
             Column('is_group',       Boolean,     index = True),
             ForeignKeyConstraint(['section_handle'],
@@ -99,7 +100,6 @@ class DBReader:
             Column('path',           Binary(255), index = True),
             Column('depth',          Integer,     index = True),
             Column('resource_id',    Integer,     index = True),
-            Column('n_children',     Integer,     index = True, default = 0),
             Column('refcount',       Integer,     index = True, default = 0),
             ForeignKeyConstraint(['resource_id'],
                                  ['resource.id'],
@@ -192,6 +192,7 @@ class DBReader:
         #print "Type:", type
         resource = type(row[tbl_r.c.name], row[tbl_r.c.handle])
         resource.set_id(row[tbl_r.c.id])
+        resource.set_n_children(row[tbl_r.c.n_children])
         return resource
 
 
@@ -354,7 +355,7 @@ class DBReader:
             if row[tbl_r.c.handle] is not last:
                 last = row[tbl_r.c.handle]
                 resource = self.__get_resource_from_row(row, type)
-                resource.set_n_children(row[tbl_p1.c.n_children])
+                resource.set_n_children(row[tbl_r.c.n_children])
                 children.append(resource)
 
             # Append attribute (if any).
@@ -404,7 +405,7 @@ class DBReader:
             if row[tbl_r.c.handle] is not last:
                 last = row[tbl_r.c.handle]
                 resource = self.__get_resource_from_row(row, type)
-                resource.set_n_children(row[tbl_p1.c.n_children])
+                resource.set_n_children(row[tbl_r.c.n_children])
                 parents.append(resource)
 
             # Append attribute (if any).
