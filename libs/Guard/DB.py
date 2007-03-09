@@ -1031,6 +1031,13 @@ if __name__ == '__main__':
             assert db.add_action(edit, action_section)
             delete = Action('Delete Content')
             assert db.add_action(delete, action_section)
+            
+            view_user = Action('View User')
+            assert db.add_action(view_user, action_section)
+            edit_user = Action('Edit User')
+            assert db.add_action(edit_user, action_section)
+            delete_user = Action('Delete User')
+            assert db.add_action(delete_user, action_section)
 
             # Set up content.
             homepage         = ResourceGroup('Homepage')
@@ -1070,7 +1077,7 @@ if __name__ == '__main__':
 
             # Set up groups.
             users  = ActorGroup('Users')
-            admins = ActorGroup('Amins')
+            admins = ActorGroup('Admins')
             assert db.add_resource(None, users,  resource_section)
             assert db.add_resource(None, admins, resource_section)
             
@@ -1083,6 +1090,7 @@ if __name__ == '__main__':
             assert db.add_resource(admins.get_id(), admin, resource_section)
             
             # Set up ACLs.
+            db.grant(admins, [view_user, edit_user, delete_user], users)
             db.grant(admins, [view, edit, delete], homepage)
             db.grant(users,  view,                 homepage)
             db.grant(user,   edit,                 sub_page_1)
@@ -1161,10 +1169,22 @@ if __name__ == '__main__':
             assert not db.has_permission(anon, delete, sub_page_1_2)
             assert not db.has_permission(anon, delete, sub_page_2)
 
-            perms = db.get_permission_list_from_id(admins.get_id(),
-                                                   sub_page_1_1_1.get_id())
+            # Get permissions one one specific resource.
+            pageid = sub_page_1_1_1.get_id()
+            perms  = db.get_permission_list_from_id(actor_id = admins.get_id(),
+                                                    resource = pageid)
             #for acl in perms:
-            #    print 'Permission:', acl.get_action().get_name()
+            #    print 'Permission on subpage:', acl.get_action().get_name()
+            #print
+
+            # Get permissions one all resources.
+            perms = db.get_permission_list_from_id()
+            #for acl in perms:
+            #    actor_id    = acl.get_actor_id()
+            #    action_name = acl.get_action().get_name()
+            #    resource_id = acl.get_resource_id()
+            #    permit      = acl.get_permit()
+            #    print 'Permission:', actor_id, action_name, resource_id, permit
 
             # Clean up.
             assert db.clear_database()
