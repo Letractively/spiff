@@ -17,7 +17,7 @@
             </td>
           </tr>
         </py:for>
-        <div py:if="groups and users" class='seperator'></div>
+        <tr><td><div py:if="groups and users" class='seperator' /></td></tr>
         <py:for each="item in users">
           <tr>
             <td py:with="url = request_uri(parent_id = [group.get_id()],
@@ -64,18 +64,14 @@
           <td colspan="2">
             <table cellpadding="0" cellspacing="0" border="0">
               <tr>
-                <td py:content="txt('Homepage of this user:')" />
-                <td>&nbsp;<input type="text" name="homepage" value="${group.get_attribute('homepage')}" /></td>
-              </tr>
-              <tr>
                 <td py:content="txt('Content created by users in this group is by default owned by:')" />
                 <td colspan="2">
-                  &nbsp;<select name="use_group_rights"
-                          py:with="group_rights = group.get_attribute('use_group_rights')">
-                    <option selected="${group_rights or None}"
+                  &nbsp;<select name="use_group_permission"
+                          py:with="group_permission = group.get_attribute('use_group_permission')">
+                    <option selected="${group_permission or None}"
                             value="1"
                             py:content="txt('Group')" />
-                    <option selected="${not group_rights or None}"
+                    <option selected="${not group_permission or None}"
                             value="0"
                             py:content="txt('User')" />
                   </select>
@@ -106,6 +102,7 @@
                       rows="2"
                       cols="80"><py:for each="actor in editable_actors">${actor.get_name()}, </py:for></textarea>
           </td>
+        </tr>
         <tr>
           <td></td>
           <td class="nowrap" valign="top" py:content="txt('Delete:')" />
@@ -114,7 +111,6 @@
                       rows="2"
                       cols="80"><py:for each="actor in deletable_actors">${actor.get_name()}, </py:for></textarea>
           </td>
-        </tr>
         </tr>
 
         <!-- Denied Permissions -->
@@ -127,8 +123,7 @@
           <td width="100%">
             <textarea name="non_viewable_actors"
                       rows="2"
-                      cols="80"
-                      py:content="group.get_attribute('non_viewable_actors')" />
+                      cols="80"><py:for each="actor in non_viewable_actors">${actor.get_name()}, </py:for></textarea>
           </td>
         </tr>
         <tr>
@@ -137,26 +132,24 @@
           <td width="100%">
             <textarea name="non_editable_actors"
                       rows="2"
-                      cols="80"
-                      py:content="group.get_attribute('non_editable_actors')" />
+                      cols="80"><py:for each="actor in non_editable_actors">${actor.get_name()}, </py:for></textarea>
           </td>
+        </tr>
         <tr>
           <td></td>
           <td class="nowrap" valign="top" py:content="txt('Delete:')" />
           <td width="100%">
             <textarea name="non_deleteable_actors"
                       rows="2"
-                      cols="80"
-                      py:content="group.get_attribute('non_deleteable_actors')" />
+                      cols="80"><py:for each="actor in non_deletable_actors">${actor.get_name()}, </py:for></textarea>
           </td>
-        </tr>
         </tr>
       </table>
     </td>
   </tr>
   <tr>
     <td>
-    <table py:if="group.get_id() >  0" width="100%">
+    <table py:if="group.get_id() > 0" width="100%">
       <tr>
         <td><input type="submit" class="button" name="group_add" value="${txt('Add New Group')}" /></td>
         <td>&nbsp;</td>
