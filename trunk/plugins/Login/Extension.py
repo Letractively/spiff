@@ -45,7 +45,7 @@ class Extension:
             sid = SimpleCookie(os.environ['HTTP_COOKIE'])['sid'].value
         except:
             sid = None
-        guard = self.api.get_guard()
+        guard = self.api.get_guard_db()
         if sid:
             users = guard.get_resource_list_from_attribute('sid', sid)
             assert users is not None
@@ -61,7 +61,7 @@ class Extension:
         #print "Login requested for user '%s'." % username
         if username is None or password is None:
             return self.login_failure
-        guard = self.api.get_guard()
+        guard = self.api.get_guard_db()
         user  = guard.get_resource_from_handle(username, 'users')
         if user is None:
             return self.login_failure
@@ -82,9 +82,9 @@ class Extension:
 
     def on_page_open(self, args):
         # A user is trying to log in.
-        if self.api.get_form_value('login') is not None:
-            user        = self.api.get_form_value('username')
-            password    = self.api.get_form_value('password')
+        if self.api.get_post_data('login') is not None:
+            user        = self.api.get_post_data('username')[0]
+            password    = self.api.get_post_data('password')[0]
             self.status = self.__do_login(user, password)
             return
 

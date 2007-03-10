@@ -354,7 +354,7 @@ class DBReader:
         last     = None
         children = [];
         for row in result:
-            if row[tbl_r.c.handle] is not last:
+            if row[tbl_r.c.handle] != last:
                 last = row[tbl_r.c.handle]
                 resource = self.__get_resource_from_row(row, type)
                 resource.set_n_children(row[tbl_r.c.n_children])
@@ -396,6 +396,7 @@ class DBReader:
         table  = table.outerjoin(tbl_p2, tbl_p2.c.id == tbl_m.c.resource_path_id)
         select = table.select(and_(tbl_p2.c.resource_id == parent_id,
                                    tbl_p2.c.depth       == tbl_p1.c.depth + 1),
+                              order_by   = [tbl_p1.c.id],
                               use_labels = True)
         result = select.execute()
         assert result is not None
@@ -404,18 +405,18 @@ class DBReader:
         last    = None
         parents = [];
         for row in result:
-            if row[tbl_r.c.handle] is not last:
-                last = row[tbl_r.c.handle]
+            if row[tbl_p1.c.resource_id] != last:
+                last = row[tbl_p1.c.resource_id]
                 resource = self.__get_resource_from_row(row, type)
                 resource.set_n_children(row[tbl_r.c.n_children])
                 parents.append(resource)
 
             # Append attribute (if any).
             if row[tbl_a.c.name] is None: continue
-            if row[tbl_a.c.type] is self.attrib_type_int:
+            if row[tbl_a.c.type] == self.attrib_type_int:
                 resource.set_attribute(row[tbl_a.c.name],
                                        int(row[tbl_a.c.attr_int]))
-            elif row[tbl_a.c.type] is self.attrib_type_string:
+            elif row[tbl_a.c.type] == self.attrib_type_string:
                 resource.set_attribute(row[tbl_a.c.name],
                                        row[tbl_a.c.attr_string])
 

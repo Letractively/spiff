@@ -1,8 +1,7 @@
 <div xmlns:py="http://genshi.edgewall.org/"
-     py:with="action_url = request_uri(parent_id = [group.get_id()]);
-              img_dir    = plugin_dir + '/img/'"
+     py:with="img_dir = plugin_dir + '/img'"
      py:strip="True">
-<form action="${action_url}" method="post">
+<form action="${request_uri()}" method="post">
 <table class="container" width="100%" border="0" cellpadding="0" cellspacing="0">
   <tr>
     <td width='230' valign="top">
@@ -12,7 +11,7 @@
           <tr>
             <td py:with="url = request_uri(parent_id = [group.get_id()],
                                            id        = [item.get_id()])">
-            <a href="$url"><img src="${img_dir}/group.png" alt="Group:" /><span py:content="item.get_name()" /></a>
+            <a href="$url"><img src="$img_dir/group.png" alt="Group:" /><span py:content="item.get_name()" /></a>
             <span py:content="'(%i)' % item.get_n_children()" />
             </td>
           </tr>
@@ -22,7 +21,7 @@
           <tr>
             <td py:with="url = request_uri(parent_id = [group.get_id()],
                                            id        = [item.get_id()])">
-            <a href="$url"><img src="${img_dir}/user.png" alt="User:" /><span py:content="item.get_name()" /></a>
+            <a href="$url"><img src="$img_dir/user.png" alt="User:" /><span py:content="item.get_name()" /></a>
             </td>
           </tr>
         </py:for>
@@ -34,6 +33,9 @@
         <h2 py:when="group.get_id() == 0" py:content="txt('Create A New Group')" />
         <h2 py:otherwise="" py:content="group.get_name()" />
       </py:choose>
+      <py:for each="error in errors">
+        <font color="red" size="3" py:content="error" /><br/>
+      </py:for>
       <table width="100%" cellpadding="0" cellspacing="5">
         <!-- Public information -->
         <tr>

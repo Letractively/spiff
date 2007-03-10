@@ -30,12 +30,13 @@ class Manager:
     __database_error,         \
     __permission_denied_error = range(-1, -7, -1)
     
-    def  __init__(self, acldb, extension_api_obj, *api_args, **api_kwargs):
-        assert acldb             is not None
+    def  __init__(self, guard_db, extension_api_obj, *api_args, **api_kwargs):
+        assert guard_db             is not None
         assert extension_api_obj is not None
-        self.__extension_db = DB(acldb)
+        self.__extension_db = DB(guard_db)
         self.__event_bus    = EventBus()
-        self.extension_api  = extension_api_obj(self,
+        self.extension_api  = extension_api_obj(guard_db,
+                                                self,
                                                 self.__event_bus,
                                                 **api_kwargs)
         self.__install_dir     = None
@@ -301,20 +302,20 @@ if __name__ == '__main__':
             password = cfg.get('database', 'password')
 
             # Connect to MySQL.
-            auth  = user + ':' + password
-            dbn   = 'mysql://' + auth + '@' + host + '/' + db_name
-            db    = create_engine(dbn)
-            acldb = Guard.DB(db)
+            auth     = user + ':' + password
+            dbn      = 'mysql://' + auth + '@' + host + '/' + db_name
+            db       = create_engine(dbn)
+            guard_db = Guard.DB(db)
 
             # Install dependencies.
-            extdb = DB(acldb)
+            extdb = DB(guard_db)
             assert extdb.uninstall()
-            assert acldb.uninstall()
-            assert acldb.install()
+            assert guard_db.uninstall()
+            assert guard_db.install()
             assert extdb.install()
 
             # Set up.
-            manager = Manager(acldb, Api)
+            manager = Manager(guard_db, Api)
             manager.set_extension_dir('tmp')
             
             # Install first extension.
@@ -334,7 +335,7 @@ if __name__ == '__main__':
             # Clean up.
             assert extdb.clear_database()
             assert extdb.uninstall()
-            assert acldb.uninstall()
+            assert guard_db.uninstall()
             
     testcase = ManagerTest()
     runner   = unittest.TextTestRunner()
