@@ -1,54 +1,141 @@
-<div xmlns:py="http://genshi.edgewall.org/" py:strip="True">
-  <form action="${url}&amp;manage_users=1&amp;parent_id=${parent_id}&amp;id=${user.get_id()}" method="post">
-  <table class="container" width="100%" border="0" cellpadding="0" cellspacing="0">
-    <tr>
-      <td width='230' valign="top">
+<div xmlns:py="http://genshi.edgewall.org/"
+     py:with="action_url = request_uri(parent_id = [parent_id], id = [user.get_id()]);
+              img_dir    = plugin_dir + '/img/'"
+     py:strip="True">
+<form action="${action_url}" method="post">
+<table class="container" width="100%" border="0" cellpadding="0" cellspacing="0">
+  <tr>
+    <td width='230' valign="top">
       <table class="menu" cellpadding="0">
-        <tr><td align='center'><i>Member Of:</i></td></tr>
-        <tr py:for="current in groups">
-          <td><a href="${url}&amp;manage_users=1&amp;id=${current.get_id()}"><img src="${plugin_dir}/img/group.png" alt="Group:" /> ${current.get_name()}</a></td>
-        </tr>
+        <tr><td align='center'><i py:content="txt('Member of')" /></td></tr>
+        <py:for each="item in groups">
+          <tr>
+            <td py:with="url = request_uri(id = [item.get_id()])">
+            <a href="$url"><img src="${img_dir}/group.png" alt="Group:" /><span py:content="item.get_name()" /></a>
+            </td>
+          </tr>
+        </py:for>
       </table>
-      </td>
-      <td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
-      <td width='100%'>
-      <div py:choose="user.get_id()" py:strip="True">
-        <h2 py:when="0">Create A New User</h2>
-        <h2 py:otherwise="">${user.get_name()}</h2>
-      </div>
-      <h3>Public User Information</h3>
-      <table class="indent" width="100%" cellpadding="0" cellspacing="5">
-        <tr><td class="nowrap">User Name:</td><td width="100%"><input type="text" class="field" name="name" value="${user.get_name()}" /></td></tr>
-        <tr><td class="nowrap" valign="top">Description:</td><td width="100%"><textarea name="description">${user.get_attribute('description')}</textarea></td></tr>
-      </table>
-
-      <h3>Defaults</h3>
-      <table class="indent" cellpadding="0">
+    </td>
+    <td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+    <td width='100%'>
+      <py:choose>
+        <h2 py:when="user.get_id() == 0" py:content="txt('Create A New User')" />
+        <h2 py:otherwise="" py:content="user.get_name()" />
+      </py:choose>
+      <table width="100%" cellpadding="0" cellspacing="5">
+        <!-- Public information -->
         <tr>
-          <td>Content created this user is by default owned by:</td>
-          <td>
-          <select name="use_group_rights">
-            <div py:choose="user.get_attribute('use_group_rights')" py:strip="True">
-              <div py:when="1">
-                <option value="1" selected="selected">Group</option>
-                <option value="0">User</option>
-              </div>
-              <div py:otherwise="">
-                <option value="1">Group</option>
-                <option value="0" selected="selected">User</option>
-              </div>
-            </div>
-          </select>
+          <td class="nowrap" colspan="3"><h3 py:content="txt('Public User Information')" /></td>
+        </tr>
+        <tr>
+          <td><img src="$img_dir/null.png" height="1" width="20" alt="" /></td>
+          <td class="nowrap" py:content="txt('User Name:')" />
+          <td width="100%"><input type="text" class="field" name="name" value="${user.get_name()}" /></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="nowrap" valign="top" py:content="txt('Description:')" />
+          <td width="100%">
+            <textarea name="description"
+                      rows="3"
+                      cols="80"
+                      py:content="user.get_attribute('description')" />
+          </td>
+        </tr>
+
+
+        <!-- Defaults -->
+        <tr>
+          <td class="nowrap" colspan="3"><h3 py:content="txt('Defaults')" /></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td colspan="2">
+            <table cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td py:content="txt('Content created by this user is by default owned by:')" />
+                <td colspan="2">
+                  &nbsp;<select name="default_owner"
+                          py:with="default_owner = user.get_attribute('default_owner')">
+                    <option selected="${default_owner == user.get_name()}"
+                            value="0"
+                            py:content="txt('User')" />
+                    <option py:for="item in groups"
+                            selected="${default_owner == item.get_name()}"
+                            value="1"
+                            py:content="item.get_name()" />
+                  </select>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Granted Permissions -->
+        <tr>
+          <td class="nowrap" colspan="3"><h3 py:content="txt('Granted User and Group Permissions')" /></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="nowrap" valign="top" py:content="txt('View:')" />
+          <td width="100%">
+            <textarea name="viewable_actors"
+                      rows="2"
+                      cols="80"><py:for each="actor in viewable_actors">${actor.get_name()}, </py:for></textarea>
+          </td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="nowrap" valign="top" py:content="txt('Edit:')" />
+          <td width="100%">
+            <textarea name="editable_actors"
+                      rows="2"
+                      cols="80"><py:for each="actor in editable_actors">${actor.get_name()}, </py:for></textarea>
+          </td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="nowrap" valign="top" py:content="txt('Delete:')" />
+          <td width="100%">
+            <textarea name="deletable_actors"
+                      rows="2"
+                      cols="80"><py:for each="actor in deletable_actors">${actor.get_name()}, </py:for></textarea>
+          </td>
+        </tr>
+
+        <!-- Denied Permissions -->
+        <tr>
+          <td class="nowrap" colspan="3"><h3 py:content="txt('Denied User and Group Permissions')" /></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="nowrap" valign="top" py:content="txt('View:')" />
+          <td width="100%">
+            <textarea name="non_viewable_actors"
+                      rows="2"
+                      cols="80"><py:for each="actor in non_viewable_actors">${actor.get_name()}, </py:for></textarea>
+          </td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="nowrap" valign="top" py:content="txt('Edit:')" />
+          <td width="100%">
+            <textarea name="non_editable_actors"
+                      rows="2"
+                      cols="80"><py:for each="actor in non_editable_actors">${actor.get_name()}, </py:for></textarea>
+          </td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="nowrap" valign="top" py:content="txt('Delete:')" />
+          <td width="100%">
+            <textarea name="non_deleteable_actors"
+                      rows="2"
+                      cols="80"><py:for each="actor in non_deletable_actors">${actor.get_name()}, </py:for></textarea>
           </td>
         </tr>
       </table>
-
-      <h3>Things This User May Do</h3>
-      <iframe id='permission_tree' src="${url}&amp;permission_tree=1&amp;actor_id=${user.get_id()}" style='border: 0' width="100%" height="30">
-      </iframe>
-
-      <h3>Unconfirmed Permission Changes</h3>
-      <div id='changelog'><i>No permissions changed.</i></div>
       </td>
     </tr>
     <tr>

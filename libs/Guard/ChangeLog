@@ -1,0 +1,12 @@
+Changes since 1.0.1
+
+  * DBReader.py (get_permission_list_from_id): API change, accept
+    additional search options. Some API documentation was added.
+    (get_permission_list): Likewise.
+    Improved unit tests.
+
+  * DB.py (add_resource): Support for adding one resource into
+  multiple parent groups was added.
+  (__resource_add_n_children): The database structure had to be
+  changed (moving n_children from the resource_path table to the
+  resource table), so this feature now actually works.
