@@ -1,11 +1,14 @@
 #!/usr/bin/python
-import sys, cgi, os.path
+import sys, cgi, os, os.path
 sys.path.append('libs')
 import MySQLdb, Integrator
 from sqlalchemy   import *
 from ConfigParser import RawConfigParser
 from ExtensionApi import ExtensionApi
 import Guard
+
+#print 'Content-Type: text/html'
+#print
 
 if not os.path.exists('data/spiff.cfg'):
     print 'Content-Type: text/html'
@@ -22,10 +25,10 @@ if os.path.exists('install'):
     print 'accessing this page.'
     sys.exit()
 
-def find_requested_page(form_data):
-    if not form_data.has_key('page'):
+def find_requested_page(get_data):
+    if not get_data.has_key('page'):
         return 'system/login'
-    return form_data['page'].value
+    return get_data['page'][0]
 
 
 # Read config.
@@ -34,18 +37,21 @@ cfg.read('data/spiff.cfg')
 dbn = cfg.get('database', 'dbn')
 
 # Connect to MySQL and set up.
-db            = create_engine(dbn)
-acldb         = Guard.DB(db)
-form_data     = cgi.FieldStorage()
-integrator    = Integrator.Manager(acldb,
-                                   ExtensionApi,
-                                   guard     = acldb,
-                                   form_data = form_data)
+db         = create_engine(dbn)
+guard_db   = Guard.DB(db)
+get_data   = cgi.parse_qs(os.environ["QUERY_STRING"])
+post_data  = cgi.FieldStorage()
+integrator = Integrator.Manager(guard_db,
+                                ExtensionApi,
+                                acldb     = guard_db,
+                                guard_mod = Guard,
+                                get_data  = get_data,
+                                post_data = post_data)
 integrator.set_extension_dir('data/repo')
 
 # Lookup page from the given cgi variables.
-page     = find_requested_page(form_data)
-page_res = acldb.get_resource_from_handle(page, 'content')
+page     = find_requested_page(get_data)
+page_res = guard_db.get_resource_from_handle(page, 'content')
 if page_res is None:
     print 'Content-Type: text/html'
     print

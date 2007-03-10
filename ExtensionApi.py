@@ -22,14 +22,18 @@ from genshi.template import MarkupTemplate
 
 
 class ExtensionApi(Api):
-    def __init__(self, manager, event_bus, *args, **kwargs):
-        assert manager             is not None
-        assert event_bus           is not None
-        assert kwargs.has_key('guard')
-        assert kwargs.has_key('form_data')
-        Api.__init__(self, manager, event_bus)
-        self.__guard        = kwargs['guard']
-        self.__form_data    = kwargs['form_data']
+    def __init__(self, guard_db, manager, event_bus, *args, **kwargs):
+        assert guard_db  is not None
+        assert manager   is not None
+        assert event_bus is not None
+        assert kwargs.has_key('guard_mod')
+        assert kwargs.has_key('get_data')
+        assert kwargs.has_key('post_data')
+        Api.__init__(self, guard_db, manager, event_bus)
+        self.__guard_db     = guard_db
+        self.__guard_mod    = kwargs['guard_mod']
+        self.__get_data     = kwargs['get_data']
+        self.__post_data    = kwargs['post_data']
         self.__headers_sent = False
 
 
@@ -42,16 +46,37 @@ class ExtensionApi(Api):
         return caller
 
 
+    def get_i18n(self):
+        return gettext
+
+
+    def get_guard_db(self):
+        #FIXME: Check permission of the caller!
+        return self.__guard_db
+
+
     def get_guard(self):
         #FIXME: Check permission of the caller!
-        return self.__guard
+        return self.__guard_mod
 
 
-    def get_form_value(self, name):
+    def get_get_data(self, name, unpack = True):
         #FIXME: Do we need to check the permission of the caller?
-        if not self.__form_data.has_key(name):
+        if not self.__get_data.has_key(name):
             return None
-        return self.__form_data[name].value
+        if unpack:
+            return self.__get_data[name][0]
+        return self.__get_data[name]
+
+
+    def get_post_data(self, name, unpack = True):
+        #FIXME: Do we need to check the permission of the caller?
+        if not self.__post_data.has_key(name):
+            return None
+        value = self.__post_data[name].value
+        if type([]) != type(value) or not unpack:
+            return value
+        return value[0]
 
 
     def send_headers(self, content_type = 'text/html', headers = {}):

@@ -16,7 +16,8 @@ from Callback  import Callback
 from functions import is_valid_uri
 
 class Api:
-    def __init__(self, manager, event_bus):
+    def __init__(self, guard_db, manager, event_bus):
+        assert guard_db  is not None
         assert manager   is not None
         assert event_bus is not None
         self.__manager   = manager
@@ -59,7 +60,7 @@ if __name__ == '__main__':
 
         def runTest(self):
             eb  = EventBus()
-            api = Api(eb, eb) # Passing eb as manager because it doesn't matter
+            api = Api(None, eb, eb) # Passing eb as manager because it doesn't matter
             assert api.add_listener(self.dummy, "test:some/event/uri") >= 0
 
             #Note: The other functions are not tested here, but in the

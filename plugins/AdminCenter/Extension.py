@@ -11,8 +11,10 @@ signal:       render_start
 """
 class Extension:
     def __init__(self, api):
-        self.api   = api
-        self.guard = api.get_guard()
+        self.api      = api
+        self.i18n     = api.get_i18n()
+        self.guard    = api.get_guard()
+        self.guard_db = api.get_guard_db()
 
 
     def __content_editor(self):
@@ -22,17 +24,17 @@ class Extension:
             self.api.render('templates/content_editor.tmpl')
 
 
-    def __show_user(self, user):
+    def __show_user(self, user, errors = []):
         assert user is not None
         assert not user.is_group()
-        guard = self.guard
+        guard_db = self.guard_db
 
         # Collect information for the browser.
-        parents = guard.get_resource_parents(user)
+        parents = guard_db.get_resource_parents(user)
         
         # Collect permissions.
         search = {'actor': user, 'resource_section_handle': 'users'}
-        acls            = guard.get_permission_list(**search)
+        acls            = guard_db.get_permission_list(**search)
         acls_view       = []
         acls_edit       = []
         acls_delete     = []
@@ -56,12 +58,12 @@ class Extension:
                 acls_non_delete.append(acl.get_resource_id())
 
         # Collect more permission info.
-        viewable      = guard.get_resource_list_from_id_list(acls_view)
-        editable      = guard.get_resource_list_from_id_list(acls_edit)
-        deletable     = guard.get_resource_list_from_id_list(acls_delete)
-        non_viewable  = guard.get_resource_list_from_id_list(acls_non_view)
-        non_editable  = guard.get_resource_list_from_id_list(acls_non_edit)
-        non_deletable = guard.get_resource_list_from_id_list(acls_non_delete)
+        viewable      = guard_db.get_resource_list_from_id_list(acls_view)
+        editable      = guard_db.get_resource_list_from_id_list(acls_edit)
+        deletable     = guard_db.get_resource_list_from_id_list(acls_delete)
+        non_viewable  = guard_db.get_resource_list_from_id_list(acls_non_view)
+        non_editable  = guard_db.get_resource_list_from_id_list(acls_non_edit)
+        non_deletable = guard_db.get_resource_list_from_id_list(acls_non_delete)
 
         # Render the template.
         self.api.render('templates/user_editor.tmpl',
@@ -72,16 +74,17 @@ class Extension:
                         deletable_actors     = deletable,
                         non_viewable_actors  = non_viewable,
                         non_editable_actors  = non_editable,
-                        non_deletable_actors = non_deletable)
+                        non_deletable_actors = non_deletable,
+                        errors               = errors)
 
 
-    def __show_group(self, group):
+    def __show_group(self, group, errors = []):
         assert group is not None
         assert group.is_group()
-        guard = self.guard
+        guard_db = self.guard_db
 
         # Collect information for the browser.
-        children = guard.get_resource_children(group)
+        children = guard_db.get_resource_children(group)
         users    = []
         groups   = []
         for child in children:
@@ -92,7 +95,7 @@ class Extension:
 
         # Collect permissions.
         search = {'actor': group, 'resource_section_handle': 'users'}
-        acls            = guard.get_permission_list(**search)
+        acls            = guard_db.get_permission_list(**search)
         acls_view       = []
         acls_edit       = []
         acls_delete     = []
@@ -116,12 +119,12 @@ class Extension:
                 acls_non_delete.append(acl.get_resource_id())
 
         # Collect more permission info.
-        viewable      = guard.get_resource_list_from_id_list(acls_view)
-        editable      = guard.get_resource_list_from_id_list(acls_edit)
-        deletable     = guard.get_resource_list_from_id_list(acls_delete)
-        non_viewable  = guard.get_resource_list_from_id_list(acls_non_view)
-        non_editable  = guard.get_resource_list_from_id_list(acls_non_edit)
-        non_deletable = guard.get_resource_list_from_id_list(acls_non_delete)
+        viewable      = guard_db.get_resource_list_from_id_list(acls_view)
+        editable      = guard_db.get_resource_list_from_id_list(acls_edit)
+        deletable     = guard_db.get_resource_list_from_id_list(acls_delete)
+        non_viewable  = guard_db.get_resource_list_from_id_list(acls_non_view)
+        non_editable  = guard_db.get_resource_list_from_id_list(acls_non_edit)
+        non_deletable = guard_db.get_resource_list_from_id_list(acls_non_delete)
 
         # Render the template.
         self.api.render('templates/group_editor.tmpl',
@@ -133,34 +136,142 @@ class Extension:
                         deletable_actors     = deletable,
                         non_viewable_actors  = non_viewable,
                         non_editable_actors  = non_editable,
-                        non_deletable_actors = non_deletable)
+                        non_deletable_actors = non_deletable,
+                        errors               = errors)
+
+
+    def __save_resource(self, resource):
+        assert resource is not None
+        
+        # Retrieve form data.
+        get_data             = self.api.get_get_data
+        post_data            = self.api.get_post_data
+        parent_id            = get_data('parent_id')
+        name                 = post_data('name')
+        description          = post_data('description')
+        use_group_permission = post_data('use_group_permission')
+        default_owner_id     = post_data('default_owner_id')
+        viewable_actors      = post_data('viewable_actors')
+        editable_actors      = post_data('editable_actors')
+        deletable_actors     = post_data('deletable_actors')
+        non_viewable_actors  = post_data('non_viewable_actors')
+        non_editable_actors  = post_data('non_editable_actors')
+        non_deletable_actors = post_data('non_deletable_actors')
+        if parent_id is not None:
+            parent_id = int(parent_id)
+        if resource.is_group() and parent_id is None:
+            parent_id = 0  # Given resource is a top-level group.
+        if use_group_permission is not None:
+            use_group_permission = int(use_group_permission)
+        if default_owner_id is not None:
+            default_owner_id = int(default_owner_id)
+
+        # Validate form data.
+        errors = []
+        parent = None
+
+        # Parent ID must be >= 0.
+        if parent_id is None or parent_id < 0:
+            msg = self.i18n("Invalid parent id.")
+            errors.append(msg)
+
+        # A resource can not be its own parent/child.
+        elif parent_id == resource.get_id():
+            msg = self.i18n("A resource can not be its own parent.")
+            errors.append(msg)
+
+        # Users *need* to have a parent (unlike groups, whose parent is 0).
+        elif parent == 0 and not resource.is_group():
+            msg = self.i18n("Can not create a user without a group.")
+            errors.append(msg)
+
+        # So a parent was given - make sure that it exists.
+        elif parent_id > 0:
+            parent = self.guard_db.get_resource_from_id(parent_id)
+            if parent is None:
+                msg = self.i18n("Specified parent does not exist.")
+                errors.append(msg)
+
+        # Minimum name length.
+        if name is None or len(name) < 2:
+            msg = self.i18n("The name must be at least two characters long.")
+            errors.append(msg)
+
+        # Groups require the use_group_permission field.
+        if resource.is_group():
+            if use_group_permission not in [0, 1]:
+                msg = self.i18n("Group has an invalid default owner.")
+                errors.append(msg)
+
+        # New users require the default_owner_id field set to either 0 or
+        # to the parent_id.
+        elif parent is not None and resource.get_id() <= 0:
+            if default_owner_id != 0 and default_owner_id != parent_id:
+                msg = self.i18n("Specified parent does not exist.")
+                errors.append(msg)
+
+        # Existing users require the default_owner_id field set to either 0
+        # or one of the parent ids.
+        elif parent is not None and default_owner_id != 0:
+            parents = self.guard_db.get_resource_parents(resource)
+            found   = False
+            if parents is not None:
+                for parent in parents:
+                    if int(default_owner_id) == parent.get_id():
+                        found = True
+                        break
+            if not found:
+                msg = self.i18n("User has an invalid default owner.")
+                errors.append(msg)
+        if len(errors) > 0:
+            return errors
+
+        # Cool, everything looks clean! Store the data in the resource and
+        # save it.
+        resource.set_name(name)
+        resource.set_attribute('description', description)
+        if resource.is_group():
+            resource.set_attribute('use_group_permission',
+                                   use_group_permission)
+        else:
+            resource.set_attribute('default_owner_id', default_owner_id)
+        section = self.guard_db.get_resource_section_from_handle('users')
+        if resource.get_id() <= 0:
+            self.guard_db.add_resource(parent_id, resource, section)
+        else:
+            self.guard_db.save_resource(resource, section)
+        return None
 
 
     def __user_editor(self):
-        id = self.api.get_form_value('id')
+        id = self.api.get_get_data('id')
 
-        # If no id was given, display the root group.
+        # Fetch the requested user or group info.
         if id is None:
-            group = self.guard.get_resource_from_handle('everybody', 'users')
-            self.__show_group(group)
-            return
-
-        # Ending up here, we have an id.
-        # Fetch the requested user or group info and display it.
-        resource = self.guard.get_resource_from_id(id)
-        if resource.is_group():
-            self.__show_group(resource)
+            resource = self.guard_db.get_resource_from_handle('everybody',
+                                                              'users')
         else:
-            self.__show_user(resource)
+            resource = self.guard_db.get_resource_from_id(id)
+
+        # If the user or group is to be saved, try now.
+        errors = []
+        if self.api.get_post_data('save') is not None:
+            errors = self.__save_resource(resource)
+
+        # Display the editor.
+        if resource.is_group():
+            self.__show_group(resource, errors)
+        else:
+            self.__show_user(resource, errors)
 
 
     def on_render_request(self):
         self.api.emit('render_start')
         self.api.send_headers()
 
-        if self.api.get_form_value('manage_content') is not None:
+        if self.api.get_get_data('manage_content') is not None:
             self.__content_editor()
-        elif self.api.get_form_value('manage_users') is not None:
+        elif self.api.get_get_data('manage_users') is not None:
             self.__user_editor()
         else:
             self.api.render('templates/admin.tmpl')

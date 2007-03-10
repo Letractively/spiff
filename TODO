@@ -1,16 +1,24 @@
-* Check string escaping in HTML templates.
+* Admin Center: Make saving permissions work.
 
-* Get the signal permission checks right.
+* Admin Center: Make creating groups work.
 
-* Finish the Admin Center extension.
+* Admin Center: Make creating users work.
 
-* Check permissions of user actions in the admin UI.
+* Admin Center: Handle duplicate user/group names.
+
+* Admin Center: Make deleting groups work.
+
+* Admin Center: Make deleting users work.
+
+* Admin Center: Handle orphaned users.
+
+* Admin Center: Check permissions of user actions.
+
+* Everywhere: Check string escaping in HTML templates.
+
+* Integrator/Extensions: Get the signal permission checks right.
 
 * Create a navigation bar ("breadcrumbs") extension.
-
-* Delete orphaned users.
-
-* Handle invalid/duplicate user/group names.
 
 * Decide how to lay out multiple plugins on one site.
   - Create layout containers? (Straight forward, but how can we hide

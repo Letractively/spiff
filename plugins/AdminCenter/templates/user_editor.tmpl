@@ -1,8 +1,7 @@
 <div xmlns:py="http://genshi.edgewall.org/"
-     py:with="action_url = request_uri(parent_id = [parent_id], id = [user.get_id()]);
-              img_dir    = plugin_dir + '/img/'"
+     py:with="img_dir = plugin_dir + '/img'"
      py:strip="True">
-<form action="${action_url}" method="post">
+<form action="${request_uri()}" method="post">
 <table class="container" width="100%" border="0" cellpadding="0" cellspacing="0">
   <tr>
     <td width='230' valign="top">
@@ -23,6 +22,9 @@
         <h2 py:when="user.get_id() == 0" py:content="txt('Create A New User')" />
         <h2 py:otherwise="" py:content="user.get_name()" />
       </py:choose>
+      <py:for each="error in errors">
+        <font color="red" size="3" py:content="error" /><br/>
+      </py:for>
       <table width="100%" cellpadding="0" cellspacing="5">
         <!-- Public information -->
         <tr>
@@ -56,14 +58,14 @@
               <tr>
                 <td py:content="txt('Content created by this user is by default owned by:')" />
                 <td colspan="2">
-                  &nbsp;<select name="default_owner"
-                          py:with="default_owner = user.get_attribute('default_owner')">
-                    <option selected="${default_owner == user.get_name()}"
+                  &nbsp;<select name="default_owner_id"
+                          py:with="default_owner_id = user.get_attribute('default_owner_id')">
+                    <option selected="${default_owner_id == 0 or None}"
                             value="0"
                             py:content="txt('User')" />
                     <option py:for="item in groups"
-                            selected="${default_owner == item.get_name()}"
-                            value="1"
+                            selected="${default_owner_id == item.get_id() or None}"
+                            value="${item.get_id()}"
                             py:content="item.get_name()" />
                   </select>
                 </td>
