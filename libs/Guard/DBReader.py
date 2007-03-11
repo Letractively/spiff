@@ -253,7 +253,7 @@ class DBReader:
         table  = outerjoin(tbl_r, tbl_a, tbl_r.c.id == tbl_a.c.resource_id)
         select = table.select(tbl_r.c.id == id, use_labels = True)
         return self.__get_resource_from_query(select, type)
-        
+
 
     def get_resource_from_handle(self, handle, section_handle, type = None):
         assert handle         is not None
@@ -274,7 +274,8 @@ class DBReader:
         tbl_a  = self._table_map['resource_attribute']
         table  = outerjoin(tbl_r, tbl_a, tbl_r.c.id == tbl_a.c.resource_id)
         select = table.select(and_(tbl_r.c.name           == name,
-                                   tbl_r.c.section_handle == section_handle))
+                                   tbl_r.c.section_handle == section_handle),
+                              use_labels = True)
         return self.__get_resource_from_query(select, type)
 
 

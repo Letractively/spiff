@@ -9,6 +9,8 @@ dependency:   spiff spiff_core_login
 signal:       render_start
               render_end
 """
+from string import split
+
 class Extension:
     def __init__(self, api):
         self.api      = api
@@ -24,6 +26,18 @@ class Extension:
             self.api.render('templates/content_editor.tmpl')
 
 
+    def __parse_permissions(self, permission_str):
+        permissions = []
+        for permission in split(permission_str, ','):
+            permission = permission.strip()
+            if permission == '':
+                continue
+            if len(permission) < 2:
+                return None
+            permissions.append(permission)
+        return permissions
+
+
     def __show_user(self, user, path, errors = []):
         assert user is not None
         assert not user.is_group()
@@ -35,8 +49,8 @@ class Extension:
             parents = guard_db.get_resource_parents(user)
             # Abuse attributes to pass the path to the HTML template.
             for parent in parents:
-                path = guard_db.get_resource_path_from_id(parent.get_id())
-                parent.set_attribute('path_str', path.get())
+                ppath = guard_db.get_resource_path_from_id(parent.get_id())
+                parent.set_attribute('path_str', ppath.get())
         else:
             parent_id = path.crop().get_current_id()
             parent    = guard_db.get_resource_from_id(parent_id)
@@ -248,6 +262,36 @@ class Extension:
             if not found:
                 msg = self.i18n("User has an invalid default owner.")
                 errors.append(msg)
+
+        # Check the syntax of the permission fields.
+        permission_fields = {
+          'viewable_actors':      self.i18n('Viewable Users'),
+          'editable_actors':      self.i18n('Editable Users'),
+          'deletable_actors':     self.i18n('Deletable Users'),
+          'non_viewable_actors':  self.i18n('Non-Viewable Users'),
+          'non_editable_actors':  self.i18n('Non-Editable Users'),
+          'non_deletable_actors': self.i18n('Non-Deletable Users'),
+        }
+        for field in permission_fields:
+            if locals()[field] is None:
+                continue
+            # Syntax check.
+            list = self.__parse_permissions(locals()[field])
+            if list is None:
+                fname = permission_fields[field]
+                msg   = self.i18n("'%s' field has invalid content." % fname)
+                errors.append(msg)
+                continue
+
+            # Make sure that the specified users/groups exist.
+            for rname in list:
+                res = self.guard_db.get_resource_from_name(rname, 'users')
+                if res is not None:
+                    continue
+                msg = self.i18n("User or group '%s' does not exists." % rname)
+                errors.append(msg)
+
+        # Bail out if an error occured.
         if len(errors) > 0:
             return errors
 
@@ -265,6 +309,10 @@ class Extension:
             self.guard_db.add_resource(parent_id, resource, section)
         else:
             self.guard_db.save_resource(resource, section)
+
+        # Save the permissions.
+        #FIXME
+
         return None
 
 
@@ -291,19 +339,19 @@ class Extension:
         elif self.api.get_post_data('group_save') is not None and id == 0:
             resource = self.guard.ResourceGroup('')
             errors   = self.__save_resource(resource)
-            path     = path.crop(1).append(resource.get_id())
+            path     = path.crop().append(resource.get_id())
         elif self.api.get_post_data('group_save') is not None:
             resource = self.guard_db.get_resource_from_id(id)
             errors   = self.__save_resource(resource)
-            path     = path.crop(1).append(resource.get_id())
+            path     = path.crop().append(resource.get_id())
         elif self.api.get_post_data('user_save') is not None and id == 0:
             resource = self.guard.Resource('')
             errors   = self.__save_resource(resource)
-            path     = path.crop(1).append(resource.get_id())
+            path     = path.crop().append(resource.get_id())
         elif self.api.get_post_data('user_save') is not None:
             resource = self.guard_db.get_resource_from_id(id)
             errors   = self.__save_resource(resource)
-            path     = path.crop(1).append(resource.get_id())
+            path     = path.crop().append(resource.get_id())
         elif path_str is not None:
             resource = self.guard_db.get_resource_from_id(id)
 
