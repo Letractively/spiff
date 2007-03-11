@@ -24,9 +24,10 @@ class Extension:
             self.api.render('templates/content_editor.tmpl')
 
 
-    def __show_user(self, user, errors = []):
+    def __show_user(self, user, path, errors = []):
         assert user is not None
         assert not user.is_group()
+        assert path is not None
         guard_db = self.guard_db
 
         # Collect information for the browser.
@@ -67,6 +68,7 @@ class Extension:
 
         # Render the template.
         self.api.render('templates/user_editor.tmpl',
+                        path                 = path,
                         user                 = user,
                         groups               = parents,
                         viewable_actors      = viewable,
@@ -78,12 +80,14 @@ class Extension:
                         errors               = errors)
 
 
-    def __show_group(self, group, errors = []):
+    def __show_group(self, group, path, errors = []):
         assert group is not None
         assert group.is_group()
+        assert path is not None
         guard_db = self.guard_db
 
         # Collect information for the browser.
+        parents  = guard_db.get_resource_parents(group)
         children = guard_db.get_resource_children(group)
         users    = []
         groups   = []
@@ -128,6 +132,8 @@ class Extension:
 
         # Render the template.
         self.api.render('templates/group_editor.tmpl',
+                        path                 = path,
+                        parents              = parents,
                         group                = group,
                         users                = users,
                         groups               = groups,
@@ -146,7 +152,8 @@ class Extension:
         # Retrieve form data.
         get_data             = self.api.get_get_data
         post_data            = self.api.get_post_data
-        parent_id            = get_data('parent_id')
+        path                 = None
+        path_str             = get_data('path_str')
         name                 = post_data('name')
         description          = post_data('description')
         use_group_permission = post_data('use_group_permission')
@@ -157,8 +164,10 @@ class Extension:
         non_viewable_actors  = post_data('non_viewable_actors')
         non_editable_actors  = post_data('non_editable_actors')
         non_deletable_actors = post_data('non_deletable_actors')
-        if parent_id is not None:
-            parent_id = int(parent_id)
+        if path_str is not None:
+            path = self.guard.ResourcePath(path_str)
+        if path is not None:
+            parent_id = path.get_parent_id()
         if resource.is_group() and parent_id is None:
             parent_id = 0  # Given resource is a top-level group.
         if use_group_permission is not None:
@@ -180,8 +189,9 @@ class Extension:
             msg = self.i18n("A resource can not be its own parent.")
             errors.append(msg)
 
-        # Users *need* to have a parent (unlike groups, whose parent is 0).
-        elif parent == 0 and not resource.is_group():
+        # Users *have to* have a parent (unlike groups, whose parent may be
+        # 0).
+        elif parent_id == 0 and not resource.is_group():
             msg = self.i18n("Can not create a user without a group.")
             errors.append(msg)
 
@@ -244,25 +254,49 @@ class Extension:
 
 
     def __user_editor(self):
-        id = self.api.get_get_data('id')
+        path_str = self.api.get_get_data('path_str')
 
-        # Fetch the requested user or group info.
-        if id is None:
+        # Find out which item was requested.
+        if path_str is None:
             resource = self.guard_db.get_resource_from_handle('everybody',
                                                               'users')
+            path     = self.guard.ResourcePath([resource.get_id()])
         else:
-            resource = self.guard_db.get_resource_from_id(id)
+            path = self.guard.ResourcePath(path_str)
 
-        # If the user or group is to be saved, try now.
+        # Fetch the requested user or group info.
         errors = []
-        if self.api.get_post_data('save') is not None:
-            errors = self.__save_resource(resource)
+        id     = int(path.get_current_id())
+        if self.api.get_post_data('group_add') is not None:
+            resource = self.guard.ResourceGroup('')
+            path     = path.append(0)
+        elif self.api.get_post_data('user_add') is not None:
+            resource = self.guard.Resource('')
+            path     = path.append(0)
+        elif self.api.get_post_data('group_save') is not None and id == 0:
+            resource = self.guard.ResourceGroup('')
+            errors   = self.__save_resource(resource)
+            path     = path.crop(1).append(resource.get_id())
+        elif self.api.get_post_data('group_save') is not None:
+            resource = self.guard_db.get_resource_from_id(id)
+            errors   = self.__save_resource(resource)
+            path     = path.crop(1).append(resource.get_id())
+        elif self.api.get_post_data('user_save') is not None and id == 0:
+            resource = self.guard.Resource('')
+            errors   = self.__save_resource(resource)
+            path     = path.crop(1).append(resource.get_id())
+        elif self.api.get_post_data('user_save') is not None:
+            resource = self.guard_db.get_resource_from_id(id)
+            errors   = self.__save_resource(resource)
+            path     = path.crop(1).append(resource.get_id())
+        elif path_str is not None:
+            resource = self.guard_db.get_resource_from_id(id)
 
         # Display the editor.
         if resource.is_group():
-            self.__show_group(resource, errors)
+            self.__show_group(resource, path, errors)
         else:
-            self.__show_user(resource, errors)
+            self.__show_user(resource, path, errors)
 
 
     def on_render_request(self):

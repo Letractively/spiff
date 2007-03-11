@@ -60,7 +60,7 @@ if __name__ == '__main__':
 
         def runTest(self):
             eb  = EventBus()
-            api = Api(None, eb, eb) # Passing eb as manager because it doesn't matter
+            api = Api(eb, eb, eb) # Passing eb as manager because it doesn't matter
             assert api.add_listener(self.dummy, "test:some/event/uri") >= 0
 
             #Note: The other functions are not tested here, but in the

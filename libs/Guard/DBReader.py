@@ -336,6 +336,7 @@ class DBReader:
         table  = table.outerjoin(tbl_p2, tbl_p2.c.id == tbl_m.c.ancestor_path_id)
         select = table.select(and_(tbl_p2.c.resource_id == resource_id,
                                    tbl_p1.c.depth       == tbl_p2.c.depth + 1),
+                              order_by   = [tbl_p1.c.resource_id],
                               use_labels = True)
 
         # Define whether to fetch groups, items, or both.
@@ -354,8 +355,8 @@ class DBReader:
         last     = None
         children = [];
         for row in result:
-            if row[tbl_r.c.handle] != last:
-                last = row[tbl_r.c.handle]
+            if row[tbl_p1.c.resource_id] != last:
+                last = row[tbl_p1.c.resource_id]
                 resource = self.__get_resource_from_row(row, type)
                 resource.set_n_children(row[tbl_r.c.n_children])
                 children.append(resource)
@@ -382,8 +383,8 @@ class DBReader:
         return self.get_resource_children_from_id(resource_id, type, options)
 
 
-    def get_resource_parents_from_id(self, parent_id, type = None):
-        assert parent_id >= 0
+    def get_resource_parents_from_id(self, child_id, type = None):
+        assert child_id is not None
 
         tbl_r  = self._table_map['resource']
         tbl_a  = self._table_map['resource_attribute']
@@ -394,9 +395,9 @@ class DBReader:
         table  = table.outerjoin(tbl_p1, tbl_r.c.id  == tbl_p1.c.resource_id)
         table  = table.outerjoin(tbl_m,  tbl_p1.c.id == tbl_m.c.ancestor_path_id)
         table  = table.outerjoin(tbl_p2, tbl_p2.c.id == tbl_m.c.resource_path_id)
-        select = table.select(and_(tbl_p2.c.resource_id == parent_id,
+        select = table.select(and_(tbl_p2.c.resource_id == child_id,
                                    tbl_p2.c.depth       == tbl_p1.c.depth + 1),
-                              order_by   = [tbl_p1.c.id],
+                              order_by   = [tbl_p1.c.resource_id],
                               use_labels = True)
         result = select.execute()
         assert result is not None
