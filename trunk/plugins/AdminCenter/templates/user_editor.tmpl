@@ -1,15 +1,16 @@
 <div xmlns:py="http://genshi.edgewall.org/"
      py:with="img_dir = plugin_dir + '/img'"
      py:strip="True">
-<form action="${request_uri()}" method="post">
+<form action="${request_uri(path_str = [path.get()])}" method="post">
 <table class="container" width="100%" border="0" cellpadding="0" cellspacing="0">
   <tr>
     <td width='230' valign="top">
       <table class="menu" cellpadding="0">
         <tr><td align='center'><i py:content="txt('Member of')" /></td></tr>
         <py:for each="item in groups">
-          <tr>
-            <td py:with="url = request_uri(id = [item.get_id()])">
+          <tr py:with="parent_path = path.crop(2).append(item.get_id());
+                       url         = request_uri(path_str = [parent_path.get()])">
+            <td>
             <a href="$url"><img src="${img_dir}/group.png" alt="Group:" /><span py:content="item.get_name()" /></a>
             </td>
           </tr>
@@ -19,7 +20,7 @@
     <td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
     <td width='100%'>
       <py:choose>
-        <h2 py:when="user.get_id() == 0" py:content="txt('Create A New User')" />
+        <h2 py:when="user.get_id() == -1" py:content="txt('Create A New User')" />
         <h2 py:otherwise="" py:content="user.get_name()" />
       </py:choose>
       <py:for each="error in errors">
@@ -144,9 +145,9 @@
       <td>
       <table py:if="user.get_id() != 0" width="100%">
         <tr>
-          <td><input type="submit" class="button" name="cancel_membership" value="Cancel Membership" /></td>
+          <td><input type="submit" class="button" name="cancel_membership" value="${txt('Cancel Membership')}" /></td>
           <td>&nbsp;</td>
-          <td><input type="submit" class="button" name="add_membership" value="Add Membership" /></td>
+          <td><input type="submit" class="button" name="add_membership" value="${txt('Add Membership')}" /></td>
         </tr>
       </table>
       </td>
@@ -154,9 +155,9 @@
       <td align="right">
       <table>
         <tr>
-          <td><input type="submit" class="button" name="delete" value="Delete User" /></td>
+          <td><input type="submit" class="button" name="user_delete" value="${txt('Delete User')}" /></td>
           <td>&nbsp;</td>
-          <td><input type="submit" class="button" name="save" value="Apply Changes" /></td>
+          <td><input type="submit" class="button" name="user_save" value="${txt('Apply Changes')}" /></td>
         </tr>
       </table>
       </td>

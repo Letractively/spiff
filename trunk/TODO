@@ -1,8 +1,6 @@
 * Admin Center: Make saving permissions work.
 
-* Admin Center: Make creating groups work.
-
-* Admin Center: Make creating users work.
+* Admin Center: Display the parent list in the new user/group dialog.
 
 * Admin Center: Handle duplicate user/group names.
 

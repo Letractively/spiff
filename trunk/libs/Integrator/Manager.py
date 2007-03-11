@@ -31,7 +31,7 @@ class Manager:
     __permission_denied_error = range(-1, -7, -1)
     
     def  __init__(self, guard_db, extension_api_obj, *api_args, **api_kwargs):
-        assert guard_db             is not None
+        assert guard_db          is not None
         assert extension_api_obj is not None
         self.__extension_db = DB(guard_db)
         self.__event_bus    = EventBus()

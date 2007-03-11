@@ -15,9 +15,11 @@ Installation Instructions
 06. Open spiff/installer/install.py in your web browser and follow the
     instructions. Make sure that no error message appears.
     !!! WARNING: This step will erase the content of the database that
-        is configured in spiff/data/config.txt !!!
+        is specified in the configuration dialog !!!
 
-07. If you encountered any bugs, please report them at
+07. If you encountered any problems or bugs, please report them at
     http://code.google.com/p/spiff/issues/list
+    You can also tell us how we can make the installation procedure even
+    easier.
 
 08. Done! You should now be able to open the index.py file in your web browser.

@@ -33,6 +33,8 @@ class DBObject:
         assert name != None
         assert len(name) > 0
         self.__name = name
+        if len(self.__handle) == 0:
+            self.__handle = make_handle_from_string(name)
 
     def get_name(self):
         return self.__name

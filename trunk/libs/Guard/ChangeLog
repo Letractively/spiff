@@ -1,7 +1,9 @@
 Changes since 1.0.1
 
-  * Guard (get_resource_parents_from_id): Fixed a bug that the result
-  was incorrect when a resource had multiple attributes.
+  * ResourcePath.py: Added new class for user convenience.
+
+  * DBReader.py (get_resource_parents_from_id): Fixed a bug that the
+  result was incorrect when a resource had multiple attributes.
   (get_resource_children_from_id): Likewise.
 
   * DBReader.py (get_permission_list_from_id): API change, accept

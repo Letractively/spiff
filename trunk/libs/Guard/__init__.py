@@ -7,6 +7,7 @@ __all__ = ['Acl',
            'DBReader',
            'Resource',
            'ResourceGroup',
+           'ResourcePath',
            'ResourceSection']
 
 from Acl             import Acl
@@ -18,4 +19,5 @@ from DB              import DB
 from DBReader        import DBReader
 from Resource        import Resource
 from ResourceGroup   import ResourceGroup
+from ResourcePath    import ResourcePath
 from ResourceSection import ResourceSection
