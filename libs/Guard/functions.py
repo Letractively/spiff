@@ -28,7 +28,7 @@ def hex_path2bin_path(path):
     return bin_path
 
 
-def bin_path2hex_path(path):
+def bin_path2list(path):
     assert path is not None
     #print "Path length:", len(path)
     numbers = []
@@ -36,6 +36,14 @@ def bin_path2hex_path(path):
         cur_chunk = path[-4:]
         numbers.append(struct.unpack('l', cur_chunk)[0])
         path = path[0:len(path) - 4]
+    hex_path = ''
+    return numbers
+
+
+def bin_path2hex_path(path):
+    assert path is not None
+    #print "Path length:", len(path)
+    numbers  = bin_path2list(path)
     hex_path = ''
     for number in numbers:
         hex_path += int2hex(number, 8)

@@ -16,6 +16,7 @@ import sys
 import os.path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from sqlalchemy import *
+from functions  import bin_path2list
 
 from ObjectSection   import *
 from ActionSection   import *
@@ -24,6 +25,7 @@ from Acl             import *
 from Action          import *
 from Resource        import *
 from ResourceGroup   import *
+from ResourcePath    import *
 from Actor           import *
 from ActorGroup      import *
 
@@ -371,6 +373,18 @@ class DBReader:
                                        row[tbl_a.c.attr_string])
 
         return children
+
+
+    def get_resource_path_from_id(self, id):
+        assert id >= 0
+        tbl_p  = self._table_map['resource_path']
+        select = tbl_p.select(tbl_p.c.resource_id == id)
+        result = select.execute()
+        assert result is not None
+        row = result.fetchone()
+        assert row is not None
+        list = bin_path2list(row[tbl_p.c.path])
+        return ResourcePath(list)
 
 
     def get_resource_children(self,

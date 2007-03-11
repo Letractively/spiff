@@ -8,8 +8,7 @@
       <table class="menu" cellpadding="0">
         <tr><td align='center'><i py:content="txt('Member of')" /></td></tr>
         <py:for each="item in groups">
-          <tr py:with="parent_path = path.crop(2).append(item.get_id());
-                       url         = request_uri(path_str = [parent_path.get()])">
+          <tr py:with="url = request_uri(path_str = [item.get_attribute('path_str')])">
             <td>
             <a href="$url"><img src="${img_dir}/group.png" alt="Group:" /><span py:content="item.get_name()" /></a>
             </td>

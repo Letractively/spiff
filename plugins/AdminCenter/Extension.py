@@ -31,7 +31,17 @@ class Extension:
         guard_db = self.guard_db
 
         # Collect information for the browser.
-        parents = guard_db.get_resource_parents(user)
+        if user.get_id() > 0:
+            parents = guard_db.get_resource_parents(user)
+            # Abuse attributes to pass the path to the HTML template.
+            for parent in parents:
+                path = guard_db.get_resource_path_from_id(parent.get_id())
+                parent.set_attribute('path_str', path.get())
+        else:
+            parent_id = path.crop().get_current_id()
+            parent    = guard_db.get_resource_from_id(parent_id)
+            parent.set_attribute('path_str', path.crop().get())
+            parents   = [parent]
         
         # Collect permissions.
         search = {'actor': user, 'resource_section_handle': 'users'}
@@ -87,7 +97,12 @@ class Extension:
         guard_db = self.guard_db
 
         # Collect information for the browser.
-        parents  = guard_db.get_resource_parents(group)
+        if group.get_id() > 0:
+            parents = guard_db.get_resource_parents(group)
+        else:
+            parent_id = path.crop().get_current_id()
+            parent    = guard_db.get_resource_from_id(parent_id)
+            parents   = [parent]
         children = guard_db.get_resource_children(group)
         users    = []
         groups   = []

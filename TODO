@@ -1,12 +1,14 @@
 * Admin Center: Make saving permissions work.
 
-* Admin Center: Display the parent list in the new user/group dialog.
-
 * Admin Center: Handle duplicate user/group names.
 
 * Admin Center: Make deleting groups work.
 
 * Admin Center: Make deleting users work.
+
+* Admin Center: Make the "Add membership" button work.
+
+* Admin Center: Make the "Cancel membership" button work.
 
 * Admin Center: Handle orphaned users.
 
