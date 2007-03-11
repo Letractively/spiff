@@ -16,6 +16,9 @@
           </tr>
         </py:for>
         <tr><td align='center'><i py:content="txt('Members')" /></td></tr>
+        <tr py:if="len(groups) == 0 and len(users) == 0">
+          <td><i py:content="txt('(None)')" /></td>
+        </tr>
         <py:for each="item in groups">
           <tr py:with="url = request_uri(path_str = [path.append(item.get_id()).get()])">
             <td>
