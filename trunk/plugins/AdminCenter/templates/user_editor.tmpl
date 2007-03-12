@@ -1,4 +1,5 @@
 <div xmlns:py="http://genshi.edgewall.org/"
+     xmlns:xi="http://www.w3.org/2001/XInclude"
      py:with="img_dir = plugin_dir + '/img'"
      py:strip="True">
 <form action="${request_uri(path_str = [path.get()])}" method="post">
@@ -76,66 +77,13 @@
 
         <!-- Granted Permissions -->
         <tr>
-          <td class="nowrap" colspan="3"><h3 py:content="txt('Granted User and Group Permissions')" /></td>
-        </tr>
-        <tr>
-          <td></td>
-          <td class="nowrap" valign="top" py:content="txt('View:')" />
-          <td width="100%">
-            <textarea name="viewable_actors"
-                      rows="2"
-                      cols="80"><py:for each="actor in viewable_actors">${actor.get_name()}, </py:for></textarea>
+          <td class="nowrap" colspan="3">
+            <h3 py:content="txt('Things this user may do')" />
           </td>
         </tr>
         <tr>
           <td></td>
-          <td class="nowrap" valign="top" py:content="txt('Edit:')" />
-          <td width="100%">
-            <textarea name="editable_actors"
-                      rows="2"
-                      cols="80"><py:for each="actor in editable_actors">${actor.get_name()}, </py:for></textarea>
-          </td>
-        </tr>
-        <tr>
-          <td></td>
-          <td class="nowrap" valign="top" py:content="txt('Delete:')" />
-          <td width="100%">
-            <textarea name="deletable_actors"
-                      rows="2"
-                      cols="80"><py:for each="actor in deletable_actors">${actor.get_name()}, </py:for></textarea>
-          </td>
-        </tr>
-
-        <!-- Denied Permissions -->
-        <tr>
-          <td class="nowrap" colspan="3"><h3 py:content="txt('Denied User and Group Permissions')" /></td>
-        </tr>
-        <tr>
-          <td></td>
-          <td class="nowrap" valign="top" py:content="txt('View:')" />
-          <td width="100%">
-            <textarea name="non_viewable_actors"
-                      rows="2"
-                      cols="80"><py:for each="actor in non_viewable_actors">${actor.get_name()}, </py:for></textarea>
-          </td>
-        </tr>
-        <tr>
-          <td></td>
-          <td class="nowrap" valign="top" py:content="txt('Edit:')" />
-          <td width="100%">
-            <textarea name="non_editable_actors"
-                      rows="2"
-                      cols="80"><py:for each="actor in non_editable_actors">${actor.get_name()}, </py:for></textarea>
-          </td>
-        </tr>
-        <tr>
-          <td></td>
-          <td class="nowrap" valign="top" py:content="txt('Delete:')" />
-          <td width="100%">
-            <textarea name="non_deleteable_actors"
-                      rows="2"
-                      cols="80"><py:for each="actor in non_deletable_actors">${actor.get_name()}, </py:for></textarea>
-          </td>
+          <td colspan="2"><xi:include href="permission_editor.tmpl" /></td>
         </tr>
       </table>
       </td>
@@ -149,18 +97,18 @@
           <td><input type="submit" class="button" name="add_membership" value="${txt('Add Membership')}" /></td>
         </tr>
       </table>
-      </td>
-      <td></td>
-      <td align="right">
-      <table>
-        <tr>
-          <td><input type="submit" class="button" name="user_delete" value="${txt('Delete User')}" /></td>
-          <td>&nbsp;</td>
-          <td><input type="submit" class="button" name="user_save" value="${txt('Apply Changes')}" /></td>
-        </tr>
-      </table>
-      </td>
-    </tr>
-  </table>
-  </form>
+    </td>
+    <td></td>
+    <td align="right">
+    <table>
+      <tr>
+        <td><input type="submit" class="button" name="user_delete" value="${txt('Delete User')}" /></td>
+        <td>&nbsp;</td>
+        <td><input type="submit" class="button" name="user_save" value="${txt('Apply Changes')}" /></td>
+      </tr>
+    </table>
+    </td>
+  </tr>
+</table>
+</form>
 </div>

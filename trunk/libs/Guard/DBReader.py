@@ -489,15 +489,104 @@ class DBReader:
         return self.has_permission_from_id(actor_id, action_id, resource_id)
 
 
-    def get_permission_list_from_id(self, *args, **kwargs):
+    def get_permission_list_from_id(self, actor_id, *args, **kwargs):
         """
-        Returns a list of ACLs that match the given criteria. Allowed argument
-        keywords include: actor_id, action_id, resource_id, permit,
-        actor_section_handle, action_section_handle and
+        Returns a list of ACLs that match the given criteria. The function
+        ignores inheritance, so that ACLs are only returned if they were
+        defined specificly for the requested resource.
+        
+        Allowed argument keywords include: action_id, resource_id,
+        permit, action_section_handle and resource_section_handle.
+        All arguments are optional; if no arguments are given all ACLs for
+        the given actor_id are returned.
+        """
+        tbl_p1 = self._table_map['resource_path'].alias('p1')
+        tbl_m1 = self._table_map['path_ancestor_map'].alias('m1')
+        tbl_p2 = self._table_map['resource_path'].alias('p2')
+        tbl_ac = self._table_map['acl']
+        tbl_p3 = self._table_map['resource_path'].alias('p3')
+        tbl_a1 = self._table_map['action'].alias('a1')
+        tbl = tbl_p1.outerjoin(tbl_m1, tbl_p1.c.id == tbl_m1.c.resource_path_id)
+        tbl = tbl.outerjoin(tbl_p2, or_(tbl_p2.c.id == tbl_p1.c.id,
+                                        tbl_p2.c.id == tbl_m1.c.ancestor_path_id))
+        tbl = tbl.outerjoin(tbl_ac, tbl_p2.c.resource_id == tbl_ac.c.resource_id)
+        tbl = tbl.outerjoin(tbl_p3, tbl_p3.c.id == tbl_ac.c.actor_id)
+        tbl = tbl.outerjoin(tbl_a1, tbl_a1.c.id == tbl_ac.c.action_id)
+
+        where = tbl_p3.c.resource_id == actor_id
+
+        if kwargs.has_key('action_id'):
+            where = and_(where, tbl_ac.c.action_id == kwargs['action_id'])
+
+        if kwargs.has_key('resource_id'):
+            where = and_(where, tbl_p1.c.resource_id == kwargs['resource_id'])
+
+        if kwargs.has_key('permit'):
+            where = and_(where, tbl_ac.c.permit == kwargs['permit'])
+
+        if kwargs.has_key('action_section_handle'):
+            handle = kwargs['action_section_handle']
+            where  = and_(where, tbl_a1.c.section_handle == handle)
+
+        if kwargs.has_key('resource_section_handle'):
+            tbl_r1 = self._table_map['resource'].alias('r1')
+            tbl    = tbl.outerjoin(tbl_r1, tbl_r1.c.id == tbl_ac.c.resource_id)
+            handle = kwargs['resource_section_handle']
+            where  = and_(where, tbl_r1.c.section_handle == handle)
+
+        sel = select([tbl_ac.c.id,
+                      tbl_ac.c.actor_id,
+                      tbl_ac.c.resource_id,
+                      tbl_ac.c.permit,
+                      tbl_a1.c.id,
+                      tbl_a1.c.name,
+                      tbl_a1.c.handle],
+                     where,
+                     order_by   = [desc(tbl_p2.c.path), desc(tbl_p3.c.path)],
+                     use_labels = True,
+                     from_obj   = [tbl])
+
+        result = sel.execute()
+        assert result is not None
+
+        # Collect all permissions.
+        acl_list = [];
+        for row in result:
+            action = Action(row[tbl_a1.c.name], row[tbl_a1.c.handle])
+            action.set_id(row[tbl_a1.c.id])
+            acl = Acl(row[tbl_ac.c.actor_id],
+                      action,
+                      row[tbl_ac.c.resource_id],
+                      row[tbl_ac.c.permit])
+            acl.set_id(row[tbl_ac.c.id])
+            acl_list.append(acl)
+
+        return acl_list
+
+
+    def get_permission_list_from_id_with_inheritance(self, *args, **kwargs):
+        """
+        Returns a list of ACLs that match the given criteria. The function
+        honors inheritance, so that ACLs are returned even if they were
+        defined for a parent of the requested resource.
+
+        This function is expensive and should be used with care.
+        You might want to consider using get_permission_list_from_id()
+        instead.
+        
+        Allowed argument keywords include: actor_id, action_id, resource_id,
+        permit, actor_section_handle, action_section_handle and
         resource_section_handle.
         All arguments are optional; if no arguments are given all ACLs are
         returned.
         """
+        # Looking to find a bug in this function? Congratulations, you are
+        # about to enter hell.
+        # Also, if you find (and fix) that damn bug here, you are totally a
+        # hero - even I have difficulty understanding how the hell I managed
+        # to write that. But don't blame me, because any database design
+        # will suck in at least one respect when you implement ACLs.
+        where = None
 
         # **************************************************************
         # * 1. Get all ACLs that match the given resource.
@@ -531,20 +620,34 @@ class DBReader:
         tbl_p4 = self._table_map['resource_path'].alias('p4')
         tbl = tbl.outerjoin(tbl_p4, or_(tbl_p4.c.id == tbl_p3.c.id,
                                         tbl_p4.c.id == tbl_m2.c.resource_path_id))
+        if kwargs.has_key('actor_id'):
+            actor_id = kwargs['actor_id']
+            where = and_(where, tbl_p4.c.resource_id == actor_id)
 
         # Informative only.
         tbl_a1 = self._table_map['action'].alias('a1')
         tbl = tbl.outerjoin(tbl_a1, tbl_a1.c.id == tbl_ac1.c.action_id)
+        if kwargs.has_key('action_id'):
+            action_id = kwargs['action_id']
+            where = and_(where, tbl_a1.c.id == action_id)
+        if kwargs.has_key('action_section_handle'):
+            handle = kwargs['action_section_handle']
+            where = and_(where, tbl_a1.c.section_handle == handle)
+
+        # Informative only.
         tbl_s1 = self._table_map['action_section'].alias('s1')
         tbl = tbl.outerjoin(tbl_s1, tbl_a1.c.section_handle == tbl_s1.c.handle)
         
+        # Informative only.
         if kwargs.has_key('resource_section_handle'):
             tbl_r1 = self._table_map['resource'].alias('r1')
             tbl = tbl.outerjoin(tbl_r1, tbl_r1.c.id == tbl_p1.c.resource_id)
 
+        # Informative only.
         if kwargs.has_key('actor_section_handle'):
             tbl_r4 = self._table_map['resource'].alias('r4')
             tbl = tbl.outerjoin(tbl_r4, tbl_r4.c.id == tbl_p4.c.resource_id)
+
 
         # **************************************************************
         # * 2. We want to filter out any ACL that is defined for the
@@ -562,6 +665,8 @@ class DBReader:
         tbl_p5 = self._table_map['resource_path'].alias('p5')
         tbl = tbl.outerjoin(tbl_p5, and_(tbl_ac2.c.actor_id == tbl_p5.c.resource_id,
                                          tbl_p5.c.depth > tbl_p3.c.depth))
+        where = and_(where, tbl_p5.c.id == None)
+
 
         # **************************************************************
         # * 3. Filter out any ACLs that are irrelevant because they do
@@ -580,10 +685,14 @@ class DBReader:
         tbl_p7 = self._table_map['resource_path'].alias('p7')
         tbl = tbl.outerjoin(tbl_p7, or_(tbl_p6.c.id == tbl_p7.c.id,
                                         tbl_m3.c.resource_path_id == tbl_p7.c.id))
+        if kwargs.has_key('actor_id'):
+            where = and_(where, tbl_p7.c.resource_id == actor_id)
 
+        # Informative only.
         if kwargs.has_key('actor_section_handle'):
             tbl_r7 = self._table_map['resource'].alias('r7')
             tbl = tbl.outerjoin(tbl_r7, tbl_r7.c.id == tbl_p7.c.resource_id)
+
 
         # **************************************************************
         # * 4. We want to filter out any ACL that is defined for the
@@ -601,6 +710,7 @@ class DBReader:
         tbl_p8 = self._table_map['resource_path'].alias('p8')
         tbl = tbl.outerjoin(tbl_p8, and_(tbl_ac3.c.resource_id == tbl_p8.c.resource_id,
                                          tbl_p8.c.depth > tbl_p3.c.depth))
+        where = and_(where, tbl_p8.c.id == None)
 
 
         # **************************************************************
@@ -627,22 +737,8 @@ class DBReader:
 
         #print 'Get: %i,%i' % (actor_id, resource_id)
         p2_max_depth = func.max(tbl_p2.c.depth).label('p2_max_depth')
-        p3_max_depth = func.max(tbl_p3.c.depth).label('p3_max_depth')
+        p4_max_depth = func.max(tbl_p4.c.depth).label('p4_max_depth')
         
-        where = and_(tbl_p5.c.id == None,         # See 2.
-                     tbl_p8.c.id == None)         # See 4.
-
-        if kwargs.has_key('actor_id'):
-            actor_id = kwargs['actor_id']
-            where = and_(where,
-                         tbl_p4.c.resource_id == actor_id,     # See 1.
-                         tbl_p7.c.resource_id == actor_id)     # See 3.
-
-        if kwargs.has_key('action_id'):
-            action_id = kwargs['action_id']
-            where = and_(where,
-                        tbl_a1.c.id == action_id)   # See 1.
-
         if kwargs.has_key('resource_id'):
             resource_id = kwargs['resource_id']
             where = and_(where,
@@ -662,18 +758,14 @@ class DBReader:
                          tbl_r4.c.section_handle == handle,
                          tbl_r7.c.section_handle == handle)
 
-        if kwargs.has_key('action_section_handle'):
-            handle = kwargs['action_section_handle']
-            where = and_(where,
-                         tbl_a1.c.section_handle == handle)
-
         if kwargs.has_key('resource_section_handle'):
             handle = kwargs['resource_section_handle']
             where = and_(where,
                          tbl_r1.c.section_handle  == handle,
                          tbl_r10.c.section_handle == handle)
 
-        sel = select([tbl_ac1.c.actor_id,
+        sel = select([tbl_ac1.c.id,
+                      tbl_ac1.c.actor_id,
                       tbl_ac1.c.resource_id,
                       tbl_ac1.c.permit,
                       tbl_a1,
@@ -681,17 +773,18 @@ class DBReader:
                       tbl_s1.c.handle,
                       tbl_s1.c.name,
                       tbl_p2.c.depth.label('p2_depth'),
-                      tbl_p3.c.depth.label('p3_depth'),
+                      tbl_p4.c.depth.label('p4_depth'),
+                      tbl_p4.c.resource_id,
                       p2_max_depth,
-                      p3_max_depth],
+                      p4_max_depth],
                      where,
                      from_obj   = [tbl],
                      use_labels = True,
                      group_by   = [tbl_p2.c.id,
-                                   tbl_p3.c.id,
+                                   tbl_p4.c.id,
                                    tbl_ac1.c.action_id],
                      having = and_('p2_depth = p2_max_depth',
-                                   'p3_depth = p3_max_depth'))
+                                   'p4_depth = p4_max_depth'))
 
         #print sel
         result = sel.execute()
@@ -705,13 +798,16 @@ class DBReader:
             acl = Acl(row[tbl_ac1.c.actor_id],
                       action,
                       row[tbl_ac1.c.resource_id],
-                      row[tbl_ac1.c.permit])
+                      row[tbl_ac1.c.permit],
+                      row[tbl_p4.c.resource_id] != row[tbl_ac1.c.actor_id])
+            acl.set_id(row[tbl_ac1.c.id])
             acl_list.append(acl)
         
+        #print "LENGTH:", len(acl_list)
         return acl_list
 
 
-    def get_permission_list(self, *args, **kwargs):
+    def get_permission_list_with_inheritance(self, *args, **kwargs):
         """
         Returns a list of ACLs that match the given criteria. Allowed argument
         keywords include: actor, action, resource, permit, actor_section,
@@ -739,7 +835,7 @@ class DBReader:
             handle = kwargs['resource_section'].get_handle()
             kwargs['resource_section_handle'] = handle
 
-        return self.get_permission_list_from_id(**kwargs)
+        return self.get_permission_list_from_id_with_inheritance(**kwargs)
 
 
 if __name__ == '__main__':

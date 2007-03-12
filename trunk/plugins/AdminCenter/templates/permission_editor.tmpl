@@ -1,0 +1,91 @@
+<div xmlns:py="http://genshi.edgewall.org/" py:strip="True">
+<script type="text/javascript">
+<!--
+/**
+ * Increases the n_permissions counter and returns the result.
+ */
+function incrementItemCount()
+{
+  var input = document.getElementById('n_permissions');
+  var count = parseInt(input.getAttribute('value'), 10);
+  input.setAttribute('value', count + 1);
+  return count + 1;
+}
+
+
+/**
+ * Adds a new row to the permission table.
+ */
+function add_row(tbody) {
+  // Add a new row with three cells.
+  var tr    = document.createElement('tr');
+  var td1   = document.createElement('td');
+  var td2   = document.createElement('td');
+  tbody.appendChild(tr);
+  tr.appendChild(td1);
+  tr.appendChild(td2);
+
+  // Add a text field into the first cell.
+  var count = incrementItemCount();
+  var input = document.createElement('input');
+  input.setAttribute('type',     'text');
+  input.setAttribute('name',     'resource[' + count.toString() + ']');
+  input.setAttribute('onKeyUp',  'on_text_changed()');
+  input.setAttribute('onChange', 'on_field_left(this)');
+  td1.appendChild(input);
+
+  // Add a select box into the second cell.
+  var select = document.createElement('select');
+  select.setAttribute('name', 'permission[' + count.toString() + ']');
+  td2.appendChild(select);
+  
+  // Add the option items.
+  var option = document.createElement('option');
+  option.innerHTML = "Like xxx group (View/Edit/Moderate)";
+  select.appendChild(option);
+}
+
+
+function on_text_changed() {
+  var tbody = document.getElementById('permission_table_body');
+  var rows  = tbody.getElementsByTagName("tr");
+  var tr    = rows[rows.length - 1];
+  var td    = tr.getElementsByTagName("td")[0];
+  var input = td.getElementsByTagName("input")[0];
+  var text  = input.value;
+
+  if (text != '')
+    add_row(tbody);
+}
+
+
+function on_field_left(field) {
+  var text = field.value;
+  if (text != '')
+    return;
+  var td    = field.parentNode;
+  var tr    = td.parentNode;
+  var tbody = tr.parentNode;
+  tbody.removeChild(tr);
+}
+-->
+</script>
+<input type="hidden" name="n_permissions" id="n_permissions" value="0" />
+<table cellpadding="3" cellspacing="0">
+  <tbody id='permission_table_body'>
+    <tr id="add_permission">
+      <td>
+        <input type='text'
+               name="resource[0]"
+               onKeyUp="on_text_changed()"
+               onChange="on_field_left(this)" />
+      </td>
+      <td>
+        <select name="permission[0]">
+          <option>asdlkjaslkd</option>
+        </select>
+      </td>
+    </tr>
+  </tbody>
+</table>
+</div>

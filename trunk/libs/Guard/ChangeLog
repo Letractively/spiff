@@ -1,5 +1,8 @@
 Changes since 1.0.1
 
+  * Acl.py (get_inherited)(set_inherited)(set_id)(get_id): New
+  methods.
+  
   * ResourcePath.py: Added new class for user convenience.
 
   * DBReader.py (get_resource_parents_from_id): Fixed a bug that the
@@ -7,14 +10,21 @@ Changes since 1.0.1
   (get_resource_children_from_id): Likewise.
   (get_resource_path_from_id): New.
   (get_resource_from_name): Fixed (apparently did not work at all).
-
-  * DBReader.py (get_permission_list_from_id): API change, accept
-    additional search options. Some API documentation was added.
-    (get_permission_list): Likewise.
-    Improved unit tests.
+  (get_permission_list_from_id): Renamed original function
+  to (get_permission_list_from_id_with_inheritance) and replaced the old
+  function by a new one that does *not* honor inheritance.
+  (get_permission_list_from_id_with_inheritance): Renamed from
+  get_permission_list_from_id. Accept additional search options. Some
+  API documentation was added. Support for the new acl.set_inheritance()
+  and acl.set_id() methods was added. Numerous bugs were fixed.
+  (get_permission_list_with_inheritance): Renamed from
+  (get_permission_list) and improved unit tests. This function is a wrapper
+  around (get_permission_list_from_id_with_inheritance), so it is affected
+  by the above changes.
 
   * DB.py (add_resource): Support for adding one resource into
   multiple parent groups was added.
   (__resource_add_n_children): The database structure had to be
   changed (moving n_children from the resource_path table to the
   resource table), so this feature now actually works.
+  (delete_permission_from_id): New.
