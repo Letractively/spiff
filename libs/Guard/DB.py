@@ -699,6 +699,33 @@ class DB(DBReader):
         return True
 
 
+    def delete_permission_from_id(self, actor_id, action_id, resource_id):
+        """
+        Deletes the ACL with the given id from the database.
+
+        @type  actor_id: int
+        @param actor_id: The id of the actor whose ACL is to be deleted.
+        @type  action_id: int
+        @param action_id: The id of the action whose ACL is to be deleted.
+        @type  resource_id: int
+        @param resource_id: The id of the resource whose ACL is to be deleted.
+        @rtype:  Boolean
+        @return: True if the ACL existed, False otherwise.
+        """
+        assert actor_id    >= 0
+        assert action_id   >= 0
+        assert resource_id >= 0
+        table  = self._table_map['acl']
+        delete = table.delete(and_(table.c.actor_id    == actor_id,
+                                   table.c.action_id   == action_id,
+                                   table.c.resource_id == resource_id))
+        result = delete.execute()
+        assert result is not None
+        if result.rowcount is 0:
+            return False
+        return True
+
+
     def __has_acl_from_id(self, actor_id, action_id, resource_id):
         assert actor_id    >= 0
         assert action_id   >= 0
@@ -897,6 +924,16 @@ if __name__ == '__main__':
     from ConfigParser import RawConfigParser
 
     class DBTest(unittest.TestCase):
+        def dump_acl_list(self, acls):
+            for acl in acls:
+                id          = acl.get_id()
+                actor_id    = acl.get_actor_id()
+                action_name = acl.get_action().get_name()
+                res_id      = acl.get_resource_id()
+                permit      = acl.get_permit()
+                inh         = acl.get_inherited()
+                print 'ACL:', id, actor_id, action_name, res_id, permit, inh
+
         def test_with_db(self, db):
             assert db is not None
             db = DB(db)
@@ -1077,13 +1114,15 @@ if __name__ == '__main__':
 
             # Set up groups.
             users  = ActorGroup('Users')
+            guys   = ActorGroup('Guys')
             admins = ActorGroup('Admins')
-            assert db.add_resource(None, users,  resource_section)
-            assert db.add_resource(None, admins, resource_section)
+            assert db.add_resource(None,           users,  resource_section)
+            assert db.add_resource(users.get_id(), guys,   resource_section)
+            assert db.add_resource(None,           admins, resource_section)
             
             # Set up users.
             user = Actor('Normal User')
-            assert db.add_resource(users.get_id(),  user,  resource_section)
+            assert db.add_resource(guys.get_id(),   user,  resource_section)
             anon = Actor('Anonymous User')
             assert db.add_resource(users.get_id(),  anon,  resource_section)
             admin = Actor('Administrator')
@@ -1094,6 +1133,7 @@ if __name__ == '__main__':
             db.grant(admins, [view, edit, delete], homepage)
             db.grant(users,  view,                 homepage)
             db.grant(user,   edit,                 sub_page_1)
+            db.grant(guys,   delete,               homepage)
             db.deny(anon,    view,                 sub_page_1)
 
             # Test Acl.
@@ -1137,13 +1177,13 @@ if __name__ == '__main__':
             assert db.has_permission(user, edit, sub_page_1_2)
             assert not db.has_permission(user, edit, sub_page_2)
 
-            assert not db.has_permission(user, delete, homepage)
-            assert not db.has_permission(user, delete, sub_page_1)
-            assert not db.has_permission(user, delete, sub_page_1_1)
-            assert not db.has_permission(user, delete, sub_page_1_1_1)
-            assert not db.has_permission(user, delete, sub_page_1_1_1_1)
-            assert not db.has_permission(user, delete, sub_page_1_2)
-            assert not db.has_permission(user, delete, sub_page_2)
+            assert db.has_permission(user, delete, homepage)
+            assert db.has_permission(user, delete, sub_page_1)
+            assert db.has_permission(user, delete, sub_page_1_1)
+            assert db.has_permission(user, delete, sub_page_1_1_1)
+            assert db.has_permission(user, delete, sub_page_1_1_1_1)
+            assert db.has_permission(user, delete, sub_page_1_2)
+            assert db.has_permission(user, delete, sub_page_2)
 
             assert db.has_permission(anon, view, homepage)
             assert not db.has_permission(anon, view, sub_page_1)
@@ -1171,20 +1211,18 @@ if __name__ == '__main__':
 
             # Get permissions one one specific resource.
             pageid = sub_page_1_1_1.get_id()
-            perms  = db.get_permission_list_from_id(actor_id = admins.get_id(),
-                                                    resource = pageid)
-            #for acl in perms:
-            #    print 'Permission on subpage:', acl.get_action().get_name()
-            #print
+            perms  = db.get_permission_list_from_id(guys.get_id(),
+                                                    resource_id = pageid)
+            #self.dump_acl_list(perms)
+
+            # Get recursive permissions one one specific resource.
+            perms  = db.get_permission_list_from_id_with_inheritance(
+                                                actor_id    = guys.get_id(),
+                                                resource_id = pageid)
+            #self.dump_acl_list(perms)
 
             # Get permissions one all resources.
-            perms = db.get_permission_list_from_id()
-            #for acl in perms:
-            #    actor_id    = acl.get_actor_id()
-            #    action_name = acl.get_action().get_name()
-            #    resource_id = acl.get_resource_id()
-            #    permit      = acl.get_permit()
-            #    print 'Permission:', actor_id, action_name, resource_id, permit
+            perms = db.get_permission_list_from_id_with_inheritance()
 
             # Clean up.
             assert db.clear_database()

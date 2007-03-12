@@ -15,11 +15,24 @@
 from Action import *
 
 class Acl(object):
-    def __init__(self, actor_id, action, resource_id, permit = False):
+    def __init__(self,
+                 actor_id,
+                 action,
+                 resource_id,
+                 permit    = False,
+                 inherited = False):
+        self.__id          = -1
         self.__actor_id    = int(actor_id)
         self.__action      = action
         self.__resource_id = int(resource_id)
         self.__permit      = bool(permit)
+        self.__inherited   = bool(inherited)
+
+    def set_id(self, id):
+        self.__id = int(id)
+
+    def get_id(self):
+        return self.__id
 
     def set_actor_id(self, actor_id):
         self.__actor_id = int(actor_id)
@@ -44,6 +57,18 @@ class Acl(object):
 
     def get_permit(self):
         return self.__permit
+
+    def set_inherited(self, inherited = True):
+        """
+        Defines whether the Acl was inherited from a parent actor.
+        """
+        self.__inherited = bool(inherited)
+
+    def get_inherited(self):
+        """
+        Returns True if the Acl was inherited from a parent actor.
+        """
+        return self.__inherited
 
 
 if __name__ == '__main__':
