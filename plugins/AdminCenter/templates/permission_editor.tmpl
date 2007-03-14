@@ -113,9 +113,8 @@ function on_field_left(field) {
 <input type="hidden" name="n_permissions" id="n_permissions" value="${len(acls) + 1}" />
 <table cellpadding="3" cellspacing="0">
   <tbody id='permission_table_body' py:with="x = enumerate(acls)">
-    <tr py:for="resource in acls"
+    <tr py:for="resource, res_acls in acls"
         py:with="(n, _)        = x.next();
-                 res_acls      = acls[resource];
                  actions       = [(acl.get_permit() == True and acl.get_action().get_handle()) for acl in res_acls];
                  action_handle = 'none';
                  action_handle = 'view'     in actions and 'view'               or action_handle;
