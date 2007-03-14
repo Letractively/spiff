@@ -216,9 +216,9 @@ class CreateDefaultSetup(CheckList):
         if user_action_edit is None:
             return Task.failure
 
-        user_action_delete = self.__create_user_action('Delete User',
-                                                       'delete')
-        if user_action_delete is None:
+        user_action_moderate = self.__create_user_action('Delete User',
+                                                         'moderate')
+        if user_action_moderate is None:
             return Task.failure
 
         #########
@@ -230,7 +230,7 @@ class CreateDefaultSetup(CheckList):
                    user_action_view,
                    user_action_create,
                    user_action_edit,
-                   user_action_delete]
+                   user_action_moderate]
         try:
             self.guard.grant(group_admin, actions, group_everybody)
         except:

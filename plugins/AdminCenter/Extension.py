@@ -26,18 +26,6 @@ class Extension:
             self.api.render('templates/content_editor.tmpl')
 
 
-    def __parse_permissions(self, permission_str):
-        permissions = []
-        for permission in split(permission_str, ','):
-            permission = permission.strip()
-            if permission == '':
-                continue
-            if len(permission) < 2:
-                return None
-            permissions.append(permission)
-        return permissions
-
-
     def __get_permissions_from_db(self, resource):
         guard_db = self.guard_db
 
@@ -61,13 +49,6 @@ class Extension:
         for resource in resource_list:
             acls[resource] = acls_dict[resource.get_id()]
 
-        # Dump
-        #for resource in acls:
-        #    acl_list = acls[resource]
-        #    print "Resource:", resource.get_name()
-        #    for acl in acl_list:
-        #        print "ACL:", acl.get_action().get_name(), acl.get_permit(), acl.get_inherited()
-        
         return acls
 
 
@@ -99,6 +80,7 @@ class Extension:
                         user                 = user,
                         groups               = parents,
                         acls                 = acls,
+                        get_resource_from_id = guard_db.get_resource_from_id,
                         errors               = errors)
 
 
@@ -125,7 +107,12 @@ class Extension:
                 users.append(child)
 
         # Collect permissions.
+        #print "Search:", group.get_id()
         acls = self.__get_permissions_from_db(group)
+        #for item in acls:
+        #    res_acls = acls[item]
+        #    for acl in res_acls:
+        #        print "ACL:", acl.get_id(), acl.get_actor_id(), acl.get_action().get_id(), acl.get_resource_id()
 
         # Render the template.
         self.api.render('templates/group_editor.tmpl',
@@ -135,11 +122,13 @@ class Extension:
                         users                = users,
                         groups               = groups,
                         acls                 = acls,
+                        get_resource_from_id = guard_db.get_resource_from_id,
                         errors               = errors)
 
 
     def __save_resource(self, resource):
         assert resource is not None
+        i18n = self.i18n
         
         # Retrieve form data.
         get_data             = self.api.get_get_data
@@ -150,12 +139,8 @@ class Extension:
         description          = post_data('description')
         use_group_permission = post_data('use_group_permission')
         default_owner_id     = post_data('default_owner_id')
-        viewable_actors      = post_data('viewable_actors')
-        editable_actors      = post_data('editable_actors')
-        deletable_actors     = post_data('deletable_actors')
-        non_viewable_actors  = post_data('non_viewable_actors')
-        non_editable_actors  = post_data('non_editable_actors')
-        non_deletable_actors = post_data('non_deletable_actors')
+        resource_list        = post_data('resource[]',   False)
+        permission_list      = post_data('permission[]', False)
         if path_str is not None:
             path = self.guard.ResourcePath(path_str)
         if path is not None:
@@ -173,43 +158,43 @@ class Extension:
 
         # Parent ID must be >= 0.
         if parent_id is None or parent_id < 0:
-            msg = self.i18n("Invalid parent id.")
+            msg = i18n("Invalid parent id.")
             errors.append(msg)
 
         # A resource can not be its own parent/child.
         elif parent_id == resource.get_id():
-            msg = self.i18n("A resource can not be its own parent.")
+            msg = i18n("A resource can not be its own parent.")
             errors.append(msg)
 
         # Users *have to* have a parent (unlike groups, whose parent may be
         # 0).
         elif parent_id == 0 and not resource.is_group():
-            msg = self.i18n("Can not create a user without a group.")
+            msg = i18n("Can not create a user without a group.")
             errors.append(msg)
 
         # So a parent was given - make sure that it exists.
         elif parent_id > 0:
             parent = self.guard_db.get_resource_from_id(parent_id)
             if parent is None:
-                msg = self.i18n("Specified parent does not exist.")
+                msg = i18n("Specified parent does not exist.")
                 errors.append(msg)
 
         # Minimum name length.
         if name is None or len(name) < 2:
-            msg = self.i18n("The name must be at least two characters long.")
+            msg = i18n("The name must be at least two characters long.")
             errors.append(msg)
 
         # Groups require the use_group_permission field.
         if resource.is_group():
             if use_group_permission not in [0, 1]:
-                msg = self.i18n("Group has an invalid default owner.")
+                msg = i18n("Group has an invalid default owner.")
                 errors.append(msg)
 
         # New users require the default_owner_id field set to either 0 or
         # to the parent_id.
         elif parent is not None and resource.get_id() <= 0:
             if default_owner_id != 0 and default_owner_id != parent_id:
-                msg = self.i18n("Specified parent does not exist.")
+                msg = i18n("Specified parent does not exist.")
                 errors.append(msg)
 
         # Existing users require the default_owner_id field set to either 0
@@ -223,39 +208,32 @@ class Extension:
                         found = True
                         break
             if not found:
-                msg = self.i18n("User has an invalid default owner.")
+                msg = i18n("User has an invalid default owner.")
                 errors.append(msg)
 
-        # Check the syntax of the permission fields.
-        permission_fields = {
-          'viewable_actors':      self.i18n('Viewable Users'),
-          'editable_actors':      self.i18n('Editable Users'),
-          'deletable_actors':     self.i18n('Deletable Users'),
-          'non_viewable_actors':  self.i18n('Non-Viewable Users'),
-          'non_editable_actors':  self.i18n('Non-Editable Users'),
-          'non_deletable_actors': self.i18n('Non-Deletable Users'),
-        }
-        for field in permission_fields:
-            if locals()[field] is None:
+        # Make sure that the user/group names for which permissions were
+        # defined exist in the database.
+        have_already = {}
+        for rname in resource_list:
+            res = self.guard_db.get_resource_from_name(rname, 'users')
+            if res is not None:
                 continue
-            # Syntax check.
-            list = self.__parse_permissions(locals()[field])
-            if list is None:
-                fname = permission_fields[field]
-                msg   = self.i18n("'%s' field has invalid content." % fname)
-                errors.append(msg)
+            msg = i18n("User or group '%s' does not exists." % rname)
+            errors.append(msg)
+
+            # Make sure that a user does not have two sets of permissions
+            # defined.
+            if not have_already.has_key(rname):
+                have_already[rname] = True
                 continue
 
-            # Make sure that the specified users/groups exist.
-            for rname in list:
-                res = self.guard_db.get_resource_from_name(rname, 'users')
-                if res is not None:
-                    continue
-                msg = self.i18n("User or group '%s' does not exists." % rname)
-                errors.append(msg)
-
-        #FIXME: Make sure that "grant" permission for a user is not requested
-        # at the same time as "deny" permission.
+            if res.is_group():
+                msg = i18n("Permission for group '%s' was specified twice."
+                           % rname)
+            else:
+                msg = i18n("Permission for user '%s' was specified twice."
+                           % rname)
+            errors.append(msg)
 
         # Bail out if an error occured.
         if len(errors) > 0:
@@ -276,66 +254,85 @@ class Extension:
         else:
             self.guard_db.save_resource(resource, section)
 
-        # Get the list of permissions from the database.
-        (viewable,
-         editable,
-         deletable,
-         non_viewable,
-         non_editable,
-         non_deletable) = self.__get_permissions_from_db(resource)
+        #i = 0
+        #for item in resource_list:
+        #    print "RESOURCES:", item
+        #    print "PERMS:", permission_list[i]
+        #    i += 1
 
-        # Save changed permissions.
-        permission_fields = {
-          'viewable_actors':      'view',
-          'editable_actors':      'edit',
-          'deletable_actors':     'delete',
-          'non_viewable_actors':  'view',
-          'non_editable_actors':  'edit',
-          'non_deletable_actors': 'delete',
-        }
-        for field in permission_fields:
-            # Extract fields.
-            if locals()[field] is None:
-                list = []
-            else:
-                list = self.__parse_permissions(locals()[field])
+        # Get the list of current permissions from the database.
+        search = { 'resource_section_handle': 'users' }
+        acls = self.guard_db.get_permission_list_from_id(resource.get_id(),
+                                                         **search)
 
-            # Retrieve the action.
-            section   = 'user_permissions'
-            handle    = permission_fields[field]
-            action    = self.guard_db.get_action_from_handle(handle, section)
-            actor_id  = resource.get_id()
-            action_id = action.get_id()
-            permit    = not field.startswith('non_')
-            assert action is not None
+        resource_id_list = []
+        for acl in acls:
+            acl_id      = acl.get_id()
+            actor_id    = acl.get_actor_id()
+            action      = acl.get_action()
+            resource_id = acl.get_resource_id()
+            res         = self.guard_db.get_resource_from_id(resource_id)
+            resource_id_list.append(resource_id)
 
-            # Delete all permissions that are no longer specified.
-            old_field = field[:-7] # Strip "_actors" from the field name.
-            for group in locals()[old_field]:
-                if group.get_name() not in list:
-                    #print "DELETE:", group.get_name(), field
-                    resource_id = group.get_id()
-                    assert self.guard_db.delete_permission_from_id(actor_id,
-                                                                   action_id,
-                                                                   resource_id)
+            # If the resource was removed from the UI, delete it from the DB.
+            if res.get_name() not in resource_list:
+                #print "Missing resource: Deleting permission %s" % acl_id
+                assert self.guard_db.delete_permission_from_id(actor_id,
+                                                               action.get_id(),
+                                                               resource_id)
+                continue
 
-            # Create all new permissions.
-            for group_name in list:
-                found = False
-                for group in locals()[old_field]:
-                    if group.get_name() == group_name:
-                        found = True
-                        break
-                if not found:
-                    #print "ADD:", group_name, field
-                    res = self.guard_db.get_resource_from_name(group_name,
-                                                               'users')
-                    assert res is not None
-                    resource_id = res.get_id()
-                    assert self.guard_db.set_permission_from_id(actor_id,
-                                                                action_id,
-                                                                resource_id,
-                                                                permit)
+            # Get the permissions that were defined for the resource.
+            resource_permission = None
+            seq                 = 0
+            for rname in resource_list:
+                if rname == res.get_name():
+                    resource_permission = split(permission_list[seq], '/')
+                seq += 1
+            assert resource_permission is not None
+
+            # If the specific permission was removed from the UI, also remove
+            # it from the DB.
+            if action.get_handle() not in resource_permission:
+                #print "Missing permission: Deleting permission %s" % acl_id
+                assert self.guard_db.delete_permission_from_id(actor_id,
+                                                               action.get_id(),
+                                                               resource_id)
+                continue
+
+        # Walk through all permissions that were defined in the UI and make
+        # sure that they exist in the database.
+        seq      = 0
+        section  = 'user_permissions'
+        view     = self.guard_db.get_action_from_handle('view',     section)
+        edit     = self.guard_db.get_action_from_handle('edit',     section)
+        moderate = self.guard_db.get_action_from_handle('moderate', section)
+        for name in resource_list:
+            resource_permission = split(permission_list[seq], '/')
+            seq += 1
+            if 'default' in resource_permission:
+                continue
+
+            res = self.guard_db.get_resource_from_name(name, 'users')
+            #print "Current:", resource.get_name(), res.get_name(), resource_permission
+            for permission in resource_permission:
+                if permission == 'none':
+                    continue
+                #print "Granting %s on %s" % permission, res.get_name())
+                action_id = locals()[permission].get_id()
+                assert self.guard_db.grant_from_id(resource.get_id(),
+                                                   action_id,
+                                                   res.get_id())
+
+            for permission in ['view', 'edit', 'moderate']:
+                if permission in resource_permission:
+                    continue
+                #print "Denying %s on %s" % permission, res.get_name())
+                action_id = locals()[permission].get_id()
+                assert self.guard_db.deny_from_id(resource.get_id(),
+                                                  action_id,
+                                                  res.get_id())
+             
 
         return None
 

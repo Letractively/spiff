@@ -73,10 +73,15 @@ class ExtensionApi(Api):
         #FIXME: Do we need to check the permission of the caller?
         if not self.__post_data.has_key(name):
             return None
-        value = self.__post_data[name].value
-        if type([]) != type(value) or not unpack:
-            return value
-        return value[0]
+        field = self.__post_data[name]
+        if type(field) != type([]):
+            if unpack:
+                return field.value
+            return [field.value]
+        values = []
+        for item in field:
+            values.append(item.value)
+        return values
 
 
     def send_headers(self, content_type = 'text/html', headers = {}):
