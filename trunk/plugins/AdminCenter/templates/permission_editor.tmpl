@@ -1,15 +1,21 @@
-<div xmlns:py="http://genshi.edgewall.org/" py:strip="True">
+<div xmlns:py="http://genshi.edgewall.org/"
+     py:with="name_map = {'view/edit/moderate': txt('View, Edit, and Moderate'),
+                          'view/moderate':      txt('View and Moderate'),
+                          'view':               txt('View Only'),
+                          'none':               txt('No Permission')};
+              name_map_keys = name_map.keys();
+              name_map_keys.sort()"
+     py:strip="True">
 <script type="text/javascript">
-<!--
 /**
  * Increases the n_permissions counter and returns the result.
  */
-function incrementItemCount()
+function incrementItemCount(n)
 {
   var input = document.getElementById('n_permissions');
   var count = parseInt(input.getAttribute('value'), 10);
-  input.setAttribute('value', count + 1);
-  return count + 1;
+  input.setAttribute('value', count + n);
+  return count + n;
 }
 
 
@@ -26,12 +32,12 @@ function add_row(tbody) {
   tr.appendChild(td2);
 
   // Add a text field into the first cell.
-  var count = incrementItemCount();
+  var count = incrementItemCount(1);
   var input = document.createElement('input');
-  input.setAttribute('type',     'text');
-  input.setAttribute('name',     'resource[' + count.toString() + ']');
-  input.setAttribute('onKeyUp',  'on_text_changed()');
-  input.setAttribute('onChange', 'on_field_left(this)');
+  input.setAttribute('type',    'text');
+  input.setAttribute('name',    'resource[' + count.toString() + ']');
+  input.setAttribute('onKeyUp', 'on_text_changed()');
+  input.setAttribute('onBlur',  'on_field_left(this)');
   td1.appendChild(input);
 
   // Add a select box into the second cell.
@@ -40,8 +46,32 @@ function add_row(tbody) {
   td2.appendChild(select);
   
   // Add the option items.
+  var handle = "view/edit/moderate";
+  var name   = "${name_map['view/edit/moderate']}";
   var option = document.createElement('option');
-  option.innerHTML = "Like xxx group (View/Edit/Moderate)";
+  option.setAttribute('value', handle);
+  option.innerHTML = name;
+  select.appendChild(option);
+
+  var handle = "view/moderate";
+  var name   = "${name_map['view/moderate']}";
+  var option = document.createElement('option');
+  option.setAttribute('value', handle);
+  option.innerHTML = name;
+  select.appendChild(option);
+
+  var handle = "view";
+  var name   = "${name_map['view']}";
+  var option = document.createElement('option');
+  option.setAttribute('value', handle);
+  option.innerHTML = name;
+  select.appendChild(option);
+
+  var handle = "none";
+  var name   = "${name_map['none']}";
+  var option = document.createElement('option');
+  option.setAttribute('value', handle);
+  option.innerHTML = name;
   select.appendChild(option);
 }
 
@@ -60,29 +90,79 @@ function on_text_changed() {
 
 
 function on_field_left(field) {
+  on_text_changed()
+
+  // If the field still contains text, do nothing.
   var text = field.value;
   if (text != '')
     return;
+
+  // If this is the last row of the table, do nothing.
   var td    = field.parentNode;
   var tr    = td.parentNode;
   var tbody = tr.parentNode;
+  var rows  = tbody.getElementsByTagName("tr");
+  if (tr == rows[rows.length - 1])
+    return;
+  
+  // Remove the row.
+  incrementItemCount(-1);
   tbody.removeChild(tr);
 }
--->
 </script>
-<input type="hidden" name="n_permissions" id="n_permissions" value="0" />
+<input type="hidden" name="n_permissions" id="n_permissions" value="${len(acls) + 1}" />
 <table cellpadding="3" cellspacing="0">
-  <tbody id='permission_table_body'>
+  <tbody id='permission_table_body' py:with="x = enumerate(acls)">
+    <tr py:for="resource in acls"
+        py:with="(n, _)        = x.next();
+                 res_acls      = acls[resource];
+                 actions       = [(acl.get_permit() == True and acl.get_action().get_handle()) for acl in res_acls];
+                 action_handle = 'none';
+                 action_handle = 'view'     in actions and 'view'               or action_handle;
+                 action_handle = 'moderate' in actions and 'view/moderate'      or action_handle;
+                 action_handle = 'edit'     in actions and 'view/edit/moderate' or action_handle;">
+      <td>
+        ${res_acls[0].get_inherited() and resource.get_name() or None}
+        <py:choose>
+          <input py:when="res_acls[0].get_inherited()"
+                 type="hidden"
+                 name="resource[]"
+                 value="${resource.get_name()}" />
+          <input py:otherwise=""
+                 type="text"
+                 name="resource[]"
+                 value="${resource.get_name()}"
+                 onKeyUp="on_text_changed()"
+                 onBlur="on_field_left(this)" />
+        </py:choose>
+      </td>
+      <td>
+        <select name="permission[]">
+          <option py:for="handle in name_map_keys"
+                  value="${handle}"
+                  selected="${not inherited and action_handle == handle or None}"
+                  py:content="name_map[handle]" />
+          <option value="default"
+                  selected="selected"
+                  py:if="res_acls[0].get_inherited()"
+                  py:with="parent = get_resource_from_id(res_acls[0].get_actor_id())"
+                  py:content="txt('Like %s (%s)' % (parent.get_name(), name_map[action_handle]))" />
+        </select>
+      </td>
+    </tr>
     <tr id="add_permission">
       <td>
         <input type='text'
-               name="resource[0]"
+               name="resource[]"
                onKeyUp="on_text_changed()"
-               onChange="on_field_left(this)" />
+               onBlur="on_field_left(this)" />
       </td>
       <td>
-        <select name="permission[0]">
-          <option>asdlkjaslkd</option>
+        <select name="permission[]">
+          <option value="view/edit/moderate" py:content="txt('View, Edit, and Moderate')" />
+          <option value="view/moderate"      py:content="txt('View and Moderate')" />
+          <option value="view"               py:content="txt('View Only')" />
+          <option value="none"               py:content="txt('No Permission')" />
         </select>
       </td>
     </tr>

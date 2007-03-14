@@ -129,7 +129,7 @@ class DBReader:
             Column('permit',         Boolean, index = True),
             Column('refcount',       Integer),
             ForeignKeyConstraint(['actor_id'],
-                                 ['resource_path.resource_id'],
+                                 ['resource.id'],
                                  ondelete = 'CASCADE'),
             ForeignKeyConstraint(['action_id'],
                                  ['action.id'],
@@ -500,20 +500,21 @@ class DBReader:
         All arguments are optional; if no arguments are given all ACLs for
         the given actor_id are returned.
         """
+        # Get a list of all resources.
         tbl_p1 = self._table_map['resource_path'].alias('p1')
-        tbl_m1 = self._table_map['path_ancestor_map'].alias('m1')
-        tbl_p2 = self._table_map['resource_path'].alias('p2')
-        tbl_ac = self._table_map['acl']
-        tbl_p3 = self._table_map['resource_path'].alias('p3')
-        tbl_a1 = self._table_map['action'].alias('a1')
-        tbl = tbl_p1.outerjoin(tbl_m1, tbl_p1.c.id == tbl_m1.c.resource_path_id)
-        tbl = tbl.outerjoin(tbl_p2, or_(tbl_p2.c.id == tbl_p1.c.id,
-                                        tbl_p2.c.id == tbl_m1.c.ancestor_path_id))
-        tbl = tbl.outerjoin(tbl_ac, tbl_p2.c.resource_id == tbl_ac.c.resource_id)
-        tbl = tbl.outerjoin(tbl_p3, tbl_p3.c.id == tbl_ac.c.actor_id)
-        tbl = tbl.outerjoin(tbl_a1, tbl_a1.c.id == tbl_ac.c.action_id)
 
+        # Search all ACLs that are defined for those resources.
+        tbl_ac = self._table_map['acl']
+        tbl = tbl_p1.outerjoin(tbl_ac, tbl_p1.c.resource_id == tbl_ac.c.resource_id)
+
+        # Now search the corresponding actors.
+        tbl_p3 = self._table_map['resource_path'].alias('p3')
+        tbl = tbl.outerjoin(tbl_p3, tbl_p3.c.id == tbl_ac.c.actor_id)
         where = tbl_p3.c.resource_id == actor_id
+
+        # Informative only.
+        tbl_a1 = self._table_map['action'].alias('a1')
+        tbl = tbl.outerjoin(tbl_a1, tbl_a1.c.id == tbl_ac.c.action_id)
 
         if kwargs.has_key('action_id'):
             where = and_(where, tbl_ac.c.action_id == kwargs['action_id'])
@@ -542,7 +543,7 @@ class DBReader:
                       tbl_a1.c.name,
                       tbl_a1.c.handle],
                      where,
-                     order_by   = [desc(tbl_p2.c.path), desc(tbl_p3.c.path)],
+                     order_by   = [desc(tbl_p3.c.path), desc(tbl_p1.c.path)],
                      use_labels = True,
                      from_obj   = [tbl])
 
@@ -588,51 +589,54 @@ class DBReader:
         # will suck in at least one respect when you implement ACLs.
         where = None
 
-        # **************************************************************
-        # * 1. Get all ACLs that match the given resource.
-        # **************************************************************
-        # All paths that match directly.
+        # Get all actor paths.
         tbl_p1 = self._table_map['resource_path'].alias('p1')
+        if kwargs.has_key('actor_id'):
+            actor_id = kwargs['actor_id']
+            where    = and_(where, tbl_p1.c.resource_id == actor_id)
 
-        # All paths that are a parent of the direct match.
+        # All paths that are a parent of the path.
         tbl_m1 = self._table_map['path_ancestor_map'].alias('m1')
         tbl = tbl_p1.outerjoin(tbl_m1, tbl_p1.c.id == tbl_m1.c.resource_path_id)
 
-        # Still all paths that are a parent of the direct match, and also the
+        # Still all paths that are a child of the direct match, and also the
         # direct match itself.
         tbl_p2 = self._table_map['resource_path'].alias('p2')
         tbl = tbl.outerjoin(tbl_p2, or_(tbl_p2.c.id == tbl_p1.c.id,
                                         tbl_p2.c.id == tbl_m1.c.ancestor_path_id))
 
-        # All ACLs that reference the given resource or any of its parents.
+        # All ACLs that reference the given actor or any of its parents.
         tbl_ac1 = self._table_map['acl'].alias('ac1')
-        tbl = tbl.outerjoin(tbl_ac1, tbl_p2.c.resource_id == tbl_ac1.c.resource_id)
+        tbl = tbl.outerjoin(tbl_ac1, tbl_p2.c.resource_id == tbl_ac1.c.actor_id)
+        if kwargs.has_key('permit'):
+            permit = kwargs['permit']
+            where  = and_(where, tbl_ac1.c.permit == permit)
 
-        # Path of the actor that is referenced by the ACL.
+        # Path of the resource that is referenced by the ACL.
         tbl_p3 = self._table_map['resource_path'].alias('p3')
-        tbl = tbl.outerjoin(tbl_p3, tbl_p3.c.id == tbl_ac1.c.actor_id)
+        tbl = tbl.outerjoin(tbl_p3, tbl_p3.c.resource_id == tbl_ac1.c.resource_id)
+        if kwargs.has_key('resource_id'):
+            resource_id = kwargs['resource_id']
+            where       = and_(where, tbl_p3.c.resource_id == resource_id)
 
-        # Paths of all children of the actor.
+        # Paths of all children of the resource.
         tbl_m2 = self._table_map['path_ancestor_map'].alias('m2')
         tbl = tbl.outerjoin(tbl_m2, tbl_p3.c.id == tbl_m2.c.ancestor_path_id)
 
-        # Paths of all children of the actor, and also the actor itself.
+        # Paths of all children of the resource, and also the resource itself.
         tbl_p4 = self._table_map['resource_path'].alias('p4')
         tbl = tbl.outerjoin(tbl_p4, or_(tbl_p4.c.id == tbl_p3.c.id,
                                         tbl_p4.c.id == tbl_m2.c.resource_path_id))
-        if kwargs.has_key('actor_id'):
-            actor_id = kwargs['actor_id']
-            where = and_(where, tbl_p4.c.resource_id == actor_id)
 
         # Informative only.
         tbl_a1 = self._table_map['action'].alias('a1')
         tbl = tbl.outerjoin(tbl_a1, tbl_a1.c.id == tbl_ac1.c.action_id)
         if kwargs.has_key('action_id'):
             action_id = kwargs['action_id']
-            where = and_(where, tbl_a1.c.id == action_id)
+            where     = and_(where, tbl_a1.c.id == action_id)
         if kwargs.has_key('action_section_handle'):
             handle = kwargs['action_section_handle']
-            where = and_(where, tbl_a1.c.section_handle == handle)
+            where  = and_(where, tbl_a1.c.section_handle == handle)
 
         # Informative only.
         tbl_s1 = self._table_map['action_section'].alias('s1')
@@ -640,130 +644,40 @@ class DBReader:
         
         # Informative only.
         if kwargs.has_key('resource_section_handle'):
+            handle = kwargs['resource_section_handle']
             tbl_r1 = self._table_map['resource'].alias('r1')
-            tbl = tbl.outerjoin(tbl_r1, tbl_r1.c.id == tbl_p1.c.resource_id)
+            tbl    = tbl.outerjoin(tbl_r1, tbl_r1.c.id == tbl_p4.c.resource_id)
+            where  = and_(where, tbl_r1.c.section_handle == handle)
 
         # Informative only.
-        if kwargs.has_key('actor_section_handle'):
-            tbl_r4 = self._table_map['resource'].alias('r4')
-            tbl = tbl.outerjoin(tbl_r4, tbl_r4.c.id == tbl_p4.c.resource_id)
-
-
-        # **************************************************************
-        # * 2. We want to filter out any ACL that is defined for the
-        # * same action but has a shorter actor path.
-        # * A side effect of this way of doing it is that ACLs are 
-        # * added even if they were not defined for the right actor,
-        # * so we need to filter them out in the next step (see 3.).
-        # **************************************************************
-        # Get all ACLs that control the same action as the ACL above.
-        tbl_ac2 = self._table_map['acl'].alias('ac2')
-        tbl = tbl.outerjoin(tbl_ac2, tbl_ac1.c.action_id == tbl_ac2.c.action_id)
-
-        # Get a list of all ACLs that perform the same action, but only
-        # if their actor path is longer.
-        tbl_p5 = self._table_map['resource_path'].alias('p5')
-        tbl = tbl.outerjoin(tbl_p5, and_(tbl_ac2.c.actor_id == tbl_p5.c.resource_id,
-                                         tbl_p5.c.depth > tbl_p3.c.depth))
-        where = and_(where, tbl_p5.c.id == None)
-
-
-        # **************************************************************
-        # * 3. Filter out any ACLs that are irrelevant because they do
-        # * not have the correct path.
-        # **************************************************************
-        # Get a list of all actors that are pointed to by the ACL joined
-        # above.
-        tbl_p6 = self._table_map['resource_path'].alias('p6')
-        tbl = tbl.outerjoin(tbl_p6, tbl_p6.c.resource_id == tbl_ac2.c.actor_id)
-
-        # Get their children.
-        tbl_m3 = self._table_map['path_ancestor_map'].alias('m3')
-        tbl = tbl.outerjoin(tbl_m3, tbl_m3.c.ancestor_path_id == tbl_p6.c.id)
-
-        # Keep only those that are inherited by the wanted actor.
-        tbl_p7 = self._table_map['resource_path'].alias('p7')
-        tbl = tbl.outerjoin(tbl_p7, or_(tbl_p6.c.id == tbl_p7.c.id,
-                                        tbl_m3.c.resource_path_id == tbl_p7.c.id))
-        if kwargs.has_key('actor_id'):
-            where = and_(where, tbl_p7.c.resource_id == actor_id)
-
-        # Informative only.
-        if kwargs.has_key('actor_section_handle'):
-            tbl_r7 = self._table_map['resource'].alias('r7')
-            tbl = tbl.outerjoin(tbl_r7, tbl_r7.c.id == tbl_p7.c.resource_id)
-
-
-        # **************************************************************
-        # * 4. We want to filter out any ACL that is defined for the
-        # * same action but has a shorter resource path.
-        # * A side effect of this way of doing it is that ACLs are
-        # * added even if they were not defined for the right resource,
-        # * so we need to filter them out in the next step (see 5.).
-        # **************************************************************
-        # Get all ACLs that control the same action as the ACL above.
-        tbl_ac3 = self._table_map['acl'].alias('ac3')
-        tbl = tbl.outerjoin(tbl_ac3, tbl_ac1.c.action_id == tbl_ac3.c.action_id)
-
-        # Get a list of all ACLs that perform the same action, but only
-        # if their resource path is longer.
-        tbl_p8 = self._table_map['resource_path'].alias('p8')
-        tbl = tbl.outerjoin(tbl_p8, and_(tbl_ac3.c.resource_id == tbl_p8.c.resource_id,
-                                         tbl_p8.c.depth > tbl_p3.c.depth))
-        where = and_(where, tbl_p8.c.id == None)
-
-
-        # **************************************************************
-        # * 5. Filter out any ACL that is irrelevant because it does
-        # * not have the correct path.
-        # **************************************************************
-        # Get a list of all resources that are pointed to by the ACL
-        # joined above.
-        tbl_p9 = self._table_map['resource_path'].alias('p9')
-        tbl = tbl.outerjoin(tbl_p9, tbl_p9.c.resource_id == tbl_ac3.c.resource_id)
-
-        # Get their children.
-        tbl_m4 = self._table_map['path_ancestor_map'].alias('m4')
-        tbl = tbl.outerjoin(tbl_m4, tbl_m4.c.ancestor_path_id == tbl_p9.c.id)
-
-        # Keep only those that are inherited by the wanted resource.
-        tbl_p10 = self._table_map['resource_path'].alias('p10')
-        tbl = tbl.outerjoin(tbl_p10, or_(tbl_p9.c.id == tbl_p10.c.id,
-                                         tbl_m4.c.resource_path_id == tbl_p10.c.id))
-
-        if kwargs.has_key('resource_section_handle'):
-            tbl_r10 = self._table_map['resource'].alias('r10')
-            tbl = tbl.outerjoin(tbl_r10, tbl_r10.c.id == tbl_p10.c.resource_id)
-
-        #print 'Get: %i,%i' % (actor_id, resource_id)
-        p2_max_depth = func.max(tbl_p2.c.depth).label('p2_max_depth')
-        p4_max_depth = func.max(tbl_p4.c.depth).label('p4_max_depth')
-        
-        if kwargs.has_key('resource_id'):
-            resource_id = kwargs['resource_id']
-            where = and_(where,
-                         tbl_p1.c.resource_id  == resource_id,  # See 1.
-                         tbl_p10.c.resource_id == resource_id)  # See 5.
-
-        if kwargs.has_key('permit'):
-            permit = kwargs['permit']
-            where = and_(where,
-                         tbl_ac1.c.permit == permit,
-                         tbl_ac2.c.permit == permit,
-                         tbl_ac3.c.permit == permit)
-
         if kwargs.has_key('actor_section_handle'):
             handle = kwargs['actor_section_handle']
-            where = and_(where,
-                         tbl_r4.c.section_handle == handle,
-                         tbl_r7.c.section_handle == handle)
+            tbl_r2 = self._table_map['resource'].alias('r2')
+            tbl    = tbl.outerjoin(tbl_r2, tbl_r2.c.id == tbl_p2.c.resource_id)
+            where  = and_(where, tbl_r2.c.section_handle == handle)
 
-        if kwargs.has_key('resource_section_handle'):
-            handle = kwargs['resource_section_handle']
-            where = and_(where,
-                         tbl_r1.c.section_handle  == handle,
-                         tbl_r10.c.section_handle == handle)
+        # Get all ACLs that control the same resource/action as the ACL above.
+        tbl_ac2 = self._table_map['acl'].alias('ac2')
+        tbl = tbl.outerjoin(tbl_ac2, and_(tbl_ac1.c.action_id   == tbl_ac2.c.action_id,
+                                          tbl_ac1.c.resource_id == tbl_ac2.c.resource_id))
+        
+        # Get a list of all the actors that perform the action.
+        tbl_p5 = self._table_map['resource_path'].alias('p5')
+        tbl = tbl.outerjoin(tbl_p5, tbl_ac2.c.actor_id == tbl_p5.c.resource_id)
 
+        # Make sure that the actor is a parent of the wanted one.
+        tbl_m3 = self._table_map['path_ancestor_map'].alias('m3')
+        tbl = tbl.outerjoin(tbl_m3, tbl_p5.c.id == tbl_m3.c.ancestor_path_id)
+        
+        # Get the list of all the children.
+        tbl_p6 = self._table_map['resource_path'].alias('p6')
+        tbl = tbl.outerjoin(tbl_p6, or_(tbl_m3.c.resource_path_id == tbl_p6.c.id,
+                                        tbl_p5.c.id               == tbl_p6.c.id))
+        if kwargs.has_key('actor_id'):
+            actor_id = kwargs['actor_id']
+            where = and_(where, tbl_p6.c.resource_id == actor_id)
+
+        group_by = [tbl_ac1.c.actor_id, tbl_ac1.c.action_id, tbl_ac1.c.resource_id]
         sel = select([tbl_ac1.c.id,
                       tbl_ac1.c.actor_id,
                       tbl_ac1.c.resource_id,
@@ -772,34 +686,30 @@ class DBReader:
                       tbl_s1.c.id,
                       tbl_s1.c.handle,
                       tbl_s1.c.name,
+                      tbl_p1.c.resource_id,
                       tbl_p2.c.depth.label('p2_depth'),
-                      tbl_p4.c.depth.label('p4_depth'),
-                      tbl_p4.c.resource_id,
-                      p2_max_depth,
-                      p4_max_depth],
+                      func.max(tbl_p5.c.depth).label('p5_max_depth')],
                      where,
                      from_obj   = [tbl],
                      use_labels = True,
-                     group_by   = [tbl_p2.c.id,
-                                   tbl_p4.c.id,
-                                   tbl_ac1.c.action_id],
-                     having = and_('p2_depth = p2_max_depth',
-                                   'p4_depth = p4_max_depth'))
+                     group_by   = group_by,
+                     having     = 'p2_depth = p5_max_depth')
 
         #print sel
         result = sel.execute()
         assert result is not None
 
         # Collect all permissions.
-        acl_list = [];
+        acl_list = []
         for row in result:
+            #print row
             action = Action(row[tbl_a1.c.name], row[tbl_a1.c.handle])
             action.set_id(row[tbl_a1.c.id])
             acl = Acl(row[tbl_ac1.c.actor_id],
                       action,
                       row[tbl_ac1.c.resource_id],
                       row[tbl_ac1.c.permit],
-                      row[tbl_p4.c.resource_id] != row[tbl_ac1.c.actor_id])
+                      row[tbl_p1.c.resource_id] != row[tbl_ac1.c.actor_id])
             acl.set_id(row[tbl_ac1.c.id])
             acl_list.append(acl)
         
