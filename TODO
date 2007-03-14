@@ -1,14 +1,9 @@
 * Admin Center: Handle duplicate user/group names.
 
-* Admin Center: Make deleting groups work.
-
-* Admin Center: Make deleting users work.
-
 * Admin Center: Make the "Add membership" button work.
 
-* Admin Center: Make the "Cancel membership" button work.
-
-* Admin Center: Handle orphaned users.
+* Admin Center: Make the "Cancel membership" button work; handle
+  orphaned users?
 
 * Admin Center: Check permissions of user actions.
 

@@ -337,6 +337,11 @@ class Extension:
         return None
 
 
+    def __delete_resource(self, resource):
+        assert resource is not None
+        assert self.guard_db.delete_resource_from_id(resource.get_id())
+
+
     def __user_editor(self):
         path_str = self.api.get_get_data('path_str')
 
@@ -373,6 +378,25 @@ class Extension:
             resource = self.guard_db.get_resource_from_id(id)
             errors   = self.__save_resource(resource)
             path     = path.crop().append(resource.get_id())
+        elif self.api.get_post_data('group_delete_really') == 'yes':
+            resource = self.guard_db.get_resource_from_id(id)
+            # Check if the group still has users in it.
+            children = self.guard_db.get_resource_children(resource)
+            if len(children) > 0:
+                #FIXME: Rather ask what to do with the children.
+                errors = [self.i18n("Group can not be deleted because " +
+                                    "it has still users in it.")]
+            else:
+                errors   = self.__delete_resource(resource)
+                path     = path.crop()
+                id       = int(path.get_current_id())
+                resource = self.guard_db.get_resource_from_id(id)
+        elif self.api.get_post_data('user_delete_really') == 'yes':
+            resource = self.guard_db.get_resource_from_id(id)
+            errors   = self.__delete_resource(resource)
+            path     = path.crop()
+            id       = int(path.get_current_id())
+            resource = self.guard_db.get_resource_from_id(id)
         elif path_str is not None:
             resource = self.guard_db.get_resource_from_id(id)
 
