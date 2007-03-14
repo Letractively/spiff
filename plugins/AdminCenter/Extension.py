@@ -139,8 +139,8 @@ class Extension:
         description          = post_data('description')
         use_group_permission = post_data('use_group_permission')
         default_owner_id     = post_data('default_owner_id')
-        resource_list        = post_data('resource[]',   False)
-        permission_list      = post_data('permission[]', False)
+        resource_list        = post_data('resource[]',   False) or []
+        permission_list      = post_data('permission[]', False) or []
         if path_str is not None:
             path = self.guard.ResourcePath(path_str)
         if path is not None:
@@ -183,6 +183,16 @@ class Extension:
         if name is None or len(name) < 2:
             msg = i18n("The name must be at least two characters long.")
             errors.append(msg)
+
+        # Make sure that the user/group name does not yet exist.
+        elif resource.get_id() <= 0:
+            res = self.guard_db.get_resource_from_name(name, 'users')
+            if res is not None and res.is_group():
+                msg = i18n("A group with the given name already exists.")
+                errors.append(msg)
+            elif res is not None:
+                msg = i18n("A user with the given name already exists.")
+                errors.append(msg)
 
         # Groups require the use_group_permission field.
         if resource.is_group():
@@ -365,7 +375,8 @@ class Extension:
         elif self.api.get_post_data('group_save') is not None and id == 0:
             resource = self.guard.ResourceGroup('')
             errors   = self.__save_resource(resource)
-            path     = path.crop().append(resource.get_id())
+            if not errors:
+                path = path.crop().append(resource.get_id())
         elif self.api.get_post_data('group_save') is not None:
             resource = self.guard_db.get_resource_from_id(id)
             errors   = self.__save_resource(resource)
@@ -373,7 +384,8 @@ class Extension:
         elif self.api.get_post_data('user_save') is not None and id == 0:
             resource = self.guard.Resource('')
             errors   = self.__save_resource(resource)
-            path     = path.crop().append(resource.get_id())
+            if not errors:
+                path = path.crop().append(resource.get_id())
         elif self.api.get_post_data('user_save') is not None:
             resource = self.guard_db.get_resource_from_id(id)
             errors   = self.__save_resource(resource)
