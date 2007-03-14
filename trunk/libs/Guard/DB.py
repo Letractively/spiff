@@ -464,6 +464,39 @@ class DB(DBReader):
         return True
 
 
+    def __resource_parent_add_n_children(self,
+                                         connection,
+                                         resource_id,
+                                         n_children):
+        """
+        Increases the child counter of the items that are the parent of the
+        given id. n_children allows negative values.
+        Warning: When using this, make sure to lock a transaction.
+        """
+        assert resource_id is not None
+        assert resource_id >= 0
+        assert n_children is not None
+
+        transaction = connection.begin()
+
+        # Get a list of parent nodes.
+        parent_list = self.get_resource_parents_from_id(resource_id)
+        assert parent_list is not None
+        
+        # Decrease the child counter of parent nodes.
+        table = self._table_map['resource']
+        where = None
+        for parent in parent_list:
+            where = or_(where, table.c.id == parent.get_id())
+        values = {table.c.n_children: table.c.n_children + n_children}
+        update = table.update(where, values)
+        result = update.execute()
+        assert result is not None
+
+        transaction.commit()
+        return True
+
+
     def __resource_add_n_children(self, resource_id, n_children):
         assert resource_id >= 0
         assert n_children  >= 0
@@ -622,10 +655,23 @@ class DB(DBReader):
         @return: True if the resource existed, False otherwise.
         """
         assert resource_id >= 0
+
+        connection  = self.db.connect()
+        transaction = connection.begin()
+
+        assert self.__resource_parent_add_n_children(connection,
+                                                     resource_id,
+                                                     -1)
+
+        # Delete the resource.
         table  = self._table_map['resource']
         delete = table.delete(table.c.id == resource_id)
         result = delete.execute()
         assert result is not None
+
+        transaction.commit()
+        connection.close()
+
         if result.rowcount is 0:
             return False
         return True
@@ -645,14 +691,12 @@ class DB(DBReader):
         """
         assert handle         is not None
         assert section_handle is not None
-        table  = self._table_map['resource']
-        delete = table.delete(and_(table.c.section_handle == section_handle,
-                                   table.c.handle         == handle))
-        result = delete.execute()
-        assert result is not None
-        if result.rowcount is 0:
-            return False
-        return True
+        # We can not just delete the resource, we also have to update the
+        # child counter of its parents. We need the resource id to look them
+        # up.
+        resource = db.get_resource_from_handle(handle, section_handle)
+        assert resource is not None
+        return self.delete_resource_from_id(resource.get_id())
 
 
     def delete_resource(self, resource):

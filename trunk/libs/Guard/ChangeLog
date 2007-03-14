@@ -28,3 +28,7 @@ Changes since 1.0.1
   changed (moving n_children from the resource_path table to the
   resource table), so this feature now actually works.
   (delete_permission_from_id): New.
+  (delete_resource_from_id): Fix: Decrease child counter of parents when
+  deleting.
+  (delete_resource_from_handle): Likewise.
+  (delete_resource): Likewise.
