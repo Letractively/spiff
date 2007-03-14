@@ -92,9 +92,19 @@
       <td>
       <table py:if="user.get_id() != 0" width="100%">
         <tr>
-          <td><input type="submit" class="button" name="cancel_membership" value="${txt('Cancel Membership')}" /></td>
+          <td>
+            <input type="submit"
+                   class="button"
+                   name="cancel_membership"
+                   value="${txt('Cancel Membership')}" />
+          </td>
           <td>&nbsp;</td>
-          <td><input type="submit" class="button" name="add_membership" value="${txt('Add Membership')}" /></td>
+          <td>
+            <input type="submit"
+                   class="button"
+                   name="add_membership"
+                   value="${txt('Add Membership')}" />
+          </td>
         </tr>
       </table>
     </td>
@@ -102,9 +112,27 @@
     <td align="right">
     <table>
       <tr>
-        <td><input type="submit" class="button" name="user_delete" value="${txt('Delete User')}" /></td>
+        <td valign="bottom">
+          <input type="checkbox"
+                 class="checkbox"
+                 name="user_delete_really"
+                 value="yes"
+                 py:content="txt('Yes, I am sure that I want to delete this user')" />
+        </td>
         <td>&nbsp;</td>
-        <td><input type="submit" class="button" name="user_save" value="${txt('Apply Changes')}" /></td>
+        <td>
+          <input type="submit"
+                 class="button"
+                 name="user_delete"
+                 value="${txt('Delete User')}" />
+        </td>
+        <td>&nbsp;</td>
+        <td>
+          <input type="submit"
+                 class="button"
+                 name="user_save"
+                 value="${txt('Apply Changes')}" />
+        </td>
       </tr>
     </table>
     </td>

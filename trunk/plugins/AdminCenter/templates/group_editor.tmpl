@@ -111,9 +111,19 @@
     <td>
     <table py:if="group.get_id() > 0" width="100%">
       <tr>
-        <td><input type="submit" class="button" name="group_add" value="${txt('Add New Group')}" /></td>
+        <td>
+          <input type="submit"
+                 class="button"
+                 name="group_add"
+                 value="${txt('Add New Group')}" />
+        </td>
         <td>&nbsp;</td>
-        <td><input type="submit" class="button" name="user_add" value="${txt('Add New User')}" /></td>
+        <td>
+          <input type="submit"
+                 class="button"
+                 name="user_add"
+                 value="${txt('Add New User')}" />
+        </td>
       </tr>
     </table>
     </td>
@@ -121,9 +131,27 @@
     <td align="right">
     <table>
       <tr>
-        <td><input type="submit" class="button" name="group_delete" value="${txt('Delete Group')}" /></td>
+        <td valign="bottom">
+          <input type="checkbox"
+                 class="checkbox"
+                 name="group_delete_really"
+                 value="yes"
+                 py:content="txt('Yes, I am sure that I want to delete this group')" />
+        </td>
         <td>&nbsp;</td>
-        <td><input type="submit" class="button" name="group_save" value="${txt('Apply Changes')}" /></td>
+        <td>
+          <input type="submit"
+                 class="button"
+                 name="group_delete"
+                 value="${txt('Delete Group')}" />
+        </td>
+        <td>&nbsp;</td>
+        <td>
+          <input type="submit"
+                 class="button"
+                 name="group_save"
+                 value="${txt('Apply Changes')}" />
+        </td>
       </tr>
     </table>
     </td>
