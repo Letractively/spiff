@@ -29,27 +29,31 @@ class Extension:
     def __get_permissions_from_db(self, resource):
         guard_db = self.guard_db
 
-        # Retrieve a list of all ACLs.
+        # Retrieve a list of all ACLs. The result is ordered by actor_path,
+        # resource_path.
         search = {'actor': resource, 'resource_section_handle': 'users'}
         acls   = guard_db.get_permission_list_with_inheritance(**search)
 
-        # Sort them into a dict, mapping resource_id to ACL.
-        acls_dict = {}
-        for acl in acls:
-            acl_actions = acls_dict.get(acl.get_resource_id(), [])
-            acl_actions.append(acl)
-            acls_dict[acl.get_resource_id()] = acl_actions
-
         # Retrieve additional info about the resource.
-        acl_id_list   = acls_dict.keys()
-        resource_list = guard_db.get_resource_list_from_id_list(acl_id_list)
+        res_id_list = [acl.get_resource_id() for acl in acls]
+        res_list    = guard_db.get_resource_list_from_id_list(res_id_list)
+        res_dict    = {}
+        for resource in res_list:
+            res_dict[resource.get_id()] = resource
 
-        # Map resource to acl.
-        acls = {}
-        for resource in resource_list:
-            acls[resource] = acls_dict[resource.get_id()]
+        # Group them by resource into a list that contains (resource,
+        # [acl1, acl2, ...]) tuples.
+        resource_acls = []
+        last_resource = None
+        for acl in acls:
+            resource = res_dict[acl.get_resource_id()]
+            if last_resource == resource:
+                resource_acls[-1][1].append(acl)
+            else:
+                resource_acls.append((resource, [acl]))
+                last_resource = resource
 
-        return acls
+        return resource_acls
 
 
     def __show_user(self, user, path, errors = []):
@@ -107,12 +111,7 @@ class Extension:
                 users.append(child)
 
         # Collect permissions.
-        #print "Search:", group.get_id()
         acls = self.__get_permissions_from_db(group)
-        #for item in acls:
-        #    res_acls = acls[item]
-        #    for acl in res_acls:
-        #        print "ACL:", acl.get_id(), acl.get_actor_id(), acl.get_action().get_id(), acl.get_resource_id()
 
         # Render the template.
         self.api.render('templates/group_editor.tmpl',
@@ -390,20 +389,22 @@ class Extension:
             resource = self.guard_db.get_resource_from_id(id)
             errors   = self.__save_resource(resource)
             path     = path.crop().append(resource.get_id())
-        elif self.api.get_post_data('group_delete_really') == 'yes':
+        elif (self.api.get_post_data('group_delete') is not None and
+              self.api.get_post_data('group_delete_really') == 'yes'):
             resource = self.guard_db.get_resource_from_id(id)
             # Check if the group still has users in it.
             children = self.guard_db.get_resource_children(resource)
             if len(children) > 0:
                 #FIXME: Rather ask what to do with the children.
                 errors = [self.i18n("Group can not be deleted because " +
-                                    "it has still users in it.")]
+                                    "it still has users in it.")]
             else:
                 errors   = self.__delete_resource(resource)
                 path     = path.crop()
                 id       = int(path.get_current_id())
                 resource = self.guard_db.get_resource_from_id(id)
-        elif self.api.get_post_data('user_delete_really') == 'yes':
+        elif (self.api.get_post_data('user_delete') is not None and
+              self.api.get_post_data('user_delete_really') == 'yes'):
             resource = self.guard_db.get_resource_from_id(id)
             errors   = self.__delete_resource(resource)
             path     = path.crop()

@@ -693,7 +693,8 @@ class DBReader:
                      from_obj   = [tbl],
                      use_labels = True,
                      group_by   = group_by,
-                     having     = 'p2_depth = p5_max_depth')
+                     having     = 'p2_depth = p5_max_depth',
+                     order_by   = [tbl_p2.c.path, tbl_p4.c.path])
 
         #print sel
         result = sel.execute()
