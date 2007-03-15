@@ -1,6 +1,6 @@
-from distutils.core import setup
+from setuptools import setup, find_packages
 setup(name             = 'Spiff Guard',
-      version          = '1.0.1',
+      version          = '1.2.0',
       description      = 'A Generic Access List Library',
       long_description = \
 """

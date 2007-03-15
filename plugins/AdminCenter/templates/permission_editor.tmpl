@@ -8,18 +8,6 @@
      py:strip="True">
 <script type="text/javascript">
 /**
- * Increases the n_permissions counter and returns the result.
- */
-function incrementItemCount(n)
-{
-  var input = document.getElementById('n_permissions');
-  var count = parseInt(input.getAttribute('value'), 10);
-  input.setAttribute('value', count + n);
-  return count + n;
-}
-
-
-/**
  * Adds a new row to the permission table.
  */
 function add_row(tbody) {
@@ -32,17 +20,16 @@ function add_row(tbody) {
   tr.appendChild(td2);
 
   // Add a text field into the first cell.
-  var count = incrementItemCount(1);
   var input = document.createElement('input');
   input.setAttribute('type',    'text');
-  input.setAttribute('name',    'resource[' + count.toString() + ']');
+  input.setAttribute('name',    'resource[]');
   input.setAttribute('onKeyUp', 'on_text_changed()');
   input.setAttribute('onBlur',  'on_field_left(this)');
   td1.appendChild(input);
 
   // Add a select box into the second cell.
   var select = document.createElement('select');
-  select.setAttribute('name', 'permission[' + count.toString() + ']');
+  select.setAttribute('name', 'permission[]');
   td2.appendChild(select);
   
   // Add the option items.
@@ -106,11 +93,9 @@ function on_field_left(field) {
     return;
   
   // Remove the row.
-  incrementItemCount(-1);
   tbody.removeChild(tr);
 }
 </script>
-<input type="hidden" name="n_permissions" id="n_permissions" value="${len(acls) + 1}" />
 <table cellpadding="3" cellspacing="0">
   <tbody id='permission_table_body' py:with="x = enumerate(acls)">
     <tr py:for="resource, res_acls in acls"

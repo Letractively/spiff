@@ -41,11 +41,13 @@ class SetUserPassword(Task):
         # Connect to MySQL and set up.
         db              = create_engine(dbn)
         self.guard      = Guard.DB(db)
-        form_data       = cgi.FieldStorage()
+        get_data        = cgi.parse_qs(os.environ["QUERY_STRING"])
+        post_data       = cgi.FieldStorage()
         self.integrator = Integrator.Manager(self.guard,
                                              ExtensionApi,
-                                             guard     = self.guard,
-                                             form_data = form_data)
+                                             guard_mod = Guard,
+                                             get_data  = get_data,
+                                             post_data = post_data)
         self.integrator.set_extension_dir('../data/repo')
 
 

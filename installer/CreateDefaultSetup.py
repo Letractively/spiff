@@ -94,7 +94,13 @@ class CreateDefaultSetup(CheckList):
         return self.__create_action(name, handle, section)
 
 
-    def __create_resource(self, group, parent, name, handle, section):
+    def __create_resource(self,
+                          group,
+                          parent,
+                          name,
+                          handle,
+                          section,
+                          private = False):
         assert name    is not None
         assert handle  is not None
         assert section is not None
@@ -106,6 +112,8 @@ class CreateDefaultSetup(CheckList):
                 resource = ResourceGroup(name, handle)
             else:
                 resource = Resource(name, handle)
+            if private:
+                resource.set_attribute('private', True)
             try:
                 if parent is None:
                     parent_id = None
@@ -130,9 +138,14 @@ class CreateDefaultSetup(CheckList):
         return self.__create_resource(False, parent, name, handle, section)
 
 
-    def __create_content(self, parent, name, handle):
+    def __create_content(self, parent, name, handle, private = False):
         section = ResourceSection('content')
-        return self.__create_resource(True, parent, name, handle, section)
+        return self.__create_resource(True,
+                                      parent,
+                                      name,
+                                      handle,
+                                      section,
+                                      private)
 
 
     def install(self, environment):
@@ -206,17 +219,12 @@ class CreateDefaultSetup(CheckList):
         if user_action_view is None:
             return Task.failure
 
-        user_action_create = self.__create_user_action('Create User',
-                                                       'create')
-        if user_action_create is None:
-            return Task.failure
-
         user_action_edit = self.__create_user_action('Edit User',
                                                      'edit')
         if user_action_edit is None:
             return Task.failure
 
-        user_action_moderate = self.__create_user_action('Delete User',
+        user_action_moderate = self.__create_user_action('Moderate User',
                                                          'moderate')
         if user_action_moderate is None:
             return Task.failure
@@ -225,14 +233,32 @@ class CreateDefaultSetup(CheckList):
         # Assign user permissions.
         #########
         self._result_markup += '{subtitle "Assigning user permissions"}'
-        caption = 'Granting all access to Administrators'
+        caption = 'Denying all permissions for Everybody'
         actions = [user_action_admin,
                    user_action_view,
-                   user_action_create,
                    user_action_edit,
                    user_action_moderate]
         try:
+            self.guard.deny(group_everybody, actions, group_everybody)
+        except:
+            self._add_result(caption, Task.failure)
+            self._print_result(environment, False)
+            return Task.failure
+        self._add_result(caption, Task.success)
+
+        caption = 'Granting all access to Administrators'
+        try:
             self.guard.grant(group_admin, actions, group_everybody)
+        except:
+            self._add_result(caption, Task.failure)
+            self._print_result(environment, False)
+            return Task.failure
+        self._add_result(caption, Task.success)
+
+        caption = 'Granting view permission to Users'
+        actions = [user_action_view]
+        try:
+            self.guard.grant(group_users, actions, group_everybody)
         except:
             self._add_result(caption, Task.failure)
             self._print_result(environment, False)
@@ -273,7 +299,8 @@ class CreateDefaultSetup(CheckList):
 
         content_system_admin = self.__create_content(content_system,
                                                      'Admin Center',
-                                                     'system/admin')
+                                                     'system/admin',
+                                                     True)
         if content_system_admin is None:
             return Task.failure
 
@@ -295,23 +322,23 @@ class CreateDefaultSetup(CheckList):
         if content_perms is None:
             return Task.failure
 
-        content_action_view = self.__create_user_action('View Content',
-                                                        'view')
+        content_action_view = self.__create_content_action('View Content',
+                                                           'view')
         if content_action_view is None:
             return Task.failure
 
-        content_action_create = self.__create_user_action('Create Content',
-                                                         'create')
+        content_action_create = self.__create_content_action('Create Content',
+                                                             'create')
         if content_action_create is None:
             return Task.failure
 
-        content_action_edit = self.__create_user_action('Edit Content',
-                                                        'edit')
+        content_action_edit = self.__create_content_action('Edit Content',
+                                                           'edit')
         if content_action_edit is None:
             return Task.failure
 
-        content_action_delete = self.__create_user_action('Delete Content',
-                                                          'delete')
+        content_action_delete = self.__create_content_action('Delete Content',
+                                                             'delete')
         if content_action_delete is None:
             return Task.failure
 

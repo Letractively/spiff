@@ -37,9 +37,7 @@ class Extension:
         # Retrieve additional info about the resource.
         res_id_list = [acl.get_resource_id() for acl in acls]
         res_list    = guard_db.get_resource_list_from_id_list(res_id_list)
-        res_dict    = {}
-        for resource in res_list:
-            res_dict[resource.get_id()] = resource
+        res_dict    = dict([(r.get_id(), r) for r in res_list])
 
         # Group them by resource into a list that contains (resource,
         # [acl1, acl2, ...]) tuples.

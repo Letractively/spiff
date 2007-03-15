@@ -16,6 +16,7 @@ import os.path, sys
 from functions       import get_request_uri,gettext
 from Integrator      import Api
 from Cookie          import SimpleCookie
+from Login           import Login
 from genshi.template import TemplateLoader
 from genshi.template import TextTemplate
 from genshi.template import MarkupTemplate
@@ -30,6 +31,7 @@ class ExtensionApi(Api):
         assert kwargs.has_key('get_data')
         assert kwargs.has_key('post_data')
         Api.__init__(self, guard_db, manager, event_bus)
+        self.__login        = Login(guard_db)
         self.__guard_db     = guard_db
         self.__guard_mod    = kwargs['guard_mod']
         self.__get_data     = kwargs['get_data']
@@ -48,6 +50,11 @@ class ExtensionApi(Api):
 
     def get_i18n(self):
         return gettext
+
+
+    def get_login(self):
+        #FIXME: Check permission of the caller!
+        return self.__login
 
 
     def get_guard_db(self):
@@ -95,9 +102,11 @@ class ExtensionApi(Api):
         self.__headers_sent = True
         
         # Load and display the HTML header.
-        loader = TemplateLoader(['web'])
-        tmpl   = loader.load('header.tmpl', None, TextTemplate)
-        print tmpl.generate().render('text')
+        current_user = self.__login.get_current_user()
+        loader       = TemplateLoader(['web'])
+        tmpl         = loader.load('header.tmpl', None, TextTemplate)
+        print tmpl.generate(current_user = current_user,
+                            txt          = gettext).render('text')
 
 
     def headers_sent(self):
