@@ -32,7 +32,7 @@ from ActorGroup      import *
 
 class DBReader:
     fetch_all, fetch_groups, fetch_items = range(3)
-    attrib_type_int, attrib_type_string = range(2)
+    attrib_type_int, attrib_type_bool, attrib_type_string = range(3)
 
     def __init__(self, db):
         self.db            = db
@@ -227,6 +227,8 @@ class DBReader:
                 # Determine attribute type.
                 if row[tbl_a.c.type] == self.attrib_type_int:
                     value = int(row[tbl_a.c.attr_int])
+                elif row[tbl_a.c.type] == self.attrib_type_bool:
+                    value = bool(row[tbl_a.c.attr_int])
                 elif row[tbl_a.c.type] == self.attrib_type_string:
                     value = row[tbl_a.c.attr_string]
 
@@ -298,28 +300,33 @@ class DBReader:
         return self.__get_resource_from_query(select, type, True)
         
 
-    def get_resource_list_from_attribute(self, name, value, type = None):
+    def get_resource_list_from_attribute(self, name, value, r_type = None):
         assert name  is not None
         assert value is not None
         tbl_a  = self._table_map['resource_attribute']
         tbl_r  = self._table_map['resource']
         table  = outerjoin(tbl_a, tbl_r, tbl_r.c.id == tbl_a.c.resource_id)
-        try:
-            int(value)
+        if type(value) == type(0):
             attr_type = self.attrib_type_int
-        except:
-            attr_type = self.attrib_type_string
-        if attr_type == self.attrib_type_int:
             select = table.select(and_(tbl_a.c.name        == name,
                                        tbl_a.c.type        == attr_type,
-                                       tbl_a.c.attr_int    == value),
+                                       tbl_a.c.attr_int    == int(value)),
                                   use_labels = True)
-        else:
+        elif type(value) == type(True):
+            attr_type = self.attrib_type_bool
+            select = table.select(and_(tbl_a.c.name        == name,
+                                       tbl_a.c.type        == attr_type,
+                                       tbl_a.c.attr_int    == int(value)),
+                                  use_labels = True)
+        elif type(value) == type(''):
+            attr_type = self.attrib_type_string
             select = table.select(and_(tbl_a.c.name        == name,
                                        tbl_a.c.type        == attr_type,
                                        tbl_a.c.attr_string == value),
                                   use_labels = True)
-        return self.__get_resource_from_query(select, type, True)
+        else:
+            assert False # Unknown attribute type.
+        return self.__get_resource_from_query(select, r_type, True)
 
 
     def get_resource_children_from_id(self,
@@ -369,6 +376,9 @@ class DBReader:
             if row[tbl_a.c.type] == self.attrib_type_int:
                 resource.set_attribute(row[tbl_a.c.name],
                                        int(row[tbl_a.c.attr_int]))
+            elif row[tbl_a.c.type] == self.attrib_type_bool:
+                resource.set_attribute(row[tbl_a.c.name],
+                                       bool(row[tbl_a.c.attr_int]))
             elif row[tbl_a.c.type] == self.attrib_type_string:
                 resource.set_attribute(row[tbl_a.c.name],
                                        row[tbl_a.c.attr_string])
@@ -432,6 +442,9 @@ class DBReader:
             if row[tbl_a.c.type] == self.attrib_type_int:
                 resource.set_attribute(row[tbl_a.c.name],
                                        int(row[tbl_a.c.attr_int]))
+            elif row[tbl_a.c.type] == self.attrib_type_bool:
+                resource.set_attribute(row[tbl_a.c.name],
+                                       bool(row[tbl_a.c.attr_string]))
             elif row[tbl_a.c.type] == self.attrib_type_string:
                 resource.set_attribute(row[tbl_a.c.name],
                                        row[tbl_a.c.attr_string])
