@@ -12,7 +12,7 @@ import Guard
 
 def find_requested_page(get_data):
     if not get_data.has_key('page'):
-        return 'system/login'
+        return 'admin/login'
     return get_data['page'][0]
 
 
@@ -30,7 +30,7 @@ def log_in(guard_db, integrator, page):
 
     # Ending up here, the user is not logged in or has insufficient rights.
     # Build a login form.
-    login = guard_db.get_resource_from_handle('system/login', 'content')
+    login = guard_db.get_resource_from_handle('admin/login', 'content')
     assert login is not None
     descriptor = login.get_attribute('extension')
     assert descriptor is not None
@@ -57,7 +57,7 @@ def log_in(guard_db, integrator, page):
 if not os.path.exists('data/spiff.cfg'):
     print 'Content-Type: text/html'
     print
-    print 'Please configure Spiff before you access this site.<br/>'
+    print 'Please configure Spiff before accessing this site.<br/>'
     print 'The INSTALL file shipped with the Spiff installation contains'
     print 'instructions on how this can be done.'
     sys.exit()

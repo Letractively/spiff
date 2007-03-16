@@ -5,13 +5,13 @@
 <div align="center">
   <table width="600">
     <tr>
-      <td py:with="url = request_uri(manage_content = [1])">
+      <td py:with="url = request_uri(page = ['admin/content'])">
         <xi:include href="icon_with_caption.tmpl"
                     py:with="img     = img_dir + '/logo_medium.png';
                              caption = txt('Change Site Content');
                              url     = url" />
       </td>
-      <td py:with="url = request_uri(manage_users = [1])">
+      <td py:with="url = request_uri(page = ['admin/users'])">
         <xi:include href="icon_with_caption.tmpl"
                     py:with="img     = img_dir + '/groups.png';
                              caption = txt('User and Group Management');

@@ -1,11 +1,12 @@
 """
-extension:    Admin Center
-handle:       spiff_core_admin_center
+extension:    Content Manager
+handle:       spiff_core_content_manager
 version:      0.1
 author:       Samuel Abels
 author-email: spam2@debain.org
-description:  This core extension implements the admininistration user interface.
-dependency:   spiff spiff_core_login
+description:  This core extension implements the user interface for
+              managing content.
+dependency:   spiff
 signal:       render_start
               render_end
 """
@@ -23,6 +24,6 @@ class Extension:
         self.api.emit('render_start')
         self.api.send_headers()
 
-        self.api.render('admin.tmpl')
+        self.api.render('content_editor.tmpl')
 
         self.api.emit('render_end')

@@ -72,3 +72,7 @@ class Login:
         self.__current_user = user
         headers = {'Set-Cookie': 'sid=%s;' % sid}
         return headers
+
+
+    def logout(self):
+        return {'Set-Cookie': 'sid=''; expires=Thu, 01-JAN-1970 00:00:00 GMT;'}
