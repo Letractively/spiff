@@ -1,18 +1,18 @@
 from setuptools import setup, find_packages
-setup(name             = 'Spiff WikiMarkup',
+setup(name             = 'Spiff Warehouse',
       version          = '0.1',
-      description      = 'A library for converting between HTML and Wiki text',
+      description      = 'A library for storing revisioned files in a database',
       long_description = \
 """
-Spiff WikiMarkup is a library that bidirectionally converts between HTML and
-Wiki markup language.
+Spiff Warehouse is a library that stores revisioned files in a database
+and provides an API for getting a diff between documents (if the
+document format is supported).
 """,
       author           = 'Samuel Abels',
       author_email     = 'cheeseshop.python.org@debain.org',
       license          = 'GPLv2',
       packages         = [''],
-      requires         = ['Plex'],
-      provides         = ['WikiMarkup'],
+      provides         = ['Warehouse'],
       url              = 'http://code.google.com/p/spiff/',
       classifiers      = [
         'Development Status :: 5 - Production/Stable',
