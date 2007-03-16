@@ -20,7 +20,7 @@
     <td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
     <td width='100%'>
       <py:choose>
-        <h2 py:when="user.get_id() == -1" py:content="txt('Create A New User')" />
+        <h2 py:when="user.get_name() == ''" py:content="txt('Create A New User')" />
         <h2 py:otherwise="" py:content="user.get_name()" />
       </py:choose>
       <py:for each="error in errors">

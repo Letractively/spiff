@@ -53,9 +53,22 @@ class Extension:
         assert not user.is_group()
         assert path is not None
         guard_db = self.guard_db
+        i18n     = self.i18n
+
+        # Make sure that current_user has "view" permissions on it.
+        current_user = self.api.get_login().get_current_user()
+        if user.get_id() > 0:
+            view = guard_db.get_action_from_handle('view', 'user_permissions')
+            assert view is not None
+            if not guard_db.has_permission(current_user, view, user):
+                old_user = user
+                user     = self.guard.Resource(old_user.get_name())
+                errors   = [i18n("You do not have permission to view " +
+                                 "this user.")]
 
         # Collect information for the browser.
         if user.get_id() > 0:
+            acls = self.__get_permissions_from_db(user)
             parents = guard_db.get_resource_parents(user)
             # Abuse attributes to pass the path to the HTML template.
             for parent in parents:
@@ -67,9 +80,6 @@ class Extension:
             parent.set_attribute('path_str', path.crop().get())
             parents   = [parent]
         
-        # Collect permissions.
-        acls = self.__get_permissions_from_db(user)
-
         # Render the template.
         self.api.render('user_editor.tmpl',
                         path                 = path,
@@ -85,25 +95,36 @@ class Extension:
         assert group.is_group()
         assert path is not None
         guard_db = self.guard_db
+        i18n     = self.i18n
+
+        # Make sure that current_user has "view" permissions on it.
+        current_user = self.api.get_login().get_current_user()
+        if group.get_id() > 0:
+            view = guard_db.get_action_from_handle('view', 'user_permissions')
+            assert view is not None
+            if not guard_db.has_permission(current_user, view, group):
+                old_group = group
+                group     = self.guard.Resource(old_group.get_name())
+                errors    = [i18n("You do not have permission to view " +
+                                  "this group.")]
 
         # Collect information for the browser.
+        users    = []
+        groups   = []
         if group.get_id() > 0:
-            parents = guard_db.get_resource_parents(group)
+            acls     = self.__get_permissions_from_db(group)
+            parents  = guard_db.get_resource_parents(group)
+            children = guard_db.get_resource_children(group)
+            for child in children:
+                if child.is_group():
+                    groups.append(child)
+                else:
+                    users.append(child)
         else:
             parent_id = path.crop().get_current_id()
             parent    = guard_db.get_resource_from_id(parent_id)
             parents   = [parent]
-        children = guard_db.get_resource_children(group)
-        users    = []
-        groups   = []
-        for child in children:
-            if child.is_group():
-                groups.append(child)
-            else:
-                users.append(child)
-
-        # Collect permissions.
-        acls = self.__get_permissions_from_db(group)
+            acls      = []
 
         # Render the template.
         self.api.render('group_editor.tmpl',
@@ -119,7 +140,8 @@ class Extension:
 
     def __save_resource(self, resource):
         assert resource is not None
-        i18n = self.i18n
+        guard_db = self.guard_db
+        i18n     = self.i18n
         
         # Retrieve form data.
         get_data             = self.api.get_get_data
@@ -157,10 +179,9 @@ class Extension:
             msg = i18n("A resource can not be its own parent.")
             errors.append(msg)
 
-        # Users *have to* have a parent (unlike groups, whose parent may be
-        # 0).
-        elif parent_id == 0 and not resource.is_group():
-            msg = i18n("Can not create a user without a group.")
+        # Users and groups must have a parent, except existing ones.
+        elif resource.get_id() <= 0 and parent_id == 0:
+            msg = i18n("Can not create a user or group without a parent.")
             errors.append(msg)
 
         # So a parent was given - make sure that it exists.
@@ -169,6 +190,35 @@ class Extension:
             if parent is None:
                 msg = i18n("Specified parent does not exist.")
                 errors.append(msg)
+
+        # Check permissions.
+        current_user    = self.api.get_login().get_current_user()
+        current_user_id = current_user.get_id()
+        section         = 'user_permissions'
+
+        # If the given user/group is new, make sure that current_user has
+        # "administer" permissions on the parent.
+        if resource.get_id() <= 0:
+            admin = guard_db.get_action_from_handle('adminster', section)
+            assert admin is not None
+            if not guard_db.has_permission(current_user, admin, parent):
+                return [i18n("You do not have permission to add a group.")]
+
+        # If the given group already exists, make sure that current_user
+        # has "edit" permissions on it.
+        elif resource.is_group():
+            edit = guard_db.get_action_from_handle('edit', section)
+            assert edit is not None
+            if not guard_db.has_permission(current_user, edit, resource):
+                return [i18n("You do not have permission to edit this group.")]
+
+        # If the given user already exists, make sure that current_user
+        # has "edit" permissions on it.
+        else:
+            edit = guard_db.get_action_from_handle('edit', section)
+            assert edit is not None
+            if not guard_db.has_permission(current_user, edit, resource):
+                return [i18n("You do not have permission to edit this user.")]
 
         # Minimum name length.
         if name is None or len(name) < 2:
@@ -263,21 +313,34 @@ class Extension:
 
         # Get the list of current permissions from the database.
         search = { 'resource_section_handle': 'users' }
-        acls = self.guard_db.get_permission_list_from_id(resource.get_id(),
-                                                         **search)
+        acls   = guard_db.get_permission_list_from_id(resource.get_id(),
+                                                      **search)
 
         resource_id_list = []
         for acl in acls:
             acl_id      = acl.get_id()
             actor_id    = acl.get_actor_id()
             action      = acl.get_action()
+            action_id   = action.get_id()
             resource_id = acl.get_resource_id()
-            res         = self.guard_db.get_resource_from_id(resource_id)
+            res         = guard_db.get_resource_from_id(resource_id)
             resource_id_list.append(resource_id)
+            cur_permit  = guard_db.has_permission_from_id(current_user_id,
+                                                          action_id,
+                                                          resource_id)
 
             # If the resource was removed from the UI, delete it from the DB.
             if res.get_name() not in resource_list:
                 #print "Missing resource: Deleting permission %s" % acl_id
+                # If deleting this permission would escalate the permission
+                # of that user to something that is higher than current_user,
+                # deny that.
+                par_permit = guard_db.has_permission_from_id(parent_id,
+                                                             action_id,
+                                                             resource_id)
+                if par_permit and not cur_permit:
+                    return [i18n("Permission change would escalate rights " +
+                                 "above the currently logged in user.")]
                 assert self.guard_db.delete_permission_from_id(actor_id,
                                                                action.get_id(),
                                                                resource_id)
@@ -296,6 +359,15 @@ class Extension:
             # it from the DB.
             if action.get_handle() not in resource_permission:
                 #print "Missing permission: Deleting permission %s" % acl_id
+                # If deleting this permission would escalate the permission
+                # of that user to something that is higher than current_user,
+                # deny that.
+                par_permit = guard_db.has_permission_from_id(parent_id,
+                                                             action_id,
+                                                             resource_id)
+                if par_permit and not cur_permit:
+                    return [i18n("Permission change would escalate rights " +
+                                 "above the currently logged in user.")]
                 assert self.guard_db.delete_permission_from_id(actor_id,
                                                                action.get_id(),
                                                                resource_id)
@@ -316,15 +388,27 @@ class Extension:
 
             res = self.guard_db.get_resource_from_name(name, 'users')
             #print "Current:", resource.get_name(), res.get_name(), resource_permission
+
+            # Walk through all permissions, granting all that were newly added.
             for permission in resource_permission:
                 if permission == 'none':
                     continue
                 #print "Granting %s on %s" % permission, res.get_name())
-                action_id = locals()[permission].get_id()
+                action_id  = locals()[permission].get_id()
+                cur_permit = guard_db.has_permission_from_id(current_user_id,
+                                                             action_id,
+                                                             resource_id)
+                if not guard_db.has_permission_from_id(current_user_id,
+                                                       action_id,
+                                                       resource_id):
+                    return [i18n("Permission change would escalate rights " +
+                                 "above the currently logged in user.")]
                 assert self.guard_db.grant_from_id(resource.get_id(),
                                                    action_id,
                                                    res.get_id())
 
+            # Walk through all permissions, denying all that were listed as
+            # rejected.
             for permission in ['view', 'edit', 'moderate']:
                 if permission in resource_permission:
                     continue
@@ -340,16 +424,31 @@ class Extension:
 
     def __delete_resource(self, resource):
         assert resource is not None
+
+        # Check permissions.
+        current_user = self.api.get_login().get_current_user()
+        section      = 'user_permissions'
+
+        # Make sure that current_user has "edit" permissions on it.
+        delete = guard_db.get_action_from_handle('delete', section)
+        assert delete is not None
+        permit = guard_db.has_permission(current_user, delete, resource)
+        if not permit and resource.is_group():
+            return [i18n("You do not have permission to delete this group.")]
+        elif not permit:
+            return [i18n("You do not have permission to delete this user.")]
+
         assert self.guard_db.delete_resource_from_id(resource.get_id())
+        return None
 
 
     def on_render_request(self):
         self.api.emit('render_start')
         self.api.send_headers()
-
-        path_str = self.api.get_get_data('path_str')
+        i18n = self.i18n
 
         # Find out which item was requested.
+        path_str = self.api.get_get_data('path_str')
         if path_str is None:
             resource = self.guard_db.get_resource_from_handle('everybody',
                                                               'users')
@@ -391,7 +490,7 @@ class Extension:
             children = self.guard_db.get_resource_children(resource)
             if len(children) > 0:
                 #FIXME: Rather ask what to do with the children.
-                errors = [self.i18n("Group can not be deleted because " +
+                errors = [i18n("Group can not be deleted because " +
                                     "it still has users in it.")]
             else:
                 errors   = self.__delete_resource(resource)

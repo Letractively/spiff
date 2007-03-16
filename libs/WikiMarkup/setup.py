@@ -1,7 +1,7 @@
 from distutils.core import setup
 setup(name             = 'Spiff WikiMarkup',
       version          = '0.1',
-      description      = 'A library for converting between HTML and Wiki Text',
+      description      = 'A library for converting between HTML and Wiki text',
       long_description = \
 """
 Spiff WikiMarkup is a library that bidirectionally converts between HTML and

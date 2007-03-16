@@ -106,9 +106,9 @@ function on_field_left(field) {
                  action_handle = 'moderate' in actions and 'view/moderate'      or action_handle;
                  action_handle = 'edit'     in actions and 'view/edit/moderate' or action_handle;">
       <td>
-        ${res_acls[0].get_inherited() and resource.get_name() or None}
+        ${res_acls[-1].get_inherited() and resource.get_name() or None}
         <py:choose>
-          <input py:when="res_acls[0].get_inherited()"
+          <input py:when="res_acls[-1].get_inherited()"
                  type="hidden"
                  name="resource[]"
                  value="${resource.get_name()}" />
@@ -128,8 +128,8 @@ function on_field_left(field) {
                   py:content="name_map[handle]" />
           <option value="default"
                   selected="selected"
-                  py:if="res_acls[0].get_inherited()"
-                  py:with="parent = get_resource_from_id(res_acls[0].get_actor_id())"
+                  py:if="res_acls[-1].get_inherited()"
+                  py:with="parent = get_resource_from_id(res_acls[-1].get_actor_id())"
                   py:content="txt('Like %s (%s)' % (parent.get_name(), name_map[action_handle]))" />
         </select>
       </td>
