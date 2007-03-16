@@ -23,7 +23,11 @@
   <tr><td align="right">Not logged in.</td></tr>
  #end
  #otherwise
-  <tr><td align="right">Logged in: ${current_user.get_name()}</td></tr>
+  <tr>
+    <td align="right">
+    Logged in: ${current_user.get_name()}
+    </td>
+  </tr>
  #end
 #end
 </table>

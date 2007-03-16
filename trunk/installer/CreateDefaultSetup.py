@@ -266,7 +266,7 @@ class CreateDefaultSetup(CheckList):
         self._add_result(caption, Task.success)
 
         #########
-        # Create content.
+        # Create content pages.
         #########
         self._result_markup += '{subtitle "Creating content"}'
         section_content = self.__create_resource_section('Content', 'content')
@@ -277,37 +277,66 @@ class CreateDefaultSetup(CheckList):
         if content_homepage is None:
             return Task.failure
 
-        content_system = self.__create_content(None, 'System Pages', 'system')
-        if content_system is None:
+        content_admin = self.__create_content(None, 'Admin Center', 'admin')
+        if content_admin is None:
             return Task.failure
 
-        content_system_login = self.__create_content(content_system,
-                                                     'System Login',
-                                                     'system/login')
-        if content_system_login is None:
+        content_admin_content = self.__create_content(content_admin,
+                                                      'Content Manager',
+                                                      'admin/content',
+                                                      True)
+        if content_admin_content is None:
             return Task.failure
 
-        # Assign an extension to the system/login page.
+        content_admin_users = self.__create_content(content_admin,
+                                                    'User Manager',
+                                                    'admin/users',
+                                                    True)
+        if content_admin_users is None:
+            return Task.failure
+
+        content_admin_login = self.__create_content(content_admin,
+                                                    'System Login',
+                                                    'admin/login')
+        if content_admin_login is None:
+            return Task.failure
+
+        #########
+        # Assign extensions to the content pages.
+        #########
+        # Assign an extension to the admin/login page.
         caption = 'Assign login extension to a system page'
-        content_system_login.set_attribute('extension', 'spiff_core_login')
-        if not self.guard.save_resource(content_system_login, section_content):
+        content_admin_login.set_attribute('extension', 'spiff_core_login')
+        if not self.guard.save_resource(content_admin_login, section_content):
             self._add_result(caption, Task.failure)
             self._print_result(environment, False)
             return Task.failure
         self._add_result(caption, Task.success)
 
-
-        content_system_admin = self.__create_content(content_system,
-                                                     'Admin Center',
-                                                     'system/admin',
-                                                     True)
-        if content_system_admin is None:
+        # Assign an extension to the admin page.
+        caption = 'Assign admin center extension to a system page'
+        content_admin.set_attribute('extension', 'spiff_core_admin_center')
+        if not self.guard.save_resource(content_admin, section_content):
+            self._add_result(caption, Task.failure)
+            self._print_result(environment, False)
             return Task.failure
+        self._add_result(caption, Task.success)
 
-        # Assign an extension to the system/admin page.
-        caption = 'Assign login extension to a system page'
-        content_system_admin.set_attribute('extension', 'spiff_core_admin_center')
-        if not self.guard.save_resource(content_system_admin, section_content):
+        # Assign an extension to the admin/users page.
+        caption = 'Assign user manager extension to a system page'
+        handle  = 'spiff_core_user_manager'
+        content_admin_users.set_attribute('extension', handle)
+        if not self.guard.save_resource(content_admin_users, section_content):
+            self._add_result(caption, Task.failure)
+            self._print_result(environment, False)
+            return Task.failure
+        self._add_result(caption, Task.success)
+
+        # Assign an extension to the admin/content page.
+        caption = 'Assign content manager extension to a system page'
+        handle  = 'spiff_core_content_manager'
+        content_admin_content.set_attribute('extension', handle)
+        if not self.guard.save_resource(content_admin_content, section_content):
             self._add_result(caption, Task.failure)
             self._print_result(environment, False)
             return Task.failure
@@ -351,7 +380,7 @@ class CreateDefaultSetup(CheckList):
                    content_action_view,
                    content_action_edit,
                    content_action_delete]
-        content = [content_homepage, content_system]
+        content = [content_homepage, content_admin]
         try:
             self.guard.grant(group_admin, actions, content)
         except:
@@ -361,7 +390,7 @@ class CreateDefaultSetup(CheckList):
         self._add_result(caption, Task.success)
 
         caption = 'Granting view permissions to users'
-        content = [content_homepage, content_system]
+        content = [content_homepage]
         try:
             self.guard.grant(group_users, content_action_view, content)
         except:

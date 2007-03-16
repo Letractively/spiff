@@ -9,6 +9,7 @@ description:  This core extension implements the login form that lets
 dependency:   spiff
 listener:     spiff:page_open
 signal:       login_done
+              logout_done
               render_start
               render_end
 """
@@ -37,6 +38,13 @@ class Extension:
                 self.__api.send_headers('text/html', headers)
                 self.__status = self.login_success
                 self.__api.emit('login_done')
+            return
+        elif self.__api.get_post_data('logout') is not None:
+            headers = self.__login.logout()
+            assert headers is not None
+            self.__api.send_headers('text/html', headers)
+            self.__status = self.login_open
+            self.__api.emit('logout_done')
             return
 
         # No user is currently logged in.

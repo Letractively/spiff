@@ -6,6 +6,7 @@
 * Admin Center: Check permissions of user actions.
 
 * Everywhere: Check string escaping in HTML templates.
+  E.g. current_user.get_name() in web/header.tmpl is not escaped!
 
 * Integrator/Extensions: Get the signal permission checks right.
 

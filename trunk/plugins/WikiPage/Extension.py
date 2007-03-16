@@ -1,11 +1,12 @@
 """
-extension:    Admin Center
-handle:       spiff_core_admin_center
+extension:    Wiki Page
+handle:       spiff_core_wiki_page
 version:      0.1
 author:       Samuel Abels
 author-email: spam2@debain.org
-description:  This core extension implements the admininistration user interface.
-dependency:   spiff spiff_core_login
+description:  This core extension shows normal web pages written in plain text
+              with some annotations.
+dependency:   spiff
 signal:       render_start
               render_end
 """
@@ -23,6 +24,6 @@ class Extension:
         self.api.emit('render_start')
         self.api.send_headers()
 
-        self.api.render('admin.tmpl')
+        print "This wiki page is not yet implemented."
 
         self.api.emit('render_end')
