@@ -85,7 +85,7 @@ class DB:
         @rtype:  Boolean
         @return: True on success, False otherwise.
         """
-        delete = self._table_map['data'].delete()
+        delete = self._table_map[self._table_prefix + 'data'].delete()
         result = delete.execute()
         assert result is not None
         return True

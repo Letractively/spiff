@@ -144,7 +144,7 @@ class ApiDB:
         @rtype:  Boolean
         @return: True on success, False otherwise.
         """
-        delete = self._table_map['source_tree'].delete()
+        delete = self._table_map[self._table_prefix + 'source_tree'].delete()
         result = delete.execute()
         assert result is not None
         return True
