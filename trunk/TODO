@@ -3,7 +3,8 @@
 * Admin Center: Make the "Cancel membership" button work; handle
   orphaned users?
 
-* Admin Center: Check permissions of user actions.
+* Admin Center: Test better whether the permission escalation prevention
+  works.
 
 * Everywhere: Check string escaping in HTML templates.
   E.g. current_user.get_name() in web/header.tmpl is not escaped!

@@ -422,6 +422,8 @@ class DB(DBReader):
             self.__resource_update_attribute(resource_id, name, value)
             return None
         insert = self._table_map['resource_attribute'].insert()
+        if value is None:
+            value = ''
         if type(value) == type(0):
             result = insert.execute(resource_id = resource_id,
                                     name        = name,
@@ -450,6 +452,8 @@ class DB(DBReader):
         table  = self._table_map['resource_attribute']
         update = table.update(and_(table.c.resource_id == resource_id,
                                    table.c.name        == name))
+        if value is None:
+            value = ''
         if type(value) == type(0):
             result = update.execute(type        = self.attrib_type_int,
                                     name        = name,
