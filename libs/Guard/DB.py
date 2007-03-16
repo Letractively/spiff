@@ -66,10 +66,11 @@ class DB(DBReader):
         @rtype:  Boolean
         @return: True on success, False otherwise.
         """
-        delete = self._table_map['action_section'].delete()
+        pfx    = self._table_prefix
+        delete = self._table_map[pfx + 'action_section'].delete()
         result = delete.execute()
         assert result is not None
-        delete = self._table_map['resource_section'].delete()
+        delete = self._table_map[pfx + 'resource_section'].delete()
         result = delete.execute()
         assert result is not None
         return True
@@ -702,7 +703,7 @@ class DB(DBReader):
         # We can not just delete the resource, we also have to update the
         # child counter of its parents. We need the resource id to look them
         # up.
-        resource = db.get_resource_from_handle(handle, section_handle)
+        resource = self.get_resource_from_handle(handle, section_handle)
         assert resource is not None
         return self.delete_resource_from_id(resource.get_id())
 
