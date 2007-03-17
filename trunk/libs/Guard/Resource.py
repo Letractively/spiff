@@ -36,9 +36,7 @@ class Resource(DBObject):
         self.__attribute_list[name] = value
 
     def get_attribute(self, name):
-        if not self.__attribute_list.has_key(name):
-            return None
-        return self.__attribute_list[name]
+        return self.__attribute_list.get(name, None)
 
     def remove_attribute(self, name):
         if self.__attribute_list.has_key(name):

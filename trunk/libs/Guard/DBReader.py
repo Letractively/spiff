@@ -35,17 +35,21 @@ class DBReader:
     attrib_type_int, attrib_type_bool, attrib_type_string = range(3)
 
     def __init__(self, db):
+        """
+        Instantiates a new DBReader.
+        """
         self.db            = db
         self.db_metadata   = BoundMetaData(self.db)
-        self._table_prefix = ''
+        self._table_prefix = 'guard_'
         self._table_map    = {}
         self._table_list   = []
         self.__update_table_names()
 
 
     def __add_table(self, table):
+        pfx = self._table_prefix
         self._table_list.append(table)
-        self._table_map[table.name] = table
+        self._table_map[table.name[len(pfx):]] = table
 
 
     def __update_table_names(self):
@@ -68,7 +72,7 @@ class DBReader:
             Column('handle',         String(230)),
             Column('name',           String(230), unique = True),
             ForeignKeyConstraint(['section_handle'],
-                                 ['action_section.handle'],
+                                 [pfx + 'action_section.handle'],
                                  ondelete = 'CASCADE'),
             mysql_engine='INNODB'
         ))
@@ -83,7 +87,7 @@ class DBReader:
             Column('is_actor',       Boolean,     index = True),
             Column('is_group',       Boolean,     index = True),
             ForeignKeyConstraint(['section_handle'],
-                                 ['resource_section.handle'],
+                                 [pfx + 'resource_section.handle'],
                                  ondelete = 'CASCADE'),
             mysql_engine='INNODB'
         ))
@@ -95,7 +99,7 @@ class DBReader:
             Column('attr_string',    String(200)),
             Column('attr_int',       Integer),
             ForeignKeyConstraint(['resource_id'],
-                                 ['resource.id'],
+                                 [pfx + 'resource.id'],
                                  ondelete = 'CASCADE'),
             mysql_engine='INNODB'
         ))
@@ -106,7 +110,7 @@ class DBReader:
             Column('resource_id',    Integer,     index = True),
             Column('refcount',       Integer,     index = True, default = 0),
             ForeignKeyConstraint(['resource_id'],
-                                 ['resource.id'],
+                                 [pfx + 'resource.id'],
                                  ondelete = 'CASCADE'),
             mysql_engine='INNODB'
         ))
@@ -114,10 +118,10 @@ class DBReader:
             Column('resource_path_id',  Integer, index = True),
             Column('ancestor_path_id',  Integer, index = True),
             ForeignKeyConstraint(['resource_path_id'],
-                                 ['resource_path.id'],
+                                 [pfx + 'resource_path.id'],
                                  ondelete = 'CASCADE'),
             ForeignKeyConstraint(['ancestor_path_id'],
-                                 ['resource_path.id'],
+                                 [pfx + 'resource_path.id'],
                                  ondelete = 'CASCADE'),
             mysql_engine='INNODB'
         ))
@@ -129,28 +133,46 @@ class DBReader:
             Column('permit',         Boolean, index = True),
             Column('refcount',       Integer),
             ForeignKeyConstraint(['actor_id'],
-                                 ['resource.id'],
+                                 [pfx + 'resource.id'],
                                  ondelete = 'CASCADE'),
             ForeignKeyConstraint(['action_id'],
-                                 ['action.id'],
+                                 [pfx + 'action.id'],
                                  ondelete = 'CASCADE'),
             ForeignKeyConstraint(['resource_id'],
-                                 ['resource.id'],
+                                 [pfx + 'resource.id'],
                                  ondelete = 'CASCADE'),
             mysql_engine='INNODB'
         ))
 
 
     def debug(self, debug = True):
+        """
+        Enable/disable debugging.
+
+        @type  debug: Boolean
+        @param debug: True to enable debugging.
+        """
         self.db.debug = debug
 
 
     def set_table_prefix(self, prefix):
+        """
+        Define a table prefix. Default is 'warehouse_'.
+
+        @type  prefix: string
+        @param prefix: The new prefix.
+        """
         self._table_prefix = prefix
         self.__update_table_names()
 
 
     def get_table_prefix(self):
+        """
+        Returns the current database table prefix.
+        
+        @rtype:  string
+        @return: The current prefix.
+        """
         return self._table_prefix
 
 

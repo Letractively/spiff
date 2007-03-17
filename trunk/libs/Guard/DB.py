@@ -66,11 +66,10 @@ class DB(DBReader):
         @rtype:  Boolean
         @return: True on success, False otherwise.
         """
-        pfx    = self._table_prefix
-        delete = self._table_map[pfx + 'action_section'].delete()
+        delete = self._table_map['action_section'].delete()
         result = delete.execute()
         assert result is not None
-        delete = self._table_map[pfx + 'resource_section'].delete()
+        delete = self._table_map['resource_section'].delete()
         result = delete.execute()
         assert result is not None
         return True
