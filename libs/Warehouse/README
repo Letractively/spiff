@@ -29,7 +29,7 @@ db.set_directory('data/')
 
 # Add a revision of a file into the database.
 item = Item("my/alias")
-item.set_filename("my/test.txt")
+item.set_source_filename("my/test.txt")
 assert db.add_file(item)
 print "Added revision", item.get_revision()
 
