@@ -1,6 +1,8 @@
 Changes since 1.2.0
 
   * DBReader.py: Added support for boolean attribute types.
+  (set_table_prefix): Fixed.
+
   * DB.py: Added support for boolean attribute types.
 
 Changes since 1.0.1
