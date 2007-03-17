@@ -30,6 +30,7 @@ class Item:
         self.__id             = -1
         self.__alias          = alias
         self.__filename       = None
+        self.__source_file    = None
         self.__move_on_add    = False
         self.__mime_type      = None
         self.__revision       = None
@@ -73,7 +74,7 @@ class Item:
 
     def get_alias(self):
         """
-        Returns the alias of the Item in the database.
+        Returns the alias of the file in the database.
         
         @rtype:  string
         @return: The name of the file, or None if undefined.
@@ -81,38 +82,62 @@ class Item:
         return self.__alias
 
 
-    def set_filename(self, filename, move = False):
+    def set_filename(self):
+        """
+        Defines the filename under which the file in the database can be
+        accessed.
+        This method should normally not be used, you probably want
+        set_source_file() instead.
+        
+        @rtype:  string
+        @return: The name of the file, or None if not yet stored.
+        """
+        return self.__source_file
+
+
+    def get_filename(self):
+        """
+        Returns the filename under which the file in the database can be
+        accessed.
+        
+        @rtype:  string
+        @return: The name of the file, or None if not yet stored.
+        """
+        return self.__source_file
+
+
+    def set_source_filename(self, source_file, move = False):
         """
         Defines the name of the file to be added into the database.
         
-        @type  filename: string
-        @param filename: The content of the item.
+        @type  source_file: string
+        @param source_file: The name of the file to be added.
         @type  move: boolean
         @param move: When True, the file is *moved* instead of copied when the
                      item is added into the database.
         """
-        assert os.path.exists(filename)
+        assert os.path.exists(source_file)
         # Determine MIME type.
         #FIXME
         self.__mime_type   = mime_type
-        self.__filename    = filename
+        self.__source_file = source_file
         self.__move_on_add = move
 
 
-    def get_filename(self):
+    def get_source_filename(self):
         """
         Returns the name of the file that will be added into the database.
         
         @rtype:  string
         @return: The name of the file, or None if undefined.
         """
-        return self.__filename
+        return self.__source_file
 
 
     def set_content(self, content):
         """
         If you have the data in memory instead of a file, you can use this
-        method instead of set_filename(). It takes the content, creates a file
+        method instead of set_source_file(). It takes the content, creates a file
         out of it, and when the item is added into the database, moves the
         temporary file into the database.
         
@@ -121,12 +146,12 @@ class Item:
         """
         # Write the content into a temporary file.
         #FIXME
-        self.set_filename(temp_file_name, True)
+        self.set_source_file(temp_file_name, True)
 
 
     def get_move_on_add(self):
         """
-        Returns True if the file returned by get_filename() will be moved when
+        Returns True if the file returned by get_source_file() will be moved when
         the item is added into the database.
         Returns False if the file will be copied.
         
@@ -157,6 +182,19 @@ class Item:
         @return: The revision number, or None if the Item is not yet saved.
         """
         return self.__revision
+
+
+    def set_mime_type(self, mime_type):
+        """
+        Can be used to overwrite the mime type. Should normally not be used,
+        because the mime type is detected automatically when
+        set_source_filename() or set_content() is used.
+        
+        @type  mime_type: string
+        @param mime_type: The mime type.
+        """
+        assert mime_type is not None
+        self.__mime_type = mime_type
 
 
     def get_mime_type(self):
