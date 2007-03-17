@@ -13,7 +13,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import os.path, sys
-from functions       import get_request_uri,gettext
+from functions       import *
 from Integrator      import Api
 from Cookie          import SimpleCookie
 from Login           import Login
@@ -105,7 +105,9 @@ class ExtensionApi(Api):
         current_user = self.__login.get_current_user()
         loader       = TemplateLoader(['web'])
         tmpl         = loader.load('header.tmpl', None, TextTemplate)
-        print tmpl.generate(current_user = current_user,
+        web_dir      = get_mod_rewrite_prevented_uri('web')
+        print tmpl.generate(web_dir      = web_dir,
+                            current_user = current_user,
                             txt          = gettext).render('text')
 
 
@@ -127,11 +129,12 @@ class ExtensionApi(Api):
         classname  = '%s' % extension.__class__
         subdirname = '/'.join(classname.split('.')[:-2])
         dirname    = os.path.join('data/repo/', subdirname)
+        plugin_uri = get_mod_rewrite_prevented_uri(dirname)
 
         # Load and display the template.
         loader = TemplateLoader([dirname])
         tmpl   = loader.load(filename, None, MarkupTemplate)
-        print tmpl.generate(plugin_dir  = dirname,
+        print tmpl.generate(plugin_dir  = plugin_uri,
                             request_uri = get_request_uri,
                             txt         = gettext,
                             **kwargs).render('xhtml')
