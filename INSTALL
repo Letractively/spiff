@@ -23,3 +23,21 @@ Installation Instructions
     easier.
 
 08. Done! You should now be able to open the index.py file in your web browser.
+
+
+Using mod_rewrite
+------------------
+
+Spiff supports mod_rewrite. To enable it, follow these instructions:
+
+1. Edit the .htaccess file in the root directory of Spiff and change
+   "RewriteEngine off" to "RewriteEngine on"
+
+2. If Spiff is NOT installed in the www root of your webserver (i.e.
+   opening "http://www.your-domain-name.com" does not point to your
+   Spiff directory), you will have to edit the RewriteRule statements.
+   It is expected that you know how to do that if you use mod_rewrite.
+
+3. Edit the functions.py file in the root directory of Spiff and change
+   "use_mod_rewrite = False" (near the top of the file) to
+   "use_mod_rewrite = True".

@@ -70,7 +70,7 @@ class Login:
         section = ResourceSection('users')
         self.__guard_db.save_resource(user, section)
         self.__current_user = user
-        headers = {'Set-Cookie': 'sid=%s;' % sid}
+        headers = {'Set-Cookie': 'sid=%s; path=/' % sid}
         return headers
 
 

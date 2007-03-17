@@ -13,6 +13,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import os, cgi
+use_mod_rewrite = False
 
 
 def get_request_uri(*args, **kwargs):
@@ -22,17 +23,45 @@ def get_request_uri(*args, **kwargs):
     """
     vars = cgi.parse()
     url  = os.environ["REQUEST_URI"]
-    pos  = url.find('?')
-    if pos is -1:
-        url += '?'
-    else:
-        url = url[:pos + 1]
+    page = vars.get('page', [''])[0]
+
+    # The "page" variable is treated differently depending on whether
+    # mod_rewrite is enabled. Firstly, remove it from the dictionaries.
     vars.update(kwargs)
+    if vars.has_key('page'):
+        page = vars['page'][0]
+        del vars['page']
+
+    # Build the path of the URL.
+    if use_mod_rewrite:
+        url = '/' + page + '/'
+        if len(vars) > 0:
+            url += '?'
+    else:
+        pos = url.find('?')
+        if pos != -1:
+            url = url[:pos]
+        if page != '':
+            url += '?page=' + page
+        elif len(vars) > 0:
+            url += '?'
+
+    # Append attributes, if any.
     for key in vars:
         if url[-1] != '&' and url[-1] != '?':
             url += '&'
         url += key + '=' + str(vars[key][0])
     return url
+
+
+def get_mod_rewrite_prevented_uri(plugin_dir):
+    """
+    Returns a URL that points to the same directory as the given one,
+    but where, when mod_rewrite is enabled, rewriting is prevented.
+    """
+    if not use_mod_rewrite:
+        return plugin_dir
+    return "mod-rewrite-will-strip-this/" + plugin_dir
 
 
 def gettext(text):
