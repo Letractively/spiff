@@ -41,7 +41,7 @@ def random_path(depth):
     @rtype:  string
     @return: The newly generated path name.
     """
-    component_len = 8
+    component_len = 2
     path          = random_string(component_len)
     for i in range(depth - 1):
          path = os.path.join(path, random_string(component_len))

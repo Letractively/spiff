@@ -13,7 +13,9 @@ signal:       render_start
 import os
 import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '../../libs/'))
-from Warehouse import *
+from Warehouse  import *
+from WikiMarkup import *
+from genshi     import Markup
 
 class Extension:
     def __init__(self, api):
@@ -21,7 +23,25 @@ class Extension:
         self.i18n      = api.get_i18n()
         self.db        = api.get_db()
         self.page      = api.get_requested_page()
+        self.wiki2html = Wiki2Html()
         self.warehouse = DB(self.db)
+        root_directory = os.path.dirname(sys.argv[0])
+        data_directory = os.path.join(root_directory, 'data')
+        self.warehouse.set_directory(data_directory)
+
+
+    def __save_page(self):
+        i18n = self.i18n
+        wiki_markup = self.api.get_post_data('wiki_markup')
+        if wiki_markup is None or wiki_markup == '':
+            return [i18n('No text was entered...')]
+
+        item = Item(self.page.get_handle())
+        item.set_content(wiki_markup)
+        if not self.warehouse.add_file(item):
+            msg = i18n('File could not be saved - please contact the author!')
+            return (None, [msg])
+        return (item, [])
 
 
     def on_render_request(self):
@@ -29,9 +49,61 @@ class Extension:
         self.api.send_headers()
         errors = []
 
-        item = self.warehouse.get_file_from_alias(self.page.get_handle())
-        if not item:
-            errors.append(self.i18n('Page not found!'))
+        # Collect data.
+        edit     = self.api.get_get_data('edit')
+        save     = self.api.get_post_data('save')
+        revision = self.api.get_get_data('revision')
+        alias    = self.page.get_handle()
+        may_edit = self.api.has_permission('edit')
+        item     = None
+        if not may_edit and edit is not None:
+            errors.append(self.i18n('You are not allowed to edit this page.'))
+        if revision is not None:
+            item = self.warehouse.get_file_from_alias(alias, int(revision))
+        if item is None:
+            item = self.warehouse.get_file_from_alias(alias)
+        if (item is not None
+            and revision is not None
+            and revision != item.get_revision()):
+            errors.append(self.i18n('Requested revision not found, showing '
+                                    'most recent version instead.'))
 
-        self.api.render('show.tmpl', page = self.page, errors = errors)
+        # Save, if requested by the user.
+        if save is not None:
+            (item, errors) = self.__save_page()
+
+        tmpl_args = {
+            'page':     self.page,
+            'may_edit': may_edit,
+            'errors':   errors
+        }
+
+        # Edit an existing page.
+        if item is not None and edit is not None:
+            assert item.get_filename() is not None
+            assert len(item.get_filename()) > 0
+
+            # Read the file.
+            infile = open(item.get_filename(), 'r')
+            assert infile is not None
+            tmpl_args['wiki_markup'] = infile.read()
+            infile.close()
+
+            self.api.render('edit.tmpl', **tmpl_args)
+
+        # Edit a new page.
+        elif item is None:
+            errors.append(self.i18n('You are editing a new page.'))
+            self.api.render('edit.tmpl', **tmpl_args)
+
+        # Show a page.
+        else:
+            assert item.get_filename() is not None
+            assert len(item.get_filename()) > 0
+            
+            # Convert to html.
+            self.wiki2html.read(item.get_filename())
+            tmpl_args['html'] = Markup(self.wiki2html.html)
+            
+            self.api.render('show.tmpl', **tmpl_args)
         self.api.emit('render_end')
