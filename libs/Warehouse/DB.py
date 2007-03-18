@@ -59,6 +59,7 @@ class DB:
         Adds all tables to the internal table list.
         """
         pfx = self._table_prefix
+        self._table_list = []
         self.__add_table(Table(pfx + 'revision', self.db_metadata,
             Column('id',              Integer,     primary_key = True),
             Column('alias',           String(230), index = True),

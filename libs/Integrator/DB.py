@@ -25,9 +25,20 @@ from functions       import *
 
 class DB:
     def __init__(self, acldb, section_handle = 'extensions'):
+        """
+        Instantiates a new DB.
+        
+        @type  acldb: AclDB
+        @param acldb: A Spiff Guard AclDB instance.
+        @type  section_handle: string
+        @param section_handle: A string specifying the Spiff Guard section
+                               into which extensions are added.
+        @rtype:  DB
+        @return: The new instance.
+        """
         self.db                  = acldb.db
         self._acldb              = acldb
-        self._table_prefix       = ''
+        self._table_prefix       = 'integrator_'
         self._table_map          = {}
         self._table_list         = []
         self._acl_section_handle = section_handle
@@ -36,14 +47,25 @@ class DB:
 
 
     def __add_table(self, table):
+        """
+        Adds a new table to the internal table list.
+        
+        @type  table: Table
+        @param table: An sqlalchemy table.
+        """
+        pfx = self._table_prefix
         self._table_list.append(table)
-        self._table_map[table.name] = table
+        self._table_map[table.name[len(pfx):]] = table
 
 
     def __update_table_names(self):
+        """
+        Adds all tables to the internal table list.
+        """
         metadata  = self._acldb.db_metadata
         pfx       = self._table_prefix
         acldb_pfx = self._acldb.get_table_prefix()
+        self._table_list = []
         self.__add_table(Table(pfx + 'extension_dependency', metadata,
             Column('id',                  Integer,    primary_key = True),
             Column('extension_id',        Integer,    index = True),
@@ -82,15 +104,34 @@ class DB:
 
 
     def debug(self, debug = True):
+        """
+        Enable/disable debugging.
+
+        @type  debug: Boolean
+        @param debug: True to enable debugging.
+        """
         self.db.debug = debug
 
 
     def set_table_prefix(self, prefix):
+        """
+        Define a table prefix. Default is 'warehouse_'.
+
+        @type  prefix: string
+        @param prefix: The new prefix.
+        """
+        assert prefix is not None
         self._table_prefix = prefix
         self.__update_table_names()
 
 
     def get_table_prefix(self):
+        """
+        Returns the current database table prefix.
+        
+        @rtype:  string
+        @return: The current prefix.
+        """
         return self._table_prefix
 
 
@@ -601,9 +642,11 @@ if __name__ == '__main__':
     class DBTest(unittest.TestCase):
         def set_table_prefix_test(self, db):
             assert db.clear_database()
-            assert db.get_table_prefix() == ''
+            assert db.get_table_prefix() == 'integrator_'
             db.set_table_prefix('test')
             assert db.get_table_prefix() == 'test'
+            db.set_table_prefix('integrator_')
+            assert db.get_table_prefix() == 'integrator_'
             
         def check_dependencies_test(self, db):
             assert db.clear_database()

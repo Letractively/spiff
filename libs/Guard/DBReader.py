@@ -37,6 +37,11 @@ class DBReader:
     def __init__(self, db):
         """
         Instantiates a new DBReader.
+        
+        @type  db: object
+        @param db: An sqlalchemy database connection.
+        @rtype:  DB
+        @return: The new instance.
         """
         self.db            = db
         self.db_metadata   = BoundMetaData(self.db)
@@ -47,13 +52,23 @@ class DBReader:
 
 
     def __add_table(self, table):
+        """
+        Adds a new table to the internal table list.
+        
+        @type  table: Table
+        @param table: An sqlalchemy table.
+        """
         pfx = self._table_prefix
         self._table_list.append(table)
         self._table_map[table.name[len(pfx):]] = table
 
 
     def __update_table_names(self):
+        """
+        Adds all tables to the internal table list.
+        """
         pfx = self._table_prefix
+        self._table_list = []
         self.__add_table(Table(pfx + 'action_section', self.db_metadata,
             Column('id',     Integer,     primary_key = True),
             Column('handle', String(230), unique = True),

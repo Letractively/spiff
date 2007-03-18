@@ -22,21 +22,40 @@ from functions     import *
 
 class ApiDB:
     def __init__(self, db):
+        """
+        Instantiates a new ApiDB.
+        
+        @type  db: object
+        @param db: An sqlalchemy database connection.
+        @rtype:  DB
+        @return: The new instance.
+        """
         self.db            = db
-        self._table_prefix = ''
+        self._table_prefix = 'api_db_'
         self._table_map    = {}
         self._table_list   = []
         self.__update_table_names()
 
 
     def __add_table(self, table):
+        """
+        Adds a new table to the internal table list.
+        
+        @type  table: Table
+        @param table: An sqlalchemy table.
+        """
+        pfx = self._table_prefix
         self._table_list.append(table)
-        self._table_map[table.name] = table
+        self._table_map[table.name[len(pfx):]] = table
 
 
     def __update_table_names(self):
+        """
+        Adds all tables to the internal table list.
+        """
         metadata = BoundMetaData(self.db)
         pfx = self._table_prefix
+        self._table_list = []
         self.__add_table(Table(pfx + 'source_tree', metadata,
             Column('id',              Integer,     primary_key = True),
             Column('path',            Binary(255), unique = True),
@@ -48,10 +67,10 @@ class ApiDB:
             Column('node_id',     Integer),
             Column('ancestor_id', Integer),
             ForeignKeyConstraint(['node_id'],
-                                 ['source_tree.id'],
+                                 [pfx + 'source_tree.id'],
                                  ondelete = 'CASCADE'),
             ForeignKeyConstraint(['ancestor_id'],
-                                 ['source_tree.id'],
+                                 [pfx + 'source_tree.id'],
                                  ondelete = 'CASCADE'),
             mysql_engine='INNODB'
         ))
@@ -62,7 +81,7 @@ class ApiDB:
             Column('data',          TEXT),
             Column('name',          String(230)),
             ForeignKeyConstraint(['node_id'],
-                                 ['source_tree.id'],
+                                 [pfx + 'source_tree.id'],
                                  ondelete = 'CASCADE'),
             mysql_engine='INNODB'
         ))
@@ -73,10 +92,10 @@ class ApiDB:
             Column('introduction',       String(230)),
             Column('description',        TEXT),
             ForeignKeyConstraint(['documents_chunk_id'],
-                                 ['source_chunk.id'],
+                                 [pfx + 'source_chunk.id'],
                                  ondelete = 'CASCADE'),
             ForeignKeyConstraint(['source_chunk_id'],
-                                 ['source_chunk.id'],
+                                 [pfx + 'source_chunk.id'],
                                  ondelete = 'CASCADE'),
             mysql_engine='INNODB'
         ))
@@ -87,7 +106,7 @@ class ApiDB:
             Column('type',       String(100)),
             Column('docs',       TEXT),
             ForeignKeyConstraint(['api_doc_id'],
-                                 ['api_doc.id'],
+                                 [pfx + 'api_doc.id'],
                                  ondelete = 'CASCADE'),
             mysql_engine='INNODB'
         ))
@@ -97,19 +116,42 @@ class ApiDB:
             Column('type',       String(100)),
             Column('docs',       TEXT),
             ForeignKeyConstraint(['api_doc_id'],
-                                 ['api_doc.id'],
+                                 [pfx + 'api_doc.id'],
                                  ondelete = 'CASCADE'),
             mysql_engine='INNODB'
         ))
 
 
     def debug(self, debug = True):
+        """
+        Enable/disable debugging.
+
+        @type  debug: Boolean
+        @param debug: True to enable debugging.
+        """
         self.db.debug = debug
 
 
     def set_table_prefix(self, prefix):
+        """
+        Define a table prefix. Default is 'warehouse_'.
+
+        @type  prefix: string
+        @param prefix: The new prefix.
+        """
+        assert prefix is not None
         self._table_prefix = prefix
         self.__update_table_names()
+
+
+    def get_table_prefix(self):
+        """
+        Returns the current database table prefix.
+        
+        @rtype:  string
+        @return: The current prefix.
+        """
+        return self._table_prefix
 
 
     def install(self):
@@ -144,7 +186,7 @@ class ApiDB:
         @rtype:  Boolean
         @return: True on success, False otherwise.
         """
-        delete = self._table_map[self._table_prefix + 'source_tree'].delete()
+        delete = self._table_map['source_tree'].delete()
         result = delete.execute()
         assert result is not None
         return True
