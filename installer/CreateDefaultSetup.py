@@ -304,6 +304,15 @@ class CreateDefaultSetup(CheckList):
         #########
         # Assign extensions to the content pages.
         #########
+        # Assign the wiki page extension to the homepage.
+        caption = 'Assign homepage to a wiki page'
+        content_homepage.set_attribute('extension', 'spiff_core_wiki_page')
+        if not self.guard.save_resource(content_homepage, section_content):
+            self._add_result(caption, Task.failure)
+            self._print_result(environment, False)
+            return Task.failure
+        self._add_result(caption, Task.success)
+
         # Assign an extension to the admin/login page.
         caption = 'Assign login extension to a system page'
         content_admin_login.set_attribute('extension', 'spiff_core_login')

@@ -12,7 +12,7 @@ import Guard
 
 def find_requested_page(get_data):
     if not get_data.has_key('page'):
-        return 'admin/login'
+        return 'homepage'
     return get_data['page'][0]
 
 
@@ -74,20 +74,13 @@ cfg = RawConfigParser()
 cfg.read('data/spiff.cfg')
 dbn = cfg.get('database', 'dbn')
 
-# Connect to MySQL and set up.
-db         = create_engine(dbn)
-guard_db   = Guard.DB(db)
-get_data   = cgi.parse_qs(os.environ["QUERY_STRING"])
-post_data  = cgi.FieldStorage()
-integrator = Integrator.Manager(guard_db,
-                                ExtensionApi,
-                                acldb     = guard_db,
-                                guard_mod = Guard,
-                                get_data  = get_data,
-                                post_data = post_data)
-integrator.set_extension_dir('data/repo')
+# Connect to MySQL and set up Spiff Guard.
+db       = create_engine(dbn)
+guard_db = Guard.DB(db)
 
-# Lookup page from the given cgi variables.
+# Lookup the current page from the given cgi variables.
+get_data    = cgi.parse_qs(os.environ["QUERY_STRING"])
+post_data   = cgi.FieldStorage()
 page_handle = find_requested_page(get_data)
 page        = guard_db.get_resource_from_handle(page_handle, 'content')
 if page is None:
@@ -95,6 +88,16 @@ if page is None:
     print
     print 'error 404'
     sys.exit()
+
+# Set up the plugin manager (Integrator).
+integrator = Integrator.Manager(guard_db,
+                                ExtensionApi,
+                                requested_page = page,
+                                acldb          = guard_db,
+                                guard_mod      = Guard,
+                                get_data       = get_data,
+                                post_data      = post_data)
+integrator.set_extension_dir('data/repo')
 
 # Make sure that the caller has permission to retrieve this page.
 page_open_event_sent = False

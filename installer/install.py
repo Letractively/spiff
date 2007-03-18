@@ -7,6 +7,7 @@ from Constructor           import *
 from Constructor.Task      import *
 from InstallGuard          import InstallGuard
 from InstallIntegrator     import InstallIntegrator
+from InstallWarehouse      import InstallWarehouse
 from InstallExtension      import InstallExtension
 from CreateDefaultSetup    import CreateDefaultSetup
 from SetUserPassword       import SetUserPassword
@@ -40,7 +41,8 @@ tasks = [
     CreateDir('../data/repo'),
     CreateDir('../data/uploads'),
     InstallGuard(),
-    InstallIntegrator()
+    InstallIntegrator(),
+    InstallWarehouse()
 ]
 constructor.append(CreateDefaultSetup('Creating default setup', tasks))
 constructor.append(SetUserPassword('admin'))

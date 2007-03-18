@@ -43,9 +43,10 @@ class InstallExtension(Task):
         post_data       = cgi.FieldStorage()
         self.integrator = Integrator.Manager(self.guard,
                                              ExtensionApi,
-                                             guard_mod = Guard,
-                                             get_data  = get_data,
-                                             post_data = post_data)
+                                             requested_page = None,
+                                             guard_mod      = Guard,
+                                             get_data       = get_data,
+                                             post_data      = post_data)
         self.integrator.set_extension_dir('../data/repo')
 
 
