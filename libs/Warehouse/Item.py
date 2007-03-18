@@ -12,6 +12,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+import os
+import mimetypes
+from tempfile import mkstemp
+
 class Item:
     """
     An Item represents a single version of a file in the database.
@@ -82,17 +86,17 @@ class Item:
         return self.__alias
 
 
-    def set_filename(self):
+    def set_filename(self, filename):
         """
         Defines the filename under which the file in the database can be
         accessed.
         This method should normally not be used, you probably want
         set_source_file() instead.
         
-        @rtype:  string
-        @return: The name of the file, or None if not yet stored.
+        @type  filename: string
+        @param filename: The name of the file in the database.
         """
-        return self.__source_file
+        self.__filename = filename
 
 
     def get_filename(self):
@@ -103,23 +107,28 @@ class Item:
         @rtype:  string
         @return: The name of the file, or None if not yet stored.
         """
-        return self.__source_file
+        return self.__filename
 
 
-    def set_source_filename(self, source_file, move = False):
+    def set_source_filename(self, source_file, move = False, magic = True):
         """
         Defines the name of the file to be added into the database.
+        Note that detecting the mime type automatically is expensive.
         
         @type  source_file: string
         @param source_file: The name of the file to be added.
         @type  move: boolean
         @param move: When True, the file is *moved* instead of copied when the
                      item is added into the database.
+        @type  magic: boolean
+        @param magic: When True, the mime type is automatically determined.
         """
         assert os.path.exists(source_file)
         # Determine MIME type.
-        #FIXME
-        self.__mime_type   = mime_type
+        if magic:
+            self.__mime_type = mimetypes.guess_type(source_file)[0]
+        else:
+            self.__mime_type = None
         self.__source_file = source_file
         self.__move_on_add = move
 
@@ -134,7 +143,7 @@ class Item:
         return self.__source_file
 
 
-    def set_content(self, content):
+    def set_content(self, content, magic = True):
         """
         If you have the data in memory instead of a file, you can use this
         method instead of set_source_file(). It takes the content, creates a file
@@ -143,10 +152,14 @@ class Item:
         
         @type  content: string
         @param content: The content of the item.
+        @type  magic: boolean
+        @param magic: When True, the mime type is automatically determined.
         """
         # Write the content into a temporary file.
-        #FIXME
-        self.set_source_file(temp_file_name, True)
+        (fp, temp_file_name) = mkstemp('', '/tmp/')
+        os.write(fp, content)
+        os.close(fp)
+        self.set_source_filename(temp_file_name, True, magic)
 
 
     def get_move_on_add(self):
@@ -193,7 +206,6 @@ class Item:
         @type  mime_type: string
         @param mime_type: The mime type.
         """
-        assert mime_type is not None
         self.__mime_type = mime_type
 
 
@@ -271,6 +283,11 @@ if __name__ == '__main__':
             assert item.get_id()    == -1
             assert item.get_alias() == alias
             
+            test_file = 'test.py'
+            item.set_source_filename(test_file)
+            assert item.get_source_filename() == test_file
+            assert item.get_mime_type() == 'text/x-python'
+
             newid = 123
             item.set_id(newid)
             assert item.get_id() == newid

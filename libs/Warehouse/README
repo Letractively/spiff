@@ -39,11 +39,11 @@ assert db.add_file(item)
 print "Added revision", item.get_revision()
 
 # Retrieve the latest revision.
-item = db.get_item_from_alias("my/alias")
+item = db.get_file_from_alias("my/alias")
 print "Latest revision is", item.get_revision()
 
 # Retrieve all revisions.
-items = db.get_item_list_from_alias("my/alias")
+items = db.get_file_list_from_alias("my/alias")
 for item in items:
     print "Revision", item.get_revision()
 ##############################
