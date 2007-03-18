@@ -14,13 +14,17 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import HTMLParser, re, sys
 from WikiParser import WikiParser
+from cgi        import escape
 
 class Wiki2Html:
     def __init__(self):
         self.html             = ''
         self.buffer           = ''
+        self.counter          = 0
+        self.in_list          = False
         self.in_numbered_list = False
         self.in_heading       = False
+        self.in_table         = False
         self.in_cell          = False
         self.indent_level     = 0
 
@@ -83,10 +87,12 @@ class Wiki2Html:
 
     def unnumbered_list_start(self, text):
         self.buffer += '<ul>\n'
+        self.in_list = True
 
 
     def numbered_list_start(self, text):
         self.buffer += '<ol>\n'
+        self.in_list = True
         self.in_numbered_list = True
 
 
@@ -96,6 +102,7 @@ class Wiki2Html:
             self.in_numbered_list = False
         else:
             self.buffer += '</ul>\n'
+        self.in_list = False
 
 
     def list_item_start(self, text):
@@ -108,7 +115,9 @@ class Wiki2Html:
 
 
     def table_start(self, text):
-        self.buffer += '<table>'
+        self.in_table = True
+        self.counter  = 0
+        self.buffer += '<table>\n'
 
 
     def heading_start(self, text):
@@ -117,7 +126,7 @@ class Wiki2Html:
 
 
     def row_start(self, text):
-        self.buffer += '<tr>'
+        self.buffer  += '<tr>'
 
 
     def cell_start(self, text):
@@ -129,9 +138,14 @@ class Wiki2Html:
             self.buffer += '<th%s>' % attribs
         else:
             self.buffer += '<td%s>' % attribs
+        self.__flush(True)
 
 
     def cell_end(self, text):
+        # If the cell contains only a hash, replace it by a counter.
+        if self.buffer.strip() == '#':
+            self.counter += 1
+            self.buffer = str(self.counter) + '.'
         self.__flush(True)
         self.in_cell = False
         if self.in_heading:
@@ -151,15 +165,22 @@ class Wiki2Html:
 
 
     def table_end(self, text):
+        self.in_table = False
         self.buffer += '</table>\n'
 
 
     def text(self, text):
-        self.buffer += text
+        self.buffer += escape(text)
 
 
     def newline(self, text):
-        self.buffer += text
+        if self.in_table or self.in_list:
+            self.buffer += '\n'
+            return
+        if self.buffer[-1] != '\n':
+            self.buffer += '\n'
+            return
+        self.buffer += '<br/>\n<br/>\n'
 
 
     def __flush(self, strip = False):
@@ -170,7 +191,7 @@ class Wiki2Html:
         self.buffer = ''
 
     def read(self, filename):
-        infile    = open(filename, 'r')
+        infile    = open(filename, 'U')
         parser    = WikiParser(infile, filename)
         nonecount = 0
         while True:

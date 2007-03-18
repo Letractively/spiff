@@ -32,6 +32,11 @@ def get_request_uri(*args, **kwargs):
         page = vars['page'][0]
         del vars['page']
 
+    # Remove all attributes that are None.
+    for key in vars.keys():
+        if vars[key] is None:
+            del vars[key]
+
     # Build the path of the URL.
     if use_mod_rewrite:
         url = '/' + page + '/'

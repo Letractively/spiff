@@ -156,7 +156,7 @@ class Item:
         @param magic: When True, the mime type is automatically determined.
         """
         # Write the content into a temporary file.
-        (fp, temp_file_name) = mkstemp('', '/tmp/')
+        (fp, temp_file_name) = mkstemp('txt', '/tmp/')
         os.write(fp, content)
         os.close(fp)
         self.set_source_filename(temp_file_name, True, magic)

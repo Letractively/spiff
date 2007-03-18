@@ -12,7 +12,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-import sys
+import sys, string
 sys.path.append('..')
 from Plex import *
 
@@ -47,7 +47,6 @@ italic_end    = slash + Alt(Eol, spaces, punctuation)
 title1        = equal + words + equal
 title2        = equal + equal + words + equal + equal
 title3        = equal + equal + equal + words + equal + equal + equal
-table         = Str('#Table') + nl
 heading       = Str('#Heading') + nl
 row           = Str('#Row') + nl
 cell          = Rep1(Str('|')) + Str(' ')
@@ -72,9 +71,14 @@ class WikiParser(Scanner):
     def _buffer_flush(self):
         indent = self._get_current_indent_level()
         #print "_buffer_flush (%i): '%s'" % (indent, self.my_buffer)
-        if self.my_buffer != '':
+        if self.my_buffer == '':
+            return
+        if self.my_buffer == '\n':
+            self.produce('newline', '\n')
+        else:
             self.produce('text', self.my_buffer)
-            self.my_buffer = ''
+        #print "Flush produced"
+        self.my_buffer = ''
 
     def _newline_action(self, text):
         #print '_newline_action'
@@ -132,11 +136,12 @@ class WikiParser(Scanner):
         self.produce('title3_end', text[-3:])
 
     def _italic_start(self, text):
-        #print '_italic_start'
-        self.my_buffer += text[0]
+        #print '_italic_start "%s"' % text
+        if text[0] != '/':
+            self.my_buffer += text[0]
         self._buffer_flush()
         self.in_italic = True
-        self.produce('italic_start', text[1])
+        self.produce('italic_start', text[-1])
 
     def _italic_end(self, text):
         #print '_italic_end'
@@ -188,17 +193,11 @@ class WikiParser(Scanner):
         self.in_list = False
         self.produce('list_end', '')
 
-    def _table_start(self, text):
-        self._buffer_flush()
-        self.produce('table_start', text[:-1])
-        self._newline_action(text[-1])
-        self.in_table   = True
-
     def _heading_start(self, text):
         self._buffer_flush()
         if not self.in_table:
-            self._text(text)
-            return
+            self.produce('table_start', '')
+            self.in_table = True
         if self.in_heading:
             self._heading_end()
         self.in_heading = True
@@ -208,8 +207,8 @@ class WikiParser(Scanner):
     def _row_start(self, text):
         self._buffer_flush()
         if not self.in_table:
-            self._text(text)
-            return
+            self.produce('table_start', '')
+            self.in_table = True
         if self.in_heading:
             self._heading_end()
         if self.in_row:
@@ -276,6 +275,7 @@ class WikiParser(Scanner):
         self.my_buffer += text
 
     def eof(self):
+        #print "EOF"
         self._blank_line('')
 
     lexicon = Lexicon([
@@ -301,7 +301,6 @@ class WikiParser(Scanner):
         (italic_end,   _italic_end),
 
         # Tables.
-        (table,   _table_start),
         (heading, _heading_start),
         (row,     _row_start),
         (cell,    _cell_start),
@@ -318,7 +317,7 @@ if __name__ == '__main__':
         def runTest(self):
             # Read the entire file into one string.
             filename  = 'markup.txt'
-            infile    = open(filename, "r")
+            infile    = open(filename, "U")
             in_text   = infile.read()
             infile.close()
 
@@ -326,10 +325,14 @@ if __name__ == '__main__':
             infile  = open(filename, "r")
             scanner = WikiParser(infile, filename)
             content = ''
+            nonecount = 0
             while True:
                 token    = scanner.read()
                 position = scanner.position()
-                if token[0] is None: break
+                if token[0] is None:
+                    nonecount += 1  # This is because Plex is broken.
+                if nonecount >= 2:
+                    break
                 #print "Token type: %s, Token: '%s'" % (token[0], token[1])
                 if not token[0] in ['indent', 'dedent']:
                     content += token[1]

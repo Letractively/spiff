@@ -130,8 +130,6 @@ class Html2Wiki(HTMLParser.HTMLParser):
 
     def start_table(self):
         self.in_table = True
-        self.__output('#Table')
-        self.indent += 1
         
     def start_tr(self):
         pass
@@ -197,7 +195,7 @@ class Html2Wiki(HTMLParser.HTMLParser):
         self.__flush()
 
     def newline(self):
-        self.output('')
+        self.buffer += ''
 
 
 if __name__ == '__main__':
@@ -217,7 +215,7 @@ if __name__ == '__main__':
             parser = Wiki2Html()
             parser.read(filename)
             html1 = parser.html
-            #print html
+            #print html1
 
             # Convert the HTML back to Wiki.
             parser = Html2Wiki()

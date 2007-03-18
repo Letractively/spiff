@@ -62,6 +62,26 @@ class ExtensionApi(Api):
     def get_requested_page(self):
         return self.__requested_page
 
+    
+    def has_permission(self, permission):
+        """
+        Returns true if the current user has the given permission
+        on the current page.
+        """
+        assert permission is not None
+        private = self.__requested_page.get_attribute('private') or False
+        if permission == 'view' and not private:
+            return True
+        user = self.__login.get_current_user()
+        if user is None:
+            return False
+        section = 'content_permissions'
+        action  = self.__guard_db.get_action_from_handle(permission, section)
+        assert action is not None
+        return self.__guard_db.has_permission(user,
+                                              action,
+                                              self.__requested_page)
+
 
     def get_login(self):
         #FIXME: Check permission of the caller!
