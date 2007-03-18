@@ -17,6 +17,8 @@ import os
 import os.path
 import shutil
 from stat import *
+from functions import random_path
+from Item      import Item
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from sqlalchemy import *
 
@@ -177,10 +179,11 @@ class DB:
         if not row: return None
         tbl_r = self._table_map['revision']
         item  = Item(row[tbl_r.c.alias])
+        pathname = os.path.join(self.__directory_base, row[tbl_r.c.filename])
         item.set_id(row[tbl_r.c.id])
         item.set_revision(row[tbl_r.c.revision_number])
         item.set_mime_type(row[tbl_r.c.mime_type])
-        item.set_filename(row[tbl_r.c.filename])
+        item.set_filename(pathname)
         return item
 
 
@@ -200,7 +203,10 @@ class DB:
         result = query.execute()
         assert result is not None
         row = result.fetchone()
-        if not row: return None
+        if not row and always_list:
+            return []
+        elif not row:
+            return None
 
         tbl_r         = self._table_map['revision']
         tbl_m         = self._table_map['metadata']
@@ -346,26 +352,61 @@ class DB:
     def add_file(self, item):
         """
         Adds the given Item into the database as a new revision. Also
-        updates the database id and revision number in the given object.
+        updates the database id, revision number, and filename in the
+        given object.
 
         @type  item: Item
         @param item: The item to be added.
         @rtype:  boolean
         @return: True on success, False otherwise.
         """
-        assert filename is not None
-        assert os.path.exists(filename)
-        assert metadata is not None
-        if name is None:
-            name = filename
-        # Check whether the file already exists in the data table.
-        #FIXME
+        assert item is not None
+        assert os.path.exists(item.get_source_filename())
+
+        connection  = self.db.connect()
+        transaction = connection.begin()
+
+        # Find the latest version number in the database.
+        latest_item = self.get_file_from_alias(item.get_alias())
+        revision    = latest_item and latest_item.get_revision() + 1 or 1
+        
+        # Move or copy the file to the location in the data directory.
+        subdir   = random_path(8)
+        dirname  = os.path.join(self.__directory_base, subdir)
+        filename = random_path(1)
+        pathname = os.path.join(dirname, filename)
+        while os.path.exists(pathname):
+            filename = random_path(1)
+            pathname = os.path.join(dirname, filename)
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
+        if item.get_move_on_add():
+            shutil.move(item.get_source_filename(), pathname)
+        else:
+            shutil.copy(item.get_source_filename(), pathname)
+        item.set_filename(pathname)
         
         # Insert the new revision to the revision table.
-        #FIXME
+        rel_pathname = os.path.join(subdir, filename)
+        table  = self._table_map['revision']
+        insert = table.insert()
+        result = insert.execute(alias           = item.get_alias(),
+                                revision_number = revision,
+                                mime_type       = item.get_mime_type(),
+                                filename        = rel_pathname)
+        assert result is not None
+        revision_id = result.last_inserted_ids()[0]
 
-        # Append the metadata.
-        #FIXME
+        # Save the attributes.
+        attrib_dict = item.get_attribute_dict()
+        for attrib_name in attrib_dict.keys():
+            value = attrib_dict[attrib_name]
+            self.__add_attribute(revision_id, attrib_name, value)
+
+        transaction.commit()
+        connection.close()
+        item.set_id(revision_id)
+        item.set_revision(revision)
         return True
 
 
@@ -379,8 +420,29 @@ class DB:
         @rtype:  boolean
         @return: True on success, False otherwise.
         """
-        assert id is not None
-        #FIXME: Delete the item from the revision table.
+        assert id > 0
+
+        # Look the item up, because we need the path name.
+        item = self.get_file_from_id(id)
+        if item is None:
+            return False
+        
+        # Delete the item from the revision table.
+        table  = self._table_map['revision']
+        delete = table.delete(table.c.id == id)
+        result = delete.execute()
+        assert result is not None
+
+        if result.rowcount == 0:
+            return False
+
+        # Delete the file.
+        try:
+            os.remove(item.get_filename())
+        except:
+            pass
+
+        return True
 
 
     def remove_file(self, item):
@@ -398,7 +460,7 @@ class DB:
         return self.remove_file_from_id(item.get_id())
 
 
-    def remove_files_from_alias(self, alias, version = None):
+    def remove_files_from_alias(self, alias, revision = None):
         """
         Removes the version of the file with the given alias from the
         database. If no version number is specified, all versions are
@@ -412,7 +474,31 @@ class DB:
         @return: True on success, False otherwise.
         """
         assert alias is not None
-        #FIXME
+
+        # Look the items up, because we need the path name.
+        items = self.get_file_list_from_alias(alias, revision)
+        if len(items) == 0:
+            return False
+        
+        # Delete the items from the revision table.
+        table  = self._table_map['revision']
+        where  = table.c.alias == alias
+        if revision is not None:
+            where = and_(where, table.c.revision_number == revision)
+        delete = table.delete(where)
+        result = delete.execute()
+        assert result is not None
+
+        if result.rowcount == 0:
+            return False
+
+        # Delete the files.
+        for item in items:
+            try:
+                os.remove(item.get_filename())
+            except:
+                pass
+        return True
 
 
     def get_file_from_id(self, id):
@@ -448,7 +534,10 @@ class DB:
         tbl_r  = self._table_map['revision']
         tbl_m  = self._table_map['metadata']
         table  = outerjoin(tbl_r, tbl_m, tbl_r.c.id == tbl_m.c.revision_id)
-        select = table.select(tbl_r.c.alias == alias,
+        where  = tbl_r.c.alias == alias
+        if revision is not None:
+            where = and_(where, tbl_r.c.revision_number == revision)
+        select = table.select(where,
                               order_by   = [desc(tbl_r.c.revision_number)],
                               limit      = 1,
                               use_labels = True)
@@ -462,10 +551,13 @@ class DB:
                                  limit      = 0):
         """
         Returns a list containing revisions of the file with the given alias.
-        The list is ordered by revision number (ascending).
+        By default, the list is ordered descending by revision number.
 
         @type  alias: string
         @param alias: The alias of the file.
+        @type  descending: boolean
+        @param descending: When True, the list is ordered descending,
+                           otherwise ascending.
         @type  offset: integer
         @param offset: When != 0, the first n items will be skipped.
         @type  limit: integer
@@ -498,11 +590,58 @@ if __name__ == '__main__':
         def test_with_db(self, db):
             assert db is not None
             db = DB(db)
+            db.set_directory('data')
             assert db.uninstall()
             assert db.install()
 
-            #FIXME: Do something.
-            db.set_directory('data')
+            # Add a revision of a file into the database.
+            item = Item("my/alias")
+            item.set_source_filename("test.py")
+            assert db.add_file(item)
+            assert item.get_revision() == 1
+
+            # Add another revision of the file into the database.
+            item.set_source_filename("test2.py")
+            assert db.add_file(item)
+            assert item.get_revision() == 2
+
+            # Add a new revision, but this time user a string instead of a file.
+            item.set_content("this is the new version of test.txt")
+            assert db.add_file(item)
+            assert item.get_revision() == 3
+
+            # Retrieve the latest revision.
+            item = db.get_file_from_alias("my/alias")
+            assert item.get_revision() == 3
+            #print "Latest revision is", item.get_revision()
+
+            # Retrieve all revisions.
+            items = db.get_file_list_from_alias("my/alias")
+            #print "All revisions:", [item.get_revision() for item in items]
+            assert len(items) == 3
+            assert items[0].get_revision() == 3
+            assert items[1].get_revision() == 2
+            assert items[2].get_revision() == 1
+
+            # Retrieve revision 2.
+            item = db.get_file_from_alias("my/alias", 2)
+            assert item.get_revision() == 2
+
+            # Delete revision 2.
+            assert db.remove_file(item)
+
+            # Make sure that it is gone.
+            items = db.get_file_list_from_alias("my/alias")
+            assert len(items) == 2
+            assert items[0].get_revision() == 3
+            assert items[1].get_revision() == 1
+
+            # Delete the remaining items.
+            assert db.remove_files_from_alias("my/alias")
+
+            # Make sure that they are gone.
+            items = db.get_file_list_from_alias("my/alias")
+            assert len(items) == 0
 
             # Clean up.
             assert db.clear_database()
