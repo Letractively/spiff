@@ -27,16 +27,18 @@ class ExtensionApi(Api):
         assert guard_db  is not None
         assert manager   is not None
         assert event_bus is not None
+        assert kwargs.has_key('requested_page')
         assert kwargs.has_key('guard_mod')
         assert kwargs.has_key('get_data')
         assert kwargs.has_key('post_data')
         Api.__init__(self, guard_db, manager, event_bus)
-        self.__login        = Login(guard_db)
-        self.__guard_db     = guard_db
-        self.__guard_mod    = kwargs['guard_mod']
-        self.__get_data     = kwargs['get_data']
-        self.__post_data    = kwargs['post_data']
-        self.__headers_sent = False
+        self.__login          = Login(guard_db)
+        self.__guard_db       = guard_db
+        self.__requested_page = kwargs['requested_page']
+        self.__guard_mod      = kwargs['guard_mod']
+        self.__get_data       = kwargs['get_data']
+        self.__post_data      = kwargs['post_data']
+        self.__headers_sent   = False
 
 
     def __get_caller(self):
@@ -50,6 +52,15 @@ class ExtensionApi(Api):
 
     def get_i18n(self):
         return gettext
+
+
+    def get_db(self):
+        #FIXME: Check permission of the caller!
+        return self.__guard_db.db
+
+
+    def get_requested_page(self):
+        return self.__requested_page
 
 
     def get_login(self):
