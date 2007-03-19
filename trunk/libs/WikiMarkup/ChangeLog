@@ -1,0 +1,7 @@
+Changes since 0.1
+
+  * Wiki2Html.py: Now also works with windows line breaks. Line break handling
+  has also bee improved in other cases. The _underline_ tag now underlines, it
+  no longer strikes through the text.
+  The #Table tag has been removed, tables work now only by using the #Heading
+  and #Row tags.

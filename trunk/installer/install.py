@@ -40,6 +40,7 @@ constructor.append(CheckDBSupportsConstraints())
 tasks = [
     CreateDir('../data/repo'),
     CreateDir('../data/uploads'),
+    CreateDir('../data/warehouse'),
     InstallGuard(),
     InstallIntegrator(),
     InstallWarehouse()

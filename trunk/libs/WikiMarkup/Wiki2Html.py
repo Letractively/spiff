@@ -78,11 +78,11 @@ class Wiki2Html:
 
 
     def underline_start(self, text):
-        self.buffer += '<strike>'
+        self.buffer += '<u>'
 
 
     def underline_end(self, text):
-        self.buffer += '</strike>'
+        self.buffer += '</u>'
 
 
     def unnumbered_list_start(self, text):
@@ -170,17 +170,14 @@ class Wiki2Html:
 
 
     def text(self, text):
-        self.buffer += escape(text)
+        self.buffer += escape(text).replace('\n', '<br/>\n')
 
 
     def newline(self, text):
         if self.in_table or self.in_list:
             self.buffer += '\n'
             return
-        if self.buffer[-1] != '\n':
-            self.buffer += '\n'
-            return
-        self.buffer += '<br/>\n<br/>\n'
+        self.buffer += '<br/>\n'
 
 
     def __flush(self, strip = False):
