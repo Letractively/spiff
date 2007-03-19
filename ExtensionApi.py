@@ -59,10 +59,18 @@ class ExtensionApi(Api):
         return self.__guard_db.db
 
 
+    def set_requested_page(self, page):
+        self.__requested_page = page
+
+
     def get_requested_page(self):
         return self.__requested_page
 
-    
+
+    def get_request_uri(self, *args, **kwargs):
+        return get_request_uri(**kwargs)
+
+
     def has_permission(self, permission):
         """
         Returns true if the current user has the given permission

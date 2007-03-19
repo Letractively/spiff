@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import sys, cgi, os, os.path
+from string import split
 sys.path.append('libs')
 import MySQLdb, Integrator
 from sqlalchemy   import *
@@ -83,11 +84,7 @@ get_data    = cgi.parse_qs(os.environ["QUERY_STRING"])
 post_data   = cgi.FieldStorage()
 page_handle = find_requested_page(get_data)
 page        = guard_db.get_resource_from_handle(page_handle, 'content')
-if page is None:
-    print 'Content-Type: text/html'
-    print
-    print 'error 404'
-    sys.exit()
+extension   = None
 
 # Set up the plugin manager (Integrator).
 integrator = Integrator.Manager(guard_db,
@@ -99,6 +96,37 @@ integrator = Integrator.Manager(guard_db,
                                 post_data      = post_data)
 integrator.set_extension_dir('data/repo')
 
+# If the specific site was not found, cut the path until an page is found.
+# Then look if the matching page has an extension that manages the entire
+# tree instead of just a single page.
+if page is None:
+    # Retrieve the parent with the longest handle.
+    while page_handle != '':
+        stack       = split(page_handle, '/')
+        page_handle = '/'.join(stack[:-1])
+        page = guard_db.get_resource_from_handle(page_handle, 'content')
+        if page is not None:
+            break
+
+    # Check whether it manages the subtree.
+    if page is not None:
+        descriptor = page.get_attribute('extension')
+        extension  = integrator.load_extension_from_descriptor(descriptor)
+        assert extension is not None
+        try:
+            is_recursive = extension.is_recursive
+        except:
+            is_recursive = False
+        if not is_recursive:
+            page = None
+
+if page is None:
+    print 'Content-Type: text/html'
+    print
+    print 'error 404'
+    sys.exit()
+integrator.extension_api.set_requested_page(page)
+
 # Make sure that the caller has permission to retrieve this page.
 page_open_event_sent = False
 if page.get_attribute('private'):
@@ -106,9 +134,10 @@ if page.get_attribute('private'):
     if not did_log_in:
         sys.exit()
 
-# Load the appended plugins.
-descriptor = page.get_attribute('extension')
-extension  = integrator.load_extension_from_descriptor(descriptor)
+# Load the appended plugins, if not done already.
+if extension is None:
+    descriptor = page.get_attribute('extension')
+    extension  = integrator.load_extension_from_descriptor(descriptor)
 
 if extension is None:
     print 'Content-Type: text/html'
