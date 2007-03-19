@@ -8,7 +8,7 @@
   <meta name="keywords" content="spiff, gnome" />
   <meta name="description" content="spiff-project.org" />
   <meta name="robots" content="all" />
-  <title>Spiff</title>
+  <title>Spiff&trade;</title>
   <style type="text/css" title="Default Style">
     @import "${web_dir}/style.css";
 #for style in styles
@@ -17,17 +17,3 @@
   </style>
 </head>
 <body>
-<table width="100%" cellpadding="0" cellspacing="0">
-#choose current_user
- #when None
-  <tr><td align="right">Not logged in.</td></tr>
- #end
- #otherwise
-  <tr>
-    <td align="right">
-    Logged in: ${current_user.get_name()}
-    </td>
-  </tr>
- #end
-#end
-</table>

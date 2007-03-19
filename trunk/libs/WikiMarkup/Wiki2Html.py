@@ -174,7 +174,10 @@ class Wiki2Html:
 
 
     def newline(self, text):
-        if self.in_table or self.in_list:
+        if (self.in_table
+            or self.in_list
+            or (self.buffer[-5:-2] == '</h' and self.buffer[-1] == '>')
+            or (self.buffer[-6:-3] == '</h' and self.buffer[-2] == '>')):
             self.buffer += '\n'
             return
         self.buffer += '<br/>\n'

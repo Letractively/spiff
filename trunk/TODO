@@ -1,3 +1,10 @@
+* Core: Make the installer install a default homepage and the WikiCommands
+  wiki page.
+
+* WikiPage: Support external links.
+
+* WikiPage: Test the permission check!
+
 * Admin Center: Make the "Add membership" button work.
 
 * Admin Center: Make the "Cancel membership" button work; handle
@@ -5,9 +12,6 @@
 
 * Admin Center: Test better whether the permission escalation prevention
   works.
-
-* Everywhere: Check string escaping in HTML templates.
-  E.g. current_user.get_name() in web/header.tmpl is not escaped!
 
 * Integrator/Extensions: Get the signal permission checks right.
 

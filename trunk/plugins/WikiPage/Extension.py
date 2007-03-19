@@ -34,14 +34,23 @@ class Extension:
         self.warehouse.set_directory(data_directory)
 
 
+    def install(self):
+        #FIXME: Install the WikiCommands page.
+        pass
+
+
     def __wiki_word2link(self, match):
+        # This is a callback function for a regular expression substitution.
         word   = match.groups()[0] or match.groups()[1]
         handle = self.page is not None and self.page.get_handle()
         alias  = self.api.get_get_data('page') or handle
         if alias is None:
             url = self.api.get_request_uri(page = [word])
         else:
-            url = self.api.get_request_uri(page = [alias + '/' + word])
+            if alias.find('/') != -1:
+                stack = split(alias, '/')
+                alias = '/'.join(stack[:-1])
+            url   = self.api.get_request_uri(page = [alias + '/' + word])
         return '<a href="%s">%s</a>' % (url, word)
 
 
