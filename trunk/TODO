@@ -1,3 +1,7 @@
+* When logging in, make refer back to the original site.
+
+* Make loggin out work.
+
 * Core: Make the installer install a default homepage and the WikiCommands
   wiki page.
 
