@@ -1,8 +1,6 @@
 * Core: Make the installer install a default homepage and the WikiCommands
   wiki page.
 
-* WikiPage: Support external links.
-
 * WikiPage: Test the permission check!
 
 * Admin Center: Make the "Add membership" button work.

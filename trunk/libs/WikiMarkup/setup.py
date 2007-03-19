@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 setup(name             = 'Spiff WikiMarkup',
-      version          = '0.1',
+      version          = '0.2',
       description      = 'A library for converting between HTML and Wiki text',
       long_description = \
 """
