@@ -30,6 +30,8 @@ class Html2Wiki(HTMLParser.HTMLParser):
         self.in_ul      = False
         self.in_ol      = False
         self.in_li      = False
+        self.in_a       = False
+        self.last_href  = ''
 
     def __output(self, text, linebreak = True):
         self.buffer += (' ' * self.indent * 2)
@@ -53,6 +55,7 @@ class Html2Wiki(HTMLParser.HTMLParser):
         elif tag == 'i':      self.start_i()
         elif tag == 'b':      self.start_b()
         elif tag == 'u':      self.start_u()
+        elif tag == 'a':      self.start_a(attrs)
         elif tag == 'strike': self.start_strike()
         elif tag == 'br':     self.newline()
         
@@ -70,6 +73,7 @@ class Html2Wiki(HTMLParser.HTMLParser):
         elif tag == 'i':      self.end_i()
         elif tag == 'b':      self.end_b()
         elif tag == 'u':      self.end_u()
+        elif tag == 'a':      self.end_a()
         elif tag == 'strike': self.end_strike()
 
     def start_h1(self):
@@ -130,6 +134,18 @@ class Html2Wiki(HTMLParser.HTMLParser):
     def end_u(self):
         self.buffer += '_'
 
+    def start_a(self, attrs):
+        self.in_a = True
+        self.last_href = ''
+        for key, value in attrs:
+            if key == 'href':
+                self.last_href = value
+        self.buffer += '{' + self.last_href
+
+    def end_a(self):
+        self.in_a = False
+        self.buffer += '}'
+
     def start_strike(self):
         self.buffer += '-'
 
@@ -158,6 +174,10 @@ class Html2Wiki(HTMLParser.HTMLParser):
         self.cells.append(cell)
 
     def handle_data(self, data):
+        if self.in_a:
+            if data == self.last_href:
+                return
+            self.buffer += ' '
         if self.in_li:
             self.buffer += data.strip() + '\n'
         if self.in_ul or self.in_ol:

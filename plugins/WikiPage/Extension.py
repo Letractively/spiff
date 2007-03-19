@@ -32,6 +32,8 @@ class Extension:
         root_directory    = os.path.dirname(sys.argv[0])
         data_directory    = os.path.join(root_directory, 'data', 'warehouse')
         self.warehouse.set_directory(data_directory)
+        self.wiki2html.set_wiki_word_handler(self.__wiki_word_handler)
+        self.wiki2html.set_url_handler(self.__wiki_url_handler)
 
 
     def install(self):
@@ -39,9 +41,7 @@ class Extension:
         pass
 
 
-    def __wiki_word2link(self, match):
-        # This is a callback function for a regular expression substitution.
-        word   = match.groups()[0] or match.groups()[1]
+    def __wiki_word_handler(self, url, word):
         handle = self.page is not None and self.page.get_handle()
         alias  = self.api.get_get_data('page') or handle
         if alias is None:
@@ -51,7 +51,14 @@ class Extension:
                 stack = split(alias, '/')
                 alias = '/'.join(stack[:-1])
             url   = self.api.get_request_uri(page = [alias + '/' + word])
-        return '<a href="%s">%s</a>' % (url, word)
+        return (url, word)
+
+
+    def __wiki_url_handler(self, url, word):
+        if url.find(':') == -1:
+            url = self.api.get_request_uri(page = [url])
+        return (url, word)
+        
 
 
     def __save_page(self):
@@ -135,9 +142,7 @@ class Extension:
             
             # Convert to html.
             self.wiki2html.read(item.get_filename())
-            html = self.wiki_word_re.sub(self.__wiki_word2link,
-                                         self.wiki2html.html)
-            tmpl_args['html'] = Markup(html)
+            tmpl_args['html'] = Markup(self.wiki2html.html)
             
             self.api.render('show.tmpl', **tmpl_args)
         self.api.emit('render_end')

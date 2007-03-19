@@ -22,20 +22,33 @@ digit       = Range('09')
 spaces      = Any(" \t\r\n")
 nl          = Str("\n") | Eof
 not_nl      = AnyBut("\r\n")
+dash        = Str('-')
 colon       = Str(':')
 hash        = Str('#')
+at          = Str('@')
 equal       = Str('=')
 star        = Str('*')
 slash       = Str('/')
 o_bracket   = Str('{')
 c_bracket   = Str('}')
 underscore  = Str('_')
+dot         = Str('.')
 punctuation = Any('.!?,;')
 
 # Single word definitions.
 name        = letter + Rep(letter | digit)
+wiki_force  = Str('->') + name
+wiki_word   = Range('AZ') + name + Range('AZ') + name
 indentation = Rep(Str(' ')) | Rep(Str("\t"))
 variable    = letter + Rep(letter | digit | Str('_')) + Rep(letter | digit)
+proto       = Alt(Str('http'), Str('https'), Str('ftp'), Str('mailto'))
+login       = name + Opt(colon + name)
+host        = name + Rep(dot + name)
+path        = Opt(slash) + name + Rep(slash + name) + Opt(slash)
+arg         = name + equal + Opt(name)
+args        = Str('?') + arg + Rep(Str('&') + arg)
+path_args   = path + Opt(args)
+url         = proto + colon + Str('//') + Opt(login + at) + host + Opt(path_args)
 
 # Markup.
 line          = Rep(not_nl) + nl
@@ -44,13 +57,15 @@ words         = Rep1(letter | digit | spaces)
 list_item     = Bol + Alt(hash, star) + Str(' ')
 italic_start  = Alt(Bol, spaces) + slash
 italic_end    = slash + Alt(Eol, spaces, punctuation)
-title_text    = Rep1(words | punctuation | slash | colon | hash)
-title1        = equal + title_text + equal
-title2        = equal + equal + title_text + equal + equal
-title3        = equal + equal + equal + title_text + equal + equal + equal
+phrase        = Rep1(words | dash | at | punctuation | slash | colon | hash)
+title1        = equal + phrase + equal
+title2        = equal + equal + phrase + equal + equal
+title3        = equal + equal + equal + phrase + equal + equal + equal
 heading       = Str('#Heading') + nl
 row           = Str('#Row') + nl
 cell          = Rep1(Str('|')) + Str(' ')
+internal_link = Str('{') + url + Opt(spaces + phrase) + Str('}')
+external_link = Str('{') + path_args + Opt(spaces + phrase) + Str('}')
 
 class WikiParser(Scanner):
     def __init__(self, file, filename):
@@ -252,6 +267,14 @@ class WikiParser(Scanner):
         self.in_table = False
         self.produce('table_end', '')
 
+    def _link(self, text):
+        self._buffer_flush()
+        self.produce('link', text)
+
+    def _wiki_word(self, text):
+        self._buffer_flush()
+        self.produce('wiki_word', text)
+
     def _open_bracket_action(self, text):
         #print '_open_bracket_action'
         self.my_buffer += text
@@ -307,7 +330,11 @@ class WikiParser(Scanner):
         (cell,    _cell_start),
 
         # Other.
-        (AnyChar, _text)
+        (internal_link, _link),
+        (external_link, _link),
+        (wiki_word,     _wiki_word),
+        (wiki_force,    _wiki_word),
+        (AnyChar,       _text)
     ])
 
 

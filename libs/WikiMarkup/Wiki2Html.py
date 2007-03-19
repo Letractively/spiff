@@ -18,15 +18,51 @@ from cgi        import escape
 
 class Wiki2Html:
     def __init__(self):
-        self.html             = ''
-        self.buffer           = ''
-        self.counter          = 0
-        self.in_list          = False
-        self.in_numbered_list = False
-        self.in_heading       = False
-        self.in_table         = False
-        self.in_cell          = False
-        self.indent_level     = 0
+        self.html              = ''
+        self.buffer            = ''
+        self.counter           = 0
+        self.in_list           = False
+        self.in_numbered_list  = False
+        self.in_heading        = False
+        self.in_table          = False
+        self.in_cell           = False
+        self.indent_level      = 0
+        self.url_handler       = None
+        self.wiki_word_handler = None
+
+
+    def set_url_handler(self, handler):
+        """
+        Whenever the parser finds a URL in the output, by default it
+        automatically translates it into a clickable link in the HTML output.
+        However, if you want more fine-grained control over which URLs are
+        converted into links, you might want to use this function.
+        It calls the given handler function before a link is added into the
+        HTML. The function is passed the URL and the caption.
+        The handler can the modify the URL and the caption, and pass it
+        back to the parser. Example handler:
+        
+        def url_handler(url, caption):
+            return (url, 'My Caption')
+        
+        The parser uses the returned values to build a link in the HTML.
+        If URL is None, the item is not linked at all.
+        """
+        self.url_handler = handler
+
+
+    def set_wiki_word_handler(self, handler):
+        """
+        Like set_url_handler() but for WikiWords.
+        Example handler:
+        
+        def wiki_word_handler(word):
+            return (url, word)
+        
+        The parser uses the returned values to build a link in the HTML.
+        If URL is None, the item is not linked at all.
+        """
+        self.wiki_word_handler = handler
 
 
     def indent(self, level):
@@ -183,12 +219,43 @@ class Wiki2Html:
         self.buffer += '<br/>\n'
 
 
+    def link(self, text):
+        text = text[1:-1]
+        pos = text.find(' ')
+        if pos == -1:
+            url     = escape(text)
+            caption = url
+        else:
+            url     = escape(text[:pos])
+            caption = escape(text[pos + 1:])
+        if self.url_handler is not None:
+            (url, caption) = self.url_handler(url, caption)
+        if url is None:
+            self.buffer += caption
+        else:
+            self.buffer += '<a href="%s">%s</a>' % (url, caption)
+
+
+    def wiki_word(self, text):
+        if text.startswith('->'):
+            text = text[2:]
+        url     = escape(text)
+        caption = url
+        if self.wiki_word_handler is not None:
+            (url, caption) = self.wiki_word_handler(url, caption)
+        if url is None:
+            self.buffer += caption
+        else:
+            self.buffer += '<a href="%s">%s</a>' % (url, caption)
+
+
     def __flush(self, strip = False):
         if strip:
             self.html += self.buffer.strip()
         else:
             self.html += self.buffer
         self.buffer = ''
+
 
     def read(self, filename):
         infile    = open(filename, 'U')
