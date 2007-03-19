@@ -1,11 +1,9 @@
-<div xmlns:py="http://genshi.edgewall.org/"
-     py:with="img_dir = plugin_dir + '/img'"
-     py:strip="True">
-<h1 py:content="name" />
-<div py:if="may_edit" py:strip="True">
-<a href="${request_uri(edit = [1])}" py:content="txt('Edit this page')" />
-<br/><br/>
-</div>
+<div class="content"
+     xmlns:py="http://genshi.edgewall.org/"
+     py:with="img_dir = plugin_dir + '/img'">
+<a py:if="may_edit"
+   href="${request_uri(edit = [1])}"
+   py:content="txt('Edit this page')" />
 <py:for each="error in errors">
 <font color="red" py:content="error" /><br/>
 </py:for>

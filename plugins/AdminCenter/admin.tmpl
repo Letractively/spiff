@@ -1,8 +1,7 @@
-<div xmlns:py="http://genshi.edgewall.org/"
+<div class="content"
+     xmlns:py="http://genshi.edgewall.org/"
      xmlns:xi="http://www.w3.org/2001/XInclude"
-     py:with="img_dir = plugin_dir + '/img'"
-     py:strip="True">
-<div align="center">
+     py:with="img_dir = plugin_dir + '/img'">
   <table width="600">
     <tr>
       <td py:with="url = request_uri(page = ['admin/content'])">
@@ -19,5 +18,4 @@
       </td>
     </tr>
   </table>
-</div>
 </div>

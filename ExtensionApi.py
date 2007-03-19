@@ -39,6 +39,7 @@ class ExtensionApi(Api):
         self.__get_data       = kwargs['get_data']
         self.__post_data      = kwargs['post_data']
         self.__headers_sent   = False
+        self.add_listener(self.__send_footer, "spiff:extensions_done")
 
 
     def __get_caller(self):
@@ -143,17 +144,30 @@ class ExtensionApi(Api):
         # Load and display the HTML header.
         current_user = self.__login.get_current_user()
         loader       = TemplateLoader(['web'])
-        tmpl         = loader.load('header.tmpl', None, TextTemplate)
+        tmpl1        = loader.load('header.tmpl',  None, TextTemplate)
+        tmpl2        = loader.load('header2.tmpl', None, MarkupTemplate)
         web_dir      = get_mod_rewrite_prevented_uri('web')
-        print tmpl.generate(web_dir      = web_dir,
-                            current_user = current_user,
-                            txt          = gettext).render('text')
+        print tmpl1.generate(web_dir      = web_dir,
+                             current_user = current_user,
+                             txt          = gettext).render('text')
+        print tmpl2.generate(web_dir      = web_dir,
+                             request_uri  = get_request_uri,
+                             current_user = current_user,
+                             txt          = gettext).render('xhtml')
 
 
     def headers_sent(self):
         return self.__headers_sent
 
         
+    def __send_footer(self, args):
+        loader  = TemplateLoader(['web'])
+        tmpl    = loader.load('footer.tmpl', None, TextTemplate)
+        web_dir = get_mod_rewrite_prevented_uri('web')
+        print tmpl.generate(web_dir = web_dir,
+                            txt     = gettext).render('text')
+
+
     def render(self, filename, *args, **kwargs):
         if not self.__headers_sent:
             self.send_headers()

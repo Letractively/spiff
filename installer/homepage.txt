@@ -1,0 +1,6 @@
+= Welcome to Spiff! =
+
+Congratulations, your installation of Spiff is completed!
+
+You can start editing your site by logging in {admin here}.
+There is also the WikiCommands page that gives you an overview over the commands that you can use in the wiki.

@@ -148,4 +148,5 @@ if extension is None:
 if not page_open_event_sent:
     integrator.extension_api.emit_sync('spiff:page_open')
 extension.on_render_request()
+integrator.extension_api.emit_sync('spiff:extensions_done')
 integrator.extension_api.emit_sync('spiff:page_done')
