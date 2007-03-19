@@ -5,3 +5,11 @@ Changes since 0.1
   no longer strikes through the text.
   The #Table tag has been removed, tables work now only by using the #Heading
   and #Row tags.
+  Headings now support additional characters, like punctuation, slashes,
+  dashes, etc.
+  (set_wiki_word_handler): New method, provides a hook into the new WikiWord
+  parser.
+  (set_url_handler): New method, provides a hook into the new URL parser.
+
+  * Html2Wiki.py: Added support for hyperlinks. Changed to reflect the changes
+  in Wiki2Html.py.
