@@ -232,7 +232,7 @@ class DB:
 
                 # Append attribute.
                 if row[tbl_m.c.type] is not None:
-                    revision.set_attribute(row[tbl_m.c.name], value)
+                    revision.set_attribute(**{row[tbl_m.c.name]: value})
                 row = result.fetchone()
 
                 if not row: break
