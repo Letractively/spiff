@@ -3,4 +3,22 @@
 Congratulations, your installation of Spiff is completed!
 
 You can start editing your site by logging in {admin here}.
-There is also the WikiCommands page that gives you an overview over the commands that you can use in the wiki.
+There is also the WikiMarkup page that gives you an overview over how Wiki pages are written.
+
+Have fun with your new homepage!
+-Samuel
+
+== Problem Reporting ==
+
+If you find any problems with Spiff, or if you have any ideas how to make Spiff easier to use, please let us know so we can make Spiff better!
+You can get in touch with us in the following ways:
+
+#Row
+  | Online form (preferred):
+  | {http://code.google.com/p/spiff/issues/entry}
+#Row
+  | Mailing list:
+  | {http://groups.google.com/group/spiff-devel}
+#Row
+  | knipknap's email:
+  | spam2 at debain dod org

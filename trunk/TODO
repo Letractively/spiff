@@ -1,11 +1,10 @@
-* When logging in, make refer back to the original site.
+* WikiMarkup: Support preformatted text (e.g. Code)
 
-* Make loggin out work.
+* Warehouse: Add support for diff.
 
-* Core: Make the installer install a default homepage and the WikiCommands
-  wiki page.
+* WikiPage: Show a version history.
 
-* WikiPage: Test the permission check!
+* RecentChanges: Implement as a new extension.
 
 * Admin Center: Make the "Add membership" button work.
 

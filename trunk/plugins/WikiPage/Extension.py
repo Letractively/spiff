@@ -14,7 +14,6 @@ import os
 import re
 import sys
 from string import split
-sys.path.append(os.path.join(os.path.dirname(__file__), '../../libs/'))
 from Warehouse  import *
 from WikiMarkup import *
 from genshi     import Markup
@@ -36,21 +35,29 @@ class Extension:
         self.wiki2html.set_url_handler(self.__wiki_url_handler)
 
 
-    def install(self):
-        #FIXME: Install the WikiCommands page.
-        pass
-
-
     def __wiki_word_handler(self, url, word):
-        handle = self.page is not None and self.page.get_handle()
-        alias  = self.api.get_get_data('page') or handle
+        alias  = self.api.get_get_data('page')
+        # The user is viewing the homepage of his web presence.
         if alias is None:
             url = self.api.get_request_uri(page = [word])
+            return (url, word)
+
+        # The user is viewing a sub page of his web presence. Find out if it
+        # is a sub-page of this wiki or the wiki homepage.
+        handle    = self.page is not None and self.page.get_handle()
+        pos       = alias.find('/')
+        wiki_home = pos == -1 and handle and handle == alias
+        #print "WikiWord:", wiki_home, handle, alias, word
+
+        # If the requested page is a sub-page of a wiki (i.e. not the wiki
+        # home), build the alias by cutting the requested path and appending
+        # the new component.
+        stack = split(alias, '/')
+        if wiki_home:
+            stack.append(word)
         else:
-            if alias.find('/') != -1:
-                stack = split(alias, '/')
-                alias = '/'.join(stack[:-1])
-            url   = self.api.get_request_uri(page = [alias + '/' + word])
+            stack[-1] = word
+        url = self.api.get_request_uri(page = ['/'.join(stack)])
         return (url, word)
 
 
@@ -63,15 +70,30 @@ class Extension:
 
     def __save_page(self):
         i18n = self.i18n
+
+        # Check permissions.
+        if not self.api.has_permission('edit'):
+            return (None, [i18n('No permission to save this page.')])
+
+        # Collect data.
         handle      = self.page is not None and self.page.get_handle()
         alias       = self.api.get_get_data('page') or handle
         wiki_markup = self.api.get_post_data('wiki_markup')
         assert alias is not None
         if wiki_markup is None or wiki_markup == '':
-            return [i18n('No text was entered...')]
+            return (None, [i18n('No text was entered...')])
 
+        # Find the name or IP of the current user.
+        current_user = self.api.get_login().get_current_user()
+        if current_user is not None:
+            user_name = current_user.get_handle()
+        else:
+            user_name = os.environ["REMOTE_ADDR"]
+
+        # Copy the data into a warehouse item.
         item = Item(alias)
         item.set_content(wiki_markup)
+        item.set_attribute(user_name = user_name)
         if not self.warehouse.add_file(item):
             msg = i18n('File could not be saved - please contact the author!')
             return (None, [msg])
@@ -95,12 +117,12 @@ class Extension:
             name = split(alias, '/')[-1]
         else:
             name = self.page.get_name()
-        if not may_edit and edit is not None:
-            errors.append(self.i18n('You are not allowed to edit this page.'))
         if revision is not None:
             item = self.warehouse.get_file_from_alias(alias, int(revision))
         if item is None:
             item = self.warehouse.get_file_from_alias(alias)
+        if not may_edit and (edit is not None or item is None):
+            errors.append(self.i18n('You are not allowed to edit this page.'))
         if (item is not None
             and revision is not None
             and revision != item.get_revision()):
