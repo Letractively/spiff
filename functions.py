@@ -25,6 +25,10 @@ def get_request_uri(*args, **kwargs):
     url  = os.environ["REQUEST_URI"]
     page = vars.get('page', [''])[0]
 
+    # Remove the special variable "logout" from the URL.
+    if vars.has_key('logout'):
+        del vars['logout']
+
     # The "page" variable is treated differently depending on whether
     # mod_rewrite is enabled. Firstly, remove it from the dictionaries.
     vars.update(kwargs)

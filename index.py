@@ -60,7 +60,7 @@ if not os.path.exists('data/spiff.cfg'):
     print
     print 'Please configure Spiff before accessing this site.<br/>'
     print 'The INSTALL file shipped with the Spiff installation contains'
-    print 'instructions on how this can be done.'
+    print 'instructions on how this is done.'
     sys.exit()
 
 if os.path.exists('install'):
@@ -96,7 +96,21 @@ integrator = Integrator.Manager(guard_db,
                                 post_data      = post_data)
 integrator.set_extension_dir('data/repo')
 
-# If the specific site was not found, cut the path until an page is found.
+# Can not open some pages by addressing them directly.
+open_sys_page = False
+if (page_handle == 'homepage'
+    or page_handle == 'default'
+    or page_handle.startswith('homepage/')
+    or page_handle.startswith('default/')):
+    open_sys_page = True
+if open_sys_page and get_data.has_key('page'):
+    print 'Content-Type: text/html'
+    print
+    print 'error 403 (Forbidden)'
+    print 'Can not open the homepage by addressing it directly.'
+    sys.exit()
+
+# If the specific site was not found, cut the path until a page is found.
 # Then look if the matching page has an extension that manages the entire
 # tree instead of just a single page.
 if page is None:
@@ -120,16 +134,37 @@ if page is None:
         if not is_recursive:
             page = None
 
+# If we still have not found a page, try our default page.
+# If it has an extension that manages the entire tree instead of just a
+# single page, use it.
+if page is None:
+    page = guard_db.get_resource_from_handle('default', 'content')
+    assert page is not None
+    integrator.extension_api.set_requested_page(page)
+    descriptor = page.get_attribute('extension')
+    extension  = integrator.load_extension_from_descriptor(descriptor)
+    assert extension is not None
+    try:
+        is_recursive = extension.is_recursive
+    except:
+        is_recursive = False
+    if not is_recursive:
+        page = None
+
+# If we still have no page, give 404.
 if page is None:
     print 'Content-Type: text/html'
     print
-    print 'error 404'
+    print 'error 404 (File not found)'
     sys.exit()
+
+# Now that we might have redirected the user to another page, let the
+# extension API know that.
 integrator.extension_api.set_requested_page(page)
 
 # Make sure that the caller has permission to retrieve this page.
 page_open_event_sent = False
-if page.get_attribute('private'):
+if page.get_attribute('private') or get_data.has_key('login'):
     (did_log_in, page_open_event_sent) = log_in(guard_db, integrator, page)
     if not did_log_in:
         sys.exit()

@@ -21,6 +21,11 @@ class Login:
         assert guard_db is not None
         self.__guard_db     = guard_db
         self.__current_user = None
+        try:
+            sid = SimpleCookie(os.environ['HTTP_COOKIE'])['sid'].value
+        except:
+            sid = None
+        self.__sid = sid
 
 
     def __generate_session_id(self):
@@ -36,14 +41,10 @@ class Login:
     def get_current_user(self):
         if self.__current_user is not None:
             return self.__current_user
-        try:
-            sid = SimpleCookie(os.environ['HTTP_COOKIE'])['sid'].value
-        except:
-            sid = None
         guard = self.__guard_db
-        if sid is None:
+        if self.__sid is None:
             return None
-        users = guard.get_resource_list_from_attribute('sid', sid)
+        users = guard.get_resource_list_from_attribute('sid', self.__sid)
         if users is None:
             return None
         assert len(users) == 1
@@ -64,15 +65,17 @@ class Login:
             return None
         if user.get_attribute('password') != self.hash_password(password):
             return None
-        sid = self.__generate_session_id()
-        #print "Logging in with sid %s..." % sid
-        user.set_attribute('sid', sid)
+        self.__sid = self.__generate_session_id()
+        #print "Logging in with sid %s..." % self.__sid
+        user.set_attribute('sid', self.__sid)
         section = ResourceSection('users')
         self.__guard_db.save_resource(user, section)
         self.__current_user = user
-        headers = {'Set-Cookie': 'sid=%s; path=/' % sid}
+        headers = {'Set-Cookie': 'sid=%s; path=/' % self.__sid}
         return headers
 
 
     def logout(self):
+        self.__current_user = None
+        self.__sid          = None
         return {'Set-Cookie': 'sid=''; expires=Thu, 01-JAN-1970 00:00:00 GMT;'}

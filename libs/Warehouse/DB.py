@@ -34,11 +34,12 @@ class DB:
         @rtype:  DB
         @return: The new instance.
         """
-        self.db            = db
-        self.db_metadata   = BoundMetaData(self.db)
-        self._table_prefix = 'warehouse_'
-        self._table_map    = {}
-        self._table_list   = []
+        self.db               = db
+        self.db_metadata      = BoundMetaData(self.db)
+        self._table_prefix    = 'warehouse_'
+        self._table_map       = {}
+        self._table_list      = []
+        self.__directory_base = ''
         self.__update_table_names()
 
 
@@ -66,7 +67,7 @@ class DB:
             Column('revision_number', Integer,     index = True),
             Column('mime_type',       String(50)),
             Column('filename',        String(250)),
-            Column('added',           DateTime),
+            Column('added',           DateTime,    default = func.now()),
             mysql_engine='INNODB'
         ))
         self.__add_table(Table(pfx + 'metadata', self.db_metadata,

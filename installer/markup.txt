@@ -18,7 +18,7 @@ You might add some marked up text /even if it contains _other markup_ or spans o
 A table is a little more sophisticated, but still pretty easy:
 
 #Heading
-  | Row number
+  | Row
   | Heading 1
   | Heading /with/ markup
   | Heading 3

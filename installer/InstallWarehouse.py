@@ -12,6 +12,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+import os
 from Task       import Task
 from sqlalchemy import *
 import Warehouse
@@ -26,8 +27,17 @@ class InstallWarehouse(Task):
         assert dbn is not None
         engine    = create_engine(dbn)
         warehouse = Warehouse.DB(engine)
+        item1     = Warehouse.Item('default')
+        file1     = os.path.join(os.path.dirname(__file__), 'homepage.txt')
+        item2     = Warehouse.Item('WikiMarkup')
+        file2     = os.path.join(os.path.dirname(__file__), 'markup.txt')
+        warehouse.set_directory('../data/warehouse')
+        item1.set_source_filename(file1)
+        item2.set_source_filename(file2)
         try:
             warehouse.install()
+            warehouse.add_file(item1)
+            warehouse.add_file(item2)
         except:
             return Task.failure
         environment.set_attribute('warehouse_db', warehouse)

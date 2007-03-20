@@ -37,15 +37,17 @@ punctuation = Any('.!?,;')
 
 # Single word definitions.
 name        = letter + Rep(letter | digit)
+file_name   = Rep1(letter | digit | dash | underscore | dot)
 wiki_force  = Str('->') + name
 wiki_word   = Range('AZ') + name + Range('AZ') + name
 indentation = Rep(Str(' ')) | Rep(Str("\t"))
 variable    = letter + Rep(letter | digit | Str('_')) + Rep(letter | digit)
 proto       = Alt(Str('http'), Str('https'), Str('ftp'), Str('mailto'))
-login       = name + Opt(colon + name)
-host        = name + Rep(dot + name)
-path        = Opt(slash) + name + Rep(slash + name) + Opt(slash)
-arg         = name + equal + Opt(name)
+login       = file_name + Opt(colon + file_name)
+host        = name + Rep(letter | digit | dash | underscore | dot) + name
+path        = Opt(slash) + file_name + Rep(slash + file_name) + Opt(slash)
+arg_value   = Rep1(letter | digit | dash | underscore | dot | Str('%'))
+arg         = file_name + equal + Opt(arg_value)
 args        = Str('?') + arg + Rep(Str('&') + arg)
 path_args   = path + Opt(args)
 url         = proto + colon + Str('//') + Opt(login + at) + host + Opt(path_args)

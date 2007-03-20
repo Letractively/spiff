@@ -273,11 +273,14 @@ class CreateDefaultSetup(CheckList):
         if section_content is None:
             return Task.failure
 
-        content_homepage = self.__create_content(None, 'Homepage', 'homepage')
-        if content_homepage is None:
+        content_default = self.__create_content(None, 'Wiki', 'default')
+        if content_default is None:
             return Task.failure
 
-        content_admin = self.__create_content(None, 'Admin Center', 'admin')
+        content_admin = self.__create_content(None,
+                                              'Admin Center',
+                                              'admin',
+                                              True)
         if content_admin is None:
             return Task.failure
 
@@ -305,9 +308,9 @@ class CreateDefaultSetup(CheckList):
         # Assign extensions to the content pages.
         #########
         # Assign the wiki page extension to the homepage.
-        caption = 'Assign homepage to a wiki page'
-        content_homepage.set_attribute('extension', 'spiff_core_wiki_page')
-        if not self.guard.save_resource(content_homepage, section_content):
+        caption = 'Assign default page to a wiki'
+        content_default.set_attribute('extension', 'spiff_core_wiki_page')
+        if not self.guard.save_resource(content_default, section_content):
             self._add_result(caption, Task.failure)
             self._print_result(environment, False)
             return Task.failure
@@ -389,7 +392,7 @@ class CreateDefaultSetup(CheckList):
                    content_action_view,
                    content_action_edit,
                    content_action_delete]
-        content = [content_homepage, content_admin]
+        content = [content_default, content_admin]
         try:
             self.guard.grant(group_admin, actions, content)
         except:
@@ -399,7 +402,7 @@ class CreateDefaultSetup(CheckList):
         self._add_result(caption, Task.success)
 
         caption = 'Granting view permissions to users'
-        content = [content_homepage]
+        content = [content_default]
         try:
             self.guard.grant(group_users, content_action_view, content)
         except:
