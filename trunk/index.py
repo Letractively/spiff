@@ -8,7 +8,7 @@ from ConfigParser import RawConfigParser
 from ExtensionApi import ExtensionApi
 import Guard
 
-#print 'Content-Type: text/html'
+#print 'Content-Type: text/html; charset=utf-8'
 #print
 
 def find_requested_page(get_data):
@@ -56,7 +56,7 @@ def log_in(guard_db, integrator, page):
 
 
 if not os.path.exists('data/spiff.cfg'):
-    print 'Content-Type: text/html'
+    print 'Content-Type: text/html; charset=utf-8'
     print
     print 'Please configure Spiff before accessing this site.<br/>'
     print 'The INSTALL file shipped with the Spiff installation contains'
@@ -64,7 +64,7 @@ if not os.path.exists('data/spiff.cfg'):
     sys.exit()
 
 if os.path.exists('install'):
-    print 'Content-Type: text/html'
+    print 'Content-Type: text/html; charset=utf-8'
     print
     print 'Out of security reasons, please delete the install/ directory before'
     print 'accessing this page.'
@@ -104,7 +104,7 @@ if (page_handle == 'homepage'
     or page_handle.startswith('default/')):
     open_sys_page = True
 if open_sys_page and get_data.has_key('page'):
-    print 'Content-Type: text/html'
+    print 'Content-Type: text/html; charset=utf-8'
     print
     print 'error 403 (Forbidden)'
     print 'Can not open the homepage by addressing it directly.'
@@ -153,7 +153,7 @@ if page is None:
 
 # If we still have no page, give 404.
 if page is None:
-    print 'Content-Type: text/html'
+    print 'Content-Type: text/html; charset=utf-8'
     print
     print 'error 404 (File not found)'
     sys.exit()
@@ -175,7 +175,7 @@ if extension is None:
     extension  = integrator.load_extension_from_descriptor(descriptor)
 
 if extension is None:
-    print 'Content-Type: text/html'
+    print 'Content-Type: text/html; charset=utf-8'
     print
     print 'Page "%s" refers to unknown extension "%s"' % (page, descriptor)
     sys.exit()
