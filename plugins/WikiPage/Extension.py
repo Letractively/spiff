@@ -144,7 +144,7 @@ class Extension:
         # Show the page.
         tmpl_args = {
             'may_edit': may_edit,
-            'html':     Markup(self.wiki2html.html),
+            'html':     Markup(unicode(self.wiki2html.html, 'utf-8')),
             'errors':   errors
         }
         self.api.render('show.tmpl', **tmpl_args)
@@ -170,12 +170,13 @@ class Extension:
         }
 
         # Read the file.
-        assert item.get_filename() is not None
-        assert len(item.get_filename()) > 0
-        infile = open(item.get_filename(), 'r')
-        assert infile is not None
-        tmpl_args['wiki_markup'] = infile.read()
-        infile.close()
+        if item is not None:
+            assert item.get_filename() is not None
+            assert len(item.get_filename()) > 0
+            infile = open(item.get_filename(), 'r')
+            assert infile is not None
+            tmpl_args['wiki_markup'] = unicode(infile.read(), 'utf-8')
+            infile.close()
 
         # Show the editor.
         self.api.render('edit.tmpl', **tmpl_args)

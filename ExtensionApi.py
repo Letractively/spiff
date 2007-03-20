@@ -131,7 +131,9 @@ class ExtensionApi(Api):
         return values
 
 
-    def send_headers(self, content_type = 'text/html', headers = {}):
+    def send_headers(self,
+                     content_type = 'text/html; charset=utf-8',
+                     headers = {}):
         if self.__headers_sent:
             return
         # Print the HTTP header.
