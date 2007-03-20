@@ -1,5 +1,3 @@
-* Warehouse: Add support for diff.
-
 * WikiPage: Support diffs in the version history.
 
 * Admin Center: Test better whether the permission escalation prevention

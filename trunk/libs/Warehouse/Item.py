@@ -15,6 +15,9 @@
 import os
 import mimetypes
 from tempfile import mkstemp
+from difflib  import SequenceMatcher
+
+sequence_matcher = SequenceMatcher()
 
 class Item:
     """
@@ -162,6 +165,22 @@ class Item:
         self.set_source_filename(temp_file_name, True, magic)
 
 
+    def get_content(self):
+        """
+        Returns the content of the file.
+
+        @rtype:  string
+        @return: The content of the item.
+        """
+        if not self.get_filename() or len(self.get_filename()) == 0:
+            return ''
+        infile = open(self.get_filename(), 'U')
+        assert infile is not None
+        content = infile.read()
+        infile.close()
+        return content
+
+
     def get_move_on_add(self):
         """
         Returns True if the file returned by get_source_file() will be moved when
@@ -292,6 +311,23 @@ class Item:
         @return: A list of all attributes.
         """
         return self.__attribute_dict
+
+
+    def diff(self, item):
+        """
+        Returns a diff of this item against the given item.
+
+        @type  item: Item
+        @param item: Another item.
+        @rtype: list[string]
+        @return: A list containing the result of Python's Differ.compare().
+        """
+        assert item is not None
+        content1 = self.get_content()
+        content2 = item.get_content()
+        sequence_matcher.set_seq1(content1)
+        sequence_matcher.set_seq2(content2)
+        return sequence_matcher
 
 
 if __name__ == '__main__':

@@ -39,7 +39,7 @@ class Extension:
         alias  = self.api.get_get_data('page')
         # The user is viewing the homepage of his web presence.
         if alias is None:
-            url = self.api.get_request_uri(page = [word])
+            url = self.api.get_request_uri(page = [word], revision = None)
             return (url, word)
 
         # The user is viewing a sub page of his web presence. Find out if it
@@ -57,13 +57,13 @@ class Extension:
             stack.append(word)
         else:
             stack[-1] = word
-        url = self.api.get_request_uri(page = ['/'.join(stack)])
+        url = self.api.get_request_uri(page = ['/'.join(stack)], revision = None)
         return (url, word)
 
 
     def __wiki_url_handler(self, url, word):
         if url.find(':') == -1:
-            url = self.api.get_request_uri(page = [url])
+            url = self.api.get_request_uri(page = [url], revision = None)
         return (url, word)
         
 
@@ -125,6 +125,27 @@ class Extension:
         self.api.render('history.tmpl', **tmpl_args)
 
 
+    def __show_diff(self, alias, may_edit):
+        revision1 = self.api.get_get_data('revision1')
+        revision2 = self.api.get_get_data('revision2')
+        assert revision1 is not None
+        assert revision2 is not None
+        item1 = self.warehouse.get_file_from_alias(alias, int(revision1))
+        item2 = self.warehouse.get_file_from_alias(alias, int(revision2))
+        assert item1 is not None
+        assert item2 is not None
+        diff = item1.diff(item2)
+        assert diff is not None
+        c1 = item1.get_content()
+        c2 = item2.get_content()
+        for opcode in diff.get_opcodes():
+            src = c1[opcode[1]:opcode[2]]
+            dst = c2[opcode[3]:opcode[4]]
+            print "%6s a[%d:%d] b[%d:%d]" % opcode
+            print "a:'%s' b'%s'"          % (src, dst)
+        #FIXME
+
+
     def __show_page(self, item, may_edit):
         revision = self.api.get_get_data('revision')
         errors   = []
@@ -171,12 +192,7 @@ class Extension:
 
         # Read the file.
         if item is not None:
-            assert item.get_filename() is not None
-            assert len(item.get_filename()) > 0
-            infile = open(item.get_filename(), 'r')
-            assert infile is not None
-            tmpl_args['wiki_markup'] = unicode(infile.read(), 'utf-8')
-            infile.close()
+            tmpl_args['wiki_markup'] = unicode(item.get_content(), 'utf-8')
 
         # Show the editor.
         self.api.render('edit.tmpl', **tmpl_args)
@@ -191,6 +207,7 @@ class Extension:
         edit     = self.api.get_get_data('edit')
         save     = self.api.get_post_data('save')
         history  = self.api.get_get_data('history')
+        diff     = self.api.get_get_data('diff')
         revision = self.api.get_get_data('revision')
         handle   = self.page is not None and self.page.get_handle()
         alias    = self.api.get_get_data('page') or handle
@@ -208,6 +225,8 @@ class Extension:
         # Show the requested page.
         if history is not None:
             self.__show_revision_history(alias, may_edit)
+        elif diff is not None:
+            self.__show_diff(alias, may_edit)
         elif edit is not None or item is None:
             self.__show_editor(item, alias, may_edit)
         else:
