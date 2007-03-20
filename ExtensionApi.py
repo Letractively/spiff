@@ -190,7 +190,7 @@ class ExtensionApi(Api):
         print tmpl.generate(plugin_dir  = plugin_uri,
                             request_uri = get_request_uri,
                             txt         = gettext,
-                            **kwargs).render('xhtml')
+                            **kwargs).render('xhtml', strip_whitespace = False)
 
 
 if __name__ == '__main__':

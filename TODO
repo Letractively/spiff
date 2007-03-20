@@ -1,39 +1,29 @@
-* WikiMarkup: Support preformatted text (e.g. Code)
-
 * Warehouse: Add support for diff.
 
 * WikiPage: Support diffs in the version history.
 
-* RecentChanges: Implement as a new extension.
-
-* Admin Center: Make the "Add membership" button work.
-
-* Admin Center: Make the "Cancel membership" button work; handle
-  orphaned users?
-
 * Admin Center: Test better whether the permission escalation prevention
   works.
 
-* Integrator/Extensions: Get the signal permission checks right.
+* Implement a Menu extension.
 
-* Create a navigation bar ("breadcrumbs") extension.
-
-* Decide how to lay out multiple plugins on one site.
+* Decide how to lay out multiple plugins on one site and implement the
+  ContentManager extension that does the layout.
   - Create layout containers? (Straight forward, but how can we hide
     complexity in simple cases?)
   - Define fixed locations depending on the plugin? (Unflexible)
   - Let plugins configure this (Non-intuitive? Too complex in complex
     cases?)
 
-* Define the plugin API. Stuff that should be easy to do for plugins:
-  - Using the authentication framework.
-  - Storing configuration and sharing them with other plugins.
-    (Should this be done by a simple library that wraps database access?
-     Should plugins be responsible to handle this themselves?)
-  - Communication with other plugins. (And avoid the problems introduced
-    by a synchronous bus.)
-  - ...
+* Create a NavigationBar ("breadcrumbs") extension.
 
-* Create an admin GUI for content management. Essentially, this GUI
-  is our "Plugin Central", where the user can add different plugins
-  into his website.
+* Create an admin GUI for installing extensions.
+
+* Implement a RecentChanges extension.
+
+* Implement a MenuBar extension.
+
+
+Long Term
+----------
+* Integrator/Extensions: Get the signal permission checks right.

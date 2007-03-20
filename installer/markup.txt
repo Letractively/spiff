@@ -1,24 +1,45 @@
 = Wiki Markup =
 
+== Text styles ==
+
+This line has /italic text/. The following, however, will not have any effect:
+test1/test2/test3
+*Strong* text is enclosed by stars.
+You might also want to _underline_ something.
+You might add some marked up text /even if it contains _other markup_ or spans
+over *multiple lines*/.
+
 == Links to other pages ==
 
 Link to other pages in the same Wiki: ->Simple or CamelCaseWords
-Link to other pages on your homepage: {admin/users} or {admin/users This is my link!}
-Link to external pages: {http://debain.org} or {http://debain.org This is an external link!}
+Link to other pages on your homepage: {admin/users} or {admin/users This is my
+link!}
+Link to external pages: {http://debain.org} or {http://debain.org This is an
+external link!}
 
-== Text styles ==
+== Preformatted text ==
 
-This line has /italic text/. The following, however, will not have any effect: test1/test2/test3
-*Strong* text is enclosed by stars.
-You might also want to _underline_ something.
-You might add some marked up text /even if it contains _other markup_ or spans over *multiple lines*/.
+If you want to show some text that is not modified by the Wiki, you mark it as
+such. For example:
+#Text
+== This is not changed into a header ==
+
+You can also embed code and preserve indent:
+
+    def link(self, text):
+        text = text[1:-1]
+        pos = text.find(' ')
+        if pos == -1:
+            url     = escape(text)
+            caption = url
+#End
 
 == Tables ==
 
 A table is a little more sophisticated, but still pretty easy:
 
 #Heading
-  | Row
+  | 
   | Heading 1
   | Heading /with/ markup
   | Heading 3

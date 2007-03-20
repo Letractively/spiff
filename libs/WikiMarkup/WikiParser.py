@@ -51,6 +51,8 @@ arg         = file_name + equal + Opt(arg_value)
 args        = Str('?') + arg + Rep(Str('&') + arg)
 path_args   = path + Opt(args)
 url         = proto + colon + Str('//') + Opt(login + at) + host + Opt(path_args)
+code        = Str('#Text') + nl
+code_end    = Str('#End') + nl
 
 # Markup.
 line          = Rep(not_nl) + nl
@@ -128,6 +130,24 @@ class WikiParser(Scanner):
 
     def _get_current_indent_level(self):
         return self.indentation_stack[-1]
+
+    def _code_start(self, text):
+        #print '_code_start: ' + text
+        self._buffer_flush()
+        self.produce('code_start', text)
+        self.begin('code')
+
+    def _code(self, text):
+        #print '_code: ' + text
+        self.my_buffer += text
+
+    def _code_end(self, text):
+        #print '_code_end: ' + text
+        if self.my_buffer != '':
+            self.produce('code', self.my_buffer)
+            self.my_buffer = ''
+        self.produce('code_end', text)
+        self.begin('')
 
     def _title1(self, text):
         #print '_title1: ' + text
@@ -311,7 +331,14 @@ class WikiParser(Scanner):
             (blank_line,  _blank_line),
             (indentation, _indentation_action)
         ]),
-        
+
+        # Preformatted text/code.
+        (code,     _code_start),
+        State('code', [
+            (code_end, _code_end),
+            (AnyChar,  _code)
+        ]),
+
         # Brackets.
         (o_bracket, _open_bracket_action),
         (c_bracket, _close_bracket_action),

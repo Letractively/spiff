@@ -1,23 +1,26 @@
 <div class="content"
      xmlns:py="http://genshi.edgewall.org/"
      py:with="img_dir = plugin_dir + '/img'">
-  <h1 py:content="name" />
+  <h1><a href="${request_uri(history = None)}" py:content="name" /></h1>
   <py:for each="error in errors">
   <font color="red" py:content="error" /><br/>
   </py:for>
-  <table py:for="revision in revisions"
-         py:with="rev_url = request_uri(history = None,
-                                        revision = [revision.get_revision()])"
-         width="100%"
-         cellpadding="0"
-         cellspacing="0">
-    <tr>
-      <td>
+  <table cellpadding="0" cellspacing="0">
+    <tr py:for="revision in revisions"
+        py:with="rev_url = request_uri(history = None,
+                                       revision = [revision.get_revision()])">
+      <td class="nowrap">
+        <a href="$rev_url"
+           py:content="revision.get_datetime()" />
+      </td>
+      <td width="20">&nbsp;</td>
+      <td align="left">
         <a href="$rev_url"
            py:content="txt('Revision %s' % revision.get_revision())" />
       </td>
-      <td align='left'
-          width='200'
+      <td width="20">&nbsp;</td>
+      <td align="left"
+          width="200"
           py:content="revision.get_attribute('user_name') or 'System'" />
     </tr>
   </table>

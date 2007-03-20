@@ -219,6 +219,27 @@ class Item:
         return self.__mime_type
 
 
+    def set_datetime(self, added):
+        """
+        Sets the time when this item was created.
+        
+        @type:  datetime
+        @param: The time when this item was created.
+        """
+        assert added is not None
+        self.__added = added
+
+
+    def get_datetime(self):
+        """
+        Returns the time when this item was created.
+        
+        @rtype:  datetime
+        @return: The time when this item was created.
+        """
+        return self.__added
+
+
     def set_attribute(self, *args, **kwargs):
         """
         You can add metadata to any revision of an item in the database. For
