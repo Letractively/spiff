@@ -2,7 +2,7 @@
 
 * Warehouse: Add support for diff.
 
-* WikiPage: Show a version history.
+* WikiPage: Support diffs in the version history.
 
 * RecentChanges: Implement as a new extension.
 

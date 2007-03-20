@@ -68,11 +68,11 @@ class Extension:
         
 
 
-    def __save_page(self):
+    def __save_page(self, may_edit):
         i18n = self.i18n
 
         # Check permissions.
-        if not self.api.has_permission('edit'):
+        if not may_edit:
             return (None, [i18n('No permission to save this page.')])
 
         # Collect data.
@@ -100,6 +100,87 @@ class Extension:
         return (item, [])
 
 
+    def __show_revision_history(self, alias, may_edit):
+        errors = []
+        # Collect data.
+        offset = self.api.get_get_data('offset') or 0
+        list   = self.warehouse.get_file_list_from_alias(alias,
+                                                         True,
+                                                         offset,
+                                                         20)
+        
+        # Determine the page name.
+        if self.page is not None:
+            page_name = self.page.get_name()
+        else:
+            page_name = split(alias, '/')[-1]
+
+        # Show the page.
+        tmpl_args = {
+            'name':      page_name,
+            'revisions': list,
+            'may_edit':  may_edit,
+            'errors':    errors
+        }
+        self.api.render('history.tmpl', **tmpl_args)
+
+
+    def __show_page(self, item, may_edit):
+        revision = self.api.get_get_data('revision')
+        errors   = []
+        if item is None:
+            errors.append(self.i18n('You are editing a new page.'))
+        elif revision and int(revision) != int(item.get_revision()):
+            errors.append(self.i18n('Requested revision not found, showing'
+                                    ' most recent version instead.'))
+        elif revision:
+            errors.append(self.i18n('Showing old revision %s' % revision))
+
+        # Convert to html.
+        assert item.get_filename() is not None
+        assert len(item.get_filename()) > 0
+        self.wiki2html.read(item.get_filename())
+        
+        # Show the page.
+        tmpl_args = {
+            'may_edit': may_edit,
+            'html':     Markup(self.wiki2html.html),
+            'errors':   errors
+        }
+        self.api.render('show.tmpl', **tmpl_args)
+        
+
+    def __show_editor(self, item, alias, may_edit):
+        errors = []
+        if not may_edit:
+            errors.append(self.i18n('You are not allowed to edit this page.'))
+        elif item is None:
+            errors.append(self.i18n('You are editing a new page.'))
+
+        # Determine the page name.
+        if self.page is not None:
+            page_name = self.page.get_name()
+        else:
+            page_name = split(alias, '/')[-1]
+
+        tmpl_args = {
+            'name':         page_name,
+            'may_edit':     may_edit,
+            'errors':       errors
+        }
+
+        # Read the file.
+        assert item.get_filename() is not None
+        assert len(item.get_filename()) > 0
+        infile = open(item.get_filename(), 'r')
+        assert infile is not None
+        tmpl_args['wiki_markup'] = infile.read()
+        infile.close()
+
+        # Show the editor.
+        self.api.render('edit.tmpl', **tmpl_args)
+
+
     def on_render_request(self):
         self.api.emit('render_start')
         self.api.send_headers()
@@ -108,63 +189,27 @@ class Extension:
         # Collect data.
         edit     = self.api.get_get_data('edit')
         save     = self.api.get_post_data('save')
+        history  = self.api.get_get_data('history')
         revision = self.api.get_get_data('revision')
         handle   = self.page is not None and self.page.get_handle()
         alias    = self.api.get_get_data('page') or handle
         may_edit = self.api.has_permission('edit')
         item     = None
-        if self.page is None:
-            name = split(alias, '/')[-1]
-        else:
-            name = self.page.get_name()
         if revision is not None:
             item = self.warehouse.get_file_from_alias(alias, int(revision))
         if item is None:
             item = self.warehouse.get_file_from_alias(alias)
-        if not may_edit and (edit is not None or item is None):
-            errors.append(self.i18n('You are not allowed to edit this page.'))
-        if (item is not None
-            and revision is not None
-            and revision != item.get_revision()):
-            errors.append(self.i18n('Requested revision not found, showing '
-                                    'most recent version instead.'))
 
         # Save, if requested by the user.
         if save is not None:
-            (item, errors) = self.__save_page()
+            (item, errors) = self.__save_page(may_edit)
 
-        tmpl_args = {
-            'name':         name,
-            'may_edit':     may_edit,
-            'errors':       errors
-        }
-
-        # Edit an existing page.
-        if item is not None and edit is not None:
-            assert item.get_filename() is not None
-            assert len(item.get_filename()) > 0
-
-            # Read the file.
-            infile = open(item.get_filename(), 'r')
-            assert infile is not None
-            tmpl_args['wiki_markup'] = infile.read()
-            infile.close()
-
-            self.api.render('edit.tmpl', **tmpl_args)
-
-        # Edit a new page.
-        elif item is None:
-            errors.append(self.i18n('You are editing a new page.'))
-            self.api.render('edit.tmpl', **tmpl_args)
-
-        # Show a page.
+        # Show the requested page.
+        if history is not None:
+            self.__show_revision_history(alias, may_edit)
+        elif edit is not None or item is None:
+            self.__show_editor(item, alias, may_edit)
         else:
-            assert item.get_filename() is not None
-            assert len(item.get_filename()) > 0
-            
-            # Convert to html.
-            self.wiki2html.read(item.get_filename())
-            tmpl_args['html'] = Markup(self.wiki2html.html)
-            
-            self.api.render('show.tmpl', **tmpl_args)
+            self.__show_page(item, may_edit)
+
         self.api.emit('render_end')
