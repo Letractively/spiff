@@ -110,7 +110,7 @@ class Extension:
                                                          20)
         
         # Determine the page name.
-        if self.page is not None:
+        if self.api.get_get_data('page') is None and self.page is not None:
             page_name = self.page.get_name()
         else:
             page_name = split(alias, '/')[-1]
@@ -158,7 +158,7 @@ class Extension:
             errors.append(self.i18n('You are editing a new page.'))
 
         # Determine the page name.
-        if self.page is not None:
+        if self.api.get_get_data('page') is None and self.page is not None:
             page_name = self.page.get_name()
         else:
             page_name = split(alias, '/')[-1]

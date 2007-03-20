@@ -56,6 +56,7 @@ class Html2Wiki(HTMLParser.HTMLParser):
         elif tag == 'b':      self.start_b()
         elif tag == 'u':      self.start_u()
         elif tag == 'a':      self.start_a(attrs)
+        elif tag == 'pre':    self.start_pre()
         elif tag == 'strike': self.start_strike()
         elif tag == 'br':     self.newline()
         
@@ -74,6 +75,7 @@ class Html2Wiki(HTMLParser.HTMLParser):
         elif tag == 'b':      self.end_b()
         elif tag == 'u':      self.end_u()
         elif tag == 'a':      self.end_a()
+        elif tag == 'pre':    self.end_pre()
         elif tag == 'strike': self.end_strike()
 
     def start_h1(self):
@@ -145,6 +147,12 @@ class Html2Wiki(HTMLParser.HTMLParser):
     def end_a(self):
         self.in_a = False
         self.buffer += '}'
+
+    def start_pre(self):
+        self.buffer += '<pre>'
+
+    def end_pre(self):
+        self.buffer += '</pre>'
 
     def start_strike(self):
         self.buffer += '-'

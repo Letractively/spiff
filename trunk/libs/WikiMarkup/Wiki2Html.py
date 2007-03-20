@@ -73,6 +73,18 @@ class Wiki2Html:
         self.indent_level = level
 
 
+    def code_start(self, text):
+        self.buffer += '<pre>'
+
+
+    def code(self, text):
+        self.buffer += escape(text)
+
+
+    def code_end(self, text):
+        self.buffer += '</pre>\n'
+
+
     def title1_start(self, text):
         self.buffer += '<h1>'
 

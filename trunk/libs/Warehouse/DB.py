@@ -186,6 +186,7 @@ class DB:
         item.set_revision(row[tbl_r.c.revision_number])
         item.set_mime_type(row[tbl_r.c.mime_type])
         item.set_filename(pathname)
+        item.set_datetime(row[tbl_r.c.added])
         return item
 
 

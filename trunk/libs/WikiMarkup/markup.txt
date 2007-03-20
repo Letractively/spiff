@@ -13,6 +13,13 @@ This line has /italic text/. The following, however, will not have any effect: t
 You might also want to _underline_ something.
 You might add some marked up text /even if it contains _other markup_ or spans over *multiple lines*/.
 
+#Text
+== Test ==
+
+def code_start(self, text): {blah/huh asdasd}
+    pass
+#End
+
 == Tables ==
 
 A table is a little more sophisticated, but still pretty easy:
