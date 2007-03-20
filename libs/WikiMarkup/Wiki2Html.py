@@ -235,13 +235,15 @@ class Wiki2Html:
         text = text[1:-1]
         pos = text.find(' ')
         if pos == -1:
-            url     = escape(text)
+            url     = text
             caption = url
         else:
-            url     = escape(text[:pos])
-            caption = escape(text[pos + 1:])
+            url     = text[:pos]
+            caption = text[pos + 1:]
         if self.url_handler is not None:
             (url, caption) = self.url_handler(url, caption)
+        url     = escape(url)
+        caption = escape(caption)
         if url is None:
             self.buffer += caption
         else:
@@ -251,10 +253,12 @@ class Wiki2Html:
     def wiki_word(self, text):
         if text.startswith('->'):
             text = text[2:]
-        url     = escape(text)
-        caption = url
+        url     = text
+        caption = text
         if self.wiki_word_handler is not None:
             (url, caption) = self.wiki_word_handler(url, caption)
+        url     = escape(url)
+        caption = escape(caption)
         if url is None:
             self.buffer += caption
         else:
