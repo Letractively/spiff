@@ -43,7 +43,9 @@ def get_request_uri(*args, **kwargs):
 
     # Build the path of the URL.
     if use_mod_rewrite:
-        url = '/' + page + '/'
+        url = '/'
+        if page != '':
+            url += page + '/'
         if len(vars) > 0:
             url += '?'
     else:
