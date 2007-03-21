@@ -1,0 +1,38 @@
+<div class="content"
+     xmlns:py="http://genshi.edgewall.org/"
+     py:with="img_dir = plugin_dir + '/img'">
+  <h1><a href="${request_uri(edit = None, revision = None)}"
+         py:content="name" /></h1>
+  <py:for each="error in errors">
+  <font color="red" py:content="error" /><br/>
+  </py:for>
+  <table width="100%">
+    <tr>
+      <th>${txt('Old Version')}</th>
+      <th width="10">&nbsp;</th>
+      <th>${txt('New Version')}</th>
+    </tr>
+    <tr py:if="not True in [l[1] != 'equal' for l in diff]">
+      <td align="center" colspan="3">
+        <i py:content="txt('No difference between versions')" />
+      </td>
+    </tr>
+    <py:for each="line_number, type, source, dest in diff"
+            py:with="type1 = type == 'insert' and 'none' or type;
+                     type2 = type == 'delete' and 'none' or type">
+    <tr py:if="type != 'equal'">
+      <td class="diff_$type1" width="48%" valign="top">
+        <span py:for="line in source">
+          $line<br/>
+        </span>
+      </td>
+      <td>&nbsp;</td>
+      <td class="diff_$type2" width="48%" valign="top">
+        <span py:for="line in dest">
+          $line<br/>
+        </span>
+      </td>
+    </tr>
+    </py:for>
+  </table><br/>
+</div>

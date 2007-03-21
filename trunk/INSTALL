@@ -1,33 +1,52 @@
+Introduction
+------------
+Before you start:
+If your installation fails anywhere, or if you stop trying because something
+is too difficult to do, PLEASE LET US KNOW:
+
+Online: http://code.google.com/p/spiff/issues/entry
+Email:  spam2 ad debain dod org
+
+
+Installation requirements
+-------------------------
+Your web server will have to support the following:
+- Python 2.3 or better
+- CGI
+- MySQL 4 or better
+
+
 Installation Instructions
 -------------------------
+1. Unpack the Spiff archive.
 
-01. Unpack the Spiff archive.
+2. Copy the contents of the spiff/ directory to your webserver.
 
-02. Copy the contents of the spiff/ directory to your webserver.
+3. Grant all permissions on data/ to the webserver.
+   This is done by either using your FTP client (refer to the documentation
+   of the client in that case), or with shell access by executing the
+   following command:
 
-03. Grant all permissions on data/ to the webserver.
-    This is done by either using your FTP client (refer to the documentation
-    of the client in that case), or with shell access by executing the
-    following command:
+   chmod 777 data/
+ 
+4. Open spiff/installer/install.py in your web browser and follow the
+   instructions. Make sure that no error message appears.
+   !!! WARNING: This step will erase the content of the database that
+       is specified in the configuration dialog !!!
 
-    chmod 777 data/
-  
-06. Open spiff/installer/install.py in your web browser and follow the
-    instructions. Make sure that no error message appears.
-    !!! WARNING: This step will erase the content of the database that
-        is specified in the configuration dialog !!!
+5. Out of security reasons, make sure to delete the install/ directory
+   after the installation is finished!
 
-07. If you encountered any problems or bugs, please report them at
-    http://code.google.com/p/spiff/issues/list
-    You can also tell us how we can make the installation procedure even
-    easier.
+6. If you encountered any problems or bugs, please report them at
+   http://code.google.com/p/spiff/issues/list
+   You can also tell us how we can make the installation procedure even
+   easier.
 
-08. Done! You should now be able to open the index.py file in your web browser.
+7. Done! You should now be able to open the index.py file in your web browser.
 
 
 Using mod_rewrite
 ------------------
-
 Spiff supports mod_rewrite. To enable it, follow these instructions:
 
 1. Edit the .htaccess file in the root directory of Spiff and change
