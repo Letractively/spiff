@@ -142,11 +142,11 @@ class Html2Wiki(HTMLParser.HTMLParser):
         for key, value in attrs:
             if key == 'href':
                 self.last_href = value
-        self.buffer += '{' + self.last_href
+        self.buffer += '[' + self.last_href
 
     def end_a(self):
         self.in_a = False
-        self.buffer += '}'
+        self.buffer += ']'
 
     def start_pre(self):
         self.buffer += '<pre>'

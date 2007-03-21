@@ -40,6 +40,7 @@ name        = letter + Rep(letter | digit)
 file_name   = Rep1(letter | digit | dash | underscore | dot)
 wiki_force  = Str('->') + name
 wiki_word   = Range('AZ') + name + Range('AZ') + name
+not_w_word  = Str('!') + wiki_word
 indentation = Rep(Str(' ')) | Rep(Str("\t"))
 variable    = letter + Rep(letter | digit | Str('_')) + Rep(letter | digit)
 proto       = Alt(Str('http'), Str('https'), Str('ftp'), Str('mailto'))
@@ -68,8 +69,8 @@ title3        = equal + equal + equal + phrase + equal + equal + equal
 heading       = Str('#Heading') + nl
 row           = Str('#Row') + nl
 cell          = Rep1(Str('|')) + Str(' ')
-internal_link = Str('{') + url + Opt(spaces + phrase) + Str('}')
-external_link = Str('{') + path_args + Opt(spaces + phrase) + Str('}')
+internal_link = Str('[') + url + Opt(spaces + phrase) + Str(']')
+external_link = Str('[') + path_args + Opt(spaces + phrase) + Str(']')
 
 class WikiParser(Scanner):
     def __init__(self, file, filename):
@@ -297,6 +298,11 @@ class WikiParser(Scanner):
         self._buffer_flush()
         self.produce('wiki_word', text)
 
+    def _not_wiki_word(self, text):
+        self._buffer_flush()
+        self.produce('not_wiki_word_intro', text[0])
+        self.produce('not_wiki_word', text[1:])
+
     def _open_bracket_action(self, text):
         #print '_open_bracket_action'
         self.my_buffer += text
@@ -361,6 +367,7 @@ class WikiParser(Scanner):
         # Other.
         (internal_link, _link),
         (external_link, _link),
+        (not_w_word,    _not_wiki_word),
         (wiki_word,     _wiki_word),
         (wiki_force,    _wiki_word),
         (AnyChar,       _text)

@@ -265,6 +265,10 @@ class Wiki2Html:
             self.buffer += '<a href="%s">%s</a>' % (url, caption)
 
 
+    def not_wiki_word(self, text):
+        self.buffer += escape(text)
+
+
     def __flush(self, strip = False):
         if strip:
             self.html += self.buffer.strip()

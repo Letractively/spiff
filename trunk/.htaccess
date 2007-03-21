@@ -16,5 +16,5 @@ RewriteRule ^(.*)/$ index.py?page=$1 [QSA,L]
 
 # This handles URLs that were marked for being an exception. It
 # removes the marker, and everything before that.
-RewriteCond %{REQUEST_URI} /mod-rewrite-will-strip-this/.*$
-RewriteRule /mod-rewrite-will-strip-this/(.*) $1 [L]
+RewriteCond %{REQUEST_URI} /?mod-rewrite-will-strip-this/.*$
+RewriteRule /?mod-rewrite-will-strip-this/(.*) $1 [L]
