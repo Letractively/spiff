@@ -256,8 +256,8 @@ class Extension:
 
     def __show_diff(self, alias, may_edit):
         errors = []
-        revision1 = self.api.get_get_data('revision1')
-        revision2 = self.api.get_get_data('revision2')
+        revision1 = self.api.get_post_data('revision1')
+        revision2 = self.api.get_post_data('revision2')
         assert revision1 is not None
         assert revision2 is not None
         item1 = self.warehouse.get_file_from_alias(alias, int(revision1))
@@ -345,7 +345,7 @@ class Extension:
         edit     = self.api.get_get_data('edit')
         save     = self.api.get_post_data('save')
         history  = self.api.get_get_data('history')
-        diff     = self.api.get_get_data('diff')
+        diff     = self.api.get_post_data('diff')
         revision = self.api.get_get_data('revision')
         handle   = self.page is not None and self.page.get_handle()
         alias    = self.api.get_get_data('page') or handle

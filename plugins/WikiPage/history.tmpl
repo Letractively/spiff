@@ -5,11 +5,10 @@
   <py:for each="error in errors">
   <font color="red" py:content="error" /><br/>
   </py:for>
-  <form action="${request_uri()}" method="get">
+  <form action="${request_uri(history = None)}" method="post">
   <table cellpadding="3" cellspacing="0">
     <tr>
       <td colspan="7">
-        <input type="hidden" name="diff" value="1" />
         <input type="submit"
                name="diff"
                value="${txt('Compare selected versions')}" /><br/>

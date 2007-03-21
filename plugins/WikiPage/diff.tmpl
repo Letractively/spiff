@@ -8,9 +8,9 @@
   </py:for>
   <table width="100%">
     <tr>
-      <th>${txt('Old Version')}</th>
-      <th width="10">&nbsp;</th>
-      <th>${txt('New Version')}</th>
+      <th width="50%">${txt('Old Version')}</th>
+      <th width="1">&nbsp;</th>
+      <th width="50%">${txt('New Version')}</th>
     </tr>
     <tr py:if="not True in [l[1] != 'equal' for l in diff]">
       <td align="center" colspan="3">
@@ -21,13 +21,13 @@
             py:with="type1 = type == 'insert' and 'none' or type;
                      type2 = type == 'delete' and 'none' or type">
     <tr py:if="type != 'equal'">
-      <td class="diff_$type1" width="48%" valign="top">
+      <td class="diff_$type1" valign="top">
         <span py:for="line in source">
           $line<br/>
         </span>
       </td>
       <td>&nbsp;</td>
-      <td class="diff_$type2" width="48%" valign="top">
+      <td class="diff_$type2" valign="top">
         <span py:for="line in dest">
           $line<br/>
         </span>

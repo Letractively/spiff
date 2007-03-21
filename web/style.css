@@ -116,6 +116,7 @@ select {
 
 td.diff_delete {
   background: #fee;
+  font-style: bold;
 }
 
 td.diff_insert {
@@ -131,7 +132,7 @@ span.diff_delete {
 }
 
 span.diff_insert {
-  color: green;
+  color: red;
 }
 
 span.diff_replace {
