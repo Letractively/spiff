@@ -113,3 +113,27 @@ select {
   margin-top: 7px;
   padding: 7px;
 }
+
+td.diff_delete {
+  background: #fee;
+}
+
+td.diff_insert {
+  background: #efe;
+}
+
+td.diff_replace {
+  background: #ffa;
+}
+
+span.diff_delete {
+  color: red;
+}
+
+span.diff_insert {
+  color: green;
+}
+
+span.diff_replace {
+  color: red;
+}
