@@ -53,6 +53,15 @@ a:visited .log_out {
   color: white;
 }
 
+.wiki table {
+  border-collapse: collapse;
+}
+
+.wiki th, .wiki td {
+  border: 1px solid #bbb;
+  padding: 5px;
+}
+
 td.banner_left {
 }
 
