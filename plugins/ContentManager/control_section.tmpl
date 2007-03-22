@@ -1,0 +1,30 @@
+<div width="100%"
+     class="control_section"
+     xmlns:py="http://genshi.edgewall.org/"
+     xmlns:xi="http://www.w3.org/2001/XInclude">
+<table width="100%">
+  <tbody id="layout_controls">
+    <tr py:for="extension in extensions">
+      <td>
+        <div class="layout_control"
+             id="layout_control_$extension">$extension</div></td>
+    </tr>
+  </tbody>
+</table>
+
+<script type="text/javascript">
+// <![CDATA[
+var tbody = document.getElementById('layout_controls');
+var rows  = tbody.getElementsByTagName('tr');
+for (var i = 0; i < rows.length; i++) {
+  var tr    = rows[i];
+  var cells = tr.getElementsByTagName('td');
+  var td    = cells[0];
+  var divs  = td.getElementsByTagName('div');
+  var div   = divs[0];
+  var id    = div.getAttribute('id');
+  new Draggable(id, {ghosting: true, revert: true});
+}
+// ]]>
+</script>
+</div>

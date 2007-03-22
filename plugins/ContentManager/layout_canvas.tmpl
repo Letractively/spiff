@@ -1,0 +1,285 @@
+<div width="100%"
+     class="control_section"
+     xmlns:py="http://genshi.edgewall.org/"
+     xmlns:xi="http://www.w3.org/2001/XInclude">
+<script type="text/javascript">
+// <![CDATA[
+// ]]>
+</script>
+
+<table class="layout_canvas" width="100%">
+  <tbody id="layout_canvas">
+    <tr>
+      <td align="center">${txt('Drag and drop your content here')}</td>
+    </tr>
+  </tbody>
+</table>
+
+<script type="text/javascript">
+// <![CDATA[
+// Called whenever an item is dragged over the canvas.
+last_highlighted = null;
+function on_hover(draggable, droppable) {
+  // Highlights the cell over which the item was dropped and
+  // removes highlighting from all others.
+  if (droppable == last_highlighted)
+    return;
+  if (last_highlighted)
+    last_highlighted.style.background = 'none';
+  var editor = document.getElementById('content_editor');
+  if (droppable == editor || droppable.style.border != '')
+    return;
+  droppable.style.background = '#eee';
+  last_highlighted           = droppable;
+}
+
+// Returns the row number of the given tr.
+function get_row_number(row) {
+  var row_number = 0;
+  var sibling    = row;
+  while (sibling = sibling.previousSibling)
+    if (sibling.nodeType == 1)
+      row_number = row_number + 1;
+  return row_number;
+}
+
+// Returns the number of columns in the given tr.
+function get_column_count(row) {
+  var columns = 0;
+  var sibling = row.firstChild;
+  while (sibling) {
+    if (sibling.nodeType == 1) {
+      colspan = sibling.getAttribute('colspan');
+      colspan = colspan ? colspan : 1;
+      columns = columns + colspan;
+    }
+    sibling = sibling.nextSibling;
+  }
+  return columns;
+}
+
+// Returns the column number of the given td.
+function get_column_number(cell) {
+  var col_number = 0;
+  var sibling    = cell;
+  while (sibling = sibling.previousSibling)
+    if (sibling.nodeType == 1)
+      col_number = col_number + sibling.getAttribute('colspan');
+  return col_number;
+}
+
+// Returns the cell with the given column number.
+function get_cell(tr, col_number) {
+  var sibling = tr.firstChild;
+  while (sibling) {
+    if (sibling.nodeType == 1) {
+      colspan    = sibling.getAttribute('colspan');
+      colspan    = colspan ? colspan : 1;
+      col_number = col_number - colspan;
+    }
+    if (col_number < 0)
+      return sibling;
+    sibling = sibling.nextSibling;
+  }
+  return sibling;
+}
+
+// Returns the first previous sibling that is an element.
+function previous_element(element) {
+  while (element = element.previousSibling)
+    if (element.nodeType == 1)
+      break;
+  return element;
+}
+
+// Returns the next sibling that is an element.
+function next_element(element) {
+  while (element = element.nextSibling)
+    if (element.nodeType == 1)
+      break;
+  return element;
+}
+
+// Increase the rowspan of all cells in the given row, except for the one of
+// the given cell.
+function increase_rowspan_except(tr, cell) {
+  var cells = tr.getElementsByTagName("td");
+  for (var i = 0; i < cells.length; i++) {
+    var current = cells[i];
+    if (current != cell)
+      continue;
+    var colspan = current.getAttribute('colspan');
+    colspan = colspan ? colspan : 1;
+    current.setAttribute('colspan', colspan + 1);
+  }
+}
+
+// Returns a new td with some default attributes.
+function create_td() {
+  var td  = document.createElement('td');
+  var img = document.createElement('img');
+  img.setAttribute('src',    '${plugin_dir}/img/null.png');
+  img.setAttribute('width',  8);
+  td.setAttribute('width',   8);
+  //td.style.background = 'red';
+  td.appendChild(img);
+  return td;
+}
+
+// Inserts a new column before the given column.
+function add_column_before(col_number) {
+  var tbody  = document.getElementById('layout_canvas');
+  var rows   = tbody.getElementsByTagName('tr');
+  var tr     = rows[0];
+  var new_td = create_td();
+  new_td.setAttribute('rowspan', rows.length);
+  if (col_number == null)
+    tr.appendChild(new_td);
+  else {
+    var td = get_cell(tr, col_number);
+    tr.insertBefore(new_td, td);
+  }
+}
+
+// Inserts a new row before the given row.
+function add_row_before(row) {
+  var new_row = document.createElement('tr');
+  var new_td  = create_td();
+  new_row.appendChild(new_td);
+  if (row) {
+    var tbody   = row.parentNode;
+    var columns = get_column_count(row);
+    new_td.setAttribute('colspan', columns);
+    tbody.insertBefore(new_row, row);
+  }
+  else {
+    var tbody   = document.getElementById('layout_canvas');
+    var rows    = tbody.getElementsByTagName('tr');
+    var row     = rows[0];
+    var columns = get_column_count(row);
+    new_td.setAttribute('colspan', columns);
+    tbody.appendChild(new_row);
+  }
+  return new_row;
+}
+
+// Called whenever an item was dropped on the canvas.
+function on_drop(draggable, droppable) {
+  // Find information on the current cell.
+  var row         = droppable.parentNode;
+  var tbody       = tr.parentNode;
+  var row_number  = get_row_number(row);
+  var col_number  = get_column_number(droppable);
+  //alert("Row:" + row_number.toString() + ", Col:" + col_number.toString());
+
+  // Find information on the cell in the row above.
+  var row_1up     = previous_element(row);
+  var cell_1up    = row_1up ? get_cell(row_1up, col_number) : null;
+
+  // Find information on the cell in the row below.
+  var row_1down   = next_element(row);
+  var cell_1down  = row_1down ? get_cell(row_1down, col_number) : null;
+
+  // Find information on the cells next to the current one.
+  var cell_1left  = previous_element(droppable);
+  var cell_1right = next_element(droppable);
+
+  // We only have one cell.
+  if (!row_1up && !row_1down && !cell_1left && !cell_1right) {
+    // Add two new columns (one drag target on each side).
+    add_column_before();
+    add_column_before(0);
+
+    // Add two new drag targets, one above and one below the existing cell.
+    add_row_before(row);
+    add_row_before();
+
+    // The default drop target has text in it, so we replace it.
+    new_cell              = create_td();
+    new_cell.style.border = '1px dashed #aaa';
+    new_cell.style.height = '100px';
+    new_cell.style.width  = '100%';
+    new_cell.innerHTML    = draggable.getAttribute('id');
+    row.replaceChild(new_cell, droppable);
+
+    // We created new cells, now make the whole table droppable again.
+    make_cells_dropable();
+    return true;
+  }
+  
+  // There is no free cell below the current one.
+  if (!row_1down || cell_1down.style.border != '') {
+    // There is a cell above.
+    if (row_1up) {
+      // Increase the rowspan of all cells in the next row, except for
+      // the cells in the current column.
+      alert("oops");
+      increase_rowspan_except(row, droppable);
+    }
+    // Add two new cells below the current one.
+    // Note: Might need to set initial rowspan if other cells in the same row
+    // already have it. (FIXME)
+    new_row_1 = add_row_before(row);
+    //new_row_2 = add_row_before(new_row_1);
+
+    // Add the new item into the first new cell.
+    //new_cell = new_row_1.childNodes[0];
+    //new_cell.style.border = '1px dashed #aaa';
+    //new_cell.innerHTML    = draggable.getAttribute('id');
+  }
+  if (!cell_1left || cell_1left.style.border != '') {
+    // There is a cell right next to this one.
+    if (!cell_1right || cell_1right.style.border != '') {
+    }
+  }
+
+  // We may have created new cells, so make the whole table droppable again.
+  make_cells_dropable();
+  //alert("success");
+  return true;
+}
+
+function make_cells_dropable() {
+  // We need a way to remove the highlighting of a cell, but there is no
+  // signal that notifies us when the cursor leaves a cell. Thus, we
+  // choose to receive signals whenever the cursor is anywhere in the
+  // content editor.
+  Droppables.add('content_editor', {
+    accept:  'layout_control',
+    onHover: on_hover,
+    onDrop:  on_drop
+  });
+
+  var tbody   = document.getElementById('layout_canvas');
+  var rows    = tbody.getElementsByTagName('tr');
+  var targets = Array();
+  
+  // Redefine all IDs and remove existing items from the Droppables list.
+  for (var i = 0; i < rows.length; i++) {
+    var tr    = rows[i];
+    var cells = tr.getElementsByTagName('td');
+    for (var j = 0; j < cells.length; j++) {
+      var td = cells[j];
+      Droppables.remove(td);
+      var id = 'droppable_' + i.toString() + '_' + j.toString();
+      td.setAttribute('id', id);
+      targets.push(id);
+    }
+  }
+
+  // Make the elements droppable.
+  for (var i = 0; i < targets.length; i++) {
+    Droppables.add(targets[i], {
+      accept:  'layout_control',
+      greedy:  true,
+      onHover: on_hover,
+      onDrop:  on_drop
+    });
+  }
+}
+
+make_cells_dropable();
+// ]]>
+</script>
+</div>
+
