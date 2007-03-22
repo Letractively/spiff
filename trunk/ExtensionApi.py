@@ -185,11 +185,13 @@ class ExtensionApi(Api):
         subdirname = '/'.join(classname.split('.')[:-2])
         dirname    = os.path.join('data/repo/', subdirname)
         plugin_uri = get_mod_rewrite_prevented_uri(dirname)
+        web_dir    = get_mod_rewrite_prevented_uri('web')
 
         # Load and display the template.
         loader = TemplateLoader([dirname])
         tmpl   = loader.load(filename, None, MarkupTemplate)
         print tmpl.generate(plugin_dir  = plugin_uri,
+                            web_dir     = web_dir,
                             request_uri = get_request_uri,
                             txt         = gettext,
                             **kwargs).render('xhtml')

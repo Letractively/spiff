@@ -1,15 +1,11 @@
+* ContentManager: Complete the extension.
+
+* Core: Add support for layout/multiple plugins on one site.
+
 * Admin Center: Test better whether the permission escalation prevention
   works.
 
 * Implement a Menu extension.
-
-* Decide how to lay out multiple plugins on one site and implement the
-  ContentManager extension that does the layout.
-  - Create layout containers? (Straight forward, but how can we hide
-    complexity in simple cases?)
-  - Define fixed locations depending on the plugin? (Unflexible)
-  - Let plugins configure this (Non-intuitive? Too complex in complex
-    cases?)
 
 * Create a NavigationBar ("breadcrumbs") extension.
 

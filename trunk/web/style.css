@@ -147,3 +147,11 @@ span.diff_insert {
 span.diff_replace {
   color: red;
 }
+
+table.layout_canvas {
+  //#border-collapse: collapse;
+  border: 2px dashed #d00;
+}
+
+table.layout_canvas td {
+}

@@ -12,10 +12,11 @@ over *multiple lines*/.
 == Links to other pages ==
 
 Link to other pages in the same Wiki: ->Simple or CamelCaseWords
-Link to other pages on your homepage: {admin/users} or {admin/users This is my
-link!}
-Link to external pages: {http://debain.org} or {http://debain.org This is an
-external link!}
+You can also prevent a !WikiWord from being linked.
+Link to other pages on your homepage: [admin/users] or [admin/users This is my
+link!]
+Link to external pages: [http://debain.org] or [http://debain.org This is an
+external link!]
 
 == Preformatted text ==
 
@@ -50,6 +51,9 @@ A table is a little more sophisticated, but still pretty easy:
   | More text 3
 #Row
   | # ||| This text spans over multiple cells.
+#Row
+  || And yet more text
+  || In multiple columns.
 
 Note that tables do not require a heading, the #Heading tag is optional.
 
@@ -76,6 +80,6 @@ counter. For example:
 #Row
   | # | Last Name:    | Abels
 #Row
-  | # | Homepage:     | {http://debain.org}
+  | # | Homepage:     | [http://debain.org]
 #Row
-  | # | Email:        | Look {http://debain.org/about/ here}
+  | # | Email:        | Look [http://debain.org/about/ here]

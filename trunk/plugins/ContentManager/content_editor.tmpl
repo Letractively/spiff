@@ -1,5 +1,25 @@
 <div class="content"
      xmlns:py="http://genshi.edgewall.org/"
      xmlns:xi="http://www.w3.org/2001/XInclude">
-Nothing here yet...
+<script src="$web_dir/scriptaculous/prototype.js"
+        type="text/javascript"></script>
+<script src="$web_dir/scriptaculous/scriptaculous.js?load=effects,dragdrop"
+        type="text/javascript"></script>
+<table id="content_editor" width="100%">
+  <tbody>
+    <tr>
+      <th valign="top" width="200">${txt('Available Extensions')}</th>
+      <th></th>
+    </tr>
+    <tr>
+      <td>
+        <xi:include py:with="extensions = ['one', 'two', 'three']"
+                    href="control_section.tmpl" />
+      </td>
+      <td>
+        <xi:include href="layout_canvas.tmpl" />
+      </td>
+    </tr>
+  </tbody>
+</table>
 </div>
