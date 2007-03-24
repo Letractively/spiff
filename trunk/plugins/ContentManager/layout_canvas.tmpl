@@ -16,7 +16,7 @@
 
 <script type="text/javascript">
 // <![CDATA[
-editor = new TableEditor(document.getElementById('layout_canvas'));
+layout = new TableEditor(document.getElementById('layout_canvas'));
 layout_right = null;
 layout_left  = null;
 
@@ -24,13 +24,11 @@ layout_left  = null;
 function create_table() {
   var table = document.createElement('table');
   var tbody = document.createElement('tbody');
-  var tr1   = document.createElement('tr');
-  var tr2   = document.createElement('tr');
-  var td1   = document.createElement('td');
-  var td2   = document.createElement('td');
+  var tr    = document.createElement('tr');
+  var td    = document.createElement('td');
   table.appendChild(tbody);
-  tbody.appendChild(tr1);
-  tr1.appendChild(td1);
+  tbody.appendChild(tr);
+  tr.appendChild(td);
   table.setAttribute('width', '100%');
   return table;
 }
@@ -54,8 +52,8 @@ function on_hover(draggable, droppable) {
   }
 
   // Ignore cells that need not be highlighted.
-  var editor = document.getElementById('content_editor');
-  if (droppable == editor)
+  var layout = document.getElementById('content_layout');
+  if (droppable == layout)
     return;
   var class = droppable.getAttribute('class');
   if (class && (class.match(/layout_occupied/)
@@ -112,62 +110,62 @@ function on_drop(draggable, droppable) {
   cell.setAttribute('class', 'layout_occupied');
 
   // If we have only one cell, add four drag targets around the layout.
-  if (editor.get_n_rows() == 1 && editor.get_n_columns() == 1) {
-    var header = editor.add_row_before(row);
-    var footer = editor.add_row_before();
-    var right  = editor.add_column_before();
-    var left   = editor.add_column_before(droppable);
+  if (layout.get_n_rows() == 1 && layout.get_n_columns() == 1) {
+    var header = layout.add_row_before(row);
+    var footer = layout.add_row_before();
+    var right  = layout.add_column_before();
+    var left   = layout.add_column_before(droppable);
     header.setAttribute('class', 'layout_header');
     footer.setAttribute('class', 'layout_footer');
-    editor.get_cell(0, right).setAttribute('class', 'layout_insensitive');
-    editor.get_cell(0, left).setAttribute('class', 'layout_insensitive');
-    editor.get_cell(1, right).setAttribute('class', 'layout_right');
-    editor.get_cell(1, left).setAttribute('class', 'layout_left');
-    editor.get_cell(2, right).setAttribute('class', 'layout_insensitive');
-    editor.get_cell(2, left).setAttribute('class', 'layout_insensitive');
+    layout.get_cell(0, right).setAttribute('class', 'layout_insensitive');
+    layout.get_cell(0, left).setAttribute('class', 'layout_insensitive');
+    layout.get_cell(1, right).setAttribute('class', 'layout_right');
+    layout.get_cell(1, left).setAttribute('class', 'layout_left');
+    layout.get_cell(2, right).setAttribute('class', 'layout_insensitive');
+    layout.get_cell(2, left).setAttribute('class', 'layout_insensitive');
 
     make_cells_droppable();
     return true;
   }
 
-  var pos = editor.find_cell(droppable);
+  var pos = layout.find_cell(droppable);
   if (class.match(/layout_header/)) {
-    var top_l = editor.get_cell(0, 0);
-    var top_r = editor.get_cell(0, 2);
+    var top_l = layout.get_cell(0, 0);
+    var top_r = layout.get_cell(0, 2);
     if (!top_l.getAttribute('class').match(/layout_occupied/))
-      editor.join_cells(droppable, top_l);
+      layout.join_cells(droppable, top_l);
     if (!top_r.getAttribute('class').match(/layout_occupied/))
-      editor.join_cells(droppable, top_r);
+      layout.join_cells(droppable, top_r);
   }
   else if (class.match(/layout_footer/)) {
-    var bot_l = editor.get_cell(editor.get_n_rows() - 1, 0);
-    var bot_r = editor.get_cell(editor.get_n_rows() - 1, 2);
+    var bot_l = layout.get_cell(layout.get_n_rows() - 1, 0);
+    var bot_r = layout.get_cell(layout.get_n_rows() - 1, 2);
     if (!bot_l.getAttribute('class').match(/layout_occupied/))
-      editor.join_cells(droppable, bot_l);
+      layout.join_cells(droppable, bot_l);
     if (!bot_r.getAttribute('class').match(/layout_occupied/))
-      editor.join_cells(droppable, bot_r);
+      layout.join_cells(droppable, bot_r);
   }
   else if (class.match(/layout_left/)) {
-    var top_l = editor.get_cell(0, 0);
-    var bot_l = editor.get_cell(editor.get_n_rows() - 1, 0);
+    var top_l = layout.get_cell(0, 0);
+    var bot_l = layout.get_cell(layout.get_n_rows() - 1, 0);
     if (!top_l.getAttribute('class').match(/layout_occupied/))
-      editor.join_cells(droppable, top_l);
+      layout.join_cells(droppable, top_l);
     if (!bot_l.getAttribute('class').match(/layout_occupied/))
-      editor.join_cells(droppable, bot_l);
+      layout.join_cells(droppable, bot_l);
   }
   else if (class.match(/layout_right/)) {
-    var top_r = editor.get_cell(0, 2);
-    var bot_r = editor.get_cell(editor.get_n_rows() - 1, 2);
+    var top_r = layout.get_cell(0, 2);
+    var bot_r = layout.get_cell(layout.get_n_rows() - 1, 2);
     if (!top_r.getAttribute('class').match(/layout_occupied/))
-      editor.join_cells(droppable, top_r);
+      layout.join_cells(droppable, top_r);
     if (!bot_r.getAttribute('class').match(/layout_occupied/))
-      editor.join_cells(droppable, bot_r);
+      layout.join_cells(droppable, bot_r);
   }
 
   // If something was inserted into a horizontal box, split it to add a new
   // drop target.
   if (class.match(/layout_header/) || class.match(/layout_footer/)) {
-    var new_cell = editor.hsplit_cell(droppable);
+    var new_cell = layout.hsplit_cell(droppable);
     new_cell.setAttribute('class', class.replace(/ highlight$/, ''));
   }
 
@@ -180,7 +178,7 @@ function make_cells_droppable() {
   // We need a way to remove the highlighting of a cell, but there is no
   // signal that notifies us when the cursor leaves a cell. Thus, we
   // choose to receive signals whenever the cursor is anywhere in the
-  // content editor.
+  // content layout.
   Droppables.add('content_editor', {
     accept:  'layout_control',
     onHover: on_hover
@@ -188,9 +186,9 @@ function make_cells_droppable() {
 
   // Redefine all IDs and remove existing items from the Droppables list.
   var targets = Array();
-  for (var i = 0; i < editor.tbody.rows.length; i++) {
-    for (var j = 0; j < editor.tbody.rows[i].cells.length; j++) {
-      var td = editor.tbody.rows[i].cells[j];
+  for (var i = 0; i < layout.tbody.rows.length; i++) {
+    for (var j = 0; j < layout.tbody.rows[i].cells.length; j++) {
+      var td = layout.tbody.rows[i].cells[j];
       var id = 'droppable_' + i.toString() + '_' + j.toString();
       Droppables.remove(id);
       td.setAttribute('id', id);
