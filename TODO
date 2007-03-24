@@ -1,10 +1,6 @@
-* ContentManager: Debug the layout editor.
+* ContentManager: Add form buttons for clearing/resetting/saving the form.
 
-* ContentManager: Remove the item from the layout when it is clicked on.
-
-* ContentManager: Add form buttons.
-
-* ContentManager: Save the layout.
+* ContentManager: Add support for saving the layout.
 
 * Extensions: Add a width recommendation field.
 

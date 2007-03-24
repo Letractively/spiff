@@ -153,8 +153,8 @@ TableEditor.prototype.hsplit_cell = function(cell) {
       continue;
     rowspan = current_cell.getAttribute('rowspan');
     colspan = current_cell.getAttribute('colspan');
-    rowspan = rowspan ? rowspan : 1;
-    colspan = colspan ? colspan : 1;
+    rowspan = rowspan ? parseInt(rowspan) : 1;
+    colspan = colspan ? parseInt(colspan) : 1;
     current_cell.setAttribute('rowspan', rowspan + 1);
     i += colspan - 1;
   }
@@ -170,10 +170,12 @@ TableEditor.prototype.hsplit_cell = function(cell) {
   this.table.push(last_row);
 
   // Create the new row in the table.
-  row      = cell.parentNode;
-  next_row = this.get_next_row(row);
-  new_row  = document.createElement('tr');
-  new_cell = document.createElement('td');
+  var row      = cell.parentNode;
+  var colspan  = cell.getAttribute('colspan');
+  var next_row = this.get_next_row(row);
+  var new_row  = document.createElement('tr');
+  var new_cell = document.createElement('td');
+  colspan      = colspan ? parseInt(colspan) : 1;
   new_cell.setAttribute('colspan', colspan);
   new_row.appendChild(new_cell);
   if (next_row)

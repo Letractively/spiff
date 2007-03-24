@@ -156,6 +156,7 @@ table.layout_canvas .droppable {
   padding: 2px;
   margin: 0px;
   line-height: 0px;
+  height: 4px;
 }
 
 table.layout_canvas .highlight {
