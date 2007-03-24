@@ -151,7 +151,7 @@ table.layout_canvas {
   border: 2px dashed #d00;
 }
 
-td.layout_droppable {
+table.layout_canvas .droppable {
   background-color: #eee;
   padding: 2px;
   margin: 0px;
@@ -162,7 +162,29 @@ table.layout_canvas .highlight {
   background-color: #999;
 }
 
+table.layout_canvas_left {
+  border: 0px;
+  padding: 0px;
+  margin: 0px;
+  border-collapse: collapse;
+  height: 100%;
+}
+
+td.layout_canvas_left .layout_occupied {
+  border: 0px;
+  padding: 0px;
+  text-align: center;
+  vertical-align: top;
+}
+
 td.layout_insensitive {
+}
+
+td.layout_occupied_subtable {
+  text-align: center;
+  padding: 0px;
+  margin: 0px;
+  vertical-align: top;
 }
 
 td.layout_occupied {
