@@ -1,4 +1,14 @@
-* ContentManager: Complete the extension.
+* ContentManager: Add a join_cells method to the TableEditor JS class.
+
+* ContentManager: Remove the item from the layout when it is clicked on.
+
+* ContentManager: Add form buttons.
+
+* ContentManager: Save the layout.
+
+* Extensions: Add a width recommendation field.
+
+* Extensions: Add icons.
 
 * Core: Add support for layout/multiple plugins on one site.
 

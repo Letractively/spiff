@@ -549,6 +549,28 @@ class DB:
         return best_version
 
 
+    def get_extension_list(self, offset = 0, limit = 0):
+        """
+        Returns a list of all installed extensions.
+
+        @type  offset: int
+        @param offset: The number of extensions to skip.
+        @type  limit: int
+        @param limit: The maximum number of extensions returned.
+        @rtype:  list[Extension]
+        @return: The list of extensions.
+        """
+        if not self._acl_section:
+            self.__lookup_section()
+        section    = self._acl_section.get_handle()
+        extensions = self._acldb.get_resource_list(section,
+                                                   offset,
+                                                   limit,
+                                                   ExtensionInfo,
+                                                   self._acldb.fetch_groups)
+        return extensions
+
+
     def get_version_list_from_handle(self, handle):
         """
         Returns a list of all registered versions that have the given

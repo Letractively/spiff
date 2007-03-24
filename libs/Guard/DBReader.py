@@ -318,6 +318,41 @@ class DBReader:
         return self.__get_resource_from_query(select, type)
 
 
+    def get_resource_list(self,
+                          section_handle = None,
+                          offset         = 0,
+                          limit          = 0,
+                          type           = None,
+                          options        = fetch_all):
+        """
+        Returns a list of resources out of the given section. If section_handle
+        is None, all resources are returned.
+        """
+        tbl_r  = self._table_map['resource']
+        tbl_a  = self._table_map['resource_attribute']
+        table  = outerjoin(tbl_r, tbl_a, tbl_r.c.id == tbl_a.c.resource_id)
+        where  = None
+
+        if section_handle is not None:
+            where = and_(where, tbl_r.c.section_handle == section_handle)
+        
+        # Define whether to fetch groups, items, or both.
+        if options is self.fetch_groups:
+            where = and_(where, tbl_r.c.is_group == True)
+        elif options is self.fetch_items:
+            where = and_(where, tbl_r.c.is_group == False)
+        elif options is self.fetch_all:
+            pass
+        else:
+            assert False # Unknown option.
+
+        select = table.select(where,
+                              use_labels = True,
+                              limit      = limit,
+                              offset     = offset)
+        return self.__get_resource_from_query(select, type, True)
+
+
     def get_resource_list_from_id_list(self, id_list, type = None):
         assert id_list is not None
         if len(id_list) == 0: return []
@@ -388,9 +423,9 @@ class DBReader:
 
         # Define whether to fetch groups, items, or both.
         if options is self.fetch_groups:
-            result = select.execute(is_group = 1)
+            result = select.execute(is_group = True)
         elif options is self.fetch_items:
-            result = select.execute(is_group = 0)
+            result = select.execute(is_group = False)
         elif options is self.fetch_all:
             result = select.execute()
         else:

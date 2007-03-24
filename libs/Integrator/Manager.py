@@ -228,6 +228,20 @@ class Manager:
         return info.get_id()
 
 
+    def get_extension_info_list(self, offset = 0, limit = 0):
+        """
+        Returns a list of all installed extensions.
+
+        @type  offset: int
+        @param offset: The number of extensions to skip.
+        @type  limit: int
+        @param limit: The maximum number of extensions returned.
+        @rtype:  list[ExtensionInfo]
+        @return: The list of extensions.
+        """
+        return self.__extension_db.get_extension_list(offset, limit)
+
+
     def remove_extension_from_id(self, id):
         """
         Uninstalls the extension with the given id.
