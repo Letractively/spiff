@@ -1,11 +1,10 @@
-<div width="100%"
-     class="control_section"
+<div class="control_section"
      xmlns:py="http://genshi.edgewall.org/"
      xmlns:xi="http://www.w3.org/2001/XInclude">
 <table width="100%">
   <tbody id="layout_controls">
     <tr py:for="extension in extensions">
-      <td>
+      <td valign="top">
         <div class="layout_control"
              id="layout_control_$extension">$extension</div></td>
     </tr>
