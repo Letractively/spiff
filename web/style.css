@@ -125,7 +125,6 @@ select {
 
 td.diff_delete {
   background: #fee;
-  font-style: bold;
 }
 
 td.diff_insert {
@@ -149,9 +148,22 @@ span.diff_replace {
 }
 
 table.layout_canvas {
-  //#border-collapse: collapse;
   border: 2px dashed #d00;
 }
 
-table.layout_canvas td {
+td.layout_droppable {
+  background-color: #eee;
+  padding: 2px;
+  margin: 0px;
+  line-height: 0px;
+}
+
+table.layout_canvas .highlight {
+  background-color: #999;
+}
+
+td.layout_occupied {
+  text-align: center;
+  border: 1px dashed #aaa;
+  background-color: #ccf;
 }
