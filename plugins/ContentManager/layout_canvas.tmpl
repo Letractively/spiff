@@ -7,7 +7,7 @@
 <table class="layout_canvas" width="100%">
   <tbody id="layout_canvas">
     <tr>
-      <td align="center">
+      <td class="layout_initial_cell" align="center">
         ${txt('Drag and drop your content here')}
       </td>
     </tr>
@@ -17,6 +17,23 @@
 <script type="text/javascript">
 // <![CDATA[
 editor = new TableEditor(document.getElementById('layout_canvas'));
+layout_right = null;
+layout_left  = null;
+
+// Creates a table as required by the left and right layout cells.
+function create_table() {
+  var table = document.createElement('table');
+  var tbody = document.createElement('tbody');
+  var tr1   = document.createElement('tr');
+  var tr2   = document.createElement('tr');
+  var td1   = document.createElement('td');
+  var td2   = document.createElement('td');
+  table.appendChild(tbody);
+  tbody.appendChild(tr1);
+  tr1.appendChild(td1);
+  table.setAttribute('width', '100%');
+  return table;
+}
 
 // Called whenever an item is dragged over the canvas.
 // Highlights the cell over which the item was dropped and
@@ -41,7 +58,8 @@ function on_hover(draggable, droppable) {
   if (droppable == editor)
     return;
   var class = droppable.getAttribute('class');
-  if (class == 'layout_occupied')
+  if (class && (class.match(/layout_occupied/)
+             || class.match(/layout_insensitive/)))
     return;
 
   // Highlight.
@@ -53,15 +71,45 @@ function on_hover(draggable, droppable) {
 function on_drop(draggable, droppable) {
   var class = droppable.getAttribute('class');
   var row   = droppable.parentNode;
+  var cell  = droppable;
   if (class.match(/layout_occupied/))
     return;
 
+  if (class.match(/layout_left/)) {
+    if (layout_left)
+      cell = layout_left.get_cell(layout_left.get_n_rows() - 1, 0);
+    else {
+      var table   = create_table();
+      var tbody   = table.getElementsByTagName('tbody')[0];
+      layout_left = new TableEditor(tbody);
+      cell        = layout_left.get_cell(0, 0);
+      droppable.appendChild(table);
+      droppable.setAttribute('class', 'layout_occupied_subtable');
+    }
+    var new_cell = layout_left.hsplit_cell(cell);
+    new_cell.setAttribute('class', class.replace(/ highlight$/, ''));
+  }
+  else if (class.match(/layout_right/)) {
+    if (layout_right)
+      cell = layout_right.get_cell(layout_right.get_n_rows() - 1, 0);
+    else {
+      var table    = create_table();
+      var tbody    = table.getElementsByTagName('tbody')[0];
+      layout_right = new TableEditor(tbody);
+      cell         = layout_right.get_cell(0, 0);
+      droppable.appendChild(table);
+      droppable.setAttribute('class', 'layout_occupied_subtable');
+    }
+    var new_cell = layout_right.hsplit_cell(cell);
+    new_cell.setAttribute('class', class.replace(/ highlight$/, ''));
+  }
+
   // Attach the content to the cell.
-  droppable.style.height     = '100px';
-  droppable.style.width      = '100%';  //FIXME: Use plugin recommendation.
-  droppable.style.background = '';
-  droppable.innerHTML        = draggable.innerHTML;
-  droppable.setAttribute('class', 'layout_occupied');
+  cell.style.height     = '100px';
+  cell.style.width      = '100%';  //FIXME: Use plugin recommendation.
+  cell.style.background = '';
+  cell.innerHTML        = draggable.innerHTML;
+  cell.setAttribute('class', 'layout_occupied');
 
   // If we have only one cell, add four drag targets around the layout.
   if (editor.get_n_rows() == 1 && editor.get_n_columns() == 1) {
@@ -69,20 +117,59 @@ function on_drop(draggable, droppable) {
     var footer = editor.add_row_before();
     var right  = editor.add_column_before();
     var left   = editor.add_column_before(droppable);
+    header.setAttribute('class', 'layout_header');
+    footer.setAttribute('class', 'layout_footer');
     editor.get_cell(0, right).setAttribute('class', 'layout_insensitive');
     editor.get_cell(0, left).setAttribute('class', 'layout_insensitive');
+    editor.get_cell(1, right).setAttribute('class', 'layout_right');
+    editor.get_cell(1, left).setAttribute('class', 'layout_left');
     editor.get_cell(2, right).setAttribute('class', 'layout_insensitive');
     editor.get_cell(2, left).setAttribute('class', 'layout_insensitive');
 
     make_cells_droppable();
     return true;
   }
-  
+
+  var pos = editor.find_cell(droppable);
+  if (class.match(/layout_header/)) {
+    var top_l = editor.get_cell(0, 0);
+    var top_r = editor.get_cell(0, 2);
+    if (!top_l.getAttribute('class').match(/layout_occupied/))
+      editor.join_cells(droppable, top_l);
+    if (!top_r.getAttribute('class').match(/layout_occupied/))
+      editor.join_cells(droppable, top_r);
+  }
+  else if (class.match(/layout_footer/)) {
+    var bot_l = editor.get_cell(editor.get_n_rows() - 1, 0);
+    var bot_r = editor.get_cell(editor.get_n_rows() - 1, 2);
+    if (!bot_l.getAttribute('class').match(/layout_occupied/))
+      editor.join_cells(droppable, bot_l);
+    if (!bot_r.getAttribute('class').match(/layout_occupied/))
+      editor.join_cells(droppable, bot_r);
+  }
+  else if (class.match(/layout_left/)) {
+    var top_l = editor.get_cell(0, 0);
+    var bot_l = editor.get_cell(editor.get_n_rows() - 1, 0);
+    if (!top_l.getAttribute('class').match(/layout_occupied/))
+      editor.join_cells(droppable, top_l);
+    if (!bot_l.getAttribute('class').match(/layout_occupied/))
+      editor.join_cells(droppable, bot_l);
+  }
+  else if (class.match(/layout_right/)) {
+    var top_r = editor.get_cell(0, 2);
+    var bot_r = editor.get_cell(editor.get_n_rows() - 1, 2);
+    if (!top_r.getAttribute('class').match(/layout_occupied/))
+      editor.join_cells(droppable, top_r);
+    if (!bot_r.getAttribute('class').match(/layout_occupied/))
+      editor.join_cells(droppable, bot_r);
+  }
+
   // If something was inserted into a horizontal box, split it to add a new
   // drop target.
-  var pos = editor.find_cell(droppable);
-  if (pos[1] == 1)
-    editor.hsplit_cell(droppable);
+  if (class.match(/layout_header/) || class.match(/layout_footer/)) {
+    var new_cell = editor.hsplit_cell(droppable);
+    new_cell.setAttribute('class', class.replace(/ highlight$/, ''));
+  }
 
   // We may have created new cells, so make the whole table droppable again.
   make_cells_droppable();
@@ -110,15 +197,41 @@ function make_cells_droppable() {
       targets.push(td);
     }
   }
+  if (layout_left) {
+    for (var i = 0; i < layout_left.tbody.rows.length; i++) {
+      for (var j = 0; j < layout_left.tbody.rows[i].cells.length; j++) {
+        var td = layout_left.tbody.rows[i].cells[j];
+        var id = 'droppable_lft_' + i.toString() + '_' + j.toString();
+        Droppables.remove(id);
+        td.setAttribute('id', id);
+        targets.push(td);
+      }
+    }
+  }
+  if (layout_right) {
+    for (var i = 0; i < layout_right.tbody.rows.length; i++) {
+      for (var j = 0; j < layout_right.tbody.rows[i].cells.length; j++) {
+        var td = layout_right.tbody.rows[i].cells[j];
+        var id = 'droppable_rgt_' + i.toString() + '_' + j.toString();
+        Droppables.remove(id);
+        td.setAttribute('id', id);
+        targets.push(td);
+      }
+    }
+  }
 
   // Make the elements droppable.
   for (var i = 0; i < targets.length; i++) {
     var td    = targets[i];
     var id    = td.getAttribute('id');
     var class = td.getAttribute('class');
-    if (td.innerHTML == '' && class != 'layout_insensitive')
-      td.setAttribute('class', 'layout_droppable');
-    if (class == 'layout_insensitive') {
+    class = class ? class : '';
+    if (!class.match(/layout_occupied/)
+      && !class.match(/layout_initial_cell/)
+      && !class.match(/layout_insensitive/)
+      && !class.match(/droppable/))
+      td.setAttribute('class', class + ' droppable');
+    if (class.match(/layout_insensitive/)) {
       Droppables.add(id, {
         accept:  'layout_control',
         greedy:  true,

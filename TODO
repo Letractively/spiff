@@ -1,4 +1,4 @@
-* ContentManager: Add a join_cells method to the TableEditor JS class.
+* ContentManager: Debug the layout editor.
 
 * ContentManager: Remove the item from the layout when it is clicked on.
 

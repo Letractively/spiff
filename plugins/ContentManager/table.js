@@ -49,9 +49,13 @@ TableEditor.prototype.dump_table = function() {
   var str = '';
   for (var i = 0; i < this.get_n_rows(); i++) {
     for (var j = 0; j < this.get_n_columns(); j++) {
-      var html = this.get_cell(i, j).innerHTML
-      html     = html.replace(/^\s*/, '').replace(/\s*$/, '')
-      str = str + '|' + html + '|';
+      var cell = this.get_cell(i, j);
+      if (!cell) {
+        str = str + '|| ';
+        continue;
+      }
+      var html = cell.innerHTML.replace(/^\s*/, '').replace(/\s*$/, '');
+      str = str + '|' + html + '| ';
     }
     str = str + "\n";
   }
@@ -115,11 +119,34 @@ TableEditor.prototype.find_cell = function(cell) {
 
 // Splits a cell horizontally by a) increasing the rowspan of other cells
 // in the row and b) inserting the new td element below the given cell.
-//FIXME: At this time, this can (maybe?) only split cells that have no rowspan.
+// Returns the newly created cell.
 TableEditor.prototype.hsplit_cell = function(cell) {
-  var pos = this.find_cell(cell);
+  var pos     = this.find_cell(cell);
+  var rowspan = cell.getAttribute('rowspan');
+  var colspan = cell.getAttribute('colspan');
+  rowspan     = rowspan ? parseInt(rowspan) : 1;
+  colspan     = colspan ? parseInt(colspan) : 1;
 
-  // Start by increasing the rowspan of the cells.
+  // If the cell already has rowspan, we only need to reduce it and add a
+  // new cell.
+  if (rowspan > 1) {
+    cell.setAttribute('rowspan', rowspan - 1);
+    var new_cell         = document.createElement('td');
+    var next_row_number  = pos[0] + rowspan - 1;
+    var next_cell_number = pos[1] + colspan;
+    var next_row         = this.tbody.rows[next_row_number];
+    var next_cell        = this.get_cell(next_row_number, next_cell_number);
+    new_cell.setAttribute('colspan', colspan);
+    next_row.insertBefore(new_cell, next_cell);
+    
+    // Update table array.
+    for (var i = pos[1]; i < pos[1] + colspan; i++)
+      this.table[next_row_number][i] = new_cell;
+    return new_cell;
+  }
+
+  // Ending up here, the given cell has no rowspan. We must start by
+  // increasing the rowspan of the cells.
   for (var i = 0; i < this.get_n_columns(); i++) {
     var current_cell = this.table[pos[0]][i];
     if (current_cell == cell)
@@ -134,7 +161,7 @@ TableEditor.prototype.hsplit_cell = function(cell) {
 
   // Reflect the change in our table array. Copy the row of the given
   // cell, and shift down all others.
-  var last_row = this.table[pos[0]];
+  var last_row = this.table[pos[0]].slice();
   for (var i = pos[0]; i < this.get_n_rows(); i++) {
     var row = this.table[i];
     this.table[i] = last_row;
@@ -147,8 +174,6 @@ TableEditor.prototype.hsplit_cell = function(cell) {
   next_row = this.get_next_row(row);
   new_row  = document.createElement('tr');
   new_cell = document.createElement('td');
-  colspan  = cell.getAttribute('colspan');
-  colspan  = colspan ? colspan : 1;
   new_cell.setAttribute('colspan', colspan);
   new_row.appendChild(new_cell);
   if (next_row)
@@ -158,7 +183,9 @@ TableEditor.prototype.hsplit_cell = function(cell) {
 
   // Again, make the same change in our table array.
   for (var i = 0; i < colspan; i++)
-    this.table[pos[0]][pos[1] + i] = new_cell;
+    this.table[pos[0] + 1][pos[1] + i] = new_cell;
+
+  return new_cell;
 }
 
 // Adds a new column to the table before the given cell. If no cell is given,
@@ -180,7 +207,6 @@ TableEditor.prototype.add_column_before = function(cell) {
   var column_number = pos[1];
 
   // Insert the new cells into every row.
-  //alert("asdasd:" + row + ":" + pos[1] + "/" + next_cell);
   for (var i = 0; i < this.get_n_rows(); i++) {
     var new_td = document.createElement('td');
     next_cell  = this.table[i][column_number];
@@ -239,6 +265,7 @@ TableEditor.prototype.add_column_before_with_rowspan = function(cell) {
 
 // Adds a new row to the table before the given row. If no row is given,
 // the new row is appended to table.
+// Returns the new *cell*.
 TableEditor.prototype.add_row_before = function(row) {
   // Create the row.
   new_row  = document.createElement('tr');
@@ -255,7 +282,7 @@ TableEditor.prototype.add_row_before = function(row) {
   if (!row) {
     this.tbody.appendChild(new_row);
     this.table.push(cells);
-    return new_row;
+    return new_cell;
   }
 
   // Insert the new row.
@@ -269,5 +296,82 @@ TableEditor.prototype.add_row_before = function(row) {
   }
   this.table.push(last_row);
 
-  return new_row;
+  return new_cell;
 }
+
+// Removes the given cell from the table without adding a new one.
+TableEditor.prototype._remove_cell = function(cell) {
+  var pos        = this.find_cell(cell);
+  var row_number = pos[0];
+  var col_number = pos[1];
+  var rowspan    = cell.getAttribute('rowspan');
+  var colspan    = cell.getAttribute('colspan');
+  rowspan = rowspan ? parseInt(rowspan) : 1;
+  colspan = colspan ? parseInt(colspan) : 1;
+  this.tbody.rows[row_number].removeChild(cell);
+  for (var i = row_number; i < row_number + rowspan; i++)
+    for (var j = col_number; j < col_number + colspan; j++)
+      this.table[i][j] = null;
+}
+
+// Joins the given cells together by removing the second one and
+// increasing the colspan (or rowspan) of the first cell.
+TableEditor.prototype.join_cells = function(cell1, cell2) {
+  var pos1          = this.find_cell(cell1);
+  var pos2          = this.find_cell(cell2);
+  var row_number1   = pos1[0];
+  var col_number1   = pos1[1];
+  var row_number2   = pos2[0];
+  var col_number2   = pos2[1];
+  var row1          = this.tbody.rows[row_number1];
+  var row2          = this.tbody.rows[row_number2];
+  var rowspan1      = cell1.getAttribute('rowspan');
+  var colspan1      = cell1.getAttribute('colspan');
+  var rowspan2      = cell2.getAttribute('rowspan');
+  var colspan2      = cell2.getAttribute('colspan');
+  rowspan1 = rowspan1 ? parseInt(rowspan1) : 1;
+  colspan1 = colspan1 ? parseInt(colspan1) : 1;
+  rowspan2 = rowspan2 ? parseInt(rowspan2) : 1;
+  colspan2 = colspan2 ? parseInt(colspan2) : 1;
+
+  // Remove both cells first.
+  this._remove_cell(cell1);
+  this._remove_cell(cell2);
+
+  // If both cells are in the same row, increase the colspan and add cell1
+  // into the table again.
+  if (row1 == row2) {
+    // Find the next cell.
+    var first_col = col_number1 < col_number2 ? col_number1 : col_number2;
+    var last_col1 = col_number1 + colspan1;
+    var last_col2 = col_number2 + colspan2;
+    var last_col  = last_col1 > last_col2 ? last_col1 : last_col2;
+    var next_cell = this.get_cell(row_number1, last_col);
+
+    // Re-insert before the next cell.
+    cell1.setAttribute('colspan', colspan1 + colspan2);
+    row1.insertBefore(cell1, next_cell);
+
+    // Update table array.
+    for (var i = row_number1; i < row_number1 + rowspan1; i++)
+      for (var j = first_col; j < last_col; j++)
+        this.table[i][j] = cell1;
+  }
+
+  // If both cells are in the same column.
+  else {
+    // Find the next cell.
+    var first_row = row_number1 < row_number2 ? row_number1 : row_number2;
+    var next_cell = this.get_cell(first_row, col_number1 + colspan1);
+    
+    // Re-insert the cell.
+    cell1.setAttribute('rowspan', rowspan1 + rowspan2);
+    this.tbody.rows[first_row].insertBefore(cell1, next_cell);
+
+    // Update table array.
+    for (var i = first_row; i < first_row + rowspan1 + rowspan2; i++)
+      for (var j = col_number1; j < col_number1 + colspan1; j++)
+        this.table[i][j] = cell1;
+  }
+}
+
