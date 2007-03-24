@@ -48,8 +48,11 @@ TableEditor.prototype.tbody;
 TableEditor.prototype.dump_table = function() {
   var str = '';
   for (var i = 0; i < this.get_n_rows(); i++) {
-    for (var j = 0; j < this.get_n_columns(); j++)
-      str = str + this.get_cell(i, j).innerHTML + '|';
+    for (var j = 0; j < this.get_n_columns(); j++) {
+      var html = this.get_cell(i, j).innerHTML
+      html     = html.replace(/^\s*/, '').replace(/\s*$/, '')
+      str = str + '|' + html + '|';
+    }
     str = str + "\n";
   }
   alert("Table debug:\n\n" + str);
@@ -160,7 +163,47 @@ TableEditor.prototype.hsplit_cell = function(cell) {
 
 // Adds a new column to the table before the given cell. If no cell is given,
 // the new column is appended to table.
+// Returns the new column number.
 TableEditor.prototype.add_column_before = function(cell) {
+  // Append to the table and to the table array.
+  if (!cell) {
+    for (var i = 0; i < this.get_n_rows(); i++) {
+      var new_td = document.createElement('td');
+      this.tbody.rows[i].appendChild(new_td);
+      this.table[i].push(new_td);
+    }
+    return this.get_n_columns();
+  }
+
+  // Find the right cell in the first row.
+  var pos           = this.find_cell(cell);
+  var column_number = pos[1];
+
+  // Insert the new cells into every row.
+  //alert("asdasd:" + row + ":" + pos[1] + "/" + next_cell);
+  for (var i = 0; i < this.get_n_rows(); i++) {
+    var new_td = document.createElement('td');
+    next_cell  = this.table[i][column_number];
+    this.tbody.rows[i].insertBefore(new_td, next_cell);
+
+    // Insert the cell into our table structure.
+    var last_cell = new_td;
+    var length    = this.get_n_columns();
+    for (var j = 0; j < length; j++) {
+      var cell         = this.table[i][j];
+      this.table[i][j] = last_cell;
+      last_cell        = cell;
+    }
+    this.table[i].push(last_cell);
+  }
+  
+  return column_number;
+}
+
+// Adds a new column to the table before the given cell. If no cell is given,
+// the new column is appended to table.
+// The new column consist out of one single cell with a rowspan.
+TableEditor.prototype.add_column_before_with_rowspan = function(cell) {
   // Create the new cell.
   var row    = this.tbody.rows[0];
   var new_td = document.createElement('td');
@@ -177,8 +220,7 @@ TableEditor.prototype.add_column_before = function(cell) {
   // Find the right cell in the first row.
   var pos           = this.find_cell(cell);
   var column_number = pos[1];
-  next_cell = this.table[0][column_number];
-  //alert("asdasd:" + row + ":" + pos[1] + "/" + next_cell);
+  next_cell         = this.table[0][column_number];
   row.insertBefore(new_td, next_cell);
 
   // Insert into the table array.

@@ -60,7 +60,7 @@ function on_drop(draggable, droppable) {
   droppable.style.height     = '100px';
   droppable.style.width      = '100%';  //FIXME: Use plugin recommendation.
   droppable.style.background = '';
-  droppable.innerHTML        = draggable.getAttribute('id');
+  droppable.innerHTML        = draggable.innerHTML;
   droppable.setAttribute('class', 'layout_occupied');
 
   // If we have only one cell, add four drag targets around the layout.
@@ -69,6 +69,10 @@ function on_drop(draggable, droppable) {
     var footer = editor.add_row_before();
     var right  = editor.add_column_before();
     var left   = editor.add_column_before(droppable);
+    editor.get_cell(0, right).setAttribute('class', 'layout_insensitive');
+    editor.get_cell(0, left).setAttribute('class', 'layout_insensitive');
+    editor.get_cell(2, right).setAttribute('class', 'layout_insensitive');
+    editor.get_cell(2, left).setAttribute('class', 'layout_insensitive');
 
     make_cells_droppable();
     return true;
@@ -109,16 +113,26 @@ function make_cells_droppable() {
 
   // Make the elements droppable.
   for (var i = 0; i < targets.length; i++) {
-    var td = targets[i];
-    var id = td.getAttribute('id');
-    if (td.innerHTML == '')
+    var td    = targets[i];
+    var id    = td.getAttribute('id');
+    var class = td.getAttribute('class');
+    if (td.innerHTML == '' && class != 'layout_insensitive')
       td.setAttribute('class', 'layout_droppable');
-    Droppables.add(id, {
-      accept:  'layout_control',
-      greedy:  true,
-      onHover: on_hover,
-      onDrop:  on_drop
-    });
+    if (class == 'layout_insensitive') {
+      Droppables.add(id, {
+        accept:  'layout_control',
+        greedy:  true,
+        onHover: on_hover
+      });
+    }
+    else {
+      Droppables.add(id, {
+        accept:  'layout_control',
+        greedy:  true,
+        onHover: on_hover,
+        onDrop:  on_drop
+      });
+    }
   }
 }
 

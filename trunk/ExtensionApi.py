@@ -34,6 +34,7 @@ class ExtensionApi(Api):
         Api.__init__(self, guard_db, manager, event_bus)
         self.__login          = Login(guard_db)
         self.__guard_db       = guard_db
+        self.__manager        = manager
         self.__requested_page = kwargs['requested_page']
         self.__guard_mod      = kwargs['guard_mod']
         self.__get_data       = kwargs['get_data']
@@ -58,6 +59,11 @@ class ExtensionApi(Api):
     def get_db(self):
         #FIXME: Check permission of the caller!
         return self.__guard_db.db
+
+
+    def get_integrator(self):
+        #FIXME: Check permission of the caller!
+        return self.__manager
 
 
     def set_requested_page(self, page):

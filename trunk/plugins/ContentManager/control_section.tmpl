@@ -6,7 +6,10 @@
     <tr py:for="extension in extensions">
       <td valign="top">
         <div class="layout_control"
-             id="layout_control_$extension">$extension</div></td>
+             id="layout_control_${extension.get_handle()}">
+          ${extension.get_name()}
+        </div>
+      </td>
     </tr>
   </tbody>
 </table>

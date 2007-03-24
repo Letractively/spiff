@@ -162,6 +162,9 @@ table.layout_canvas .highlight {
   background-color: #999;
 }
 
+td.layout_insensitive {
+}
+
 td.layout_occupied {
   text-align: center;
   border: 1px dashed #aaa;
