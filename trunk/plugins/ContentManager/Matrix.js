@@ -2,13 +2,8 @@ function Matrix(n_rows, n_cells, args) {
   // Create the initial table.
   this.table  = document.createElement('table');
   var _tbody  = document.createElement('tbody');
-  var _matrix = Array(Array());
-
-
-  // Returns a new td with some default attributes.
-  this._create_cell = function() {
-    return document.createElement('td');
-  }
+  var _matrix = null;
+  this.table.appendChild(_tbody);
 
 
   // Removes the given cell from the table without adding a new one.
@@ -24,6 +19,32 @@ function Matrix(n_rows, n_cells, args) {
     for (var i = row_number; i < row_number + rowspan; i++)
       for (var j = col_number; j < col_number + colspan; j++)
         _matrix[i][j] = null;
+  }
+
+
+  // Removes all cells and replaces itself by a new matrix
+  // with the given rows, cells and attributes.
+  this.reset = function(n_rows, n_cells, args) {
+    _matrix = Array(Array());
+
+    // Set given default attributes.
+    for (var key in args)
+      this.set_attribute(key, args[key]);
+
+    // Remove existing rows.
+    while (_tbody.rows.length > 0)
+      _tbody.removeChild(_tbody.rows[0]);
+
+    // Append rows and cells.
+    for (var i = 0; i < n_rows; i++) {
+      var tr = document.createElement('tr');
+      _tbody.appendChild(tr);
+      for (var j = 0; j < n_cells; j++) {
+        var td = document.createElement('td');
+        tr.appendChild(td);
+        _matrix[i][j] = td;
+      }
+    }
   }
 
 
@@ -149,7 +170,7 @@ function Matrix(n_rows, n_cells, args) {
         var cell  = this.get_cell(i, j);
         var id    = cell.getAttribute('id');
         var class = cell.getAttribute('class');
-        var txt   = id ? id : class;
+        var txt   = id ? id : (class ? class : cell);
         dump = dump + '[' + txt + ']';
       }
       dump += "\n";
@@ -420,22 +441,7 @@ function Matrix(n_rows, n_cells, args) {
 
 
   this.set_attribute('width', '100%');
-
-  // Set given default attributes.
-  for (var key in args)
-    this.set_attribute(key, args[key]);
-
-  // Append rows and cells.
-  this.table.appendChild(_tbody);
-  for (var i = 0; i < n_rows; i++) {
-    var tr = document.createElement('tr');
-    _tbody.appendChild(tr);
-    for (var j = 0; j < n_cells; j++) {
-      var td = this._create_cell();
-      tr.appendChild(td);
-      _matrix[i][j] = td;
-    }
-  }
+  this.reset(n_rows, n_cells, args);
 }
 
 

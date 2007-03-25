@@ -1,4 +1,9 @@
-* ContentManager: Add form buttons for clearing/resetting/saving the form.
+* ContentManager: Add a way to retrieve the content of the layout editor.
+
+* ContentManager: Add a way to init the content editor using a layout
+  language.
+
+* ContentManager: Add form buttons for restoring/saving the form.
 
 * ContentManager: Add support for saving the layout.
 

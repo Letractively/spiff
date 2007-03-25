@@ -1,28 +1,21 @@
 function LayoutCanvas(args) {
   this._args            = args;
   this._connected_ids   = Array();
+  this.table            = null;
   var _last_highlighted = null;
-  
+  var _layout           = null;
+  var _container_list   = null;
+
   // Create the initial tables.
-  var _layout = new Matrix(1, 1, {class: 'canvas'});
-  var _container_list = {
+  _layout = new Matrix(1, 1, {class: 'canvas'});
+  this.table = _layout.table;
+  _container_list = {
     header: new Matrix(1, 1, {class: 'container header'}),
     body:   new Matrix(1, 1, {class: 'container body'}),
     footer: new Matrix(1, 1, {class: 'container footer'}),
     left:   new Matrix(1, 1, {class: 'container left'}),
     right:  new Matrix(1, 1, {class: 'container right'})
   };
-
-  // Set default attributes.
-  _layout.get_cell(0, 0).appendChild(_container_list['body'].table);
-  _layout.set_cell_class(0, 0, 'body');
-  _container_list['header'].set_cell_class(0, 0, 'horizontal droppable');
-  _container_list['footer'].set_cell_class(0, 0, 'horizontal droppable');
-  _container_list['left'].set_cell_class(0, 0, 'vertical droppable');
-  _container_list['right'].set_cell_class(0, 0, 'vertical droppable');
-  _container_list['body'].set_cell_class(0, 0, 'droppable');
-  _container_list['body'].set_cell_html(0, 0, 'Drag your content here');
-  this.table = _layout.table;
 
 
   // Makes all cells droppable that have the "droppable" class.
@@ -210,4 +203,36 @@ function LayoutCanvas(args) {
 
     this.connect_events();
   }
+
+
+  // Set default attributes.
+  this.init = function() {
+    _layout.get_cell(0, 0).appendChild(_container_list['body'].table);
+    _layout.set_cell_class(0, 0, 'body');
+    _container_list['header'].set_cell_class(0, 0, 'horizontal droppable');
+    _container_list['footer'].set_cell_class(0, 0, 'horizontal droppable');
+    _container_list['left'].set_cell_class(0, 0, 'vertical droppable');
+    _container_list['right'].set_cell_class(0, 0, 'vertical droppable');
+    _container_list['body'].set_cell_class(0, 0, 'droppable');
+    _container_list['body'].set_cell_html(0, 0, 'Drag your content here');
+  }
+
+
+  // Clears out the canvas.
+  this.reset = function() {
+    this._disconnect_events();
+    
+    // Re-initialize the tables.
+    _layout.reset(1, 1);
+    for (var key in _container_list) {
+      var parent = _container_list[key].table.parentNode;
+      parent.removeChild(_container_list[key].table);
+      _container_list[key].reset(1, 1);
+    }
+    this.init();
+    this.connect_events();
+  }
+
+
+  this.init();
 }
