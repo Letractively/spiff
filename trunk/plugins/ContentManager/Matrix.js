@@ -440,6 +440,28 @@ function Matrix(n_rows, n_cells, args) {
   }
 
 
+  // Returns a description of the current layout in a layout language.
+  this.get_layout = function() {
+    var class  = this.get_class();
+    var layout = '<table class="' + class + '"><tbody>';
+    for (var i = 0; i < _tbody.rows.length; i++) {
+      layout += '<tr>';
+      for (var j = 0; j < _tbody.rows[i].cells.length; j++) {
+        var cell    = _tbody.rows[i].cells[j];
+        var rowspan = cell.getAttribute('rowspan');
+        var colspan = cell.getAttribute('colspan');
+        rowspan = rowspan ? parseInt(rowspan) : 1;
+        colspan = colspan ? parseInt(colspan) : 1;
+        layout += '<td rowspan="' + rowspan + '" colspan="' + colspan + '">';
+        layout += cell.getAttribute('id');
+        layout += '</td>';
+      }
+      layout += '</tr>\n';
+    }
+    return layout + '</tbody></table>';
+  }
+
+
   this.set_attribute('width', '100%');
   this.reset(n_rows, n_cells, args);
 }

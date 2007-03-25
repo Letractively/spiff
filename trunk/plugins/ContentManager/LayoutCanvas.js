@@ -234,5 +234,57 @@ function LayoutCanvas(args) {
   }
 
 
+  // Returns a description of the current layout in a layout language.
+  this.get_layout = function() {
+    var layout = '<table><tbody>';
+    var tbody  = _layout.get_cell(0, 0).parentNode.parentNode;
+    for (var i = 0; i < tbody.rows.length; i++) {
+      var row = '';
+      for (var j = 0; j < tbody.rows[i].cells.length; j++) {
+        var cell  = tbody.rows[i].cells[j];
+        var table = cell.childNodes[0];
+        if (!table)
+          continue;
+        var class   = table.getAttribute('class');
+        var rowspan = cell.getAttribute('rowspan');
+        var colspan = cell.getAttribute('colspan');
+        rowspan = rowspan ? parseInt(rowspan) : 1;
+        colspan = colspan ? parseInt(colspan) : 1;
+
+        // Choose the matrix.
+        var matrix = _container_list['body'];
+        if (class.match(/header/))
+          matrix = _container_list['header'];
+        else if (class.match(/footer/))
+          matrix = _container_list['footer'];
+        else if (class.match(/left/))
+          matrix = _container_list['left'];
+        else if (class.match(/right/))
+          matrix = _container_list['right'];
+
+        // If there is any content in the matrix, append it to the layout.
+        var matrix_layout = matrix.get_layout();
+        //FIXME: Remove empty rows/body/table from matrix_layout.
+        if (matrix_layout != '') {
+          row += '<td rowspan="' + rowspan + '" colspan="' + colspan + '"';
+          row += ' class="' + class + '">'
+          row += matrix_layout
+          row += '</td>';
+        }
+      }
+      if (row != '')
+        layout += '<tr>' + row + '</tr>\n';
+    }
+    return layout + '</tbody></table>';
+  }
+
+
+  // Changes the layout according to the given layout language.
+  this.set_layout = function(layout) {
+    this.reset();
+    //FIXME
+  }
+
+
   this.init();
 }
