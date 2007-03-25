@@ -1,4 +1,5 @@
-* ContentManager: Add a way to retrieve the content of the layout editor.
+* ContentManager: Make the extension handles appear in the get_layout()
+  output.
 
 * ContentManager: Add a way to init the content editor using a layout
   language.
