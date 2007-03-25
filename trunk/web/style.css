@@ -147,49 +147,77 @@ span.diff_replace {
   color: red;
 }
 
-table.layout_canvas {
+table.canvas {
   border: 2px dashed #d00;
+  padding: 0px;
+  margin: 5px;
 }
 
-table.layout_canvas .droppable {
+table.canvas td {
+  text-align: center;
+  vertical-align: top;
+  border: 0px;
+  padding: 0px;
+  margin: 0px;
+  height: 100%;
+  width: 4px;
+}
+
+table.canvas td.body {
+  width: 100%;
+  height: 100%;
+}
+
+table.canvas table.body {
+  height: 100%;
+  width: 100%;
+}
+
+table.canvas table.left {
+  height: 100%;
+  width: 4px;
+}
+
+table.canvas table.right {
+  height: 100%;
+  width: 4px;
+}
+
+table.canvas table.container {
+  border: 0px;
+  padding: 0px;
+  margin: 0px;
+}
+
+table.canvas table.container td {
+  background-color: none;
+  height: 100%;
+}
+
+table.canvas table.container td.droppable {
   background-color: #eee;
+  padding: 10px;
+}
+
+table.canvas table.container td.horizontal {
   padding: 2px;
   margin: 0px;
   line-height: 0px;
   height: 4px;
 }
 
-table.layout_canvas .highlight {
+table.canvas table.container td.vertical {
+  padding: 2px;
+  margin: 0px;
+  width: 4px;
+}
+
+table.canvas table.container td.highlight {
   background-color: #999;
 }
 
-table.layout_canvas_left {
-  border: 0px;
-  padding: 0px;
-  margin: 0px;
-  border-collapse: collapse;
-  height: 100%;
-}
-
-td.layout_canvas_left .layout_occupied {
-  border: 0px;
-  padding: 0px;
-  text-align: center;
-  vertical-align: top;
-}
-
-td.layout_insensitive {
-}
-
-td.layout_occupied_subtable {
-  text-align: center;
-  padding: 0px;
-  margin: 0px;
-  vertical-align: top;
-}
-
-td.layout_occupied {
-  text-align: center;
+table.canvas table.container td.occupied {
   border: 1px dashed #aaa;
-  background-color: #ccf;
+  background-color: #ddf;
+  vertical-align: middle;
 }
