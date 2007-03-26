@@ -549,6 +549,35 @@ class DB:
         return best_version
 
 
+    def get_extension_from_name(self, name):
+        """
+        Returns the extension that matches the given name and that has the
+        highest version number.
+
+        @type  name: string
+        @param name: The name of the extension.
+        @rtype:  ExtensionInfo
+        @return: The ExtensionInfo on success, None if none was found.
+        """
+        assert name is not None
+
+        version_list = self.get_version_list_from_name(name)
+        best_version = None
+        for cur_version in version_list:
+            if best_version is None:
+                best_version = cur_version
+                continue
+            if version_is_greater(best_version.get_version(),
+                                  cur_version.get_version()):
+                continue
+            if version_is_greater(cur_version.get_version(),
+                                  best_version.get_version()):
+                best_version = cur_version
+        if best_version is None:
+            return None
+        return best_version
+
+
     def get_extension_list(self, offset = 0, limit = 0):
         """
         Returns a list of all installed extensions.
@@ -592,6 +621,30 @@ class DB:
         children = self._acldb.get_resource_children(parent, ExtensionInfo)
         for child in children:
             child.set_handle(handle)
+        return children
+
+
+    def get_version_list_from_name(self, name):
+        """
+        Returns a list of all registered versions that have the given
+        name.
+
+        @type  name: string
+        @param name: The handle of the wanted extension versions.
+        @rtype:  list[ExtensionInfo]
+        @return: A list containing all versions of the requested extension.
+        """
+        assert name is not None
+        # Make sure that a resource section already exists.
+        if not self._acl_section:
+            self.__lookup_section()
+
+        section  = self._acl_section.get_handle()
+        parent   = self._acldb.get_resource_from_name(name, section)
+        if parent is None: return []
+        children = self._acldb.get_resource_children(parent, ExtensionInfo)
+        for child in children:
+            child.set_handle(parent.get_handle())
         return children
 
 

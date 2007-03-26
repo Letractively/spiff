@@ -453,7 +453,7 @@ function Matrix(n_rows, n_cells, args) {
         rowspan = rowspan ? parseInt(rowspan) : 1;
         colspan = colspan ? parseInt(colspan) : 1;
         layout += '<td rowspan="' + rowspan + '" colspan="' + colspan + '">';
-        layout += cell.getAttribute('id');
+        layout += cell.innerHTML;
         layout += '</td>';
       }
       layout += '</tr>\n';

@@ -42,7 +42,7 @@ class Manager:
         self.__install_dir     = None
         self.__extension_cache = {}
 
-    
+
     def __install_directory(self, dirname):
         assert os.path.isdir(dirname)
         prefix = os.path.basename(dirname)
@@ -281,12 +281,6 @@ class Manager:
         return extension
 
 
-    def load_extension_from_event(self, uri):
-        list = self.__extension_db.get_extension_id_list_from_callback(uri)
-        for id in list:
-            self.load_extension_from_id(id)
-
-
     def load_extension_from_descriptor(self, descriptor):
         assert descriptor is not None
 
@@ -296,6 +290,25 @@ class Manager:
         if info is None:
             return None
         return self.load_extension_from_id(info.get_id())
+
+
+    def load_extension_from_name(self, name):
+        assert name is not None
+
+        # Look the extension info up in the db.
+        db   = self.__extension_db
+        info = db.get_extension_from_name(name)
+        print name, info
+
+        if info is None:
+            return None
+        return self.load_extension_from_id(info.get_id())
+
+
+    def load_extension_from_event(self, uri):
+        list = self.__extension_db.get_extension_id_list_from_callback(uri)
+        for id in list:
+            self.load_extension_from_id(id)
 
 
 if __name__ == '__main__':

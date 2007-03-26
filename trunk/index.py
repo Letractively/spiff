@@ -6,6 +6,7 @@ import MySQLdb, Integrator
 from sqlalchemy   import *
 from ConfigParser import RawConfigParser
 from ExtensionApi import ExtensionApi
+from Layout       import Layout
 import Guard
 
 #print 'Content-Type: text/html; charset=utf-8'
@@ -158,7 +159,7 @@ if page is None:
     print 'error 404 (File not found)'
     sys.exit()
 
-# Now that we might have redirected the user to another page, let the
+# Now that we may have redirected the user to another page, let the
 # extension API know that.
 integrator.extension_api.set_requested_page(page)
 
@@ -168,6 +169,16 @@ if page.get_attribute('private') or get_data.has_key('login'):
     (did_log_in, page_open_event_sent) = log_in(guard_db, integrator, page)
     if not did_log_in:
         sys.exit()
+
+# If requested, load the layout editor.
+if get_data.has_key('layout'):
+    handle    = 'spiff_core_layout_editor'
+    extension = integrator.load_extension_from_descriptor(handle)
+    assert extension is not None
+    extension.on_render_request()
+    integrator.extension_api.emit_sync('spiff:extensions_done')
+    integrator.extension_api.emit_sync('spiff:page_done')
+    sys.exit()
 
 # Load the appended plugins, if not done already.
 if extension is None:
@@ -182,6 +193,8 @@ if extension is None:
 
 if not page_open_event_sent:
     integrator.extension_api.emit_sync('spiff:page_open')
-extension.on_render_request()
+
+layout = Layout(integrator, page)
+layout.render()
 integrator.extension_api.emit_sync('spiff:extensions_done')
 integrator.extension_api.emit_sync('spiff:page_done')
