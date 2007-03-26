@@ -54,7 +54,7 @@ tasks = [
     InstallExtension('../plugins/Login'),
     InstallExtension('../plugins/AdminCenter'),
     InstallExtension('../plugins/UserManager'),
-    InstallExtension('../plugins/ContentManager'),
+    InstallExtension('../plugins/LayoutEditor'),
     InstallExtension('../plugins/WikiPage')
 ]
 constructor.append(CheckList('Installing core extensions', tasks))

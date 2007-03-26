@@ -23,7 +23,7 @@ function LayoutCanvas(args) {
   this.connect_events = function() {
     this._disconnect_events();
     //FIXME: hardcoded id
-    Droppables.add('content_editor', {
+    Droppables.add('layout_editor', {
       accept:  this._args['accept_drop'],
       greedy:  true,
       onHover: this._on_hover
@@ -62,7 +62,7 @@ function LayoutCanvas(args) {
 
   // Disconnects all signals.
   this._disconnect_events = function() {
-    Droppables.remove('content_editor'); //FIXME: harcoded id
+    Droppables.remove('layout_editor'); //FIXME: harcoded id
     for (var i = 0; i < this._connected_ids.length; i++) {
       var id = this._connected_ids[i];
       Droppables.remove(id);

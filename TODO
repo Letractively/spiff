@@ -1,8 +1,11 @@
-* ContentManager: Make the extension handles appear in the get_layout()
-  output.
+* Core: Implement a header with links to admin pages that is only shown
+  when the current user has admin rights.
 
 * ContentManager: Add a way to init the content editor using a layout
   language.
+
+* Core: Finish Layout.render() for rendering multiple extensions on one
+  site.
 
 * ContentManager: Add form buttons for restoring/saving the form.
 
@@ -11,8 +14,6 @@
 * Extensions: Add a width recommendation field.
 
 * Extensions: Add icons.
-
-* Core: Add support for layout/multiple plugins on one site.
 
 * Admin Center: Test better whether the permission escalation prevention
   works.
