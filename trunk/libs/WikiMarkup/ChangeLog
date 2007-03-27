@@ -1,3 +1,10 @@
+Changes since 0.2
+
+  * Html2Wiki.py: A broken unit test caused many bugs to remain undiscovered.
+  The test was fixed, the linebreak-handling of the class was reworked and some
+  other bugs were also fixed. You should particulary notice a much higher
+  reliability when converting between wiki markup and HTML multiple times.
+
 Changes since 0.1
 
   * Wiki2Html.py: Now also works with windows line breaks. Line break handling

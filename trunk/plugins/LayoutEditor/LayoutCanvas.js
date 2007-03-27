@@ -281,7 +281,7 @@ function LayoutCanvas(args) {
 
   // Changes the layout according to the given layout language.
   this.set_layout = function(layout) {
-    this.reset();
+    //this.reset();
     //FIXME
   }
 

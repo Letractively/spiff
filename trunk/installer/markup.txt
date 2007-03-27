@@ -2,42 +2,61 @@
 
 == Text styles ==
 
-This line has /italic text/. The following, however, will not have any effect:
-test1/test2/test3
+=== Italic ===
+
+This line has /italic text/. The following, however, will not have any effect: test1/test2/test3
+#Text
+This line has /italic text/. The following, however, will not have any effect: test1/test2/test3
+#End
+
+=== Bold ===
+
 *Strong* text is enclosed by stars.
+#Text
+*Strong* text is enclosed by stars.
+#End
+
+=== Underlined ===
+
 You might also want to _underline_ something.
+#Text
+You might also want to _underline_ something.
+#End
+
+=== Mixed Text ===
+
 You might add some marked up text /even if it contains _other markup_ or spans
 over *multiple lines*/.
-
-== Links to other pages ==
-
-Link to other pages in the same Wiki: ->Simple or CamelCaseWords
-You can also prevent a !WikiWord from being linked.
-Link to other pages on your homepage: [admin/users] or [admin/users This is my
-link!]
-Link to external pages: [http://debain.org] or [http://debain.org This is an
-external link!]
-
-== Preformatted text ==
-
-If you want to show some text that is not modified by the Wiki, you mark it as
-such. For example:
 #Text
-== This is not changed into a header ==
-
-You can also embed code and preserve indent:
-
-    def link(self, text):
-        text = text[1:-1]
-        pos = text.find(' ')
-        if pos == -1:
-            url     = escape(text)
-            caption = url
+You might add some marked up text /even if it contains _other markup_ or spans
+over *multiple lines*/.
 #End
+
+=== Small Title ===
+
+For readability, this section does not contain a preview.
+#Text
+=== This line produces a small title ===
+#End
+
+=== Medium Title ===
+
+For readability, this section does not contain a preview.
+#Text
+== This line produces a medium sized title ==
+#End
+
+=== Big Title ===
+
+For readability, this section does not contain a preview.
+#Text
+= This line produces a very big title =
+#End
+
 
 == Tables ==
 
-A table is a little more sophisticated, but still pretty easy:
+A table is a little more sophisticated, but still pretty easy. Note that tables do not require a heading, the #Heading tag is optional.
 
 #Heading
   | 
@@ -55,7 +74,55 @@ A table is a little more sophisticated, but still pretty easy:
   || And yet more text
   || In multiple columns.
 
-Note that tables do not require a heading, the #Heading tag is optional.
+#Text
+#Heading
+  | 
+  | Heading 1
+  | Heading /with/ markup
+  | Heading 3
+#Row
+  | #
+  | More text 1
+  | More text 2
+  | More text 3
+#Row
+  | # ||| This text spans over multiple cells.
+#Row
+  || And yet more text
+  || In multiple columns.
+#End
+
+
+== Links to other pages ==
+
+Link to other pages in the same Wiki: ->Simple or CamelCaseWords
+You can also prevent a !WikiWord from being linked.
+Link to other pages on your homepage: [admin/users] or [admin/users This is my link!]
+Link to external pages: [http://debain.org] or [http://debain.org This is an external link!]
+#Text
+Link to other pages in the same Wiki: ->Simple or CamelCaseWords
+You can also prevent a !WikiWord from being linked.
+Link to other pages on your homepage: [admin/users] or [admin/users This is my link!]
+Link to external pages: [http://debain.org] or [http://debain.org This is an external link!]
+#End
+
+
+== Preformatted text ==
+
+If you want to show some text that is not modified by the Wiki, you mark it as such. For example:
+#Text
+== This is not changed into a header ==
+
+You can also embed code and preserve indent:
+
+    def link(self, text):
+        text = text[1:-1]
+        pos = text.find(' ')
+        if pos == -1:
+            url     = escape(text)
+            caption = url
+#End
+
 
 == Lists ==
 
@@ -65,15 +132,25 @@ A simple numbered list:
 # Second one
 # Another one.
 
+#Text
+# Line 1
+# Second one
+# Another one.
+#End
+
 Unnumbered list:
 
 * Yes yes
 * This may work.
 * It might also not work.
 
-As you might have seen in the table example above, you can also use tables as
-lists. Cells that contain only a hash ("#") are automatically replaced by a
-counter. For example:
+#Text
+* Yes yes
+* This may work.
+* It might also not work.
+#End
+
+As you might have seen in the table example above, you can also use tables as lists. Cells that contain only a hash ("#") are automatically replaced by a counter. For example:
 
 #Row
   | # | Name:         | Samuel
@@ -83,3 +160,14 @@ counter. For example:
   | # | Homepage:     | [http://debain.org]
 #Row
   | # | Email:        | Look [http://debain.org/about/ here]
+
+#Text
+#Row
+  | # | Name:         | Samuel
+#Row
+  | # | Last Name:    | Abels
+#Row
+  | # | Homepage:     | [http://debain.org]
+#Row
+  | # | Email:        | Look [http://debain.org/about/ here]
+#End

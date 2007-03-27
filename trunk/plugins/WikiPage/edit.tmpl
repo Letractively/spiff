@@ -9,7 +9,6 @@
   <form action="${request_uri(edit = None, revision = None)}" method="post">
   <textarea py:if="may_edit"
             name="wiki_markup"
-            cols="80"
             rows="30"
             py:content="wiki_markup" />
   <input type="submit" name="cancel" value="${txt('Cancel')}" />
