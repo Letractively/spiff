@@ -38,7 +38,9 @@ class Extension:
             return errors
 
         # Check whether the caller has permission to edit this page.
-        #FIXME
+        if not self.api.has_permission('edit_layout'):
+            errors.append(i18n('Insufficient rights to change the layout.'))
+            return errors
 
         # Parse the layout and retrieve all extension handles.
         # Also make sure that no invalid (i.e. core) extensions are contained

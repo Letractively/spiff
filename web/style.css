@@ -24,6 +24,13 @@ a.title {
   font-size: 1em;
 }
 
+pre {
+  padding: 12px;
+  margin-bottom: 0px;
+  border: 1px solid #888;
+  background-color: #f3f3f3;
+}
+
 span.title {
   color: white;
   font-size: 1.4em;

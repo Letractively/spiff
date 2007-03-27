@@ -1,15 +1,14 @@
 * Core: Implement a header with links to admin pages that is only shown
   when the current user has admin rights.
 
-* ContentManager: Add a way to init the content editor using a layout
-  language.
+* LayoutEditor: Add a way to initialize the canvas using a layout language.
 
 * Core: Finish Layout.render() for rendering multiple extensions on one
   site.
 
-* ContentManager: Add form buttons for restoring/saving the form.
+* LayoutEditor: Add support for restoring the layout.
 
-* ContentManager: Add support for saving the layout.
+* LayoutEditor: Add support for saving the layout.
 
 * Extensions: Add a width recommendation field.
 

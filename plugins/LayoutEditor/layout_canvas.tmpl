@@ -9,12 +9,23 @@
 var layout = new LayoutCanvas({accept_drop: 'layout_control'});
 $('layout_canvas').appendChild(layout.table);
 layout.connect_events();
+layout.set_layout(${layout});
 // ]]>
 </script>
-<input type="button"
-       value="${txt('Clear Layout')}"
-       onClick="layout.reset()" />
-<input type="button"
-       value="${txt('Save Layout')}"
-       onClick="alert(layout.get_layout())" />
+<form action="${request_uri()}" method="post">
+  <input id="layout_var"
+         type="hidden"
+         name="layout"
+         value="" />
+  <input type="button"
+         value="${txt('Clear Layout')}"
+         onClick="layout.reset()" />
+  <input type="button"
+         value="${txt('Restore Layout')}"
+         onClick="layout.set_layout(${layout})" />
+  <input type="submit"
+         value="${txt('Save Layout')}"
+         onClick="$('layout_var').setAttribute('value', layout.get_layout());
+                  this.form.submit()" />
+</form>
 </div>

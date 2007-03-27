@@ -31,6 +31,7 @@ class Html2Wiki(HTMLParser.HTMLParser):
         self.in_ol      = False
         self.in_li      = False
         self.in_a       = False
+        self.in_pre     = False
         self.last_href  = ''
 
     def __output(self, text, linebreak = True):
@@ -82,19 +83,19 @@ class Html2Wiki(HTMLParser.HTMLParser):
         self.buffer += '='
 
     def end_h1(self):
-        self.buffer += '='
+        self.buffer += '=\n\n'
 
     def start_h2(self):
         self.buffer += '=='
 
     def end_h2(self):
-        self.buffer += '=='
+        self.buffer += '==\n\n'
 
     def start_h3(self):
         self.buffer += '==='
 
     def end_h3(self):
-        self.buffer += '==='
+        self.buffer += '===\n\n'
 
     def start_ul(self):
         self.in_ul = True
@@ -149,10 +150,12 @@ class Html2Wiki(HTMLParser.HTMLParser):
         self.buffer += ']'
 
     def start_pre(self):
-        self.buffer += '<pre>'
+        self.in_pre = True
+        self.buffer += '#Text\n'
 
     def end_pre(self):
-        self.buffer += '</pre>'
+        self.in_pre = False
+        self.buffer += '#End\n'
 
     def start_strike(self):
         self.buffer += '-'
@@ -182,6 +185,8 @@ class Html2Wiki(HTMLParser.HTMLParser):
         self.cells.append(cell)
 
     def handle_data(self, data):
+        if not self.in_pre:
+            data = data.replace('\n', '')
         if self.in_a:
             if data == self.last_href:
                 return
@@ -227,11 +232,10 @@ class Html2Wiki(HTMLParser.HTMLParser):
 
     def end_table(self):
         self.in_table = False
-        self.indent -= 1
         self.__flush()
 
     def newline(self):
-        self.buffer += ''
+        self.buffer += '\n'
 
 
 if __name__ == '__main__':
@@ -260,13 +264,16 @@ if __name__ == '__main__':
             #print wiki
 
             # Write the wiki to a file.
+            # The result contains an extra newline to mark a table end.
+            # This is generally ok, but would break the unit test, so we
+            # remove the last character before writing.
             fd = open(filename + '.tmp', 'w')
-            fd.write(wiki)
+            fd.write(wiki[:-1])
             fd.close()
 
             # Convert the new Wiki file to HTML again.
             parser = Wiki2Html()
-            parser.read(filename)
+            parser.read(filename + '.tmp')
             html2 = parser.html
             #print html2
 
