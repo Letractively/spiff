@@ -1,6 +1,3 @@
-* Core: Implement a header with links to admin pages that is only shown
-  when the current user has admin rights.
-
 * LayoutEditor: Add a way to initialize the canvas using a layout language.
 
 * Core: Finish Layout.render() for rendering multiple extensions on one

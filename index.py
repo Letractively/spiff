@@ -3,14 +3,72 @@ import sys, cgi, os, os.path
 from string import split
 sys.path.append('libs')
 import MySQLdb, Integrator
-from sqlalchemy   import *
-from ConfigParser import RawConfigParser
-from ExtensionApi import ExtensionApi
-from Layout       import Layout
+from sqlalchemy      import *
+from functions       import *
+from ConfigParser    import RawConfigParser
+from ExtensionApi    import ExtensionApi
+from Layout          import Layout
+from genshi.template import TemplateLoader
+from genshi.template import TextTemplate
+from genshi.template import MarkupTemplate
 import Guard
 
-#print 'Content-Type: text/html; charset=utf-8'
-#print
+
+def show_admin_links(loader, user, integrator):
+    # Check for admin permissisions
+    edit_layout = integrator.extension_api.has_permission('edit_layout')
+    if not edit_layout:
+        return
+
+    tmpl    = loader.load('admin_header.tmpl', None, MarkupTemplate)
+    web_dir = get_mod_rewrite_prevented_uri('web')
+    print tmpl.generate(web_dir      = web_dir,
+                        uri          = get_uri,
+                        request_uri  = get_request_uri,
+                        current_user = user,
+                        edit_layout  = edit_layout,
+                        txt          = gettext).render('xhtml')
+
+
+def send_headers(integrator,
+                 user,
+                 page,
+                 headers      = [],
+                 content_type = 'text/html; charset=utf-8'):
+    # Print the HTTP header.
+    print 'Content-Type: %s' % content_type
+    for k, v in headers:
+        print '%s: %s\n' % (k, v)
+    print
+
+    # Load and display the HTML header.
+    loader  = TemplateLoader(['web'])
+    tmpl    = loader.load('header.tmpl',  None, TextTemplate)
+    web_dir = get_mod_rewrite_prevented_uri('web')
+    print tmpl.generate(web_dir      = web_dir,
+                        current_user = user,
+                        txt          = gettext).render('text')
+
+    # If the user has special rights, show links to the admin pages.
+    if user is not None:
+        show_admin_links(loader, user, integrator)
+
+    # Display the top banner.
+    tmpl = loader.load('header2.tmpl', None, MarkupTemplate)
+    print tmpl.generate(web_dir      = web_dir,
+                        uri          = get_uri,
+                        request_uri  = get_request_uri,
+                        current_user = user,
+                        txt          = gettext).render('xhtml')
+
+
+def send_footer():
+    loader  = TemplateLoader(['web'])
+    tmpl    = loader.load('footer.tmpl', None, TextTemplate)
+    web_dir = get_mod_rewrite_prevented_uri('web')
+    print tmpl.generate(web_dir = web_dir,
+                        txt     = gettext).render('text')
+
 
 def find_requested_page(get_data):
     if not get_data.has_key('page'):
@@ -18,9 +76,15 @@ def find_requested_page(get_data):
     return get_data['page'][0]
 
 
+def get_login_page(guard_db):
+    login = guard_db.get_resource_from_handle('admin/login', 'content')
+    assert login is not None
+    return login
+
+
 def log_in(guard_db, integrator, page):
     """
-    Returns a tuple of boolean: (did_login, page_open_event_sent)
+    Returns a boolean: did_login
     """
     user = integrator.extension_api.get_login().get_current_user()
     if user:
@@ -28,33 +92,35 @@ def log_in(guard_db, integrator, page):
         view = guard_db.get_action_from_handle('view', 'content_permissions')
         assert view is not None
         if guard_db.has_permission(user, view, page):
-            return (True, False)
+            return True
 
     # Ending up here, the user is not logged in or has insufficient rights.
-    # Build a login form.
-    login = guard_db.get_resource_from_handle('admin/login', 'content')
-    assert login is not None
+    # Load the login form extension.
+    login = get_login_page(guard_db)
     descriptor = login.get_attribute('extension')
     assert descriptor is not None
     extension = integrator.load_extension_from_descriptor(descriptor)
-    assert extension is not None
 
-    # Diplay the form.
+    # The extension can fetch this signal and perform the login.
     integrator.extension_api.emit_sync('spiff:page_open')
-    extension.on_render_request()
 
     # The login form might have performed a successful login.
     user = integrator.extension_api.get_login().get_current_user()
     if user is None:
-        return (False, True)
+        return False
 
     # Check permissions again.
     view = guard_db.get_action_from_handle('view', 'content_permissions')
     assert view is not None
     if guard_db.has_permission(user, view, page):
-        return (True, True)
-    return (False, True)
+        return True
+    return False
 
+
+###
+# Start the magic.
+###
+#send_headers(None, None, None)
 
 if not os.path.exists('data/spiff.cfg'):
     print 'Content-Type: text/html; charset=utf-8'
@@ -164,37 +230,33 @@ if page is None:
 integrator.extension_api.set_requested_page(page)
 
 # Make sure that the caller has permission to retrieve this page.
-page_open_event_sent = False
 if page.get_attribute('private') or get_data.has_key('login'):
-    (did_log_in, page_open_event_sent) = log_in(guard_db, integrator, page)
-    if not did_log_in:
-        sys.exit()
+    if not log_in(guard_db, integrator, page):
+        page = get_login_page(guard_db)
+        extension = None
 
 # If requested, load the layout editor.
-if get_data.has_key('layout'):
-    handle    = 'spiff_core_layout_editor'
-    extension = integrator.load_extension_from_descriptor(handle)
-    assert extension is not None
-    extension.on_render_request()
-    integrator.extension_api.emit_sync('spiff:extensions_done')
-    integrator.extension_api.emit_sync('spiff:page_done')
-    sys.exit()
+if get_data.has_key('edit_layout'):
+    page = guard_db.get_resource_from_handle('admin/layout', 'content')
 
-# Load the appended plugins, if not done already.
-if extension is None:
-    descriptor = page.get_attribute('extension')
-    extension  = integrator.load_extension_from_descriptor(descriptor)
+integrator.extension_api.emit_sync('spiff:page_open')
 
-if extension is None:
-    print 'Content-Type: text/html; charset=utf-8'
-    print
-    print 'Page "%s" refers to unknown extension "%s"' % (page, descriptor)
-    sys.exit()
+# Send headers.
+integrator.extension_api.emit_sync('spiff:header_before')
+send_headers(integrator,
+             integrator.extension_api.get_login().get_current_user(),
+             page,
+             integrator.extension_api.get_http_headers())
+integrator.extension_api.emit_sync('spiff:header_after')
 
-if not page_open_event_sent:
-    integrator.extension_api.emit_sync('spiff:page_open')
-
+# Render the layout.
+integrator.extension_api.emit_sync('spiff:render_before')
 layout = Layout(integrator, page)
 layout.render()
-integrator.extension_api.emit_sync('spiff:extensions_done')
+integrator.extension_api.emit_sync('spiff:render_after')
+
+# Send the footer.
+integrator.extension_api.emit_sync('spiff:footer_before')
+send_footer()
+integrator.extension_api.emit_sync('spiff:footer_after')
 integrator.extension_api.emit_sync('spiff:page_done')

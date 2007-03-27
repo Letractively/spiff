@@ -69,6 +69,21 @@ a:visited .log_out {
   padding: 5px;
 }
 
+table.admin_header {
+  border-bottom: 1px solid #ccc;
+  background: #eeeeae;
+  padding: 2px;
+}
+
+table.admin_header td {
+  vertical-align: middle;
+}
+
+table.admin_header img {
+  margin: 0px;
+  padding: 4px;
+}
+
 td.banner_left {
 }
 

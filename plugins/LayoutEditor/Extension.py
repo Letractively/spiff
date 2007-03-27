@@ -70,7 +70,6 @@ class Extension:
 
     def on_render_request(self):
         self.api.emit('render_start')
-        self.api.send_headers()
 
         if self.api.get_post_data('save') is not None:
             errors = self.__layout__save()
