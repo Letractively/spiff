@@ -20,7 +20,6 @@ class Extension:
 
     def on_render_request(self):
         self.api.emit('render_start')
-        self.api.send_headers()
 
         self.api.render('home.tmpl')
 

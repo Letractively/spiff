@@ -35,14 +35,14 @@ class Extension:
             password = self.__api.get_post_data('password')
             headers  = self.__login.do(user, password)
             if headers is not None:
-                self.__api.send_headers('text/html', headers)
+                self.__api.append_http_headers(**headers)
                 self.__status = self.login_success
                 self.__api.emit('login_done')
             return
         elif self.__api.get_get_data('logout') is not None:
             headers = self.__login.logout()
             assert headers is not None
-            self.__api.send_headers('text/html', headers)
+            self.__api.append_http_headers(**headers)
             self.__status = self.login_open
             self.__api.emit('logout_done')
             return
@@ -59,7 +59,6 @@ class Extension:
 
     def on_render_request(self):
         self.__api.emit('render_start')
-        self.__api.send_headers()
 
         if self.__status == self.login_done:
             user = self.__login.get_current_user()
@@ -67,9 +66,9 @@ class Extension:
             return self.__api.render('login_done.tmpl', user = user)
 
         elif self.__status == self.login_open:
-            return self.__api.render('login_form.tmpl') #FIXME
+            return self.__api.render('login_form.tmpl')
 
         elif self.__status == self.login_failure:
             return self.__api.render('login_form.tmpl',
-                                     error = 'Login failed.') #FIXME
+                                     error = 'Login failed.')
         self.__api.emit('render_end')

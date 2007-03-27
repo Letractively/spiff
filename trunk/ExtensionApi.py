@@ -18,7 +18,6 @@ from Integrator      import Api
 from Cookie          import SimpleCookie
 from Login           import Login
 from genshi.template import TemplateLoader
-from genshi.template import TextTemplate
 from genshi.template import MarkupTemplate
 
 
@@ -40,7 +39,8 @@ class ExtensionApi(Api):
         self.__get_data       = kwargs['get_data']
         self.__post_data      = kwargs['post_data']
         self.__headers_sent   = False
-        self.add_listener(self.__send_footer, "spiff:extensions_done")
+        self.__http_headers   = []
+        self.add_listener(self.__on_headers_sent, "spiff:header_after")
 
 
     def __get_caller(self):
@@ -50,6 +50,10 @@ class ExtensionApi(Api):
         finally:
             del frame
         return caller
+
+
+    def __on_headers_sent(self, args):
+        self.__headers_sent = True
 
 
     def get_i18n(self):
@@ -137,43 +141,19 @@ class ExtensionApi(Api):
         return values
 
 
-    def send_headers(self,
-                     content_type = 'text/html; charset=utf-8',
-                     headers = {}):
-        if self.__headers_sent:
-            return
-        # Print the HTTP header.
-        print 'Content-Type: %s' % content_type
-        for k, v in headers.items():
-            print '%s: %s\n' % (k, v)
-        print
-        self.__headers_sent = True
-        
-        # Load and display the HTML header.
-        current_user = self.__login.get_current_user()
-        loader       = TemplateLoader(['web'])
-        tmpl1        = loader.load('header.tmpl',  None, TextTemplate)
-        tmpl2        = loader.load('header2.tmpl', None, MarkupTemplate)
-        web_dir      = get_mod_rewrite_prevented_uri('web')
-        print tmpl1.generate(web_dir      = web_dir,
-                             current_user = current_user,
-                             txt          = gettext).render('text')
-        print tmpl2.generate(web_dir      = web_dir,
-                             request_uri  = get_request_uri,
-                             current_user = current_user,
-                             txt          = gettext).render('xhtml')
+    def append_http_headers(self, *args, **kwargs):
+        assert not self.__headers_sent
+        for key in kwargs:
+            self.__http_headers.append((key, kwargs[key]))
 
 
-    def headers_sent(self):
-        return self.__headers_sent
+    def get_http_headers(self):
+        #FIXME: Do we need to check the permission of the caller?
+        return self.__http_headers
 
-        
-    def __send_footer(self, args):
-        loader  = TemplateLoader(['web'])
-        tmpl    = loader.load('footer.tmpl', None, TextTemplate)
-        web_dir = get_mod_rewrite_prevented_uri('web')
-        print tmpl.generate(web_dir = web_dir,
-                            txt     = gettext).render('text')
+
+    def http_headers_sent(self):
+        return self.__http_headers_sent
 
 
     def render(self, filename, *args, **kwargs):
@@ -198,6 +178,7 @@ class ExtensionApi(Api):
         tmpl   = loader.load(filename, None, MarkupTemplate)
         print tmpl.generate(plugin_dir  = plugin_uri,
                             web_dir     = web_dir,
+                            uri         = get_uri,
                             request_uri = get_request_uri,
                             txt         = gettext,
                             **kwargs).render('xhtml')

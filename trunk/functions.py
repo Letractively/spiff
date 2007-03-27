@@ -16,6 +16,32 @@ import os, cgi
 use_mod_rewrite = False
 
 
+def get_uri(page, *args, **kwargs):
+    """
+    Returns a URL with the given attributes.
+    """
+    # Build the path of the URL.
+    if use_mod_rewrite:
+        url = '/'
+        if page != '':
+            url += page + '/'
+        if len(kwargs) > 0:
+            url += '?'
+    else:
+        url = '/'
+        if page != '':
+            url += '?page=' + page
+        elif len(kwargs) > 0:
+            url += '?'
+
+    # Append attributes, if any.
+    for key in kwargs:
+        if url[-1] != '&' and url[-1] != '?':
+            url += '&'
+        url += key + '=' + str(kwargs[key][0])
+    return url
+
+
 def get_request_uri(*args, **kwargs):
     """
     Returns the URL string that the client requested. Also appends the given

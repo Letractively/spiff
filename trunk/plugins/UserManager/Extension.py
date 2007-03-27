@@ -444,7 +444,6 @@ class Extension:
 
     def on_render_request(self):
         self.api.emit('render_start')
-        self.api.send_headers()
         i18n = self.i18n
 
         # Find out which item was requested.
