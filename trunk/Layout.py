@@ -60,6 +60,10 @@ class Layout:
             self.__extensions.append(extension)
 
 
+    def get_extension_handles(self):
+        return self.__extension_handles
+
+
     def render(self):
         self.__load_extensions()
         #FIXME: Render an actual layout rather than just firing all extensions

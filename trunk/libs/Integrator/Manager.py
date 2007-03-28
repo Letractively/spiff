@@ -14,7 +14,6 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 from Api      import Api
 from DB       import *
-from EventBus import EventBus
 from tempfile import *
 import Parser
 import os
@@ -30,17 +29,14 @@ class Manager:
     __database_error,         \
     __permission_denied_error = range(-1, -7, -1)
     
-    def  __init__(self, guard_db, extension_api_obj, *api_args, **api_kwargs):
-        assert guard_db          is not None
-        assert extension_api_obj is not None
-        self.__extension_db = DB(guard_db)
-        self.__event_bus    = EventBus()
-        self.extension_api  = extension_api_obj(guard_db,
-                                                self,
-                                                self.__event_bus,
-                                                **api_kwargs)
+    def  __init__(self, guard_db, extension_api):
+        assert guard_db      is not None
+        assert extension_api is not None
+        self.__extension_db    = DB(guard_db)
+        self.__extension_api   = extension_api
         self.__install_dir     = None
         self.__extension_cache = {}
+        extension_api.activate(self)
 
 
     def __install_directory(self, dirname):
@@ -271,7 +267,7 @@ class Manager:
         modulename = subdir.replace('/', '.')
         try:
             module    = __import__(modulename)
-            extension = module.Extension(self.extension_api)
+            extension = module.Extension(self.__extension_api)
         except:
             print 'Ooops... a broken extension.'
             raise
@@ -342,7 +338,8 @@ if __name__ == '__main__':
             assert extdb.install()
 
             # Set up.
-            manager = Manager(guard_db, Api)
+            api     = Api()
+            manager = Manager(guard_db, api)
             manager.set_extension_dir('tmp')
             
             # Install first extension.

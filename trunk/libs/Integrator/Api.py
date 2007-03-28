@@ -12,33 +12,44 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+from EventBus  import EventBus
 from Callback  import Callback
 from functions import is_valid_uri
 
 class Api:
-    def __init__(self, guard_db, manager, event_bus):
-        assert guard_db  is not None
-        assert manager   is not None
-        assert event_bus is not None
-        self.__manager   = manager
-        self.__event_bus = event_bus
+    def __init__(self):
+        self._event_bus = EventBus()
+        self._manager   = None
+
+
+    def activate(self, manager):
+        assert manager is not None
+        self._manager = manager
+        self._on_api_activate()
+
+
+    def _on_api_activate(self):
+        """
+        May be overwritten.
+        """
+        pass
 
 
     def add_listener(self, func, uri = None):
         assert is_valid_uri(uri)
         #FIXME: Check permissions!
         callback = Callback(func, uri)
-        return self.__event_bus.add_listener(callback)
+        return self._event_bus.add_listener(callback)
 
         
     def __emit(self, uri, args, synchronous):
         assert is_valid_uri(uri)
         #FIXME: Check signal permissions!
-        self.__manager.load_extension_from_event(uri)
+        self._manager.load_extension_from_event(uri)
         if synchronous:
-            self.__event_bus.emit_sync(uri, args)
+            self._event_bus.emit_sync(uri, args)
         else:
-            self.__event_bus.emit(uri, args)
+            self._event_bus.emit(uri, args)
 
 
     def emit(self, uri, args = None):
@@ -60,7 +71,7 @@ if __name__ == '__main__':
 
         def runTest(self):
             eb  = EventBus()
-            api = Api(eb, eb, eb) # Passing eb as manager because it doesn't matter
+            api = Api()
             assert api.add_listener(self.dummy, "test:some/event/uri") >= 0
 
             #Note: The other functions are not tested here, but in the

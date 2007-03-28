@@ -1,22 +1,25 @@
 <div xmlns:py="http://genshi.edgewall.org/"
-     xmlns:xi="http://www.w3.org/2001/XInclude"
      py:with="img_dir = web_dir + '/img'"
      py:strip="True">
-<table class="admin_header" width="100%" cellpadding="0" cellspacing="0" py:choose="current_user">
+<table class="admin_header"
+       width="100%"
+       cellpadding="0"
+       cellspacing="0"
+       py:choose="current_user">
   <tr>
     <td>
       <a href="${uri('')}"><img class="logo"
-                                         src="$img_dir/logo_small.png"
-                                         alt=""
-                                         border="0" /></a>
+                                src="$img_dir/logo_small.png"
+                                alt=""
+                                border="0" /></a>
     </td>
     <td>
       <a href="${uri('')}">Spiff</a>
     </td>
     <td width="100%">&nbsp;</td>
     <td class="nowrap" py:if="edit_layout">
-      <a href="${uri('', edit_layout = [1])}">
-        ${txt('Edit the Layout of this page')}
+      <a href="${request_uri(edit_layout = [1])}">
+        ${txt('Edit the layout of this page')}
       </a>
     </td>
   </tr>
