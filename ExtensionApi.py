@@ -22,24 +22,24 @@ from genshi.template import MarkupTemplate
 
 
 class ExtensionApi(Api):
-    def __init__(self, guard_db, manager, event_bus, *args, **kwargs):
-        assert guard_db  is not None
-        assert manager   is not None
-        assert event_bus is not None
+    def __init__(self, *args, **kwargs):
         assert kwargs.has_key('requested_page')
         assert kwargs.has_key('guard_mod')
+        assert kwargs.has_key('guard_db')
         assert kwargs.has_key('get_data')
         assert kwargs.has_key('post_data')
-        Api.__init__(self, guard_db, manager, event_bus)
-        self.__login          = Login(guard_db)
-        self.__guard_db       = guard_db
-        self.__manager        = manager
+        Api.__init__(self)
+        self.__login          = Login(kwargs['guard_db'])
         self.__requested_page = kwargs['requested_page']
         self.__guard_mod      = kwargs['guard_mod']
+        self.__guard_db       = kwargs['guard_db']
         self.__get_data       = kwargs['get_data']
         self.__post_data      = kwargs['post_data']
         self.__headers_sent   = False
         self.__http_headers   = []
+
+
+    def _on_api_activate(self):
         self.add_listener(self.__on_headers_sent, "spiff:header_after")
 
 
@@ -67,7 +67,8 @@ class ExtensionApi(Api):
 
     def get_integrator(self):
         #FIXME: Check permission of the caller!
-        return self.__manager
+        assert self._manager # Api must be associated to the manager first.
+        return self._manager
 
 
     def set_requested_page(self, page):

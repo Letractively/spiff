@@ -5,6 +5,11 @@
         type="text/javascript"></script>
 <script src="$web_dir/scriptaculous/scriptaculous.js?load=effects,dragdrop"
         type="text/javascript"></script>
+<h1 py:if="name"><a href="${request_uri(save = None)}"
+                    py:content="name" /></h1>
+<py:for each="error in errors">
+<font color="red" py:content="error" /><br/>
+</py:for>
 <table id="layout_editor" width="100%">
   <tbody>
     <tr>

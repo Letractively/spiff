@@ -11,6 +11,7 @@ signal:       render_start
               render_end
 """
 from string import split
+from Layout import Layout
 
 class Extension:
     def __init__(self, api):
@@ -43,37 +44,51 @@ class Extension:
             return errors
 
         # Parse the layout and retrieve all extension handles.
-        # Also make sure that no invalid (i.e. core) extensions are contained
+        page = self.api.get_requested_page()
+        assert page is not None
+        page.set_attribute('layout', layout)
+        layout = Layout(object, page)
+        assert layout is not None
+
+        # Make sure that no invalid (i.e. core) extensions are contained
         # in the layout, and that the user has view permissions on all
         # extensions.
-        #FIXME
-        for handle in handles:
+        for handle in layout.get_extension_handles():
             if handle in self.__hidden:
                 errors.append(i18n('Invalid extension %s in layout' % handle))
                 return errors
+            #FIXME: Check permission of these extensions
 
         # Save the layout.
-        #FIXME
-        
+        #FIXME: self.api.save_page(page)
         return []
 
 
-    def __layout_editor_show(self):
+    def __layout_editor_show(self, errors = []):
+        page = self.api.get_requested_page()
+        assert page is not None
+        layout = page.get_attribute('layout') or '';
+        
+        # Retrieve a list of available extensions from the DB.
         extension_list = self.integrator.get_extension_info_list(0, 0)
         extensions     = []
         for extension in extension_list:
             if extension.get_handle() not in self.__hidden:
                 extensions.append(extension)
 
-        self.api.render('layout_editor.tmpl', extensions = extensions)
+        self.api.render('layout_editor.tmpl',
+                        name       = page.get_name(),
+                        extensions = extensions,
+                        layout     = layout,
+                        errors     = errors)
 
 
     def on_render_request(self):
         self.api.emit('render_start')
 
         if self.api.get_post_data('save') is not None:
-            errors = self.__layout__save()
-            self.__layout_editor_show()
+            errors = self.__layout_save()
+            self.__layout_editor_show(errors)
         else:
             self.__layout_editor_show()
 

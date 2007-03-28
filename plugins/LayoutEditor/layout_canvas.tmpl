@@ -6,10 +6,10 @@
 <script src="$plugin_dir/LayoutCanvas.js" type="text/javascript"></script>
 <script type="text/javascript">
 // <![CDATA[
-var layout = new LayoutCanvas({accept_drop: 'layout_control'});
-$('layout_canvas').appendChild(layout.table);
-layout.connect_events();
-layout.set_layout(${layout});
+var canvas = new LayoutCanvas({accept_drop: 'layout_control'});
+$('layout_canvas').appendChild(canvas.table);
+canvas.connect_events();
+canvas.set_layout('${layout}');
 // ]]>
 </script>
 <form action="${request_uri()}" method="post">
@@ -19,13 +19,14 @@ layout.set_layout(${layout});
          value="" />
   <input type="button"
          value="${txt('Clear Layout')}"
-         onClick="layout.reset()" />
+         onClick="canvas.reset()" />
   <input type="button"
          value="${txt('Restore Layout')}"
-         onClick="layout.set_layout(${layout})" />
+         onClick="canvas.set_layout('${layout}')" />
   <input type="submit"
+         name="save"
          value="${txt('Save Layout')}"
-         onClick="$('layout_var').setAttribute('value', layout.get_layout());
+         onClick="$('layout_var').setAttribute('value', canvas.get_layout());
                   this.form.submit()" />
 </form>
 </div>

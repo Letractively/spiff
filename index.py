@@ -16,7 +16,7 @@ import Guard
 
 def show_admin_links(loader, user, integrator):
     # Check for admin permissisions
-    edit_layout = integrator.extension_api.has_permission('edit_layout')
+    edit_layout = extension_api.has_permission('edit_layout')
     if not edit_layout:
         return
 
@@ -86,7 +86,7 @@ def log_in(guard_db, integrator, page):
     """
     Returns a boolean: did_login
     """
-    user = integrator.extension_api.get_login().get_current_user()
+    user = extension_api.get_login().get_current_user()
     if user:
         # Bail out if the user is already logged in and has permission.
         view = guard_db.get_action_from_handle('view', 'content_permissions')
@@ -102,10 +102,10 @@ def log_in(guard_db, integrator, page):
     extension = integrator.load_extension_from_descriptor(descriptor)
 
     # The extension can fetch this signal and perform the login.
-    integrator.extension_api.emit_sync('spiff:page_open')
+    extension_api.emit_sync('spiff:page_open')
 
     # The login form might have performed a successful login.
-    user = integrator.extension_api.get_login().get_current_user()
+    user = extension_api.get_login().get_current_user()
     if user is None:
         return False
 
@@ -154,13 +154,12 @@ page        = guard_db.get_resource_from_handle(page_handle, 'content')
 extension   = None
 
 # Set up the plugin manager (Integrator).
-integrator = Integrator.Manager(guard_db,
-                                ExtensionApi,
-                                requested_page = page,
-                                acldb          = guard_db,
-                                guard_mod      = Guard,
-                                get_data       = get_data,
-                                post_data      = post_data)
+extension_api = ExtensionApi(requested_page = page,
+                             guard_mod      = Guard,
+                             guard_db       = guard_db,
+                             get_data       = get_data,
+                             post_data      = post_data)
+integrator = Integrator.Manager(guard_db, extension_api)
 integrator.set_extension_dir('data/repo')
 
 # Can not open some pages by addressing them directly.
@@ -207,7 +206,7 @@ if page is None:
 if page is None:
     page = guard_db.get_resource_from_handle('default', 'content')
     assert page is not None
-    integrator.extension_api.set_requested_page(page)
+    extension_api.set_requested_page(page)
     descriptor = page.get_attribute('extension')
     extension  = integrator.load_extension_from_descriptor(descriptor)
     assert extension is not None
@@ -227,7 +226,7 @@ if page is None:
 
 # Now that we may have redirected the user to another page, let the
 # extension API know that.
-integrator.extension_api.set_requested_page(page)
+extension_api.set_requested_page(page)
 
 # Make sure that the caller has permission to retrieve this page.
 if page.get_attribute('private') or get_data.has_key('login'):
@@ -239,24 +238,24 @@ if page.get_attribute('private') or get_data.has_key('login'):
 if get_data.has_key('edit_layout'):
     page = guard_db.get_resource_from_handle('admin/layout', 'content')
 
-integrator.extension_api.emit_sync('spiff:page_open')
+extension_api.emit_sync('spiff:page_open')
 
 # Send headers.
-integrator.extension_api.emit_sync('spiff:header_before')
+extension_api.emit_sync('spiff:header_before')
 send_headers(integrator,
-             integrator.extension_api.get_login().get_current_user(),
+             extension_api.get_login().get_current_user(),
              page,
-             integrator.extension_api.get_http_headers())
-integrator.extension_api.emit_sync('spiff:header_after')
+             extension_api.get_http_headers())
+extension_api.emit_sync('spiff:header_after')
 
 # Render the layout.
-integrator.extension_api.emit_sync('spiff:render_before')
+extension_api.emit_sync('spiff:render_before')
 layout = Layout(integrator, page)
 layout.render()
-integrator.extension_api.emit_sync('spiff:render_after')
+extension_api.emit_sync('spiff:render_after')
 
 # Send the footer.
-integrator.extension_api.emit_sync('spiff:footer_before')
+extension_api.emit_sync('spiff:footer_before')
 send_footer()
-integrator.extension_api.emit_sync('spiff:footer_after')
-integrator.extension_api.emit_sync('spiff:page_done')
+extension_api.emit_sync('spiff:footer_after')
+extension_api.emit_sync('spiff:page_done')
