@@ -1,11 +1,14 @@
+* LayoutEditor: Add support for saving the layout.
+
 * LayoutEditor: Add a way to initialize the canvas using a layout language.
+
+* LayoutEditor: Add support for restoring the layout.
 
 * Core: Finish Layout.render() for rendering multiple extensions on one
   site.
 
-* LayoutEditor: Add support for restoring the layout.
-
-* LayoutEditor: Add support for saving the layout.
+* Extensions: Use XML based header files instead of putting the info into a
+  comment at the top of the Extension file.
 
 * Extensions: Add a width recommendation field.
 

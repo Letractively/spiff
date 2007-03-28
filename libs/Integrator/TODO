@@ -1,5 +1,5 @@
+* Use XML description files instead of a comment header in extensions.
 * Fix all FIXMEs.
 * Implement test for Api class.
-* Manager: Add support so that exceptions may be stored in
-  multiple directories.
+* Manager: Add support for storing extensions in multiple directories.
 -Samuel
