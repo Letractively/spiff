@@ -1,4 +1,5 @@
-* Add better support for forms to the Form class, using Genshi's
-  template support.
+* Add better support for forms to the Form class, possibly using the
+  WikiMarkup library.
+* Scrap support for non-web environments and rename "Environment" to
+  "XHtmlEnvironment".
 * Implement unit tests for Environment and WebEnvironment.
--Samuel

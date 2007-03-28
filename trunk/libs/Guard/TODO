@@ -1,0 +1,1 @@
+* Allow passing a limit/offset to methods that return a list.
