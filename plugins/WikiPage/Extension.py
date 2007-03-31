@@ -45,7 +45,7 @@ class Extension:
         alias  = self.api.get_get_data('page')
         # The user is viewing the homepage of his web presence.
         if alias is None:
-            url = self.api.get_request_uri(page = [word], revision = None)
+            url = self.api.get_requested_uri(page = [word], revision = None)
             return (url, word)
 
         # The user is viewing a sub page of his web presence. Find out if it
@@ -63,13 +63,13 @@ class Extension:
             stack.append(word)
         else:
             stack[-1] = word
-        url = self.api.get_request_uri(page = ['/'.join(stack)], revision = None)
+        url = self.api.get_requested_uri(page = ['/'.join(stack)], revision = None)
         return (url, word)
 
 
     def __wiki_url_handler(self, url, word):
         if url.find(':') == -1:
-            url = self.api.get_request_uri(page = [url], revision = None)
+            url = self.api.get_requested_uri(page = [url], revision = None)
         return (url, word)
 
 

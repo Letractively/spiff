@@ -236,7 +236,7 @@ function LayoutCanvas(args) {
 
   // Returns a description of the current layout in a layout language.
   this.get_layout = function() {
-    var layout = '<table><tbody>';
+    var layout = '<t>';
     var tbody  = _layout.get_cell(0, 0).parentNode.parentNode;
     for (var i = 0; i < tbody.rows.length; i++) {
       var row = '';
@@ -266,16 +266,15 @@ function LayoutCanvas(args) {
         var matrix_layout = matrix.get_layout();
         //FIXME: Remove empty rows/body/table from matrix_layout.
         if (matrix_layout != '') {
-          row += '<td rowspan="' + rowspan + '" colspan="' + colspan + '"';
-          row += ' class="' + class + '">'
+          row += '<c rows="' + rowspan + '" cols="' + colspan + '">';
           row += matrix_layout
-          row += '</td>';
+          row += '</c>';
         }
       }
       if (row != '')
-        layout += '<tr>' + row + '</tr>\n';
+        layout += '\n<r>' + row + '</r>';
     }
-    return layout + '</tbody></table>';
+    return layout + '\n</t>';
   }
 
 
