@@ -56,68 +56,6 @@ class ExtensionApi(Api):
         self.__headers_sent = True
 
 
-    def get_i18n(self):
-        return gettext
-
-
-    def get_db(self):
-        #FIXME: Check permission of the caller!
-        return self.__guard_db.db
-
-
-    def get_integrator(self):
-        #FIXME: Check permission of the caller!
-        assert self._manager # Api must be associated to the manager first.
-        return self._manager
-
-
-    def set_requested_page(self, page):
-        self.__requested_page = page
-
-
-    def get_requested_page(self):
-        return self.__requested_page
-
-
-    def get_request_uri(self, *args, **kwargs):
-        return get_request_uri(**kwargs)
-
-
-    def has_permission(self, permission):
-        """
-        Returns true if the current user has the given permission
-        on the current page.
-        """
-        assert permission is not None
-        private = self.__requested_page.get_attribute('private') or False
-        if permission == 'view' and not private:
-            return True
-        user = self.__login.get_current_user()
-        if user is None:
-            return False
-        section = 'content_permissions'
-        action  = self.__guard_db.get_action_from_handle(permission, section)
-        assert action is not None
-        return self.__guard_db.has_permission(user,
-                                              action,
-                                              self.__requested_page)
-
-
-    def get_login(self):
-        #FIXME: Check permission of the caller!
-        return self.__login
-
-
-    def get_guard_db(self):
-        #FIXME: Check permission of the caller!
-        return self.__guard_db
-
-
-    def get_guard(self):
-        #FIXME: Check permission of the caller!
-        return self.__guard_mod
-
-
     def get_get_data(self, name, unpack = True):
         #FIXME: Do we need to check the permission of the caller?
         if not self.__get_data.has_key(name):
@@ -153,8 +91,66 @@ class ExtensionApi(Api):
         return self.__http_headers
 
 
-    def http_headers_sent(self):
-        return self.__http_headers_sent
+    def get_i18n(self):
+        return gettext
+
+
+    def get_db(self):
+        #FIXME: Check permission of the caller!
+        return self.__guard_db.db
+
+
+    def get_guard_db(self):
+        #FIXME: Check permission of the caller!
+        return self.__guard_db
+
+
+    def get_guard(self):
+        #FIXME: Check permission of the caller!
+        return self.__guard_mod
+
+
+    def get_integrator(self):
+        #FIXME: Check permission of the caller!
+        assert self._manager # Api must be associated to the manager first.
+        return self._manager
+
+
+    def get_login(self):
+        #FIXME: Check permission of the caller!
+        return self.__login
+
+
+    def set_requested_page(self, page):
+        self.__requested_page = page
+
+
+    def get_requested_page(self):
+        return self.__requested_page
+
+
+    def get_requested_uri(self, *args, **kwargs):
+        return get_request_uri(**kwargs)
+
+
+    def has_permission(self, permission):
+        """
+        Returns true if the current user has the given permission
+        on the current page.
+        """
+        assert permission is not None
+        private = self.__requested_page.get_attribute('private') or False
+        if permission == 'view' and not private:
+            return True
+        user = self.__login.get_current_user()
+        if user is None:
+            return False
+        section = 'content_permissions'
+        action  = self.__guard_db.get_action_from_handle(permission, section)
+        assert action is not None
+        return self.__guard_db.has_permission(user,
+                                              action,
+                                              self.__requested_page)
 
 
     def render(self, filename, *args, **kwargs):
@@ -183,6 +179,12 @@ class ExtensionApi(Api):
                             request_uri = get_request_uri,
                             txt         = gettext,
                             **kwargs).render('xhtml')
+
+
+    def save_page(self, page):
+        #FIXME: Do we need to check the permission of the caller?
+        section = self.__guard_mod.ResourceSection('content')
+        return self.__guard_db.save_resource(page, section)
 
 
 if __name__ == '__main__':

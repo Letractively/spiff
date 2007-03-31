@@ -111,7 +111,7 @@ class DBReader:
             Column('resource_id',    Integer,     index = True),
             Column('name',           String(50)),
             Column('type',           Integer),
-            Column('attr_string',    String(200)),
+            Column('attr_string',    TEXT),
             Column('attr_int',       Integer),
             ForeignKeyConstraint(['resource_id'],
                                  [pfx + 'resource.id'],

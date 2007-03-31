@@ -60,8 +60,10 @@ class Extension:
             #FIXME: Check permission of these extensions
 
         # Save the layout.
-        #FIXME: self.api.save_page(page)
-        return []
+        if not self.api.save_page(page):
+            errors.append(i18n('Error while saving layout.'))
+
+        return errors
 
 
     def __layout_editor_show(self, errors = []):

@@ -84,7 +84,7 @@ def get_login_page(guard_db):
 
 def log_in(guard_db, integrator, page):
     """
-    Returns a boolean: did_login
+    Returns a tuple of boolean: (did_login, page_open_sent)
     """
     user = extension_api.get_login().get_current_user()
     if user:
@@ -92,7 +92,7 @@ def log_in(guard_db, integrator, page):
         view = guard_db.get_action_from_handle('view', 'content_permissions')
         assert view is not None
         if guard_db.has_permission(user, view, page):
-            return True
+            return (True, False)
 
     # Ending up here, the user is not logged in or has insufficient rights.
     # Load the login form extension.
@@ -107,14 +107,14 @@ def log_in(guard_db, integrator, page):
     # The login form might have performed a successful login.
     user = extension_api.get_login().get_current_user()
     if user is None:
-        return False
+        return (False, True)
 
     # Check permissions again.
     view = guard_db.get_action_from_handle('view', 'content_permissions')
     assert view is not None
     if guard_db.has_permission(user, view, page):
-        return True
-    return False
+        return (True, True)
+    return (False, True)
 
 
 ###
@@ -229,16 +229,19 @@ if page is None:
 extension_api.set_requested_page(page)
 
 # Make sure that the caller has permission to retrieve this page.
+page_open_sent = False
 if page.get_attribute('private') or get_data.has_key('login'):
-    if not log_in(guard_db, integrator, page):
+    (did_login, page_open_sent) = log_in(guard_db, integrator, page)
+    if not did_login:
         page = get_login_page(guard_db)
         extension = None
+
+if not page_open_sent:
+    extension_api.emit_sync('spiff:page_open')
 
 # If requested, load the layout editor.
 if get_data.has_key('edit_layout'):
     page = guard_db.get_resource_from_handle('admin/layout', 'content')
-
-extension_api.emit_sync('spiff:page_open')
 
 # Send headers.
 extension_api.emit_sync('spiff:header_before')
