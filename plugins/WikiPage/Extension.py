@@ -29,7 +29,6 @@ sequence_matcher = SequenceMatcher()
 class Extension:
     def __init__(self, api):
         self.wiki_word_re = re.compile("(?:-&gt;(\w+)|([A-Z]\w+[A-Z]\w+))")
-        self.is_recursive = True
         self.api          = api
         self.i18n         = api.get_i18n()
         self.db           = api.get_db()

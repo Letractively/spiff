@@ -68,6 +68,24 @@ class Parser:
         for kind, data, pos in list:
             info.add_dependency(data.strip(), 'installtime')
 
+        # Attributes.
+        prefix = 'extension/attributes/attribute'
+        list   = xml.select(prefix + '/attribute::name')
+        for name in list:
+            type  = xml.select(prefix + '[@name="%s"]/attribute::type' % name)
+            value = xml.select(prefix + '[@name="%s"]/text()' % name)
+            type  = str(type)
+            value = str(value)
+            if type == 'boolean':
+                value = value == 'True' and True or False
+            elif type == 'integer':
+                value = int(value)
+            elif type == 'string':
+                pass
+            else:
+                assert False # Unknown attribute type.
+            info.set_attribute(name, value)
+
         self.info = info
 
 

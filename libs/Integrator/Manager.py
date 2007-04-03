@@ -229,6 +229,20 @@ class Manager:
         return self.__extension_db.get_extension_list(offset, limit)
 
 
+    def get_extension_info_from_descriptor(self, descriptor):
+        """
+        Returns the ExtensionInfo object that matches the given descriptor.
+        If multiple versions match, the most recent version is returned.
+
+        @type  name: string
+        @param name: A descriptor (e.g. "my_extension>=1.0").
+        @rtype:  ExtensionInfo
+        @return: The ExtensionInfo, or None if none was found.
+        """
+        assert descriptor is not None
+        return self.__extension_db.get_extension_from_descriptor(descriptor)
+
+
     def get_extension_info_from_name(self, name):
         """
         Returns the ExtensionInfo object with the given name. If multiple
