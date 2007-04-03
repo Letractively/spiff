@@ -26,5 +26,9 @@
       <listen uri="spiff:page_open" />
       <listen uri="spiff:header_send_before" />
     </behavior>
+
+    <attributes>
+      <attribute name="test_flag" type="boolean">True</attribute>
+    </attributes>
   </extension>
 </xml>

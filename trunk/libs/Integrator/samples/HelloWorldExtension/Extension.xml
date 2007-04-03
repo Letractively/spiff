@@ -30,5 +30,11 @@
       <runtime>spiff>=0.5</runtime>
       <installtime>spiff>=0.5</installtime>
     </depends>
+
+    <attributes>
+      <attribute name="whatever_flag"     type="boolean">True</attribute>
+      <attribute name="another_attribute" type="integer">1234</attribute>
+      <attribute name="something_else"    type="string">My string</attribute>
+    </attributes>
   </extension>
 </xml>

@@ -23,5 +23,9 @@
       <runtime>spiff</runtime>
       <installtime>spiff</installtime>
     </depends>
+
+    <attributes>
+      <attribute name="recursive" type="boolean">True</attribute>
+    </attributes>
   </extension>
 </xml>

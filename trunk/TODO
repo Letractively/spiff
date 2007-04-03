@@ -4,11 +4,7 @@
 
 * LayoutEditor: Add support for restoring the layout.
 
-* Extensions: Make it possible to define attributes in the XML.
-
 * Extensions: Add a width recommendation attribute to the XML.
-
-* Extensions: Move the "recursive" attribute out of the code into the XML.
 
 * Extensions: Add icon file attribute to the XML.
 

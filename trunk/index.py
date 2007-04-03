@@ -205,13 +205,9 @@ if page is None:
     # Check whether it manages the subtree.
     if page is not None:
         descriptor = page.get_attribute('extension')
-        extension  = integrator.load_extension_from_descriptor(descriptor)
-        assert extension is not None
-        try:
-            is_recursive = extension.is_recursive
-        except:
-            is_recursive = False
-        if not is_recursive:
+        info       = integrator.get_extension_info_from_descriptor(descriptor)
+        assert info is not None
+        if not info.get_attribute('recursive'):
             page = None
 
 # If we still have not found a page, try our default page.
@@ -222,13 +218,9 @@ if page is None:
     assert page is not None
     extension_api.set_requested_page(page)
     descriptor = page.get_attribute('extension')
-    extension  = integrator.load_extension_from_descriptor(descriptor)
-    assert extension is not None
-    try:
-        is_recursive = extension.is_recursive
-    except:
-        is_recursive = False
-    if not is_recursive:
+    info       = integrator.get_extension_info_from_descriptor(descriptor)
+    assert info is not None
+    if not info.get_attribute('recursive'):
         page = None
 
 # If we still have no page, give 404.
