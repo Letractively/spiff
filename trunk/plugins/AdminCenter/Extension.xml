@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+<xml>
+  <extension handle="spiff_core_admin_center">
+    <name>Admin Center</name>
+    <release>0.1</release>
+    <description xml:lang="" lang="">
+    This core extension implements the admininistration user interface.
+    </description>
+    <authors>
+      <person>
+        <name>Samuel Abels</name>
+        <email>spam2, debain, org</email>
+      </person>
+    </authors>
+
+    <behavior>
+      <signal uri="render_start" />
+      <signal uri="render_end" />
+    </behavior>
+
+    <depends>
+      <runtime>spiff</runtime>
+      <installtime>spiff</installtime>
+      <installtime>spiff_core_login</installtime>
+    </depends>
+  </extension>
+</xml>

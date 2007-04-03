@@ -37,16 +37,16 @@ class InstallExtension(Task):
         assert dbn is not None
 
         # Connect to MySQL and set up.
-        db              = create_engine(dbn)
-        self.guard      = Guard.DB(db)
-        get_data        = cgi.parse_qs(os.environ["QUERY_STRING"])
-        post_data       = cgi.FieldStorage()
-        self.integrator = Integrator.Manager(self.guard,
-                                             ExtensionApi,
-                                             requested_page = None,
-                                             guard_mod      = Guard,
-                                             get_data       = get_data,
-                                             post_data      = post_data)
+        db            = create_engine(dbn)
+        self.guard    = Guard.DB(db)
+        get_data      = cgi.parse_qs(os.environ["QUERY_STRING"])
+        post_data     = cgi.FieldStorage()
+        extension_api = ExtensionApi(requested_page = None,
+                                     guard_mod      = Guard,
+                                     guard_db       = self.guard,
+                                     get_data       = get_data,
+                                     post_data      = post_data)
+        self.integrator = Integrator.Manager(self.guard, extension_api)
         self.integrator.set_extension_dir('../data/repo')
 
 

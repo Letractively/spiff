@@ -1,16 +1,16 @@
-* Core: Finish Layout.render() for rendering multiple extensions on one
-  site.
+* Core: Make the layout table styleable (and style it).
 
 * LayoutEditor: Add a way to initialize the canvas using a layout language.
 
 * LayoutEditor: Add support for restoring the layout.
 
-* Extensions: Use XML based header files instead of putting the info into a
-  comment at the top of the Extension file.
+* Extensions: Make it possible to define attributes in the XML.
 
-* Extensions: Add a width recommendation field.
+* Extensions: Add a width recommendation attribute to the XML.
 
-* Extensions: Add icons.
+* Extensions: Move the "recursive" attribute out of the code into the XML.
+
+* Extensions: Add icon file attribute to the XML.
 
 * Admin Center: Test better whether the permission escalation prevention
   works.

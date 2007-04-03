@@ -281,6 +281,7 @@ class Wiki2Html:
         infile    = open(filename, 'U')
         parser    = WikiParser(infile, filename)
         nonecount = 0
+        self.html = ''
         while True:
             token    = parser.read()
             position = parser.position()

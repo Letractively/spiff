@@ -1,0 +1,34 @@
+<?xml version="1.0" ?>
+<xml>
+  <extension handle="hello_world">
+    <name>Hello World</name>
+    <release>0.1</release>
+    <description xml:lang="" lang="">
+    A simple extension for the tests.
+    It is also intended that the description
+    is a multi line string to have that tested.
+    </description>
+    <description xml:lang="de_DE" lang="de_DE">
+    Diese Erweiterung tut nichts.
+    </description>
+    <authors>
+      <person>
+        <name>Samuel Abels</name>
+        <email>spam2, debain, org</email>
+      </person>
+    </authors>
+
+    <behavior>
+      <signal uri="render_start">
+        <arg name="my_self" type="object">A reference to itself.</arg>
+      </signal>
+      <signal uri="render_end" />
+      <listen uri="spiff:render_start" />
+    </behavior>
+
+    <depends>
+      <runtime>spiff>=0.5</runtime>
+      <installtime>spiff>=0.5</installtime>
+    </depends>
+  </extension>
+</xml>

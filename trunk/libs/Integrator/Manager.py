@@ -15,7 +15,7 @@
 from Api      import Api
 from DB       import *
 from tempfile import *
-import Parser
+from Parser   import Parser
 import os
 import os.path
 import shutil
@@ -148,34 +148,25 @@ class Manager:
         if not install_dir:
             return self.__install_error
 
-        # Read the extension header.
-        class_file = os.path.join(install_dir, 'Extension.py')
-        header     = Parser.parse_header(class_file)
-        if not header:
+        # Read the extension info.
+        class_file = os.path.join(install_dir, 'Extension.xml')
+        parser     = Parser()
+        parser.parse_file(class_file)
+        info = parser.info
+        if info is None:
             return self.__parse_error
 
         # Check dependencies.
-        for descriptor in header['dependency']:
+        for descriptor in info.get_dependency_list():
             #print "Descriptor:", descriptor
             if not self.__extension_db.get_extension_from_descriptor(descriptor):
                 shutil.rmtree(install_dir)
                 return self.__unmet_dependency_error
 
-        # Create the ExtensionInfo.
-        info = ExtensionInfo(header['extension'],
-                             header['handle'],
-                             header['version'])
-
-        # Append dependencies.
-        context_list = ['dependency']
-        for context in context_list:
-            for descriptor in header[context]:
-                info.add_dependency(descriptor, context)
-
         # Check whether the extension has permission to listen to the
         # requested events.
         if event_request_func is not None:
-            for uri in header['listener']:
+            for uri in parser.listeners:
                 # event_request_func() may modify the signal URI.
                 permit = event_request_func(info, uri)
                 if not permit:
@@ -185,7 +176,7 @@ class Manager:
         # Check whether the extension has permission to send the
         # requested events.
         if signal_request_func is not None:
-            for uri in header['signal']:
+            for uri in parser.signals:
                 # signal_request_func() may modify the signal URI.
                 permit = signal_request_func(info, uri)
                 if not permit:
@@ -201,7 +192,7 @@ class Manager:
         id = info.get_id()
         assert id > 0
 
-        for uri in header['listener']:
+        for uri in parser.listeners:
             try:
                 self.__extension_db.link_extension_id_to_callback(id, uri)
             except:
@@ -238,6 +229,20 @@ class Manager:
         return self.__extension_db.get_extension_list(offset, limit)
 
 
+    def get_extension_info_from_name(self, name):
+        """
+        Returns the ExtensionInfo object with the given name. If multiple
+        versions exist, the most recent version is returned.
+
+        @type  name: string
+        @param name: The name of the extension.
+        @rtype:  ExtensionInfo
+        @return: The ExtensionInfo, or None if none was found.
+        """
+        assert name is not None
+        return self.__extension_db.get_extension_from_name(name)
+
+
     def remove_extension_from_id(self, id):
         """
         Uninstalls the extension with the given id.
@@ -271,6 +276,9 @@ class Manager:
         except:
             print 'Ooops... a broken extension.'
             raise
+
+        #FIXME: Connect signals. The extension should not be responsible to
+        # do this.
 
         # Store in cache and return.
         self.__extension_cache[str(id)] = extension
