@@ -324,9 +324,12 @@ class DB:
             parent = self._acldb.get_resource_from_handle(handle, s_handle)
 
         # Insert the extension into the ACL resource table.
+        old_name   = extension.get_name()
         old_handle = extension.get_handle()
+        new_name   = old_name   + extension.get_version()
         new_handle = old_handle + extension.get_version()
         handle     = make_handle_from_string(new_handle)
+        extension.set_name(new_name)
         extension.set_handle(handle)
         self._acldb.add_resource(parent.get_id(), extension, self._acl_section)
         extension.set_handle(old_handle)
@@ -620,6 +623,7 @@ class DB:
         if parent is None: return []
         children = self._acldb.get_resource_children(parent, ExtensionInfo)
         for child in children:
+            child.set_name(parent.get_name())
             child.set_handle(handle)
         return children
 
@@ -644,6 +648,7 @@ class DB:
         if parent is None: return []
         children = self._acldb.get_resource_children(parent, ExtensionInfo)
         for child in children:
+            child.set_name(parent.get_name())
             child.set_handle(parent.get_handle())
         return children
 

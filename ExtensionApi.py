@@ -37,6 +37,7 @@ class ExtensionApi(Api):
         self.__post_data      = kwargs['post_data']
         self.__headers_sent   = False
         self.__http_headers   = []
+        self.__output         = ''
 
 
     def _on_api_activate(self):
@@ -173,18 +174,28 @@ class ExtensionApi(Api):
         # Load and display the template.
         loader = TemplateLoader([dirname])
         tmpl   = loader.load(filename, None, MarkupTemplate)
-        print tmpl.generate(plugin_dir  = plugin_uri,
-                            web_dir     = web_dir,
-                            uri         = get_uri,
-                            request_uri = get_request_uri,
-                            txt         = gettext,
-                            **kwargs).render('xhtml')
+        self.__output = tmpl.generate(plugin_dir  = plugin_uri,
+                                      web_dir     = web_dir,
+                                      uri         = get_uri,
+                                      request_uri = get_request_uri,
+                                      txt         = gettext,
+                                      **kwargs).render('xhtml')
 
 
     def save_page(self, page):
-        #FIXME: Do we need to check the permission of the caller?
+        #FIXME: Check the permission of the caller.
         section = self.__guard_mod.ResourceSection('content')
         return self.__guard_db.save_resource(page, section)
+
+
+    def get_output(self):
+        #FIXME: Check the permission of the caller.
+        return self.__output
+
+
+    def clear_output(self):
+        #FIXME: Check the permission of the caller.
+        self.__output = ''
 
 
 if __name__ == '__main__':

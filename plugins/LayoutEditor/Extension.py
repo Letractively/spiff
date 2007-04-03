@@ -1,17 +1,19 @@
-"""
-extension:    Layout Editor
-handle:       spiff_core_layout_editor
-version:      0.1
-author:       Samuel Abels
-author-email: spam2@debain.org
-description:  This core extension implements the user interface for editing
-              the layout of a site.
-dependency:   spiff
-signal:       render_start
-              render_end
-"""
-from string import split
-from Layout import Layout
+# Copyright (C) 2006 Samuel Abels, http://debain.org
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 2, as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+from string       import split
+from LayoutParser import LayoutParser
 
 class Extension:
     def __init__(self, api):
@@ -25,6 +27,16 @@ class Extension:
                          'spiff_core_admin_center',
                          'spiff_core_user_manager',
                          'spiff_core_layout_editor']
+
+
+    def _layout_data_handler(self, data):
+        extension = self.integrator.get_extension_info_from_name(data)
+        assert extension is not None
+        assert extension.get_handle() not in self.__hidden
+
+        #FIXME: Check permission of the extension!
+
+        return extension.get_handle()
 
 
     def __layout_save(self):
@@ -43,23 +55,15 @@ class Extension:
             errors.append(i18n('Insufficient rights to change the layout.'))
             return errors
 
-        # Parse the layout and retrieve all extension handles.
-        page = self.api.get_requested_page()
-        assert page is not None
-        page.set_attribute('layout', layout)
-        layout = Layout(object, page)
-        assert layout is not None
-
-        # Make sure that no invalid (i.e. core) extensions are contained
-        # in the layout, and that the user has view permissions on all
-        # extensions.
-        for handle in layout.get_extension_handles():
-            if handle in self.__hidden:
-                errors.append(i18n('Invalid extension %s in layout' % handle))
-                return errors
-            #FIXME: Check permission of these extensions
+        # Parse the layout to replace the extension names by handles.
+        parser = LayoutParser(layout)
+        parser.set_data_handler(self._layout_data_handler)
+        parser.parse()
 
         # Save the layout.
+        page = self.api.get_requested_page()
+        assert page is not None
+        page.set_attribute('layout', parser.layout)
         if not self.api.save_page(page):
             errors.append(i18n('Error while saving layout.'))
 

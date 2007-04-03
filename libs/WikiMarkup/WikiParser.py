@@ -33,7 +33,8 @@ o_bracket   = Str('{')
 c_bracket   = Str('}')
 underscore  = Str('_')
 dot         = Str('.')
-punctuation = Any('.!?,;')
+punctuation = Any('.!?,;:')
+quotes      = Any('\'"')
 
 # Single word definitions.
 name        = letter + Rep(letter | digit)
@@ -62,7 +63,7 @@ words         = Rep1(letter | digit | spaces)
 list_item     = Bol + Alt(hash, star) + Str(' ')
 italic_start  = Alt(Bol, spaces) + slash
 italic_end    = slash + Alt(Eol, spaces, punctuation)
-phrase        = Rep1(words | dash | at | punctuation | slash | colon | hash)
+phrase        = Rep1(words | dash | at | punctuation | slash | quotes| hash)
 title1        = equal + phrase + equal
 title2        = equal + equal + phrase + equal + equal
 title3        = equal + equal + equal + phrase + equal + equal + equal

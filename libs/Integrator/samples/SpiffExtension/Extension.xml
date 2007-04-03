@@ -1,0 +1,30 @@
+<?xml version="1.0" ?>
+<xml>
+  <extension handle="spiff">
+    <name>My Spiff Extension</name>
+    <release>1.0</release>
+    <description xml:lang="" lang="">
+    This is a sample extension.
+    </description>
+    <description xml:lang="de_DE" lang="de_DE">
+    Diese Erweiterung tut nichts.
+    </description>
+    <authors>
+      <person>
+        <name>Samuel Abels</name>
+        <email>spam2, debain, org</email>
+      </person>
+    </authors>
+
+    <behavior>
+      <signal uri="render_start">
+        <arg name="my_self" type="object">A reference to itself.</arg>
+      </signal>
+      <signal uri="render_end">
+        <arg name="my_self" type="object">A reference to itself.</arg>
+      </signal>
+      <listen uri="spiff:page_open" />
+      <listen uri="spiff:header_send_before" />
+    </behavior>
+  </extension>
+</xml>
