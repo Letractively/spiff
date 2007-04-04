@@ -19,9 +19,9 @@ class ResourcePath:
         """
         Create a new instance.
 
-        @type  path_str string or array
-        @param path_str Contains the path in the following format: 0/1/2/...,
-                        or as an array.
+        @type  path string or array
+        @param path Contains the path in the following format: 0/1/2/...,
+                    or as an array.
         """
         self.path = None
         self.set(path)
@@ -31,9 +31,9 @@ class ResourcePath:
         """
         Point the object to the given path.
 
-        @type  path_str string
-        @param path_str Contains the path in the following format: 0/1/2/...,
-                        or as an array.
+        @type  path string or array
+        @param path Contains the path in the following format: 0/1/2/...,
+                    or as an array.
         """
         self.path = []
         if len(path) == 0:
