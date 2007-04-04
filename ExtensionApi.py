@@ -35,13 +35,8 @@ class ExtensionApi(Api):
         self.__guard_db       = kwargs['guard_db']
         self.__get_data       = kwargs['get_data']
         self.__post_data      = kwargs['post_data']
-        self.__headers_sent   = False
         self.__http_headers   = []
         self.__output         = ''
-
-
-    def _on_api_activate(self):
-        self.add_listener(self.__on_headers_sent, "spiff:header_after")
 
 
     def __get_caller(self):
@@ -51,10 +46,6 @@ class ExtensionApi(Api):
         finally:
             del frame
         return caller
-
-
-    def __on_headers_sent(self, args):
-        self.__headers_sent = True
 
 
     def get_get_data(self, name, unpack = True):
@@ -82,7 +73,6 @@ class ExtensionApi(Api):
 
 
     def append_http_headers(self, *args, **kwargs):
-        assert not self.__headers_sent
         for key in kwargs:
             self.__http_headers.append((key, kwargs[key]))
 
@@ -155,9 +145,6 @@ class ExtensionApi(Api):
 
 
     def render(self, filename, *args, **kwargs):
-        if not self.__headers_sent:
-            self.send_headers()
-
         #FIXME: Do we need to check the permission of the caller?
         assert filename is not None
         # Find the object that made the API call.
