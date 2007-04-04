@@ -15,6 +15,8 @@
 from Api      import Api
 from DB       import *
 from tempfile import *
+from EventBus import EventBus
+from Callback import Callback
 from Parser   import Parser
 import os
 import os.path
@@ -36,6 +38,7 @@ class Manager:
         self.__extension_api   = extension_api
         self.__install_dir     = None
         self.__extension_cache = {}
+        self.event_bus         = EventBus()
         extension_api.activate(self)
 
 
@@ -291,8 +294,14 @@ class Manager:
             print 'Ooops... a broken extension.'
             raise
 
-        #FIXME: Connect signals. The extension should not be responsible to
-        # do this.
+        # Connect signals.
+        uri_list = self.__extension_db.get_callback_list_from_extension_id(id)
+        assert uri_list is not None
+        for uri in uri_list:
+            func_name = 'on_' + uri.replace(':', '_').replace('/', '_')
+            func      = getattr(extension, func_name)
+            callback  = Callback(func, uri)
+            self.event_bus.add_listener(callback)
 
         # Store in cache and return.
         self.__extension_cache[str(id)] = extension

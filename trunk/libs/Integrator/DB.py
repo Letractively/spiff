@@ -688,6 +688,31 @@ class DB:
         return self.link_extension_id_to_callback(extension.get_id(), uri)
 
 
+    def get_callback_list_from_extension_id(self, extension_id):
+        """
+        Returns the list of listeners that the extension with the given
+        id has registered.
+
+        @type  extension_id: integer
+        @param extension_id: The id of the extension.
+        @rtype:  list[string]
+        @return: A list of URIs.
+        """
+        assert extension_id is not None
+        
+        table  = self._table_map['extension_callback']
+        query  = select([table.c.event_uri],
+                        table.c.extension_id == extension_id,
+                        from_obj = [table])
+        result = query.execute()
+        assert result is not None
+
+        uri_list = []
+        for row in result:
+            uri_list.append(row[table.c.event_uri])
+        return uri_list
+
+
     def get_extension_id_list_from_callback(self, uri):
         """
         Returns a list of all extensions that are associated with the given

@@ -24,10 +24,9 @@ class Extension:
         self.__api    = api
         self.__login  = api.get_login()
         self.__status = self.login_open
-        api.add_listener(self.on_page_open, 'spiff:page_open')
 
 
-    def on_page_open(self, args):
+    def on_spiff_page_open(self, args):
         # A user is trying to log in.
         if self.__api.get_post_data('login') is not None:
             user     = self.__api.get_post_data('username')
