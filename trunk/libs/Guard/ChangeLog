@@ -1,6 +1,10 @@
 Changes since 1.2.0
 
-  * DBReader.py: Added support for boolean attribute types.
+  * DBReader.py: Added support for boolean attribute types. string attributes
+  are now stored in a TEXT field, no longer a VARCHAR, so longer strings are
+  supported. More API documentation was added. Using a table name prefix now
+  actually works.
+  (get_resource_list): New.
   (set_table_prefix): Fixed.
 
   * DB.py: Added support for boolean attribute types.

@@ -1,4 +1,3 @@
-* Use XML description files instead of a comment header in extensions.
 * Fix all FIXMEs.
 * Implement test for Api class.
 * Manager: Add support for storing extensions in multiple directories.

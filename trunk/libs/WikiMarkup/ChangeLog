@@ -4,6 +4,12 @@ Changes since 0.2
   The test was fixed, the linebreak-handling of the class was reworked and some
   other bugs were also fixed. You should particulary notice a much higher
   reliability when converting between wiki markup and HTML multiple times.
+  Prepending a "!" before a WikiWord now prevents it from being linked.
+  URL captions now allow more characters.
+  Links are now made by enclosing them in square brackets (no longer curly
+  brackets).
+  Support for preformatted text with the #Text/#End tag was added.
+  Improved recognition of external URLs.
 
 Changes since 0.1
 
