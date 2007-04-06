@@ -19,7 +19,6 @@ documentation = function1.get_child('api_doc')
 documentation.set_introduction("My Introduction")
 documentation.set_description("My Description is decidedly a little\nlonger.")
 
-
 # Modify the documentation of another test method.
 class2        = file.get_child('class', 'SecondClass(TestClass)')
 function1     = class2.get_child('function', 'do_something2')

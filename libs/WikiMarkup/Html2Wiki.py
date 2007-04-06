@@ -33,6 +33,7 @@ class Html2Wiki(HTMLParser.HTMLParser):
         self.in_a       = False
         self.in_pre     = False
         self.last_href  = ''
+        self.span_path  = []
 
     def __output(self, text, linebreak = True):
         self.buffer += (' ' * self.indent * 2)
@@ -59,6 +60,7 @@ class Html2Wiki(HTMLParser.HTMLParser):
         elif tag == 'a':      self.start_a(attrs)
         elif tag == 'pre':    self.start_pre()
         elif tag == 'strike': self.start_strike()
+        elif tag == 'span':   self.start_span(attrs)
         elif tag == 'br':     self.newline()
         
     def handle_endtag(self, tag):
@@ -78,6 +80,7 @@ class Html2Wiki(HTMLParser.HTMLParser):
         elif tag == 'a':      self.end_a()
         elif tag == 'pre':    self.end_pre()
         elif tag == 'strike': self.end_strike()
+        elif tag == 'span':   self.end_span()
 
     def start_h1(self):
         self.buffer += '='
@@ -162,6 +165,25 @@ class Html2Wiki(HTMLParser.HTMLParser):
 
     def end_strike(self):
         self.buffer += '-'
+
+    def start_span(self, attrs):
+        cls = None
+        for key, value in attrs:
+            if key == 'class':
+                cls = value
+        if cls == 'underline':
+            char = '_'
+        elif cls == 'bold':
+            char = '*'
+        elif cls == 'italic':
+            char = '/'
+        else:
+            char = ''
+        self.buffer += char
+        self.span_path.append(char)
+
+    def end_span(self):
+        self.buffer += self.span_path.pop()
 
     def start_table(self):
         self.in_table = True

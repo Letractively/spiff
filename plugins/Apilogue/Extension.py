@@ -16,13 +16,28 @@ from ApiGenie import ApiDB
 
 class Extension:
     def __init__(self, api):
-        self.api  = api
-        self.i18n = api.get_i18n()
+        self.api    = api
+        self.db     = api.get_db()
+        self.i18n   = api.get_i18n()
+        self.api_db = ApiDB(self.db)
+
+
+    def install(self):
+        return self.api_db.install()
+
+
+    def __show(self, errors = []):
+        page = self.api.get_requested_page()
+        assert page is not None
+
+        self.api.render('home.tmpl',
+                        name       = page.get_name(),
+                        errors     = errors)
 
 
     def on_render_request(self):
         self.api.emit('render_start')
 
-        self.api.render('home.tmpl')
+        self.__show()
 
         self.api.emit('render_end')

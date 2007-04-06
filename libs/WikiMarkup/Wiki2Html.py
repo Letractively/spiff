@@ -126,11 +126,11 @@ class Wiki2Html:
 
 
     def underline_start(self, text):
-        self.buffer += '<u>'
+        self.buffer += '<span class="underline">'
 
 
     def underline_end(self, text):
-        self.buffer += '</u>'
+        self.buffer += '</span>'
 
 
     def unnumbered_list_start(self, text):
@@ -181,7 +181,7 @@ class Wiki2Html:
         self.in_cell = True
         attribs = ''
         if len(text) - 1 > 1:
-            attribs += ' colspan=%i' % (len(text) - 1)
+            attribs += ' colspan="%i"' % (len(text) - 1)
         if self.in_heading:
             self.buffer += '<th%s>' % attribs
         else:

@@ -8,14 +8,19 @@
 
 * Extensions: Add icon file attribute to the XML.
 
-* Admin Center: Test better whether the permission escalation prevention
+* LayoutEditor: Make the list of available extensions more pretty and use an
+  icon.
+
+* Create an admin GUI for installing extensions.
+
+* Create an admin GUI for adding and removing content.
+
+* User Manager: Test better whether the permission escalation prevention
   works.
 
 * Implement a Menu extension.
 
 * Create a NavigationBar ("breadcrumbs") extension.
-
-* Create an admin GUI for installing extensions.
 
 * Implement a RecentChanges extension.
 

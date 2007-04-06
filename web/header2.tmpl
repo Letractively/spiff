@@ -8,8 +8,7 @@
         style="width: 75px; background: url($img_dir/top_left.png)">
       <a class="title" href="${uri('')}"><img class="logo"
                                      src="$img_dir/logo_medium.png"
-                                     alt=""
-                                     border="0" /></a>
+                                     alt="" /></a>
     </td>
     <td class="banner_left"
         style="background: url($img_dir/top_left.png)">
@@ -17,19 +16,18 @@
     </td>
     <td class="banner_right"
         style="background: url($img_dir/top_right.png)"
-        align="right"
-        width="482">
+        align="right">
       <table>
         <tr py:if="current_user">
           <td align="right">
             <span id="you_are">
               ${txt('You are %s' % current_user.get_name())}<br/>
-              <a class="log_out" href="?logout=1">Log out</a>
+              <a class="log_out" href="${uri('', logout = [1])}">Log out</a>
             </span>
           </td>
           <td>&nbsp;</td>
           <td>
-            <a class="title" href="?logout=1"><img src="$img_dir/logout.png" alt="" border="0" /></a>
+            <a class="title" href="${uri('', logout = [1])}"><img src="$img_dir/logout.png" alt="" /></a>
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
           </td>
         </tr>
