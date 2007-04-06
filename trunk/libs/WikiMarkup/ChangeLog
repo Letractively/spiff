@@ -1,3 +1,11 @@
+Changes since 0.3
+
+  * Html2Wiki: Support for XHTML span attributes with class "bold", "italic",
+  and "underline" was added.
+
+  * Wiki2Html: Underline using XHTML strict compliant <span class="underline">
+  instead of <u> tags.
+
 Changes since 0.2
 
   * Html2Wiki.py: A broken unit test caused many bugs to remain undiscovered.

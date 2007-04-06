@@ -73,7 +73,7 @@ class Extension:
     def __layout_editor_show(self, errors = []):
         page = self.api.get_requested_page()
         assert page is not None
-        layout = page.get_attribute('layout') or '';
+        layout = page.get_attribute('layout') or ''
         
         # Retrieve a list of available extensions from the DB.
         extension_list = self.integrator.get_extension_info_list(0, 0)

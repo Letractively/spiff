@@ -25,11 +25,13 @@ import zipfile
 
 class Manager:
     __no_such_file_error,     \
+    __copy_error,             \
+    __load_error,             \
     __install_error,          \
     __parse_error,            \
     __unmet_dependency_error, \
     __database_error,         \
-    __permission_denied_error = range(-1, -7, -1)
+    __permission_denied_error = range(-1, -9, -1)
     
     def  __init__(self, guard_db, extension_api):
         assert guard_db      is not None
@@ -213,6 +215,24 @@ class Manager:
         except:
             shutil.rmtree(install_dir)
             self.remove_extension_from_id(id)
+            return self.__copy_error
+
+        # Ending up here, the extension was properly installed in the target
+        # directory. Load it.
+        try:
+            extension = self.load_extension_from_id(id)
+        except:
+            return self.__load_error
+
+        # Call it's install method.
+        install_func = None
+        try:
+            install_func = getattr(extension, 'install')
+        except:
+            pass
+        if install_func is not None:
+            success = install_func()
+        if not success:
             return self.__install_error
 
         return info.get_id()
