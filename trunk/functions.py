@@ -50,6 +50,9 @@ def get_request_uri(*args, **kwargs):
     vars = cgi.parse()
     url  = os.environ["REQUEST_URI"]
     page = vars.get('page', [''])[0]
+    if kwargs.has_key('noargs'):
+        vars = {}
+        del kwargs['noargs']
 
     # Remove the special variable "logout" from the URL.
     if vars.has_key('logout'):

@@ -4,10 +4,10 @@
      py:with="img_dir = plugin_dir + '/img'">
   <table width="600">
     <tr>
-      <td py:with="url = request_uri(page = ['admin/content'])">
+      <td py:with="url = request_uri(page = ['admin/extensions'])">
         <xi:include href="icon_with_caption.tmpl"
                     py:with="img     = img_dir + '/logo_medium.png';
-                             caption = txt('Change Site Content');
+                             caption = txt('Add or Remove Extensions');
                              url     = url" />
       </td>
       <td py:with="url = request_uri(page = ['admin/users'])">

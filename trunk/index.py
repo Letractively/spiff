@@ -30,18 +30,18 @@ import Guard
 
 def show_admin_links(loader, user, integrator):
     # Check for admin permissisions
-    edit_layout = extension_api.has_permission('edit_layout')
-    if not edit_layout:
+    may_edit_page = extension_api.has_permission('edit_page')
+    if not may_edit_page:
         return
 
     tmpl    = loader.load('admin_header.tmpl', None, MarkupTemplate)
     web_dir = get_mod_rewrite_prevented_uri('web')
-    print tmpl.generate(web_dir      = web_dir,
-                        uri          = get_uri,
-                        request_uri  = get_request_uri,
-                        current_user = user,
-                        edit_layout  = edit_layout,
-                        txt          = gettext).render('xhtml')
+    print tmpl.generate(web_dir       = web_dir,
+                        uri           = get_uri,
+                        request_uri   = get_request_uri,
+                        current_user  = user,
+                        may_edit_page = may_edit_page,
+                        txt           = gettext).render('xhtml')
 
 
 def send_headers(integrator,
@@ -52,7 +52,7 @@ def send_headers(integrator,
     # Print the HTTP header.
     print 'Content-Type: %s' % content_type
     for k, v in headers:
-        print '%s: %s\n' % (k, v)
+        print '%s: %s' % (k, v)
     print
 
     # Load and display the HTML header.
@@ -245,9 +245,9 @@ if page.get_attribute('private') or get_data.has_key('login'):
 if not page_open_sent:
     extension_api.emit_sync('spiff:page_open')
 
-# If requested, load the layout editor.
-if get_data.has_key('edit_layout'):
-    page = guard_db.get_resource_from_handle('admin/layout', 'content')
+# If requested, load the content editor.
+if get_data.has_key('new_page') or get_data.has_key('edit_page'):
+    page = guard_db.get_resource_from_handle('admin/page', 'content')
 
 # Send headers.
 extension_api.emit_sync('spiff:header_before')
