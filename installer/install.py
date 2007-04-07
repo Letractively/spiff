@@ -68,8 +68,10 @@ tasks = [
     InstallExtension('../plugins/Login'),
     InstallExtension('../plugins/AdminCenter'),
     InstallExtension('../plugins/UserManager'),
-    InstallExtension('../plugins/LayoutEditor'),
-    InstallExtension('../plugins/WikiPage')
+    InstallExtension('../plugins/PageEditor'),
+    InstallExtension('../plugins/ExtensionManager'),
+    InstallExtension('../plugins/WikiPage'),
+    InstallExtension('../plugins/Apilogue')
 ]
 constructor.append(CheckList('Installing core extensions', tasks))
 constructor.append(InstallationCompleted())

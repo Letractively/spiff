@@ -1,3 +1,5 @@
+* Page Editor: Ask before deleting a page.
+
 * Core: Make the layout table styleable (and style it).
 
 * LayoutEditor: Add a way to initialize the canvas using a layout language.
@@ -12,8 +14,6 @@
   icon.
 
 * Create an admin GUI for installing extensions.
-
-* Create an admin GUI for adding and removing content.
 
 * User Manager: Test better whether the permission escalation prevention
   works.

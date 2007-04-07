@@ -16,9 +16,15 @@
       <a href="${uri('')}">Spiff</a>
     </td>
     <td width="100%">&nbsp;</td>
-    <td class="nowrap" py:if="edit_layout">
-      <a href="${request_uri(edit_layout = [1])}">
-        ${txt('Edit the layout of this page')}
+    <td class="nowrap" py:if="may_edit_page">
+      <a href="${request_uri(noargs = 1, new_page = [1])}">
+        ${txt('Add a new page')}
+      </a>
+      &nbsp;&nbsp;
+    </td>
+    <td class="nowrap" py:if="may_edit_page">
+      <a href="${request_uri(noargs = 1, edit_page = [1])}">
+        ${txt('Change this page')}
       </a>
     </td>
   </tr>

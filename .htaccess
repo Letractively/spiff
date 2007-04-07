@@ -1,4 +1,5 @@
 DirectoryIndex index.py
+#AddHandler cgi-script-debug .py
 
 RewriteEngine off
 

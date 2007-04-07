@@ -1,0 +1,84 @@
+<div class="content"
+     xmlns:py="http://genshi.edgewall.org/"
+     xmlns:xi="http://www.w3.org/2001/XInclude"
+     py:with="img_dir = plugin_dir + '/img'">
+<script src="$web_dir/scriptaculous/prototype.js"
+        type="text/javascript"></script>
+<script src="$web_dir/scriptaculous/scriptaculous.js?load=effects,dragdrop"
+        type="text/javascript"></script>
+<h1 py:if="name"><a href="${request_uri(save = None)}"
+                    py:content="name" /></h1>
+<form action="${request_uri(noargs = 1, edit_page = [1])}" method="post">
+<table id="layout_editor" width="100%">
+  <tbody>
+    <tr>
+      <td colspan="3">
+      <py:for each="error in errors">
+      <font color="red" py:content="error" /><br/>
+      </py:for>
+      </td>
+    </tr>
+    <tr>
+      <td class="nowrap" colspan="3">
+      <h3 py:content="txt('Page Information')" />
+      </td>
+    </tr>
+    <tr>
+      <td><img src="$img_dir/null.png" height="1" width="20" alt="" /></td>
+      <td class="nowrap" py:content="txt('Page Name:')" />
+      <td width="100%" py:if="not may_edit_page" py:content="name"></td>
+      <td width="100%" py:if="may_edit_page">
+        <input type="text" name="name" value="${name}" />
+      </td>
+    </tr>
+    <tr py:if="may_edit_page">
+      <td class="nowrap" colspan="3"><h3 py:content="txt('Layout')" /></td>
+    </tr>
+    <tr py:if="may_edit_page">
+      <td><img src="$img_dir/null.png" height="1" width="20" alt="" /></td>
+      <td valign="top" width="200">
+        <xi:include href="control_section.tmpl" />
+      </td>
+      <td>
+        <xi:include href="layout_canvas.tmpl" />
+      </td>
+    </tr>
+    <tr>
+      <td></td>
+      <td></td>
+      <td>
+        <input id="layout_var"
+               type="hidden"
+               name="layout"
+               value="" />
+        <input py:if="may_edit_page"
+               type="button"
+               value="${txt('Clear Layout')}"
+               onClick="canvas.reset()" />
+        <input py:if="may_edit_page"
+               type="button"
+               value="${txt('Restore Layout')}"
+               onClick="canvas.set_layout('${layout}')" />
+      </td>
+    </tr>
+    <tr>
+      <td></td>
+      <td></td>
+      <td align="right">
+        <input py:if="may_edit_page"
+               type="submit"
+               name="delete"
+               value="${txt('Delete Page')}"
+               onClick="this.form.submit()" />
+        <input py:if="may_edit_page"
+               type="submit"
+               name="${is_new_page and 'create' or 'save'}"
+               value="${txt('Apply Changes')}"
+               onClick="$('layout_var').setAttribute('value', canvas.get_layout());
+                        this.form.submit()" />
+      </td>
+    </tr>
+  </tbody>
+</table>
+</form>
+</div>

@@ -222,7 +222,8 @@ class Manager:
         try:
             extension = self.load_extension_from_id(id)
         except:
-            return self.__load_error
+            print 'Error: Unable to load extension (%s).' % info.get_name()
+            raise
 
         # Call it's install method.
         install_func = None
@@ -231,9 +232,8 @@ class Manager:
         except:
             pass
         if install_func is not None:
-            success = install_func()
-        if not success:
-            return self.__install_error
+            if not install_func():
+                return self.__install_error
 
         return info.get_id()
 

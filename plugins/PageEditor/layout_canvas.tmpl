@@ -1,0 +1,15 @@
+<div width="100%"
+     id="layout_canvas"
+     xmlns:py="http://genshi.edgewall.org/"
+     xmlns:xi="http://www.w3.org/2001/XInclude">
+<script src="$plugin_dir/Matrix.js" type="text/javascript"></script>
+<script src="$plugin_dir/LayoutCanvas.js" type="text/javascript"></script>
+<script type="text/javascript">
+// <![CDATA[
+var canvas = new LayoutCanvas({accept_drop: 'layout_control'});
+$('layout_canvas').appendChild(canvas.table);
+${may_edit_page and 'canvas.connect_events()' or None};
+canvas.set_layout('${layout}');
+// ]]>
+</script>
+</div>

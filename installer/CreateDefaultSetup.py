@@ -284,11 +284,10 @@ class CreateDefaultSetup(CheckList):
         if content_admin is None:
             return Task.failure
 
-        content_admin_layout = self.__create_content(content_admin,
-                                                     'Layout Editor',
-                                                     'admin/layout',
-                                                     True)
-        if content_admin_layout is None:
+        content_admin_login = self.__create_content(content_admin,
+                                                    'System Login',
+                                                    'admin/login')
+        if content_admin_login is None:
             return Task.failure
 
         content_admin_users = self.__create_content(content_admin,
@@ -298,10 +297,18 @@ class CreateDefaultSetup(CheckList):
         if content_admin_users is None:
             return Task.failure
 
-        content_admin_login = self.__create_content(content_admin,
-                                                    'System Login',
-                                                    'admin/login')
-        if content_admin_login is None:
+        content_admin_page = self.__create_content(content_admin,
+                                                   'Page Editor',
+                                                   'admin/page',
+                                                   True)
+        if content_admin_page is None:
+            return Task.failure
+
+        content_admin_extensions = self.__create_content(content_admin,
+                                                         'Extension Manager',
+                                                         'admin/extensions',
+                                                         True)
+        if content_admin_extensions is None:
             return Task.failure
 
         #########
@@ -344,11 +351,22 @@ class CreateDefaultSetup(CheckList):
             return Task.failure
         self._add_result(caption, Task.success)
 
-        # Assign an extension to the admin/content page.
-        caption = 'Assign content manager extension to a system page'
-        handle  = 'spiff_core_layout_editor'
-        content_admin_layout.set_attribute('extension', handle)
-        if not self.guard.save_resource(content_admin_layout, section_content):
+        # Assign an extension to the admin/page page.
+        caption = 'Assign page editor extension to a system page'
+        handle  = 'spiff_core_page_editor'
+        content_admin_page.set_attribute('extension', handle)
+        if not self.guard.save_resource(content_admin_page, section_content):
+            self._add_result(caption, Task.failure)
+            self._print_result(environment, False)
+            return Task.failure
+        self._add_result(caption, Task.success)
+
+        # Assign an extension to the admin/extensions page.
+        caption = 'Assign extension manager to a system page'
+        handle  = 'spiff_core_extension_manager'
+        content_admin_extensions.set_attribute('extension', handle)
+        if not self.guard.save_resource(content_admin_extensions,
+                                        section_content):
             self._add_result(caption, Task.failure)
             self._print_result(environment, False)
             return Task.failure
@@ -378,9 +396,9 @@ class CreateDefaultSetup(CheckList):
         if content_action_edit is None:
             return Task.failure
 
-        content_action_edit_layout = self.__create_content_action('Edit Layout',
-                                                                  'edit_layout')
-        if content_action_edit_layout is None:
+        content_action_edit_page = self.__create_content_action('Edit Page',
+                                                                'edit_page')
+        if content_action_edit_page is None:
             return Task.failure
 
         content_action_delete = self.__create_content_action('Delete Content',
@@ -396,7 +414,7 @@ class CreateDefaultSetup(CheckList):
         actions = [content_action_create,
                    content_action_view,
                    content_action_edit,
-                   content_action_edit_layout,
+                   content_action_edit_page,
                    content_action_delete]
         content = [content_default, content_admin]
         try:

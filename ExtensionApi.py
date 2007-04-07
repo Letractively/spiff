@@ -48,6 +48,10 @@ class ExtensionApi(Api):
         return caller
 
 
+    def get_data_dir(self):
+        return os.path.join(os.path.dirname(__file__), 'data')
+
+
     def get_get_data(self, name, unpack = True):
         #FIXME: Do we need to check the permission of the caller?
         if not self.__get_data.has_key(name):
@@ -169,10 +173,21 @@ class ExtensionApi(Api):
                                       **kwargs).render('xhtml')
 
 
+    def add_page(self, parent, page):
+        #FIXME: Check the permission of the caller.
+        section = self.__guard_mod.ResourceSection('content')
+        return self.__guard_db.add_resource(parent.get_id(), page, section)
+
+
     def save_page(self, page):
         #FIXME: Check the permission of the caller.
         section = self.__guard_mod.ResourceSection('content')
         return self.__guard_db.save_resource(page, section)
+
+
+    def delete_page(self, page):
+        #FIXME: Check the permission of the caller.
+        return self.__guard_db.delete_resource(page)
 
 
     def get_output(self):

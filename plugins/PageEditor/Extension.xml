@@ -1,11 +1,11 @@
 <?xml version="1.0" ?>
 <xml>
-  <extension handle="spiff_core_layout_editor">
-    <name>Layout Editor</name>
+  <extension handle="spiff_core_page_editor">
+    <name>Page Editor</name>
     <release>0.1</release>
     <description xml:lang="" lang="">
     This core extension implements the user interface for editing
-    the layout of a site.
+    the properties and layout of a site.
     </description>
     <authors>
       <person>
