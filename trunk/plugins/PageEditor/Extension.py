@@ -148,7 +148,7 @@ class Extension:
             if extension.get_handle() not in self.__hidden:
                 extensions.append(extension)
 
-        self.api.render('layout_editor.tmpl',
+        self.api.render('show.tmpl',
                         name            = name,
                         extensions      = extensions,
                         is_new_page     = is_new_page,
