@@ -6,7 +6,7 @@
         type="text/javascript"></script>
 <script src="$web_dir/scriptaculous/scriptaculous.js?load=effects,dragdrop"
         type="text/javascript"></script>
-<h1 py:if="name"><a href="${request_uri(save = None)}"
+<h1 py:if="name"><a href="${request_uri(noargs = 1)}"
                     py:content="name" /></h1>
 <form action="${request_uri(noargs = 1, edit_page = [1])}" method="post">
 <table id="layout_editor" width="100%">
