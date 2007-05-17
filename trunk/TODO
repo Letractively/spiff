@@ -1,22 +1,27 @@
-* Page Editor: Ask before deleting a page.
+* PageEditor: Ask before deleting a page.
 
 * Core: Make the layout table styleable (and style it).
 
-* LayoutEditor: Add a way to initialize the canvas using a layout language.
+* PageEditor: Add a way to initialize the canvas using a layout language.
 
-* LayoutEditor: Add support for restoring the layout.
+* PageEditor: Add support for restoring the layout.
 
 * Extensions: Add a width recommendation attribute to the XML.
 
 * Extensions: Add icon file attribute to the XML.
 
-* LayoutEditor: Make the list of available extensions more pretty and use an
+* PageEditor: Make the list of available extensions more pretty and use an
   icon.
 
 * Create an admin GUI for installing extensions.
 
 * User Manager: Test better whether the permission escalation prevention
   works.
+
+* WikiPage: Make it easier for other plugins to use the wiki. For example,
+  the items in the Wishlist plugins should be displayed using versioned Wiki
+  markup, with features like embedded images coming for free. This is
+  currently hard to do and requires a lot of code duplication.
 
 * Implement a Menu extension.
 

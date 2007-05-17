@@ -419,7 +419,7 @@ class DB:
         database.
 
         @type  id: integer
-        @param id: The name of the file in the database.
+        @param id: The id of the file in the database.
         @rtype:  boolean
         @return: True on success, False otherwise.
         """
