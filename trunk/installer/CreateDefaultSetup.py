@@ -277,6 +277,10 @@ class CreateDefaultSetup(CheckList):
         if content_default is None:
             return Task.failure
 
+        content_wishlist = self.__create_content(None, 'Wishlist', 'wishlist')
+        if content_wishlist is None:
+            return Task.failure
+
         content_admin = self.__create_content(None,
                                               'Admin Center',
                                               'admin',
@@ -318,6 +322,15 @@ class CreateDefaultSetup(CheckList):
         caption = 'Assign default page to a wiki'
         content_default.set_attribute('extension', 'spiff_core_wiki_page')
         if not self.guard.save_resource(content_default, section_content):
+            self._add_result(caption, Task.failure)
+            self._print_result(environment, False)
+            return Task.failure
+        self._add_result(caption, Task.success)
+
+        # Assign the wishlist extension.
+        caption = 'Assign wishlist'
+        content_wishlist.set_attribute('extension', 'wishlist')
+        if not self.guard.save_resource(content_wishlist, section_content):
             self._add_result(caption, Task.failure)
             self._print_result(environment, False)
             return Task.failure
@@ -416,7 +429,7 @@ class CreateDefaultSetup(CheckList):
                    content_action_edit,
                    content_action_edit_page,
                    content_action_delete]
-        content = [content_default, content_admin]
+        content = [content_default, content_wishlist, content_admin]
         try:
             self.guard.grant(group_admin, actions, content)
         except:
@@ -426,7 +439,7 @@ class CreateDefaultSetup(CheckList):
         self._add_result(caption, Task.success)
 
         caption = 'Granting view permissions to users'
-        content = [content_default]
+        content = [content_default, content_wishlist]
         try:
             self.guard.grant(group_users, content_action_view, content)
         except:

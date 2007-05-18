@@ -1,0 +1,26 @@
+<?xml version="1.0" ?>
+<xml>
+  <extension handle="guestbook">
+    <name>Guestbook</name>
+    <release>0.1</release>
+    <description xml:lang="" lang="">
+    A simple guestbook.
+    </description>
+    <authors>
+      <person>
+        <name>Samuel Abels</name>
+        <email>spam2, debain, org</email>
+      </person>
+    </authors>
+
+    <behavior>
+      <signal uri="render_start" />
+      <signal uri="render_end" />
+    </behavior>
+
+    <depends>
+      <runtime>spiff</runtime>
+      <installtime>spiff</installtime>
+    </depends>
+  </extension>
+</xml>
