@@ -19,7 +19,7 @@
   works.
 
 * WikiPage: Make it easier for other plugins to use the wiki. For example,
-  the items in the Wishlist plugins should be displayed using versioned Wiki
+  the items in the Guestbook plugin should be displayed using versioned Wiki
   markup, with features like embedded images coming for free. This is
   currently hard to do and requires a lot of code duplication.
 

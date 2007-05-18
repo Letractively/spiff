@@ -13,8 +13,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import sys
-from Wishlist   import Wishlist
-from Wish       import Wish
+from Guestbook  import Guestbook
+from Posting    import Posting
 from sqlalchemy import *
 
 class DB:
@@ -29,7 +29,7 @@ class DB:
         """
         self.db               = db
         self.db_metadata      = BoundMetaData(self.db)
-        self._table_prefix    = 'wishlist_'
+        self._table_prefix    = 'guestbook_'
         self._table_map       = {}
         self._table_list      = []
         self.__directory_base = ''
@@ -54,21 +54,21 @@ class DB:
         """
         pfx = self._table_prefix
         self._table_list = []
-        self.__add_table(Table(pfx + 'list', self.db_metadata,
+        self.__add_table(Table(pfx + 'guestbook', self.db_metadata,
             Column('id',              Integer,     primary_key = True),
             Column('title',           String(50)),
             Column('descr',           String(250)),
             Column('added',           DateTime,    default = func.now()),
             mysql_engine='INNODB'
         ))
-        self.__add_table(Table(pfx + 'wish', self.db_metadata,
+        self.__add_table(Table(pfx + 'posting', self.db_metadata,
             Column('id',              Integer,     primary_key = True),
-            Column('list_id',         Integer,     index = True),
+            Column('guestbook_id',    Integer,     index = True),
             Column('title',           String(50)),
             Column('descr',           String(250)),
             Column('added',           DateTime,    default = func.now()),
-            ForeignKeyConstraint(['list_id'],
-                                 [pfx + 'list.id'],
+            ForeignKeyConstraint(['guestbook_id'],
+                                 [pfx + 'guestbook.id'],
                                  ondelete = 'CASCADE'),
             mysql_engine='INNODB'
         ))
@@ -144,36 +144,36 @@ class DB:
         return True
 
 
-    def __get_wishlist_from_row(self, row):
+    def __get_guestbook_from_row(self, row):
         """
         Given a database row (=a list of columns) from the result of an SQL
         query, this function copies the columns into the appropriate
-        attributes of a Wishlist object.
+        attributes of a Guestbook object.
 
         @type  row: list
         @param row: A database row.
-        @rtype:  Wishlist
-        @return: A new Wishlist instance with the attributes from the row.
+        @rtype:  Guestbook
+        @return: A new Guestbook instance with the attributes from the row.
         """
         if not row: return None
-        table = self._table_map['list']
-        wishlist  = Wishlist(row[table.c.title], row[table.c.descr])
-        wishlist.set_id(row[table.c.id])
-        wishlist.set_datetime(row[table.c.added])
-        return wishlist
+        table = self._table_map['guestbook']
+        guestbook  = Guestbook(row[table.c.title], row[table.c.descr])
+        guestbook.set_id(row[table.c.id])
+        guestbook.set_datetime(row[table.c.added])
+        return guestbook
 
 
-    def __get_wishlist_from_query(self, query, always_list = False):
+    def __get_guestbook_from_query(self, query, always_list = False):
         """
-        May return a list of Wishlist objects, a single wishlist, or None.
+        May return a list of Guestbook objects, a single guestbook, or None.
         If always_list is True, a list is returned even if only a single
         result was produced.
         Returns None on failure.
         
         @type  query: select
         @param query: An sqlalchemy query.
-        @rtype:  Wishlist|list[Wishlist]
-        @return: A new Wishlist instance, list of Wishlist instances, or None.
+        @rtype:  Guestbook|list[Guestbook]
+        @return: A new Guestbook instance, list of Guestbook instances, or None.
         """
         assert query is not None
         result = query.execute()
@@ -184,49 +184,49 @@ class DB:
         elif not row:
             return None
 
-        wishlists = []
+        guestbooks = []
         while row is not None:
-            wishlist = self.__get_wishlist_from_row(row)
-            wishlists.append(wishlist)
+            guestbook = self.__get_guestbook_from_row(row)
+            guestbooks.append(guestbook)
             row = result.fetchone()
 
         if always_list:
-            return wishlists
-        if len(wishlists) == 1:
-            return wishlist
-        return wishlists
+            return guestbooks
+        if len(guestbooks) == 1:
+            return guestbook
+        return guestbooks
 
 
-    def __get_wish_from_row(self, row):
+    def __get_posting_from_row(self, row):
         """
         Given a database row (=a list of columns) from the result of an SQL
         query, this function copies the columns into the appropriate
-        attributes of a Wish object.
+        attributes of a Posting object.
 
         @type  row: list
         @param row: A database row.
-        @rtype:  Wish
-        @return: A new Wish instance with the attributes from the row.
+        @rtype:  Posting
+        @return: A new Posting instance with the attributes from the row.
         """
         if not row: return None
-        table = self._table_map['wish']
-        wish  = Wish(row[table.c.title], row[table.c.descr])
-        wish.set_id(row[table.c.id])
-        wish.set_datetime(row[table.c.added])
-        return wish
+        table = self._table_map['posting']
+        posting  = Posting(row[table.c.title], row[table.c.descr])
+        posting.set_id(row[table.c.id])
+        posting.set_datetime(row[table.c.added])
+        return posting
 
 
-    def __get_wish_from_query(self, query, always_list = False):
+    def __get_posting_from_query(self, query, always_list = False):
         """
-        May return a list of wishes, a single wish, or None.
+        May return a list of postings, a single posting, or None.
         If always_list is True, a list is returned even if only a single
         result was produced.
         Returns None on failure.
         
         @type  query: select
         @param query: An sqlalchemy query.
-        @rtype:  Wish|list[Wish]
-        @return: A new Wish instance, list of Wish instances, or None.
+        @rtype:  Posting|list[Posting]
+        @return: A new Posting instance, list of Posting instances, or None.
         """
         assert query is not None
         result = query.execute()
@@ -237,60 +237,60 @@ class DB:
         elif not row:
             return None
 
-        wish_list = []
+        posting_list = []
         while row is not None:
-            wish = self.__get_wish_from_row(row)
-            wish_list.append(wish)
+            posting = self.__get_posting_from_row(row)
+            posting_list.append(posting)
             row = result.fetchone()
 
         if always_list:
-            return wish_list
-        if len(wish_list) == 1:
-            return wish
-        return wish_list
+            return posting_list
+        if len(posting_list) == 1:
+            return posting
+        return posting_list
 
 
-    def add_wishlist(self, wishlist):
+    def add_guestbook(self, guestbook):
         """
-        Adds the given Wishlist into the database as a new revision. Also
+        Adds the given Guestbook into the database as a new revision. Also
         updates the database id in the given object.
-        Behaves like update_wishlist() if the wishlist is already in the
+        Behaves like update_guestbook() if the guestbook is already in the
         database.
 
-        @type  wishlist: Wishlist
-        @param wishlist: The wishlist to be added.
+        @type  guestbook: Guestbook
+        @param guestbook: The guestbook to be added.
         @rtype:  boolean
         @return: True on success, False otherwise.
         """
-        assert wishlist is not None
+        assert guestbook is not None
 
-        # Check if the wishlist is already in the database.
-        if wishlist.get_id() >= 0:
-            return self.update_wishlist(wishlist)
+        # Check if the guestbook is already in the database.
+        if guestbook.get_id() >= 0:
+            return self.update_guestbook(guestbook)
         
         # Insert the new revision to the revision table.
-        insert = self._table_map['list'].insert()
-        result = insert.execute(title = wishlist.get_title(),
-                                descr = wishlist.get_description())
+        insert = self._table_map['guestbook'].insert()
+        result = insert.execute(title = guestbook.get_title(),
+                                descr = guestbook.get_description())
         assert result is not None
-        wishlist_id = result.last_inserted_ids()[0]
-        wishlist.set_id(wishlist_id)
+        guestbook_id = result.last_inserted_ids()[0]
+        guestbook.set_id(guestbook_id)
         return True
 
 
-    def remove_wishlist_from_id(self, id):
+    def remove_guestbook_from_id(self, id):
         """
-        Removes the wishlist with the given id from the database.
+        Removes the guestbook with the given id from the database.
 
         @type  id: integer
-        @param id: The id of the wishlist in the database.
+        @param id: The id of the guestbook in the database.
         @rtype:  boolean
         @return: True on success, False otherwise.
         """
         assert id > 0
 
-        # Delete the wishlist.
-        table  = self._table_map['list']
+        # Delete the guestbook.
+        table  = self._table_map['guestbook']
         delete = table.delete(table.c.id == id)
         result = delete.execute()
         assert result is not None
@@ -301,78 +301,78 @@ class DB:
         return True
 
 
-    def remove_wishlist(self, wishlist):
+    def remove_guestbook(self, guestbook):
         """
-        Convenience wrapper around remove_wishlist_from_id().
-        Removes the given wishlist from the database.
+        Convenience wrapper around remove_guestbook_from_id().
+        Removes the given guestbook from the database.
 
-        @type  wishlist: Wishlist
-        @param wishlist: The Wishlist to be removed from the database.
+        @type  guestbook: Guestbook
+        @param guestbook: The Guestbook to be removed from the database.
         @rtype:  boolean
         @return: True on success, False otherwise.
         """
-        assert wishlist is not None
-        assert wishlist.get_id() >= 0
-        return self.remove_wishlist_from_id(wishlist.get_id())
+        assert guestbook is not None
+        assert guestbook.get_id() >= 0
+        return self.remove_guestbook_from_id(guestbook.get_id())
 
 
-    def get_wishlist_from_id(self, list_id):
+    def get_guestbook_from_id(self, guestbook_id):
         """
-        Returns the wishlist with the given id.
+        Returns the guestbook with the given id.
 
-        @type  list_id: integer
-        @param list_id: The id of the wishlist.
-        @rtype:  Wishlist
-        @return: The wishlist on success, None otherwise.
+        @type  guestbook_id: integer
+        @param guestbook_id: The id of the guestbook.
+        @rtype:  Guestbook
+        @return: The guestbook on success, None otherwise.
         """
-        assert list_id >= 0
-        table  = self._table_map['list']
-        select = table.select(table.c.id == list_id)
-        return self.__get_wishlist_from_query(select)
+        assert guestbook_id >= 0
+        table  = self._table_map['guestbook']
+        select = table.select(table.c.id == guestbook_id)
+        return self.__get_guestbook_from_query(select)
 
 
-    def add_wish(self, list_id, wish):
+    def add_posting(self, guestbook_id, posting):
         """
-        Adds the given Wish into the database. Also updates the database id
+        Adds the given Posting into the database. Also updates the database id
         in the given object.
-        Behaves like update_wish() if the wish is already in the database.
+        Behaves like update_posting() if the posting is already in the database.
 
-        @type  wish: Wish
-        @param wish: The wish to be added.
+        @type  posting: Posting
+        @param posting: The posting to be added.
         @rtype:  boolean
         @return: True on success, False otherwise.
         """
-        assert list_id is not None
-        assert wish    is not None
+        assert guestbook_id is not None
+        assert posting    is not None
 
-        # Check if the wish is already in the database.
-        if wish.get_id() >= 0:
-            return self.update_wish(wish)
+        # Check if the posting is already in the database.
+        if posting.get_id() >= 0:
+            return self.update_posting(posting)
         
         # Insert the new revision to the revision table.
-        insert = self._table_map['wish'].insert()
-        result = insert.execute(list_id = list_id,
-                                title   = wish.get_title(),
-                                descr   = wish.get_description())
+        insert = self._table_map['posting'].insert()
+        result = insert.execute(guestbook_id = guestbook_id,
+                                title        = posting.get_title(),
+                                descr        = posting.get_description())
         assert result is not None
-        wish_id = result.last_inserted_ids()[0]
-        wish.set_id(wish_id)
+        posting_id = result.last_inserted_ids()[0]
+        posting.set_id(posting_id)
         return True
 
 
-    def remove_wish_from_id(self, id):
+    def remove_posting_from_id(self, id):
         """
-        Removes the wish with the given id from the database.
+        Removes the posting with the given id from the database.
 
         @type  id: integer
-        @param id: The id of the wish in the database.
+        @param id: The id of the posting in the database.
         @rtype:  boolean
         @return: True on success, False otherwise.
         """
         assert id > 0
 
-        # Delete the wish.
-        table  = self._table_map['wish']
+        # Delete the posting.
+        table  = self._table_map['posting']
         delete = table.delete(table.c.id == id)
         result = delete.execute()
         assert result is not None
@@ -383,63 +383,65 @@ class DB:
         return True
 
 
-    def remove_wish(self, wish):
+    def remove_posting(self, posting):
         """
-        Convenience wrapper around remove_wish_from_id().
-        Removes the given wish from the database.
+        Convenience wrapper around remove_posting_from_id().
+        Removes the given posting from the database.
 
-        @type  wish: Wish
-        @param wish: The Wish to be removed from the database.
+        @type  posting: Posting
+        @param posting: The Posting to be removed from the database.
         @rtype:  boolean
         @return: True on success, False otherwise.
         """
-        assert wish is not None
-        assert wish.get_id() >= 0
-        return self.remove_wish_from_id(wish.get_id())
+        assert posting is not None
+        assert posting.get_id() >= 0
+        return self.remove_posting_from_id(posting.get_id())
 
 
-    def get_wish_from_id(self, id):
+    def get_posting_from_id(self, id):
         """
-        Returns the wish that has the given id.
+        Returns the posting that has the given id.
 
         @type  id: integer
-        @param id: The id of the wish.
-        @rtype:  Wish
-        @return: The wish on success, None otherwise.
+        @param id: The id of the posting.
+        @rtype:  Posting
+        @return: The posting on success, None otherwise.
         """
         assert id >= 0
-        table  = self._table_map['wish']
+        table  = self._table_map['posting']
         select = table.select(table.c.id == id)
-        return self.__get_wish_from_query(select)
+        return self.__get_posting_from_query(select)
 
 
-    def get_wishes_from_list_id(self, list_id, offset = 0, limit = 0):
+    def get_postings_from_guestbook_id(self, guestbook_id, offset = 0, limit = 0):
         """
-        Returns the list of wishes from the list with the given id.
+        Returns the list of postings from the guestbook with the given id.
 
-        @type  list_id: integer
-        @param list_id: The id of the wishlist.
-        @rtype:  list[Wish]
-        @return: The wishes on success, None otherwise.
+        @type  guestbook_id: integer
+        @param guestbook_id: The id of the guestbook.
+        @rtype:  list[Posting]
+        @return: The postings on success, None otherwise.
         """
         assert id >= 0
-        table  = self._table_map['wish']
-        select = table.select(table.c.list_id == id)
-        return self.__get_wish_from_query(select, True)
+        table  = self._table_map['posting']
+        select = table.select(table.c.guestbook_id == id)
+        return self.__get_posting_from_query(select, True)
 
 
-    def get_wishes(self, wishlist, offset = 0, limit = 0):
+    def get_postings(self, guestbook, offset = 0, limit = 0):
         """
-        Returns the list of wishes from the given list.
+        Returns the list of postings from the given guestbook.
 
-        @type  wishlist: Wishlist
-        @param wishlist: The wishlist.
-        @rtype:  list[Wish]
-        @return: The wishes on success, None otherwise.
+        @type  guestbook: Guestbook
+        @param guestbook: The guestbook.
+        @rtype:  list[Posting]
+        @return: The postings on success, None otherwise.
         """
-        assert wishlist is not None
-        assert wishlist.get_id() > 0
-        return self.get_wishes_from_list_id(wishlist.get_id(), offset, limit)
+        assert guestbook is not None
+        assert guestbook.get_id() > 0
+        return self.get_postings_from_guestbook_id(guestbook.get_id(),
+                                                   offset,
+                                                   limit)
 
 
 if __name__ == '__main__':
@@ -454,15 +456,15 @@ if __name__ == '__main__':
             assert db.uninstall()
             assert db.install()
 
-            # Create a wishlist.
-            wishlist = Wishlist("my wishlist", "testdescription for the list")
-            assert db.add_wishlist(wishlist)
-            assert wish.get_id() > 0
+            # Create a guestbook.
+            guestbook = Guestbook("my guestbook", "testdescription for the gb")
+            assert db.add_guestbook(guestbook)
+            assert posting.get_id() > 0
 
-            # Add a wish into the list.
-            wish = Wish("my wish", "testdescr for my wish")
-            assert db.add_wish(wishlist.get_id(), wish)
-            assert wish.get_id() > 0
+            # Add a posting into the guestbook.
+            posting = Posting("my posting", "testdescr for my posting")
+            assert db.add_posting(guestbook.get_id(), posting)
+            assert posting.get_id() > 0
 
             #FIXME: Add missing tests.
 

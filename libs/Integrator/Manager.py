@@ -307,12 +307,10 @@ class Manager:
         # Create instance (or resource).
         subdir     = 'extension' + str(id)
         modulename = subdir.replace('/', '.')
-        try:
-            module    = __import__(modulename)
-            extension = module.Extension(self.__extension_api)
-        except:
-            print 'Ooops... a broken extension.'
-            raise
+
+        # The following may throw an exception if the extension is broken.
+        module    = __import__(modulename)
+        extension = module.Extension(self.__extension_api)
 
         # Connect signals.
         uri_list = self.__extension_db.get_callback_list_from_extension_id(id)

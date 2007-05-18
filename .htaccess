@@ -1,7 +1,7 @@
 DirectoryIndex index.py
 #AddHandler cgi-script-debug .py
 
-RewriteEngine off
+RewriteEngine on
 
 # In .htaccess, mod_rewrite loops over the file when it hits an
 # "L" flag. This rule prevents it.
