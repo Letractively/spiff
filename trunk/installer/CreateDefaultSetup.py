@@ -120,7 +120,8 @@ class CreateDefaultSetup(CheckList):
                 else:
                     parent_id = parent.get_id()
                 self.guard.add_resource(parent_id, resource, section)
-            except:
+            except Exception, e:
+                print e
                 self._add_result(caption, Task.failure)
                 self._print_result(self.environment, False)
                 return None
