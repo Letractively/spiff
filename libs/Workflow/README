@@ -1,0 +1,47 @@
+Spiff Workflow
+---------------
+This library is part of the Spiff platform.
+
+Spiff Workflow is a library implementing a framework for workflows.
+It is based on http://www.workflowpatterns.com and implemented in pure Python.
+
+
+Supported Workflow Patterns
+----------------------------
+ 1. Sequence
+ 2. Parallel Split
+ 3. Synchronization
+ 4. Exclusive Choice
+ 5. Simple Merge
+ 6. Multi-Choice
+ 7. Structured Synchronizing Merge
+ 8. Multi-Merge
+ 9. Structured Discriminator
+10. Arbitrary Cycles
+
+
+Contact
+--------
+Mailing List: http://groups.google.com/group/spiff-devel/
+
+
+Dependencies
+-------------
+(none)
+
+
+Usage
+------
+API documentation is embedded into the Spiff Workflow source code and
+currently not yet available elsewhere. Other developer documentation has not
+yet been written.
+
+If you need more help, please drop by our mailing list. You might actually
+make someone write the missing pieces of documentation.
+
+##############################
+from Workflow import *
+
+wf = Workflow()
+...
+##############################
