@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<process-definition name="flow" revision="1.6">
+    <description>
+    A test workflow that contains all possible activities.
+    </description>
+
+    <!-- Start with an implicit simple split. -->
+    <startactivity>
+        <successor>activity_a1</successor>
+        <successor>activity_b1</successor>
+    </startactivity>
+
+        <!-- First branch. -->
+        <activity name="activity_a1">
+            <successor>activity_a2</successor>
+        </activity>
+        <activity name="activity_a2">
+            <successor>synch_1</successor>
+        </activity>
+        <!-- End first branch -->
+
+        <!-- Second branch. -->
+        <activity name="activity_b1">
+            <successor>activity_b2</successor>
+        </activity>
+        <activity name="activity_b2">
+            <successor>synch_1</successor>
+        </activity>
+        <!-- End second branch -->
+
+    <!-- Merge branches -->
+    <synchronization name="synch_1">
+        <successor>excl_choice_1</successor>
+    </synchronization>
+
+    <!-- Add an if-condition that does not match. -->
+    <exclusivechoice name="excl_choice_1">
+        <default-successor>activity_c1</default-successor>
+        <conditional-successor>
+            <equals field-value="test_attribute1" other-value="test_attribute2" />
+            <successor>activity_c2</successor>
+        </conditional-successor>
+        <conditional-successor>
+            <equals field-value="test_attribute1" other-value="test_attribute2" />
+            <successor>activity_c3</successor>
+        </conditional-successor>
+    </exclusivechoice>
+
+    <!-- Conditional activities. -->
+    <activity name="activity_c1">
+        <successor>excl_choice_2</successor>
+    </activity>
+    <activity name="activity_c2">
+        <successor>excl_choice_2</successor>
+    </activity>
+    <activity name="activity_c3">
+        <successor>excl_choice_2</successor>
+    </activity>
+
+    <!-- An if-condition that matches. -->
+    <exclusivechoice name="excl_choice_2">
+        <default-successor>activity_d1</default-successor>
+        <conditional-successor>
+            <equals field-value="test_attribute1" other-value="test_attribute2" />
+            <successor>activity_d2</successor>
+        </conditional-successor>
+        <conditional-successor>
+            <equals field-value="test_attribute1" other-value="test_attribute1" />
+            <successor>activity_d3</successor>
+        </conditional-successor>
+    </exclusivechoice>
+
+    <!-- Conditional activities. -->
+    <activity name="activity_d1">
+        <successor>multi_choice_1</successor>
+    </activity>
+    <activity name="activity_d2">
+        <successor>multi_choice_1</successor>
+    </activity>
+    <activity name="activity_d3">
+        <successor>multi_choice_1</successor>
+    </activity>
+
+    <!-- Split branches using a multi-choice. -->
+    <multichoice name="multi_choice_1">
+        <conditional-successor>
+            <equals field-value="test_attribute1" other-value="test_attribute1" />
+            <successor>activity_e1</successor>
+        </conditional-successor>
+        <conditional-successor>
+            <equals field-value="test_attribute1" other-value="test_attribute2" />
+            <successor>activity_e2</successor>
+        </conditional-successor>
+        <conditional-successor>
+            <equals field-value="test_attribute2" other-value="test_attribute2" />
+            <successor>activity_e3</successor>
+        </conditional-successor>
+    </multichoice>
+
+    <!-- Conditional branches. -->
+    <activity name="activity_e1">
+        <successor>struct_synch_merge_1</successor>
+    </activity>
+    <activity name="activity_e2">
+        <successor>struct_synch_merge_1</successor>
+    </activity>
+    <activity name="activity_e3">
+        <successor>struct_synch_merge_1</successor>
+    </activity>
+
+    <!-- Structured synchronizing merge. -->
+    <structuredsynchronizingmerge name="struct_synch_merge_1"
+                                  context="multi_choice_1">
+        <successor>activity_f1</successor>
+        <successor>activity_f2</successor>
+        <successor>activity_f3</successor>
+    </structuredsynchronizingmerge>
+
+    <!-- Implicit split. -->
+    <activity name="activity_f1">
+        <successor>struct_discriminator_1</successor>
+    </activity>
+    <activity name="activity_f2">
+        <successor>struct_discriminator_1</successor>
+    </activity>
+    <activity name="activity_f3">
+        <successor>struct_discriminator_1</successor>
+    </activity>
+
+    <!-- Structured discriminator. -->
+    <structureddiscriminator name="struct_discriminator_1"
+                             context="struct_synch_merge_1">
+        <successor>excl_choice_3</successor>
+    </structureddiscriminator>
+
+    <!-- Loop to excl_choice_1 (once). -->
+    <exclusivechoice name="excl_choice_3">
+        <default-successor>last</default-successor>
+        <conditional-successor>
+            <not-equals field-value="excl_choice_3_reached" other-value="two" />
+            <successor>excl_choice_1</successor>
+        </conditional-successor>
+    </exclusivechoice>
+
+    <!-- A final activity. -->
+    <activity name="last">
+        <successor>end</successor>
+    </activity>
+</process-definition>

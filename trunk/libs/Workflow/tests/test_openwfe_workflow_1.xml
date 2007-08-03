@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<process-definition name="flow" revision="1.6">
+  <description>
+  A test workflow that contains all possible activities.
+  </description>
+  <concurrence name="concurrence_1">
+    <sequence name="sequence_1">
+      <activity name="activity_a1" />
+      <activity name="activity_a2" />
+      <if name="if_condition_1">
+        <equals field-value="test_attribute1" other-value="test_attribute1" />
+        <activity name="activity_a3" />
+      </if>
+      <if name="if_condition_2">
+        <equals field-value="test_attribute1" other-value="test_attribute2" />
+        <activity name="activity_a4" />
+        <activity name="activity_a5" />
+      </if>
+    </sequence>
+    <sequence name="sequence_2">
+      <activity name="activity_b1" />
+      <activity name="activity_b2" />
+    </sequence>
+  </concurrence>
+  <activity name="activity_c1" />
+  <activity name="activity_c2" />
+</process-definition>
