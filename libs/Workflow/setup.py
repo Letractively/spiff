@@ -1,39 +1,30 @@
 from setuptools import setup, find_packages
-setup(name             = 'Spiff Guard',
-      version          = '1.3.0',
-      description      = 'A Generic Access List Library',
+setup(name             = 'Spiff Workflow',
+      version          = '0.0.1',
+      description      = 'A workflow framework based on www.workflowpatterns.com',
       long_description = \
 """
-Spiff Guard is a library implementing generic access lists for Python.
-It was designed to provide a clean API, high security and high
-scalability. Working with an ACL is as simple as this:
+Spiff Workflow is a library implementing generic workflows in pure Python.
+It was designed to provide a clean API, and is very easy to use.
 
-::
+You can find a list of supported workflow patterns in the `README file`_
+included with the package.
 
-    guard.grant(group, view, website)
-    guard.grant(user, write, website)
-    if guard.has_permission(user, view, website):
-        print 'Permission granted.'
-
-Spiff Guard's features include recursion, groups, sections, inverse lookup,
-and a lot more. For a more complete example, have a look into the
-`README file`_ included with the package.
-
-.. _README file: http://spiff.googlecode.com/svn/trunk/libs/Guard/README
+.. _README file: http://spiff.googlecode.com/svn/trunk/libs/Workflow/README
 """,
       author           = 'Samuel Abels',
       author_email     = 'cheeseshop.python.org@debain.org',
-      license          = 'GPLv2',
+      license          = 'lGPLv2',
       packages         = [''],
-      requires         = ['sqlalchemy'],
-      provides         = ['Guard'],
+      requires         = [''],
+      provides         = ['Workflow'],
       url              = 'http://code.google.com/p/spiff/',
       classifiers      = [
-        'Development Status :: 5 - Production/Stable',
+        'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: GNU General Public License (GPL)',
+        'License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)',
         'Programming Language :: Python',
-        'Topic :: Security',
+        'Topic :: Other/Nonlisted Topic',
         'Topic :: Software Development :: Libraries',
         'Topic :: Software Development :: Libraries :: Python Modules'
       ])
