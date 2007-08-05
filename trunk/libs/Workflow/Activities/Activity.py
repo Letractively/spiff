@@ -14,9 +14,8 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 from Exception import WorkflowException
-from Trackable import Trackable
 
-class Activity(Trackable):
+class Activity(object):
     """
     This class implements a activity with one or more inputs and
     one or more outputs.
@@ -33,7 +32,6 @@ class Activity(Trackable):
         parent -- a reference to the parent (Activity)
         name -- a name for the pattern (string)
         """
-        Trackable.__init__(self)
         assert parent is not None
         assert name   is not None
         self._parent   = parent
@@ -42,7 +40,7 @@ class Activity(Trackable):
         self.outputs   = []
         self.user_func = None
         self.manual    = False
-        self._parent.add(self)
+        self._parent.add_notify(self)
 
 
     def connect(self, activity):

@@ -23,3 +23,7 @@ class WorkflowException(Exception):
         """
         Exception.__init__(self, '%s: %s' % (sender.name, error))
         self.sender = sender
+
+
+class StorageException(Exception):
+    pass

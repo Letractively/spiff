@@ -1,3 +1,1 @@
 * Implement more workflow activities.
-* Replace asserts and add a lot of very descriptive exceptions to expose
-  API usage errors.
