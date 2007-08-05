@@ -39,13 +39,15 @@ class Job(object):
         """
         Returns True if an attribute with the given name exists, False
         otherwise.
+
+        name -- an attribute name (string)
         """
         if self.attributes.has_key(name):
             return 1
         return 0
 
 
-    def set_attribute(self, *args, **kwargs):
+    def set_attribute(self, **kwargs):
         """
         Defines the given attribute/value pairs.
         """
@@ -54,8 +56,12 @@ class Job(object):
 
     def get_attribute(self, name, default = None):
         """
-        Returns the value of the attribute with the given name, or None if
-        the attribute does not exist.
+        Returns the value of the attribute with the given name, or the given
+        default value if the attribute does not exist.
+
+        name -- an attribute name (string)
+        default -- the default value the be returned if the attribute does not
+                   exist.
         """
         if self.attributes.has_key(name):
             return self.attributes[name]
@@ -65,6 +71,9 @@ class Job(object):
     def set_context_data(self, context, *args, **kwargs):
         """
         Defines the given attribute/value pairs for the given context.
+
+        context -- Specifies an identifier for the scope in which the data
+                   is defined. You may also use an object as identifier.
         """
         if not self.context_data.has_key(repr(context)):
             self.context_data[repr(context)] = {}
@@ -75,6 +84,9 @@ class Job(object):
         """
         Removes the data with the given name, or all data if no name was
         given.
+
+        context -- Specifies an identifier for the scope in which the data
+                   is deleted. You may also use an object as identifier.
         """
         if name is None:
             self.context_data[repr(context)] = {}
@@ -86,6 +98,9 @@ class Job(object):
         """
         Returns the value of the data with the given name, or None if
         the attribute does not exist.
+
+        context -- Specifies an identifier for the scope from which the data
+                   is returned. You may also use an object as identifier.
         """
         if not self.context_data.has_key(repr(context)):
             return default
@@ -96,8 +111,11 @@ class Job(object):
 
     def branch_completed_notify(self, branch):
         """
-        Called by a Branch when it has completed.
+        Called by an associated branch when it has completed.
+
+        branch -- the branch that has completed. (Branch)
         """
+        assert self.branch_list['%s' % branch.id] is not None
         del self.branch_list['%s' % branch.id]
 
 
@@ -105,6 +123,8 @@ class Job(object):
         """
         Splits the given Branch and adds the new branch to the same
         job. Returns the new Branch.
+
+        branch -- the branch that has completed. (Branch)
         """
         self.id_pool += 1
         new_branch = branch.copy(self.id_pool)

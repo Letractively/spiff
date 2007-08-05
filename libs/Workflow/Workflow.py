@@ -31,5 +31,8 @@ class Workflow(object):
         self.end        = StubActivity(self, 'End')
 
 
-    def add(self, activity):
+    def add_notify(self, activity):
+        """
+        Called by an activity when it was added into the workflow.
+        """
         self.activities.append(activity)

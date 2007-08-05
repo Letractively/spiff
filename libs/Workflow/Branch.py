@@ -13,9 +13,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
-from Trackable import Trackable
-
-class Branch(Trackable):
+class Branch(object):
     """
     This class implements a branch (= a taken path) within the workflow.
     """
@@ -27,7 +25,6 @@ class Branch(Trackable):
         assert id             is not None
         assert job            is not None
         assert first_activity is not None
-        Trackable.__init__(self)
         self.id         = id
         self.job        = job
         self.path       = [first_activity] # The path of taken/next activities.
@@ -46,12 +43,16 @@ class Branch(Trackable):
 
 
     def clear_queue(self):
+        """
+        Removes all future activities from the path.
+        """
         self.path = self.path[:self.current]
 
 
     def queue_next_activity(self, activity):
         """
-        Called by an activity to activate its successor in the workflow.
+        Called by an activity to enqueue its successor in the workflow to the
+        branch.
         """
         assert activity is not None
         self.path.append(activity)
@@ -67,7 +68,7 @@ class Branch(Trackable):
 
     def execute_next(self):
         """
-        Executes the next activity in the branch if it is ready to run.
+        Executes the next activity in the branch (if it is ready to run).
         Returns True if the activity was executed, False otherwise.
         """
         assert self.id >= 0

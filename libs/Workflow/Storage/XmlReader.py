@@ -16,6 +16,7 @@
 import os
 import xml.dom.minidom as minidom
 import Activities
+from Exception  import StorageException
 from Workflow   import Workflow
 from Activities import *
 
@@ -42,6 +43,10 @@ class XmlReader(object):
                              'not-equals': Activities.MultiChoice.NOT_EQUAL}
 
 
+    def _raise(self, error):
+        raise StorageException('%s in XML file.' % error)
+
+
     def _read_logical(self, node):
         """
         Reads the logical tag from the given node, returns a tuple
@@ -52,7 +57,8 @@ class XmlReader(object):
         term1 = node.getAttribute('field-value')
         op    = node.nodeName.lower()
         term2 = node.getAttribute('other-value')
-        assert op in self.logical_tags.keys()
+        if not self.logical_tags.has_key(op):
+            self._raise('Invalid operator')
         return (term1, self.logical_tags[op], term2)
 
 
@@ -70,17 +76,22 @@ class XmlReader(object):
             if node.nodeType != minidom.Node.ELEMENT_NODE:
                 continue
             if node.nodeName.lower() == 'successor':
-                assert activity_name   is None # Duplicates not allowed.
-                assert node.firstChild is not None
+                if activity_name is not None:
+                    self._raise('Duplicate activity name %s' % activity_name)
+                if node.firstChild is None:
+                    self._raise('Successor tag without an activity name')
                 activity_name = node.firstChild.nodeValue
             elif node.nodeName.lower() in self.logical_tags:
-                assert condition is None # Duplicates not yet supported.
+                if condition is not None:
+                    self._raise('Multiple conditions are not yet supported')
                 condition = self._read_logical(node)
             else:
-                raise Exception("Unknown node: %s" % node.nodeName)
+                self._raise('Unknown node: %s' % node.nodeName)
 
+        if condition is None:
+            self._raise('Missing condition in conditional statement')
         if activity_name is None:
-            raise Exception("%s has no successor" % start_node.nodeName)
+            self._raise('A %s has no activity specified' % start_node.nodeName)
         return (condition, activity_name)
 
 
@@ -97,13 +108,14 @@ class XmlReader(object):
         type    = start_node.nodeName.lower()
         name    = start_node.getAttribute('name').lower()
         context = start_node.getAttribute('context').lower()
-        assert self.activity_map.has_key(type)
+        if not self.activity_map.has_key(type):
+            self._raise('Invalid activity type "%s"' % type)
         if type == 'startactivity':
             name = 'start'
         if name == '':
-            raise Exception("Invalid activity name: '%s'" % name)
+            self._raise('Invalid activity name "%s"' % name)
         if self.read_activities.has_key(name):
-            raise Exception("Duplicate activity name %s" % name)
+            self._raise('Duplicate activity name "%s"' % name)
 
         # Create a new instance of the activity.
         module = self.activity_map[type]
@@ -113,7 +125,7 @@ class XmlReader(object):
             activity = module(workflow, name)
         else:
             if not self.read_activities.has_key(context):
-                raise Exception("Context %s does not exist" % context)
+                self._raise('Context %s does not exist' % context)
             context  = self.read_activities[context][0]
             activity = module(workflow, name, context)
 
@@ -126,12 +138,13 @@ class XmlReader(object):
                 pass
             elif node.nodeName == 'successor' \
               or node.nodeName == 'default-successor':
-                assert node.firstChild is not None
+                if node.firstChild is None:
+                    self._raise('Empty %s tag' % node.nodeName)
                 successors.append((None, node.firstChild.nodeValue))
             elif node.nodeName == 'conditional-successor':
                 successors.append(self._read_condition(workflow, node))
             else:
-                raise Exception("Unknown node: %s" % node.nodeName)
+                self._raise('Unknown node: %s' % node.nodeName)
 
         self.read_activities[name] = (activity, successors)
 
@@ -144,7 +157,8 @@ class XmlReader(object):
         start_node -- the xml structure (xml.dom.minidom.Node)
         """
         name = start_node.getAttribute('name')
-        assert name is not None
+        if name == '':
+            self._raise('%s without a name attribute' % start_node.nodeName)
 
         # Read all activities and create a list of successors.
         workflow             = Workflow(name)
@@ -157,7 +171,7 @@ class XmlReader(object):
             elif self.activity_map.has_key(node.nodeName.lower()):
                 self.read_activity(workflow, node)
             else:
-                raise Exception("Unknown node: %s" % node.nodeName)
+                self._raise('Unknown node: %s' % node.nodeName)
 
         # Remove the default start-activity from the workflow.
         workflow.start = self.read_activities['start'][0]
@@ -168,7 +182,7 @@ class XmlReader(object):
             activity, successors = self.read_activities[name]
             for condition, successor_name in successors:
                 if not self.read_activities.has_key(successor_name):
-                    raise Exception("Unknown successor: %s" % successor_name)
+                    self._raise('Unknown successor: "%s"' % successor_name)
                 successor, foo = self.read_activities[successor_name]
                 if condition is None:
                     activity.connect(successor)
