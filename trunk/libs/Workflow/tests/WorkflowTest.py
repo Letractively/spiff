@@ -25,6 +25,7 @@ class WorkflowTest(unittest.TestCase):
         step        = job.get_attribute('step', 0) + 1
         job.set_attribute(**{reached_key: n_reached})
         job.set_attribute(two             = 2)
+        job.set_attribute(three           = 3)
         job.set_attribute(step            = step)
         job.set_attribute(test_attribute1 = 'false')
         job.set_attribute(test_attribute2 = 'true')
@@ -134,9 +135,24 @@ class WorkflowTest(unittest.TestCase):
         discrim_1.connect(excl_choice_3)
         excl_choice_3.connect_if(('excl_choice_3_reached', ExclusiveChoice.NOT_EQUAL, 'two'), excl_choice_1)
 
+        # Split into 3 branches, and implicitly split twice in addition.
+        multi_instance_1 = MultiInstance(self.wf, 'multi_instance_1', 'three')
+        excl_choice_3.connect(multi_instance_1)
+
+        # Parallel activities.
+        g1 = Activity(self.wf, "activity_g1")
+        g2 = Activity(self.wf, "activity_g2")
+        multi_instance_1.connect(g1)
+        multi_instance_1.connect(g2)
+
+        # StructuredSynchronizingMerge
+        syncmerge2 = StructuredSynchronizingMerge(self.wf, "struct_synch_merge_2", multi_instance_1)
+        g1.connect(syncmerge2)
+        g2.connect(syncmerge2)
+
         # Add a final activity.
         last = Activity(self.wf, "last")
-        excl_choice_3.connect(last)
+        syncmerge2.connect(last)
 
         last.connect(self.wf.end)
         self.runWorkflow(self.wf)
@@ -163,25 +179,33 @@ class WorkflowTest(unittest.TestCase):
                 (3, 'activity_e1'),
                 (4, 'activity_e3'),
                 (4, 'struct_synch_merge_1'),
-                (5, 'activity_f2'),
                 (4, 'activity_f1'),
+                (5, 'activity_f2'),
                 (6, 'activity_f3'),
-                (5, 'struct_discriminator_1'),
-                (5, 'excl_choice_3'),
-                (5, 'excl_choice_1'),
-                (5, 'activity_c1'),
-                (5, 'excl_choice_2'),
-                (5, 'activity_d3'),
-                (5, 'multi_choice_1'),
-                (8, 'activity_e3'),
+                (4, 'struct_discriminator_1'),
+                (4, 'excl_choice_3'),
+                (4, 'excl_choice_1'),
+                (4, 'activity_c1'),
+                (4, 'excl_choice_2'),
+                (4, 'activity_d3'),
+                (4, 'multi_choice_1'),
                 (7, 'activity_e1'),
-                (7, 'struct_synch_merge_1'),
+                (8, 'activity_e3'),
+                (8, 'struct_synch_merge_1'),
+                (8, 'activity_f1'),
                 (9, 'activity_f2'),
                 (10, 'activity_f3'),
-                (7, 'activity_f1'),
-                (9, 'struct_discriminator_1'),
-                (9, 'excl_choice_3'),
-                (9, 'last')]
+                (8, 'struct_discriminator_1'),
+                (8, 'excl_choice_3'),
+                (8, 'multi_instance_1'),
+                (11, 'activity_g1'),
+                (12, 'activity_g2'),
+                (13, 'activity_g1'),
+                (14, 'activity_g2'),
+                (15, 'activity_g1'),
+                (16, 'activity_g2'),
+                (16, 'struct_synch_merge_2'),
+                (16, 'last')]
 
         # Check whether the correct route was taken.
         for i, (branch, name) in enumerate(path):

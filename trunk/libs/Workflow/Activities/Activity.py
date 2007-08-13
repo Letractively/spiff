@@ -19,9 +19,9 @@ class Activity(object):
     """
     This class implements a activity with one or more inputs and
     one or more outputs.
-    If more than one input is connected, the activity does an implicit
+    If more than one input is connected, the activity performs an implicit
     multi merge.
-    If more than one output is connected, the activity does an implicit
+    If more than one output is connected, the activity performs an implicit
     parallel split.
     """
 

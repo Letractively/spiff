@@ -18,6 +18,10 @@ Supported Workflow Patterns
  8. Multi-Merge
  9. Structured Discriminator
 10. Arbitrary Cycles
+11. Implicit Termination
+12. Multiple Instances without Synchronization
+13. Multiple Instances with a Priori Design-Time Knowledge
+14. Multiple Instances with a Priori Run-Time Knowledge
 
 
 Contact

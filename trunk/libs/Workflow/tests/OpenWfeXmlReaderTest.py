@@ -57,10 +57,10 @@ class OpenWfeXmlReaderTest(unittest.TestCase):
 
         path = [(1, 'Start'),
                 (1, 'concurrence_1'),
-                (3, 'activity_b1'),
                 (2, 'activity_a1'),
-                (3, 'activity_b2'),
+                (3, 'activity_b1'),
                 (2, 'activity_a2'),
+                (3, 'activity_b2'),
                 (2, 'if_condition_1'),
                 (2, 'activity_a3'),
                 (2, 'if_condition_1'),

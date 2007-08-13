@@ -135,12 +135,32 @@
 
     <!-- Loop to excl_choice_1 (once). -->
     <exclusivechoice name="excl_choice_3">
-        <default-successor>last</default-successor>
+        <default-successor>multi_instance_1</default-successor>
         <conditional-successor>
             <not-equals field-value="excl_choice_3_reached" other-value="two" />
             <successor>excl_choice_1</successor>
         </conditional-successor>
     </exclusivechoice>
+
+    <!-- Split into 3 branches, and implicitly split twice in addition. -->
+    <multiinstance name="multi_instance_1" times="three">
+        <successor>activity_g1</successor>
+        <successor>activity_g2</successor>
+    </multiinstance>
+
+    <!-- Parallel activities. -->
+    <activity name="activity_g1">
+        <successor>struct_synch_merge_2</successor>
+    </activity>
+    <activity name="activity_g2">
+        <successor>struct_synch_merge_2</successor>
+    </activity>
+
+    <!-- Structured synchronizing merge. -->
+    <structuredsynchronizingmerge name="struct_synch_merge_2"
+                                  context="multi_instance_1">
+        <successor>last</successor>
+    </structuredsynchronizingmerge>
 
     <!-- A final activity. -->
     <activity name="last">
