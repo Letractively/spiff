@@ -121,6 +121,9 @@ class XmlReader(object):
         module = self.activity_map[type]
         if type == 'startactivity':
             activity = module(workflow)
+        elif type == 'multiinstance':
+            times = start_node.getAttribute('times').lower()
+            activity = module(workflow, name, times)
         elif context == '':
             activity = module(workflow, name)
         else:

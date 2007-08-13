@@ -139,6 +139,8 @@ class Job(object):
         """
         while len(self.branch_list) > 0:
             branch_list = self.branch_list.copy()
-            for id in branch_list:
-                branch = branch_list[id]
+            branch_ids  = [int(id) for id in branch_list.keys()]
+            branch_ids.sort()
+            for id in branch_ids:
+                branch = branch_list['%s' % id]
                 branch.execute_next()

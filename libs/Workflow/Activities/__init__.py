@@ -1,6 +1,7 @@
 __all__ = ['Activity',
            'ExclusiveChoice',
            'MultiChoice',
+           'MultiInstance',
            'StartActivity',
            'StructuredDiscriminator',
            'StructuredSynchronizingMerge',
@@ -10,6 +11,7 @@ __all__ = ['Activity',
 from Activity                     import Activity
 from ExclusiveChoice              import ExclusiveChoice
 from MultiChoice                  import MultiChoice
+from MultiInstance                import MultiInstance
 from StartActivity                import StartActivity
 from StructuredDiscriminator      import StructuredDiscriminator
 from StructuredSynchronizingMerge import StructuredSynchronizingMerge
