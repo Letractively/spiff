@@ -63,12 +63,13 @@ class MultiChoice(Activity):
         activity.connect_notify(self)
 
 
-    def get_activated_branches(self, job):
+    def get_activated_branches(self, job, branch):
         """
         Returns the list of branches that were activated in the previous call
         of execute().
         """
-        return job.get_context_data(self, 'activated_branches', [])
+        context = branch.get_path(None, self)
+        return job.get_context_data(context, 'activated_branches', [])
 
 
     def test(self):
@@ -138,12 +139,13 @@ class MultiChoice(Activity):
             # Create a new branch.
             new_branch = job.split_branch(branch)
             new_branch.queue_next_activity(output)
-            output.completed_notify(job, new_branch, self)
+            new_branch.activity_completed_notify(self)
             activated_branches.append(new_branch)
 
         # Store how many branches were activated, because
         # a subsequent structured merge may require the information.
-        job.set_context_data(self, activated_branches = activated_branches)
+        context = branch.get_path(None, self)
+        job.set_context_data(context, activated_branches = activated_branches)
 
         # Terminate the original branch.
         job.branch_completed_notify(branch)

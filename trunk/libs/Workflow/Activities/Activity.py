@@ -35,12 +35,14 @@ class Activity(object):
         assert parent is not None
         assert name   is not None
         self._parent   = parent
+        self.id        = None
         self.name      = name
         self.inputs    = []
         self.outputs   = []
         self.user_func = None
         self.manual    = False
         self._parent.add_notify(self)
+        assert self.id is not None
 
 
     def connect(self, activity):
@@ -77,6 +79,8 @@ class Activity(object):
         Checks whether all required attributes are set. Throws an exception
         if an error was detected.
         """
+        if self.id is None:
+            raise WorkflowException(self, 'Activity is not yet instanciated.')
         if len(self.inputs) < 1:
             raise WorkflowException(self, 'No input activity connected.')
         elif len(self.outputs) < 1:
@@ -99,15 +103,12 @@ class Activity(object):
         if self.user_func is not None:
             self.user_func(job, branch, self)
 
-        # Notify the next activity.
-        self.outputs[0].completed_notify(job, branch, self)
-        branch.queue_next_activity(self.outputs[0])
-
         # If we have more than one output, implicitly split.
         for output in self.outputs[1:]:
             new_branch = job.split_branch(branch)
             new_branch.queue_next_activity(output)
-            output.completed_notify(job, new_branch, self)
+            new_branch.activity_completed_notify(self)
 
+        branch.queue_next_activity(self.outputs[0])
         branch.activity_completed_notify(self)
         return True

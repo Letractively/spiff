@@ -51,9 +51,12 @@ class StructuredDiscriminator(Activity):
 
 
     def completed_notify(self, job, branch, activity):
+        # The context is the path up to the point where the split happened.
+        context = branch.get_path(None, self.split_activity)
+
         # Look up which inputs have already completed.
         default   = dict([(repr(i), False) for i in self.inputs])
-        completed = job.get_context_data(self, 'completed', default)
+        completed = job.get_context_data(context, 'completed', default)
 
         # Make sure that the current notification is not a duplicate.
         assert completed[repr(activity)] == False
@@ -62,7 +65,7 @@ class StructuredDiscriminator(Activity):
         # If this is the first notification, activate, else discontinue the
         # branch.
         if completed.values().count(True) == 1:
-            job.set_context_data(self, may_fire = True)
+            job.set_context_data(context, may_fire = True)
         else:
             job.branch_completed_notify(branch)
 
@@ -70,7 +73,7 @@ class StructuredDiscriminator(Activity):
         if completed.values().count(False) == 0:
             completed = default
 
-        job.set_context_data(self, completed = completed)
+        job.set_context_data(context, completed = completed)
 
 
 
@@ -83,9 +86,12 @@ class StructuredDiscriminator(Activity):
         assert branch is not None
         self.test()
 
+        # The context is the path up to the point where the split happened.
+        context = branch.get_path(None, self.split_activity)
+
         # Make sure that all inputs have completed.
-        if job.get_context_data(self, 'may_fire', False) == False:
+        if job.get_context_data(context, 'may_fire', False) == False:
             return False
-        job.set_context_data(self, may_fire = False)
+        job.set_context_data(context, may_fire = False)
 
         return Activity.execute(self, job, branch)

@@ -36,3 +36,4 @@ class Workflow(object):
         Called by an activity when it was added into the workflow.
         """
         self.activities.append(activity)
+        activity.id = len(self.activities)

@@ -103,8 +103,6 @@ class ExclusiveChoice(MultiChoice):
             else:
                 assert False  # Invalid operator.
 
-        output.completed_notify(job, branch, self)
         branch.queue_next_activity(output)
-
         branch.activity_completed_notify(self)
         return True

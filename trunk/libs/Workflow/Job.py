@@ -27,12 +27,12 @@ class Job(object):
         Constructor.
         """
         assert workflow is not None
-        self.workflow      = workflow
-        self.attributes    = {}
-        self.context_data  = {}
-        self.branch_list   = {}
-        self.id_pool       = 1
-        self.branch_list['1'] = Branch(self.id_pool, self, workflow.start)
+        self.workflow         = workflow
+        self.attributes       = {}
+        self.context_data     = {}
+        self.branch_list      = {}
+        self.branch_id_pool   = 1
+        self.branch_list['1'] = Branch(self.branch_id_pool, self, workflow.start)
 
 
     def is_defined(self, name):
@@ -126,11 +126,27 @@ class Job(object):
 
         branch -- the branch that has completed. (Branch)
         """
-        self.id_pool += 1
-        new_branch = branch.copy(self.id_pool)
+        self.branch_id_pool += 1
+        new_branch = branch.copy(self.branch_id_pool)
         new_branch.clear_queue()
-        self.branch_list['%s' % self.id_pool] = new_branch
+        self.branch_list['%s' % self.branch_id_pool] = new_branch
         return new_branch
+
+
+    def execute_next(self):
+        """
+        Runs the next activity.
+        Returns True if completed, False otherwise.
+        """
+        if len(self.branch_list) <= 0:
+            return True
+        branch_ids  = [int(id) for id in self.branch_list.keys()]
+        branch_ids.sort()
+        for id in branch_ids:
+            branch = self.branch_list['%s' % id]
+            if not branch.execute_next():
+                return False
+        return True
 
 
     def execute_all(self):
