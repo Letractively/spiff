@@ -9,28 +9,72 @@ from Activities import *
 from Workflow   import Workflow
 from Job        import Job
 
+def print_name(job, branch, activity):
+    reached_key = "%s_reached" % str(activity.name)
+    n_reached   = job.get_attribute(reached_key, 0) + 1
+    step        = job.get_attribute('step', 0) + 1
+    job.set_attribute(**{reached_key: n_reached})
+    job.set_attribute(two             = 2)
+    job.set_attribute(three           = 3)
+    job.set_attribute(step            = step)
+    job.set_attribute(test_attribute1 = 'false')
+    job.set_attribute(test_attribute2 = 'true')
+
+    # Record the path in an attribute.
+    taken_path = job.get_attribute('taken_path', [])
+    taken_path.append((branch.id, activity.name))
+    job.set_attribute(taken_path = taken_path)
+    #print "%s. Branch %s: %s reached %s times" % (step, branch.id, activity.name, n_reached)
+
 class WorkflowTest(unittest.TestCase):
     """
     WARNING: Make sure to keep this test in sync with XmlReaderTest! Any
     change will break both tests!
     """
     def setUp(self):
-        self.wf   = Workflow()
-        self.path = []
+        self.wf            = Workflow()
+        self.expected_path = [( 1, 'Start'),
+                              ( 1, 'activity_a1'),
+                              ( 2, 'activity_b1'),
+                              ( 1, 'activity_a2'),
+                              ( 2, 'activity_b2'),
+                              ( 2, 'synch_1'),
+                              ( 2, 'excl_choice_1'),
+                              ( 2, 'activity_c1'),
+                              ( 2, 'excl_choice_2'),
+                              ( 2, 'activity_d3'),
+                              ( 2, 'multi_choice_1'),
+                              ( 3, 'activity_e1'),
+                              ( 4, 'activity_e3'),
+                              ( 4, 'struct_synch_merge_1'),
+                              ( 4, 'activity_f1'),
+                              ( 5, 'activity_f2'),
+                              ( 6, 'activity_f3'),
+                              ( 4, 'struct_discriminator_1'),
+                              ( 4, 'excl_choice_3'),
+                              ( 4, 'excl_choice_1'),
+                              ( 4, 'activity_c1'),
+                              ( 4, 'excl_choice_2'),
+                              ( 4, 'activity_d3'),
+                              ( 4, 'multi_choice_1'),
+                              ( 7, 'activity_e1'),
+                              ( 8, 'activity_e3'),
+                              ( 8, 'struct_synch_merge_1'),
+                              ( 8, 'activity_f1'),
+                              ( 9, 'activity_f2'),
+                              (10, 'activity_f3'),
+                              ( 8, 'struct_discriminator_1'),
+                              ( 8, 'excl_choice_3'),
+                              ( 8, 'multi_instance_1'),
+                              (11, 'activity_g1'),
+                              (12, 'activity_g2'),
+                              (13, 'activity_g1'),
+                              (14, 'activity_g2'),
+                              (15, 'activity_g1'),
+                              (16, 'activity_g2'),
+                              (16, 'struct_synch_merge_2'),
+                              (16, 'last')]
 
-
-    def print_name(self, job, branch, activity):
-        reached_key = "%s_reached" % str(activity.name)
-        n_reached   = job.get_attribute(reached_key, 0) + 1
-        step        = job.get_attribute('step', 0) + 1
-        job.set_attribute(**{reached_key: n_reached})
-        job.set_attribute(two             = 2)
-        job.set_attribute(three           = 3)
-        job.set_attribute(step            = step)
-        job.set_attribute(test_attribute1 = 'false')
-        job.set_attribute(test_attribute2 = 'true')
-        #print "%s. Branch %s: %s reached %s times" % (step, branch.id, activity.name, n_reached)
-        self.path.append((branch.id, activity.name))
 
 
     def format_path(self, path):
@@ -109,7 +153,7 @@ class WorkflowTest(unittest.TestCase):
         multichoice.connect_if(('test_attribute2', ExclusiveChoice.EQUAL, 'test_attribute2'), e3)
 
         # StructuredSynchronizingMerge
-        syncmerge = StructuredSynchronizingMerge(self.wf, "struct_synch_merge_1", multichoice)
+        syncmerge = Synchronization(self.wf, "struct_synch_merge_1", multichoice)
         e1.connect(syncmerge)
         e2.connect(syncmerge)
         e3.connect(syncmerge)
@@ -146,7 +190,7 @@ class WorkflowTest(unittest.TestCase):
         multi_instance_1.connect(g2)
 
         # StructuredSynchronizingMerge
-        syncmerge2 = StructuredSynchronizingMerge(self.wf, "struct_synch_merge_2", multi_instance_1)
+        syncmerge2 = Synchronization(self.wf, "struct_synch_merge_2", multi_instance_1)
         g1.connect(syncmerge2)
         g2.connect(syncmerge2)
 
@@ -160,71 +204,26 @@ class WorkflowTest(unittest.TestCase):
 
     def runWorkflow(self, wf):
         for activity in wf.activities:
-            activity.user_func = self.print_name
+            activity.user_func = print_name
 
+        # Execute all activities within the Job.
         job = Job(wf)
         job.execute_all()
 
-        path = [(1, 'Start'),
-                (1, 'activity_a1'),
-                (2, 'activity_b1'),
-                (1, 'activity_a2'),
-                (2, 'activity_b2'),
-                (2, 'synch_1'),
-                (2, 'excl_choice_1'),
-                (2, 'activity_c1'),
-                (2, 'excl_choice_2'),
-                (2, 'activity_d3'),
-                (2, 'multi_choice_1'),
-                (3, 'activity_e1'),
-                (4, 'activity_e3'),
-                (4, 'struct_synch_merge_1'),
-                (4, 'activity_f1'),
-                (5, 'activity_f2'),
-                (6, 'activity_f3'),
-                (4, 'struct_discriminator_1'),
-                (4, 'excl_choice_3'),
-                (4, 'excl_choice_1'),
-                (4, 'activity_c1'),
-                (4, 'excl_choice_2'),
-                (4, 'activity_d3'),
-                (4, 'multi_choice_1'),
-                (7, 'activity_e1'),
-                (8, 'activity_e3'),
-                (8, 'struct_synch_merge_1'),
-                (8, 'activity_f1'),
-                (9, 'activity_f2'),
-                (10, 'activity_f3'),
-                (8, 'struct_discriminator_1'),
-                (8, 'excl_choice_3'),
-                (8, 'multi_instance_1'),
-                (11, 'activity_g1'),
-                (12, 'activity_g2'),
-                (13, 'activity_g1'),
-                (14, 'activity_g2'),
-                (15, 'activity_g1'),
-                (16, 'activity_g2'),
-                (16, 'struct_synch_merge_2'),
-                (16, 'last')]
-
         # Check whether the correct route was taken.
-        for i, (branch, name) in enumerate(path):
-            self.assert_(i < len(self.path),
-                         'Taken route is too short: %s' % self.path)
-            self.assert_(name == self.path[i][1],
-                         'Incorrect route taken at step %s (%s):\n%s' % (i + 1, self.path[i][1], self.format_path(self.path)))
-        self.assert_(len(self.path) == len(path),
-                     'Taken route is too long: %s' % self.path)
+        taken_path = job.get_attribute('taken_path', [])
+        for i, (branch, name) in enumerate(self.expected_path):
+            self.assert_(i < len(taken_path),
+                         'Taken route is too short: %s' % taken_path)
+            self.assert_(name == taken_path[i][1],
+                         'Incorrect route taken at step %s (%s):\n%s' % (i + 1, taken_path[i][1], self.format_path(taken_path)))
+        self.assert_(len(taken_path) == len(self.expected_path),
+                     'Taken route is too long: %s' % taken_path)
 
         # Check whether all activities were in the correct branch.
-        for i, (branch, name) in enumerate(path):
-            self.assert_(branch == self.path[i][0],
-                         'Step %s (%s) in incorrect branch:\n%s' % (i + 1, self.path[i][1], self.format_path(self.path)))
+        for i, (branch, name) in enumerate(self.expected_path):
+            self.assert_(branch == taken_path[i][0],
+                         'Step %s (%s) in incorrect branch:\n%s' % (i + 1, taken_path[i][1], self.format_path(taken_path)))
 
 if __name__ == '__main__':
     unittest.TextTestRunner(verbosity = 2).run(suite())
-
-#import pickle
-#output = open('data.pkl', 'wb')
-#pickle.dump(one, output)
-#output.close()

@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import os, sys, unittest
 modules = ['OpenWfeXmlReaderTest',
+           'PersistenceTest',
            'WorkflowTest',
            'XmlReaderTest']
 

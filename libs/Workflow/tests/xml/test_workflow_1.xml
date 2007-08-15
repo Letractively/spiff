@@ -109,12 +109,11 @@
     </activity>
 
     <!-- Structured synchronizing merge. -->
-    <structuredsynchronizingmerge name="struct_synch_merge_1"
-                                  context="multi_choice_1">
+    <synchronization name="struct_synch_merge_1" context="multi_choice_1">
         <successor>activity_f1</successor>
         <successor>activity_f2</successor>
         <successor>activity_f3</successor>
-    </structuredsynchronizingmerge>
+    </synchronization>
 
     <!-- Implicit split. -->
     <activity name="activity_f1">
@@ -157,10 +156,10 @@
     </activity>
 
     <!-- Structured synchronizing merge. -->
-    <structuredsynchronizingmerge name="struct_synch_merge_2"
-                                  context="multi_instance_1">
+    <synchronization name="struct_synch_merge_2"
+                     context="multi_instance_1">
         <successor>last</successor>
-    </structuredsynchronizingmerge>
+    </synchronization>
 
     <!-- A final activity. -->
     <activity name="last">

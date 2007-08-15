@@ -7,7 +7,6 @@ def suite():
 
 from WorkflowTest      import WorkflowTest
 from Storage           import XmlReader
-from Job               import Job
 from xml.parsers.expat import ExpatError
 
 class XmlReaderTest(WorkflowTest):
