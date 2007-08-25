@@ -53,7 +53,7 @@ class Discriminator(Activity):
 
     def completed_notify(self, job, branch_node, activity):
         # The context is the path up to the point where the split happened.
-        context = branch_node.get_path(None, self.split_activity)
+        context = branch_node.find_path(None, self.split_activity)
 
         # Look up which inputs have already completed.
         default   = dict([(repr(i.id), False) for i in self.inputs])
@@ -89,7 +89,7 @@ class Discriminator(Activity):
         self.test()
 
         # The context is the path up to the point where the split happened.
-        context = branch_node.get_path(None, self.split_activity)
+        context = branch_node.find_path(None, self.split_activity)
 
         # Make sure that all inputs have completed.
         if job.get_context_data(context, 'may_fire', False) == False:

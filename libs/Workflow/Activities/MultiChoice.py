@@ -69,7 +69,7 @@ class MultiChoice(Activity):
         Returns the list of branch_nodes that were activated in the previous call
         of execute().
         """
-        context = branch_node.get_path(None, self)
+        context = branch_node.find_path(None, self)
         return job.get_context_data(context, 'activated_branch_nodes', [])
 
 
@@ -144,7 +144,7 @@ class MultiChoice(Activity):
 
         # Store the info of how many branch_nodes were activated, because
         # a subsequent structured merge may require the information.
-        context = branch_node.get_path(None, self)
+        context = branch_node.find_path(None, self)
         job.set_context_data(context, activated_branch_nodes = activated_branch_nodes)
         branch_node.activity_status_changed_notify(self, COMPLETED)
 
