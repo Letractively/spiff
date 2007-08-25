@@ -87,7 +87,7 @@ class OpenWfeXmlReader(object):
         assert condition is not None
         assert match     is not None
         choice = ExclusiveChoice(workflow, name)
-        end    = Activity(workflow, name)
+        end    = Activity(workflow, name + '_end')
         if nomatch is None:
             choice.connect(end)
         else:
@@ -138,7 +138,7 @@ class OpenWfeXmlReader(object):
         assert start_node.nodeName.lower() == 'concurrence'
         name = start_node.getAttribute('name').lower()
         multichoice = MultiChoice(workflow, name)
-        synchronize = Synchronization(workflow, name, multichoice)
+        synchronize = Synchronization(workflow, name + '_end', multichoice)
         for node in start_node.childNodes:
             if node.nodeType != minidom.Node.ELEMENT_NODE:
                 continue

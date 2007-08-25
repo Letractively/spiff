@@ -51,10 +51,3 @@ class StubActivity(Activity):
             raise WorkflowException(self, 'No input activity connected.')
         elif len(self.outputs) != 0:
             raise WorkflowException(self, 'StubActivity with an output.')
-
-
-    def execute(self, job, branch):
-        """
-        Runs the activity.
-        """
-        raise WorkflowException(self, 'StubActivity can not be executed.')

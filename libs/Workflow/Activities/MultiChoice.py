@@ -14,13 +14,14 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 import re
-from Exception import WorkflowException
-from Activity  import Activity
+from BranchNode import *
+from Exception  import WorkflowException
+from Activity   import Activity
 
 class MultiChoice(Activity):
     """
     This class represents an if condition where multiple conditions may match
-    at the same time, creating multiple branches.
+    at the same time, creating multiple branch_nodees.
     It has two or more inputs and two or more outputs.
     """
     EQUAL,          \
@@ -63,13 +64,13 @@ class MultiChoice(Activity):
         activity.connect_notify(self)
 
 
-    def get_activated_branches(self, job, branch):
+    def get_activated_branch_nodes(self, job, branch_node):
         """
-        Returns the list of branches that were activated in the previous call
+        Returns the list of branch_nodes that were activated in the previous call
         of execute().
         """
-        context = branch.get_path(None, self)
-        return job.get_context_data(context, 'activated_branches', [])
+        context = branch_node.get_path(None, self)
+        return job.get_context_data(context, 'activated_branch_nodes', [])
 
 
     def test(self):
@@ -93,21 +94,21 @@ class MultiChoice(Activity):
                 raise WorkflowException(self, 'Term 2 not specified.')
 
 
-    def execute(self, job, branch):
+    def execute(self, job, branch_node):
         """
         Runs the activity. Should not be called directly.
         Returns True if completed, False otherwise.
         """
         assert job is not None
-        assert branch is not None
+        assert branch_node is not None
         self.test()
 
         # Run user code, if any.
         if self.user_func is not None:
-            self.user_func(job, branch, self)
+            self.user_func(job, branch_node, self)
 
         # Find all matching conditions.
-        activated_branches = []
+        activated_branch_nodes = []
         for condition, output in self.cond_activities:
             matches = False
             if condition is None:
@@ -136,17 +137,15 @@ class MultiChoice(Activity):
             if not matches:
                 continue
 
-            # Create a new branch.
-            new_branch = job.split_branch(branch)
-            new_branch.queue_next_activity(output)
-            new_branch.activity_completed_notify(self)
-            activated_branches.append(new_branch)
+            # Create a new branch_node.
+            new_branch_node = branch_node.add_child(output)
+            output.completed_notify(job, branch_node, self)
+            activated_branch_nodes.append(new_branch_node)
 
-        # Store how many branches were activated, because
+        # Store the info of how many branch_nodes were activated, because
         # a subsequent structured merge may require the information.
-        context = branch.get_path(None, self)
-        job.set_context_data(context, activated_branches = activated_branches)
+        context = branch_node.get_path(None, self)
+        job.set_context_data(context, activated_branch_nodes = activated_branch_nodes)
+        branch_node.activity_status_changed_notify(self, COMPLETED)
 
-        # Terminate the original branch.
-        job.branch_completed_notify(branch)
-        return False
+        return True

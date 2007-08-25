@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 setup(name             = 'Spiff Workflow',
-      version          = '0.0.1',
+      version          = '0.0.2',
       description      = 'A workflow framework based on www.workflowpatterns.com',
       long_description = \
 """

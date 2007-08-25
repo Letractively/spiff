@@ -1,0 +1,33 @@
+2007-08-25 Samuel Abels <http://debain.org>
+
+	* BranchNode.py: New tree-based model for branches.
+	* Branch.py: Removed in favor of BranchNode.py.
+	* Activities/*.py: Replace the old Branch handling by the new branch nodes.
+
+2007-08-15 Samuel Abels <http://debain.org>
+
+	* Branch.py: Path tracking within branches now works properly.
+	* Activities/Synchronization.py: Fixed several bugs with nested
+	synchronizations.
+	* Activities/*Synchronization.py: Merged the structured synchronization with
+	the unstructured one.
+	* *.py: Added support for persistence using Python's built in pickle module.
+	* *.py: Lots of cleanups.
+
+2007-08-13 Samuel Abels <http://debain.org>
+
+	* Activities/MultiInstance.py: Implement support for Multiple Instance patterns.
+	* Job.py (execute_all): Now works through the branches in an ordered and
+	predictable way. 
+
+2007-08-05 Samuel Abels <http://debain.org>
+
+	* Trackable.py: Got rid of useless signal/event mechanism.
+	* Exception.py, Storage/*.py: Use the StorageException class.
+	* *.py: Replace many assertions by more meaningful and descriptive
+	exceptions.
+	* *.py: Minor API documentation improvements. 
+
+2007-08-03 Samuel Abels <http://debain.org>
+
+	* Initial release 0.0.1

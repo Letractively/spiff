@@ -14,13 +14,14 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 import re
+from BranchNode  import *
 from Exception   import WorkflowException
 from MultiChoice import MultiChoice
 
 class ExclusiveChoice(MultiChoice):
     """
     This class represents an exclusive choice (an if condition) activity
-    where precisely one outgoing branch is selected. If none of the
+    where precisely one outgoing branch_node is selected. If none of the
     given condition matches, a default activity is selected.
     It has two or more inputs and two or more outputs.
     """
@@ -57,18 +58,18 @@ class ExclusiveChoice(MultiChoice):
             raise WorkflowException(self, 'A default output is required.')
 
 
-    def execute(self, job, branch):
+    def execute(self, job, branch_node):
         """
         Runs the activity. Should not be called directly.
         Returns True if completed, False otherwise.
         """
         assert job is not None
-        assert branch is not None
+        assert branch_node is not None
         self.test()
 
         # Run user code, if any.
         if self.user_func is not None:
-            self.user_func(job, branch, self)
+            self.user_func(job, branch_node, self)
 
         # Find the first matching condition.
         output = self.default_activity
@@ -103,6 +104,7 @@ class ExclusiveChoice(MultiChoice):
             else:
                 assert False  # Invalid operator.
 
-        branch.queue_next_activity(output)
-        branch.activity_completed_notify(self)
+        new_branch_node = branch_node.add_child(output)
+        output.completed_notify(job, branch_node, self)
+        branch_node.activity_status_changed_notify(self, COMPLETED)
         return True

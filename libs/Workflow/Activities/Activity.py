@@ -13,7 +13,8 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
-from Exception import WorkflowException
+from BranchNode import *
+from Exception  import WorkflowException
 
 class Activity(object):
     """
@@ -63,12 +64,12 @@ class Activity(object):
         self.inputs.append(activity)
 
 
-    def completed_notify(self, job, branch, activity):
+    def completed_notify(self, job, branch_node, activity):
         """
         Called by the previous activity to let us know that it has finished.
 
         job -- the job in which this method is executed
-        branch -- the branch in which this method is executed
+        branch_node -- the branch_node in which this method is executed
         activity -- the activity in which this method is executed
         """
         pass
@@ -87,28 +88,26 @@ class Activity(object):
             raise WorkflowException(self, 'No output activity connected.')
 
 
-    def execute(self, job, branch):
+    def execute(self, job, branch_node):
         """
         Runs the activity. Should not be called directly.
         Returns True if completed, False otherwise.
 
         job -- the job in which this method is executed
-        branch -- the branch in which this method is executed
+        branch_node -- the branch_node in which this method is executed
         """
-        assert job is not None
-        assert branch is not None
+        assert job         is not None
+        assert branch_node is not None
         self.test()
 
         # Run user code, if any.
         if self.user_func is not None:
-            self.user_func(job, branch, self)
+            self.user_func(job, branch_node, self)
 
         # If we have more than one output, implicitly split.
-        for output in self.outputs[1:]:
-            new_branch = job.split_branch(branch)
-            new_branch.queue_next_activity(output)
-            new_branch.activity_completed_notify(self)
+        for output in self.outputs:
+            new_branch_node = branch_node.add_child(output)
+            output.completed_notify(job, branch_node, self)
 
-        branch.queue_next_activity(self.outputs[0])
-        branch.activity_completed_notify(self)
+        branch_node.activity_status_changed_notify(self, COMPLETED)
         return True
