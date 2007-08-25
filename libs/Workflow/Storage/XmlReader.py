@@ -194,7 +194,7 @@ class XmlReader(object):
 
         # Read all activities and create a list of successors.
         workflow             = Workflow(name)
-        self.read_activities = {'end': (workflow.end, [])}
+        self.read_activities = {'end': (StubActivity(workflow, 'End'), [])}
         for node in start_node.childNodes:
             if node.nodeType != minidom.Node.ELEMENT_NODE:
                 continue

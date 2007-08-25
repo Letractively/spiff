@@ -28,7 +28,6 @@ class Workflow(object):
         self.name       = name
         self.activities = []
         self.start      = StartActivity(self)
-        self.end        = StubActivity(self, 'End')
 
 
     def add_notify(self, activity):

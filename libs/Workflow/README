@@ -11,14 +11,14 @@ Supported Workflow Patterns
  1. Sequence [xml/patterns/sequence.xml]
  2. Parallel Split [xml/patterns/parallel_split.xml]
  3. Synchronization [xml/patterns/synchronization.xml]
- 4. Exclusive Choice
- 5. Simple Merge
- 6. Multi-Choice
- 7. Structured Synchronizing Merge
- 8. Multi-Merge
- 9. Structured Discriminator
-10. Arbitrary Cycles
-11. Implicit Termination
+ 4. Exclusive Choice [xml/patterns/exclusive_choice.xml]
+ 5. Simple Merge [xml/patterns/simple_merge.xml]
+ 6. Multi-Choice [xml/patterns/multi_choice.xml]
+ 7. Structured Synchronizing Merge [xml/patterns/structured_synchronizing_merge.xml]
+ 8. Multi-Merge [xml/patterns/multi_merge.xml]
+ 9. Structured Discriminator [xml/patterns/structured_discriminator.xml]
+10. Arbitrary Cycles [xml/patterns/arbitrary_cycles.xml]
+11. Implicit Termination [xml/patterns/implicit_termination.xml]
 12. Multiple Instances without Synchronization [xml/patterns/multi_instance_without_synch.xml]
 13. Multiple Instances with a Priori Design-Time Knowledge
 14. Multiple Instances with a Priori Run-Time Knowledge

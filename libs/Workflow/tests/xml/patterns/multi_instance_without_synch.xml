@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?> 
 <process-definition name="flow" revision="1.0">
-    <description>
-    Pattern 15 (Multiple Instances without Synchronization)
-    </description>
+    <description>Pattern 12 (Multiple Instances without Synchronization)</description>
 
     <!-- Start with an implicit simple split. -->
     <startactivity>
