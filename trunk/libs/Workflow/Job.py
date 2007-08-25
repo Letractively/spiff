@@ -13,7 +13,8 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
-from Branch import Branch
+from Activities import Activity
+from BranchNode import *
 
 class Job(object):
     """
@@ -27,12 +28,14 @@ class Job(object):
         Constructor.
         """
         assert workflow is not None
-        self.workflow         = workflow
-        self.attributes       = {}
-        self.context_data     = {}
-        self.branch_list      = {}
-        self.branch_id_pool   = 1
-        self.branch_list['1'] = Branch(self.branch_id_pool, self, workflow.start)
+        self.workflow     = workflow
+        self.attributes   = {}
+        self.context_data = {}
+        self.branch_tree  = BranchNode(self, Activity(workflow, 'Root'))
+
+        # Prevent the root node from being executed.
+        self.branch_tree.state = COMPLETED
+        self.branch_tree.add_child(workflow.start)
 
 
     def is_defined(self, name):
@@ -109,54 +112,26 @@ class Job(object):
         return self.context_data[repr(context)][name]
 
 
-    def branch_completed_notify(self, branch):
-        """
-        Called by an associated branch when it has completed.
-
-        branch -- the branch that has completed. (Branch)
-        """
-        assert self.branch_list['%s' % branch.id] is not None
-        del self.branch_list['%s' % branch.id]
-
-
-    def split_branch(self, branch):
-        """
-        Splits the given Branch and adds the new branch to the same
-        job. Returns the new Branch.
-
-        branch -- the branch that has completed. (Branch)
-        """
-        self.branch_id_pool += 1
-        new_branch = branch.copy(self.branch_id_pool)
-        new_branch.clear_queue()
-        self.branch_list['%s' % self.branch_id_pool] = new_branch
-        return new_branch
-
-
     def execute_next(self):
         """
         Runs the next activity.
         Returns True if completed, False otherwise.
         """
-        if len(self.branch_list) <= 0:
+        blacklist = []
+        for node in BranchNode.Iterator(self.branch_tree, WAITING):
+            for blacklisted_node in blacklist:
+                if node.is_descendant_of(blacklisted_node):
+                    continue
+            if not node.activity.execute(self, node):
+                blacklist.append(node)
+                continue
             return True
-        branch_ids  = [int(id) for id in self.branch_list.keys()]
-        branch_ids.sort()
-        for id in branch_ids:
-            branch = self.branch_list['%s' % id]
-            if not branch.execute_next():
-                return False
-        return True
+        return False
 
 
     def execute_all(self):
         """
         Runs all branches until completion.
         """
-        while len(self.branch_list) > 0:
-            branch_list = self.branch_list.copy()
-            branch_ids  = [int(id) for id in branch_list.keys()]
-            branch_ids.sort()
-            for id in branch_ids:
-                branch = branch_list['%s' % id]
-                branch.execute_next()
+        while self.execute_next():
+            pass

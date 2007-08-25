@@ -9,7 +9,7 @@ from Activities import *
 from Workflow   import Workflow
 from Job        import Job
 
-def print_name(job, branch, activity):
+def print_name(job, branch_node, activity):
     reached_key = "%s_reached" % str(activity.name)
     n_reached   = job.get_attribute(reached_key, 0) + 1
     step        = job.get_attribute('step', 0) + 1
@@ -21,10 +21,13 @@ def print_name(job, branch, activity):
     job.set_attribute(test_attribute2 = 'true')
 
     # Record the path in an attribute.
-    taken_path = job.get_attribute('taken_path', [])
-    taken_path.append((branch.id, activity.name))
+    taken_path  = job.get_attribute('taken_path', [])
+    split_point = branch_node.get_branch_start()
+    root_id     = branch_node._get_root().id
+    id          = split_point.id - root_id + 1
+    taken_path.append((id, activity.name))
     job.set_attribute(taken_path = taken_path)
-    #print "%s. Branch %s: %s reached %s times" % (step, branch.id, activity.name, n_reached)
+    #print "%s. Branch '%s': %s reached %s times" % (step, id, activity.name, n_reached)
 
 class WorkflowTest(unittest.TestCase):
     """
@@ -34,47 +37,47 @@ class WorkflowTest(unittest.TestCase):
     def setUp(self):
         self.wf            = Workflow()
         self.expected_path = [( 1, 'Start'),
-                              ( 1, 'activity_a1'),
-                              ( 2, 'activity_b1'),
-                              ( 1, 'activity_a2'),
-                              ( 2, 'activity_b2'),
-                              ( 2, 'synch_1'),
-                              ( 2, 'excl_choice_1'),
-                              ( 2, 'activity_c1'),
-                              ( 2, 'excl_choice_2'),
-                              ( 2, 'activity_d3'),
-                              ( 2, 'multi_choice_1'),
-                              ( 3, 'activity_e1'),
-                              ( 4, 'activity_e3'),
-                              ( 4, 'struct_synch_merge_1'),
-                              ( 4, 'activity_f1'),
-                              ( 5, 'activity_f2'),
-                              ( 6, 'activity_f3'),
-                              ( 4, 'struct_discriminator_1'),
-                              ( 4, 'excl_choice_3'),
+                              ( 3, 'activity_a1'),
+                              ( 3, 'activity_a2'),
+                              ( 4, 'activity_b1'),
+                              ( 4, 'activity_b2'),
+                              ( 4, 'synch_1'),
                               ( 4, 'excl_choice_1'),
                               ( 4, 'activity_c1'),
                               ( 4, 'excl_choice_2'),
                               ( 4, 'activity_d3'),
                               ( 4, 'multi_choice_1'),
-                              ( 7, 'activity_e1'),
-                              ( 8, 'activity_e3'),
-                              ( 8, 'struct_synch_merge_1'),
-                              ( 8, 'activity_f1'),
-                              ( 9, 'activity_f2'),
-                              (10, 'activity_f3'),
-                              ( 8, 'struct_discriminator_1'),
-                              ( 8, 'excl_choice_3'),
-                              ( 8, 'multi_instance_1'),
-                              (11, 'activity_g1'),
-                              (12, 'activity_g2'),
-                              (13, 'activity_g1'),
-                              (14, 'activity_g2'),
-                              (15, 'activity_g1'),
-                              (16, 'activity_g2'),
-                              (16, 'struct_synch_merge_2'),
-                              (16, 'last')]
-
+                              (14, 'activity_e1'),
+                              (15, 'activity_e3'),
+                              (15, 'struct_synch_merge_1'),
+                              (18, 'activity_f1'),
+                              (18, 'struct_discriminator_1'),
+                              (18, 'excl_choice_3'),
+                              (18, 'excl_choice_1'),
+                              (18, 'activity_c1'),
+                              (18, 'excl_choice_2'),
+                              (18, 'activity_d3'),
+                              (18, 'multi_choice_1'),
+                              (28, 'activity_e1'),
+                              (29, 'activity_e3'),
+                              (29, 'struct_synch_merge_1'),
+                              (32, 'activity_f1'),
+                              (32, 'struct_discriminator_1'),
+                              (32, 'excl_choice_3'),
+                              (32, 'multi_instance_1'),
+                              (33, 'activity_f2'),
+                              (38, 'activity_g1'),
+                              (39, 'activity_g2'),
+                              (40, 'activity_g1'),
+                              (41, 'activity_g2'),
+                              (42, 'activity_g1'),
+                              (43, 'activity_g2'),
+                              (43, 'struct_synch_merge_2'),
+                              (43, 'last'),
+                              (43, 'End'),
+                              (34, 'activity_f3'),
+                              (19, 'activity_f2'),
+                              (20, 'activity_f3')]
 
 
     def format_path(self, path):
@@ -168,8 +171,8 @@ class WorkflowTest(unittest.TestCase):
         f3 = Activity(self.wf, "activity_f3")
         syncmerge.connect(f3)
 
-        # StructuredDiscriminator
-        discrim_1 = StructuredDiscriminator(self.wf, "struct_discriminator_1", syncmerge)
+        # Discriminator
+        discrim_1 = Discriminator(self.wf, "struct_discriminator_1", syncmerge)
         f1.connect(discrim_1)
         f2.connect(discrim_1)
         f3.connect(discrim_1)
@@ -209,6 +212,8 @@ class WorkflowTest(unittest.TestCase):
         # Execute all activities within the Job.
         job = Job(wf)
         job.execute_all()
+
+        #job.branch_tree.dump()
 
         # Check whether the correct route was taken.
         taken_path = job.get_attribute('taken_path', [])

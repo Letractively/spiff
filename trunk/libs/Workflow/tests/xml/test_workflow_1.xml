@@ -127,10 +127,10 @@
     </activity>
 
     <!-- Structured discriminator. -->
-    <structureddiscriminator name="struct_discriminator_1"
-                             context="struct_synch_merge_1">
+    <discriminator name="struct_discriminator_1"
+                   context="struct_synch_merge_1">
         <successor>excl_choice_3</successor>
-    </structureddiscriminator>
+    </discriminator>
 
     <!-- Loop to excl_choice_1 (once). -->
     <exclusivechoice name="excl_choice_3">

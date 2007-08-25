@@ -13,10 +13,11 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
-from Exception import WorkflowException
-from Activity  import Activity
+from BranchNode import *
+from Exception  import WorkflowException
+from Activity   import Activity
 
-class StructuredDiscriminator(Activity):
+class Discriminator(Activity):
     """
     Once the first of the inputs has completed, the output is activated.
     Completion of the other task is ignored and does not result in a second
@@ -32,7 +33,7 @@ class StructuredDiscriminator(Activity):
         parent -- a reference to the parent (Activity)
         name -- a name for the pattern (string)
         split_activity -- the activity that was previously used to split the
-                          branch
+                          branch_node
         """
         assert split_activity is not None
         Activity.__init__(self, parent, name)
@@ -50,26 +51,27 @@ class StructuredDiscriminator(Activity):
             raise WorkflowException(self, error)
 
 
-    def completed_notify(self, job, branch, activity):
+    def completed_notify(self, job, branch_node, activity):
         # The context is the path up to the point where the split happened.
-        context = branch.get_path(None, self.split_activity)
+        context = branch_node.get_path(None, self.split_activity)
 
         # Look up which inputs have already completed.
-        default   = dict([(repr(i), False) for i in self.inputs])
+        default   = dict([(repr(i.id), False) for i in self.inputs])
         completed = job.get_context_data(context, 'completed', default)
 
         # Make sure that the current notification is not a duplicate.
-        assert completed[repr(activity)] == False
-        completed[repr(activity)] = True
+        assert completed[repr(activity.id)] == False
+        completed[repr(activity.id)] = True
 
         # If this is the first notification, activate, else discontinue the
-        # branch.
+        # branch_node.
         if completed.values().count(True) == 1:
             job.set_context_data(context, may_fire = True)
         else:
-            job.branch_completed_notify(branch)
+            branch_node.drop_children()
+            branch_node.state = CANCELLED
 
-        # If all branches are now completed, reset the state.
+        # If all branch_nodes are now completed, reset the state.
         if completed.values().count(False) == 0:
             completed = default
 
@@ -77,21 +79,21 @@ class StructuredDiscriminator(Activity):
 
 
 
-    def execute(self, job, branch):
+    def execute(self, job, branch_node):
         """
         Runs the activity. Should not be called directly.
         Returns True if completed, False otherwise.
         """
-        assert job    is not None
-        assert branch is not None
+        assert job         is not None
+        assert branch_node is not None
         self.test()
 
         # The context is the path up to the point where the split happened.
-        context = branch.get_path(None, self.split_activity)
+        context = branch_node.get_path(None, self.split_activity)
 
         # Make sure that all inputs have completed.
         if job.get_context_data(context, 'may_fire', False) == False:
             return False
         job.set_context_data(context, may_fire = False)
 
-        return Activity.execute(self, job, branch)
+        return Activity.execute(self, job, branch_node)
