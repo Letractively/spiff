@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<process-definition name="flow" revision="1.6">
+    <description>
+    A test workflow that contains all possible activities.
+    </description>
+
+    <!-- Start with an implicit simple split. -->
+    <startactivity>
+        <successor>first</successor>
+    </startactivity>
+
+    <!-- Merge branches -->
+    <activity name="first">
+        <successor>excl_choice_1</successor>
+    </activity>
+
+    <!-- Add an if-condition that does not match. -->
+    <exclusivechoice name="excl_choice_1">
+        <default-successor>activity_c1</default-successor>
+        <conditional-successor>
+            <equals left-value="1" right-value="2" />
+            <successor>activity_c2</successor>
+        </conditional-successor>
+    </exclusivechoice>
+
+    <!-- Conditional activities. -->
+    <activity name="activity_c1">
+        <successor>activity_d1</successor>
+    </activity>
+    <activity name="activity_c2">
+        <successor>activity_d1</successor>
+    </activity>
+
+    <!-- Implicit simple merge -->
+    <activity name="activity_d1">
+        <successor>last</successor>
+    </activity>
+
+    <!-- A final activity. -->
+    <activity name="last">
+        <successor>end</successor>
+    </activity>
+</process-definition>
