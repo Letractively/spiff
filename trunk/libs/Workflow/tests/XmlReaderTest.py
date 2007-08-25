@@ -29,19 +29,17 @@ class XmlReaderTest(WorkflowTest):
                           'foo')
 
         # 0 byte sized file.
-        self.assertRaises(ExpatError,
-                          self.reader.parse_file,
-                          'xml/test_workflow_empty1.xml')
+        self.assertRaises(ExpatError, self.reader.parse_file, 'xml/empty1.xml')
 
         # File containing only "<xml></xml>".
-        self.reader.parse_file('xml/test_workflow_empty2.xml')
+        self.reader.parse_file('xml/empty2.xml')
 
         # Read a complete workflow.
-        self.reader.parse_file('xml/test_workflow_1.xml')
+        self.reader.parse_file('xml/workflow1.xml')
 
 
     def testRunWorkflow(self):
-        workflow_list = self.reader.parse_file('xml/test_workflow_1.xml')
+        workflow_list = self.reader.parse_file('xml/workflow1.xml')
         for wf in workflow_list:
             self.runWorkflow(wf)
 

@@ -2,6 +2,7 @@
 import os, sys, unittest
 modules = ['BranchNodeTest',
            'OpenWfeXmlReaderTest',
+           'PatternTest',
            'PersistenceTest',
            'WorkflowTest',
            'XmlReaderTest']

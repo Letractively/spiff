@@ -74,37 +74,11 @@ class ExclusiveChoice(MultiChoice):
         # Find the first matching condition.
         output = self.default_activity
         for condition, activity in self.cond_activities:
-            if condition is None:
+            if condition is None or condition.matches(job):
                 output = activity
                 break
 
-            term1 = job.get_attribute(condition[0])
-            term2 = job.get_attribute(condition[2])
-            op    = condition[1]
-            if op == self.EQUAL:
-                if term1 == term2:
-                    output = activity
-                    break
-            elif op == self.NOT_EQUAL:
-                if term1 != term2:
-                    output = activity
-                    break
-            elif op == self.LESS_THAN:
-                if int(term1) < int(term2):
-                    output = activity
-                    break
-            elif op == self.GREATER_THAN:
-                if int(term1) > int(term2):
-                    output = activity
-                    break
-            elif op == self.MATCHES:
-                if re.search(term2, term1):
-                    output = activity
-                    break
-            else:
-                assert False  # Invalid operator.
-
         new_branch_node = branch_node.add_child(output)
-        output.completed_notify(job, branch_node, self)
-        branch_node.activity_status_changed_notify(self, COMPLETED)
+        output.completed_notify(job, branch_node)
+        branch_node.set_status(COMPLETED)
         return True

@@ -31,7 +31,7 @@ class Activity(object):
         Constructor.
 
         parent -- a reference to the parent (Activity)
-        name -- a name for the pattern (string)
+        name -- a name for the activity (string)
         """
         assert parent is not None
         assert name   is not None
@@ -64,13 +64,12 @@ class Activity(object):
         self.inputs.append(activity)
 
 
-    def completed_notify(self, job, branch_node, activity):
+    def completed_notify(self, job, branch_node):
         """
         Called by the previous activity to let us know that it has finished.
 
         job -- the job in which this method is executed
         branch_node -- the branch_node in which this method is executed
-        activity -- the activity in which this method is executed
         """
         pass
 
@@ -107,7 +106,7 @@ class Activity(object):
         # If we have more than one output, implicitly split.
         for output in self.outputs:
             new_branch_node = branch_node.add_child(output)
-            output.completed_notify(job, branch_node, self)
+            output.completed_notify(job, branch_node)
 
-        branch_node.activity_status_changed_notify(self, COMPLETED)
+        branch_node.set_status(COMPLETED)
         return True

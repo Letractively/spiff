@@ -17,6 +17,7 @@ import os
 import xml.dom.minidom as minidom
 import Activities
 from Workflow   import Workflow
+from Exception  import StorageException
 from Activities import *
 
 class OpenWfeXmlReader(object):
@@ -32,22 +33,28 @@ class OpenWfeXmlReader(object):
                               'concurrence',
                               'if',
                               'sequence')
-        self.logical_tags = {'equals':     Activities.MultiChoice.EQUAL,
-                             'not_equals': Activities.MultiChoice.NOT_EQUAL}
+        self.logical_tags = {'equals':     Condition.EQUAL,
+                             'not_equals': Condition.NOT_EQUAL}
+
+
+    def _raise(self, error):
+        raise StorageException('%s in XML file.' % error)
 
 
     def read_condition(self, node):
         """
-        Reads the condition from the given node, returns a tuple
-        (term1, op, term2).
+        Reads the logical tag from the given node, returns a Condition object.
         
         node -- the xml node (xml.dom.minidom.Node)
         """
         term1 = node.getAttribute('field-value')
         op    = node.nodeName.lower()
         term2 = node.getAttribute('other-value')
-        assert op in self.logical_tags.keys()
-        return (term1, self.logical_tags[op], term2)
+        if not self.logical_tags.has_key(op):
+            self._raise('Invalid operator')
+        return Condition(self.logical_tags[op], 
+                         left_attribute  = term1,
+                         right_attribute = term2)
 
 
     def read_if(self, workflow, start_node):

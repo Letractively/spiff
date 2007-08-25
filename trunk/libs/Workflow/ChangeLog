@@ -3,6 +3,16 @@
 	* BranchNode.py: New tree-based model for branches.
 	* Branch.py: Removed in favor of BranchNode.py.
 	* Activities/*.py: Replace the old Branch handling by the new branch nodes.
+	* Condition.py: New.
+	* Activities/*Choice.py, Storage/*.py: Use new condition class to replace
+	old condition tuples. This allows comparisons to be made against attributes
+	as well as (new) static values.
+	* tests/*: Vastly improved all tests. Added an xml/patterns/ directory that
+	will hold one test for each workflow pattern.
+	* *.py: Lots of cleanups.
+	* Activities/AddInstance.py: New, in preparation for the "Multiple Instances
+	without a Priori Run-Time Knowledge" pattern. This is yet untested because
+	there is no trigger activity yet, so the class is not yet useful.
 
 2007-08-15 Samuel Abels <http://debain.org>
 
