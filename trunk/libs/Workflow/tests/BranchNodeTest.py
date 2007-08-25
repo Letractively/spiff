@@ -42,18 +42,18 @@ class BranchNodeTest(unittest.TestCase):
         c11.drop_children()
 
         # Check whether the tree is built properly.
-        expected = """1/4/BranchNode for Activity 1
-  1/2/BranchNode for Activity 2
-    1/0/BranchNode for Activity 3
-    1/0/BranchNode for Activity 7
-  1/0/BranchNode for Activity 8
-  4/0/BranchNode for Activity 9
-  1/2/BranchNode for Activity 2
-    1/2/BranchNode for Activity 3
-      1/1/BranchNode for Activity 4
-        1/0/BranchNode for Activity 5
-      1/0/BranchNode for Activity 6
-    1/0/BranchNode for Activity 7"""
+        expected = """1: 1/4/BranchNode for Activity 1
+  2: 1/2/BranchNode for Activity 2
+    3: 1/0/BranchNode for Activity 3
+    7: 1/0/BranchNode for Activity 7
+  8: 1/0/BranchNode for Activity 8
+  9: 4/0/BranchNode for Activity 9
+  10: 1/2/BranchNode for Activity 2
+    11: 1/2/BranchNode for Activity 3
+      12: 1/1/BranchNode for Activity 4
+        13: 1/0/BranchNode for Activity 5
+      14: 1/0/BranchNode for Activity 6
+    15: 1/0/BranchNode for Activity 7"""
         self.assert_(expected == root.get_dump(),
                      'Expected:\n' + expected + '\n' + \
                      'but got:\n'  + root.get_dump())
@@ -69,6 +69,7 @@ class BranchNodeTest(unittest.TestCase):
         # Run the iterator test.
         result = ''
         for node in BranchNode.Iterator(root, WAITING):
+            result += '%s: ' % node.id
             result += '%s/'  % node.state
             result += '%s/'  % len(node.children)
             result += '%s\n' % node.name
@@ -77,7 +78,7 @@ class BranchNodeTest(unittest.TestCase):
                      'but got:\n'  + result)
 
         # Some simple method tests.
-        self.assert_(c1111.get_path() == '2/3/4/5', 'Invalid path: ' + c1111.get_path())
+        self.assert_(c1111.find_path() == '2/3/4/5', 'Invalid path: ' + c1111.find_path())
         self.assertRaises(WorkflowException, root.split)
 
 if __name__ == '__main__':

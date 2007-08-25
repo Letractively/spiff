@@ -219,7 +219,35 @@ class BranchNode(object):
         return self.parent.get_last_split()
 
 
-    def get_path(self, start = None, end = None):
+    def get_child_of(self, parent):
+        """
+        Returns the ancestor that has the given BranchNode as a parent.
+        If no such ancestor was found, the root node is returned.
+
+        parent -- the wanted parent BranchNode
+        """
+        if self.parent is None:
+            return self
+        if self.parent == parent:
+            return self
+        return self.parent.get_child_of(parent)
+
+
+    def find_ancestor(self, activity):
+        """
+        Returns the ancestor that has the given activity assigned.
+        If no such ancestor was found, the root node is returned.
+
+        activity -- the wanted activity
+        """
+        if self.parent is None:
+            return self
+        if self.parent.activity == activity:
+            return self.parent
+        return self.parent.find_ancestor(activity)
+
+
+    def find_path(self, start = None, end = None):
         """
         Returns a copy of the path, beginning from the first occurence
         of the given start activity, and ending at the LAST occurence
@@ -253,9 +281,10 @@ class BranchNode(object):
         Returns the subtree as a string for debugging.
         """
         dbg  = (' ' * indent * 2)
-        dbg += '%s/' % self.state
-        dbg += '%s/' % len(self.children)
-        dbg += '%s'  % self.name
+        dbg += '%s: ' % self.id
+        dbg += '%s/'  % self.state
+        dbg += '%s/'  % len(self.children)
+        dbg += '%s'   % self.name
         for child in self.children:
             dbg += '\n' + child.get_dump(indent + 1)
         return dbg

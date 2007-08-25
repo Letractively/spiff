@@ -51,7 +51,7 @@ class Synchronization(Activity):
 
     def _completed_notify_structured(self, job, branch_node, activity):
         # The context is the path up to the point where the split happened.
-        context = branch_node.get_path(None, self.split_activity)
+        context = branch_node.find_path(None, self.split_activity)
 
         # It is an error if this method is called after all inputs were
         # already received.
@@ -65,10 +65,13 @@ class Synchronization(Activity):
         default   = dict([(repr(br.id), False) for br in branch_nodes])
         completed = job.get_context_data(context, 'completed', default)
 
+        # Find the point at which the branch started.
+        split_node = branch_node.find_ancestor(self.split_activity)
+        start_node = branch_node.get_child_of(split_node)
+
         # Make sure that the current notification is not a duplicate.
-        branch_start_node = branch_node.get_branch_start()
-        assert completed[repr(branch_start_node.id)] == False
-        completed[repr(branch_start_node.id)] = True
+        assert completed[repr(start_node.id)] == False
+        completed[repr(start_node.id)] = True
 
         # If all branch_nodes are now completed, reset the state.
         if completed.values().count(False) == 0:
@@ -129,7 +132,7 @@ class Synchronization(Activity):
         if self.split_activity is None:
             context = self.id
         else:
-            context = branch_node.get_path(None, self.split_activity)
+            context = branch_node.find_path(None, self.split_activity)
 
         # Make sure that all inputs have completed.
         if job.get_context_data(context, 'may_fire', False) == False:
