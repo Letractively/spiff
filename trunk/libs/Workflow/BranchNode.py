@@ -97,6 +97,14 @@ class BranchNode(object):
         return BranchNode.Iterator(self)
 
 
+    def __setstate__(self, dict):
+        # If unpickled in the same Python process in which a workflow
+        # (BranchNode) is built through the API, we need to make sure
+        # that there iwill not be any ID collisions.
+        if dict['id'] >= self.__class__.id_pool:
+            self.__class__.id_pool = dict['id'] + 1
+
+
     def _get_root(self):
         """
         Returns the first item in the branch.
