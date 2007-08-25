@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?> 
 <process-definition name="flow" revision="1.0">
-    <description>
-    Pattern 15 (Multiple Instances without a priori Run-Time Knowledge)
-    </description>
+    <description>Pattern 15 (Multiple Instances without a priori Run-Time Knowledge)</description>
 
     <!-- Start with an implicit simple split. -->
     <startactivity>

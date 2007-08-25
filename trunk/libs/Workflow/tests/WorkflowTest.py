@@ -216,7 +216,10 @@ class WorkflowTest(unittest.TestCase):
         last = Activity(self.wf, "last")
         syncmerge2.connect(last)
 
-        last.connect(self.wf.end)
+        # Add another final activity :-).
+        end = StubActivity(self.wf, "End")
+        last.connect(end)
+
         self.runWorkflow(self.wf)
 
 

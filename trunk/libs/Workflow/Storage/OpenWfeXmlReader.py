@@ -210,7 +210,7 @@ class OpenWfeXmlReader(object):
                 print "Unknown type:", type
                 assert False # Unknown tag.
 
-        last_activity.connect(workflow.end)
+        last_activity.connect(StubActivity(workflow, 'End'))
         return workflow
 
 

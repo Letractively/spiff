@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?> 
 <process-definition name="flow" revision="1.6">
-    <description>Pattern 8 (Mutli-Merge)</description>
+    <description>Pattern 9 (Structured Discriminator)</description>
 
     <!-- Start with an implicit simple split. -->
     <startactivity>
@@ -11,33 +11,33 @@
     <multichoice name="multi_choice_1">
         <conditional-successor>
             <equals left-field="test_attribute1" right-field="test_attribute1" />
-            <successor>activity_e1</successor>
+            <successor>activity_a1</successor>
         </conditional-successor>
         <conditional-successor>
             <equals left-field="test_attribute1" right-field="test_attribute2" />
-            <successor>activity_e2</successor>
+            <successor>activity_a2</successor>
         </conditional-successor>
         <conditional-successor>
             <equals left-field="test_attribute2" right-field="test_attribute2" />
-            <successor>activity_e3</successor>
+            <successor>activity_a3</successor>
         </conditional-successor>
     </multichoice>
 
     <!-- Conditional branches. -->
-    <activity name="activity_e1">
-        <successor>merge</successor>
+    <activity name="activity_a1">
+        <successor>discriminator</successor>
     </activity>
-    <activity name="activity_e2">
-        <successor>merge</successor>
+    <activity name="activity_a2">
+        <successor>discriminator</successor>
     </activity>
-    <activity name="activity_e3">
-        <successor>merge</successor>
+    <activity name="activity_a3">
+        <successor>discriminator</successor>
     </activity>
 
-    <!-- Implicit multi-merge. -->
-    <activity name="merge">
+    <!-- Structured discriminator. -->
+    <discriminator name="discriminator" context="multi_choice_1">
         <successor>last</successor>
-    </activity>
+    </discriminator>
 
     <!-- A final activity. -->
     <activity name="last">
