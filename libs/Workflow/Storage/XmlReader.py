@@ -39,8 +39,8 @@ class XmlReader(object):
             module = Activities.__dict__[name]
             self.activity_map[name.lower()] = module
 
-        self.logical_tags = {'equals':     Activities.MultiChoice.EQUAL,
-                             'not-equals': Activities.MultiChoice.NOT_EQUAL}
+        self.logical_tags = {'equals':     Condition.EQUAL,
+                             'not-equals': Condition.NOT_EQUAL}
 
 
     def _raise(self, error):
@@ -49,17 +49,35 @@ class XmlReader(object):
 
     def _read_logical(self, node):
         """
-        Reads the logical tag from the given node, returns a tuple
-        (term1, op, term2).
+        Reads the logical tag from the given node, returns a Condition object.
         
         node -- the xml node (xml.dom.minidom.Node)
         """
-        term1 = node.getAttribute('field-value')
-        op    = node.nodeName.lower()
-        term2 = node.getAttribute('other-value')
+        term1_attrib = node.getAttribute('left-field')
+        term1_value  = node.getAttribute('left-value')
+        op           = node.nodeName.lower()
+        term2_attrib = node.getAttribute('right-field')
+        term2_value  = node.getAttribute('right-value')
+        kwargs       = {}
         if not self.logical_tags.has_key(op):
             self._raise('Invalid operator')
-        return (term1, self.logical_tags[op], term2)
+        if term1_attrib != '' and term1_value != '':
+            self._raise('Both, left-field and left-value attributes found')
+        elif term1_attrib == '' and term1_value == '':
+            self._raise('left-field or left-value attribute required')
+        elif term1_value != '':
+            kwargs['left'] = term1_value
+        else:
+            kwargs['left_attribute'] = term1_attrib
+        if term2_attrib != '' and term2_value != '':
+            self._raise('Both, right-field and right-value attributes found')
+        elif term2_attrib == '' and term2_value == '':
+            self._raise('right-field or right-value attribute required')
+        elif term2_value != '':
+            kwargs['right'] = term2_value
+        else:
+            kwargs['right_attribute'] = term2_attrib
+        return Condition(self.logical_tags[op], **kwargs)
 
 
     def _read_condition(self, workflow, start_node):
@@ -122,8 +140,19 @@ class XmlReader(object):
         if type == 'startactivity':
             activity = module(workflow)
         elif type == 'multiinstance':
-            times = start_node.getAttribute('times').lower()
-            activity = module(workflow, name, times)
+            times_field = start_node.getAttribute('times-field').lower()
+            times       = start_node.getAttribute('times').lower()
+            if times == '' and times_field == '':
+                self._raise('Missing "times" or "times-field" in "%s"' % name)
+            elif times != '' and times_field != '':
+                self._raise('Both, "times" and "times-field" in "%s"' % name)
+            elif times != '':
+                times    = int(times)
+                activity = module(workflow, name, times = times)
+            else:
+                activity = module(workflow,
+                                  name,
+                                  times_attribute = times_field)
         elif context == '':
             activity = module(workflow, name)
         else:

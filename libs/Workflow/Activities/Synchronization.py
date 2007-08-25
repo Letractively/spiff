@@ -49,7 +49,7 @@ class Synchronization(Activity):
             raise WorkflowException(self, error)
 
 
-    def _completed_notify_structured(self, job, branch_node, activity):
+    def _completed_notify_structured(self, job, branch_node):
         # The context is the path up to the point where the split happened.
         context = branch_node.find_path(None, self.split_activity)
 
@@ -63,7 +63,9 @@ class Synchronization(Activity):
 
         # Look up which branch_nodes have already completed.
         default   = dict([(repr(br.id), False) for br in branch_nodes])
-        completed = job.get_context_data(context, 'completed', default)
+        completed = job.get_context_data(context, 'completed', {})
+        default.update(completed)
+        completed = default
 
         # Find the point at which the branch started.
         split_node = branch_node.find_ancestor(self.split_activity)
@@ -82,15 +84,13 @@ class Synchronization(Activity):
         # Merge all except for the last branch_node.
         job.set_context_data(context, completed = completed)
         branch_node.drop_children()
-        branch_node.activity_status_changed_notify(activity, COMPLETED)
+        branch_node.set_status(COMPLETED)
 
 
-    def _completed_notify_unstructured(self, job, branch_node, activity):
-        # The context is the path up to this activity.
-        context = self.id
-
+    def _completed_notify_unstructured(self, job, branch_node):
         # It is an error if this method is called after all inputs were
         # already received,
+        context = self.id
         assert job.get_context_data(context, 'may_fire', False) == False
 
         # Look up which branch_nodes have already completed.
@@ -98,8 +98,8 @@ class Synchronization(Activity):
         completed = job.get_context_data(context, 'completed', default)
 
         # Make sure that the current notification is not a duplicate.
-        assert completed[repr(activity.id)] == False
-        completed[repr(activity.id)] = True
+        assert completed[repr(branch_node.activity.id)] == False
+        completed[repr(branch_node.activity.id)] = True
 
         # If all branch_nodes are now completed, reset the state.
         if completed.values().count(False) == 0:
@@ -110,13 +110,13 @@ class Synchronization(Activity):
         # Merge all except for the last branch_node.
         job.set_context_data(context, completed = completed)
         branch_node.drop_children()
-        branch_node.activity_status_changed_notify(activity, COMPLETED)
+        branch_node.set_status(COMPLETED)
 
 
-    def completed_notify(self, job, branch_node, activity):
+    def completed_notify(self, job, branch_node):
         if self.split_activity is None:
-            return self._completed_notify_unstructured(job, branch_node, activity)
-        return self._completed_notify_structured(job, branch_node, activity)
+            return self._completed_notify_unstructured(job, branch_node)
+        return self._completed_notify_structured(job, branch_node)
 
 
     def execute(self, job, branch_node):

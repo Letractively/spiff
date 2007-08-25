@@ -65,7 +65,6 @@ class WorkflowTest(unittest.TestCase):
                               (32, 'struct_discriminator_1'),
                               (32, 'excl_choice_3'),
                               (32, 'multi_instance_1'),
-                              (33, 'activity_f2'),
                               (38, 'activity_g1'),
                               (39, 'activity_g2'),
                               (40, 'activity_g1'),
@@ -75,6 +74,7 @@ class WorkflowTest(unittest.TestCase):
                               (43, 'struct_synch_merge_2'),
                               (43, 'last'),
                               (43, 'End'),
+                              (33, 'activity_f2'),
                               (34, 'activity_f3'),
                               (19, 'activity_f2'),
                               (20, 'activity_f3')]
@@ -120,10 +120,13 @@ class WorkflowTest(unittest.TestCase):
         excl_choice_1.connect(c1)
 
         c2 = Activity(self.wf, "activity_c2")
-        excl_choice_1.connect_if(('test_attribute1', ExclusiveChoice.EQUAL, 'test_attribute2'), c2)
+        cond = Condition(Condition.EQUAL,
+                         left_attribute  = 'test_attribute1',
+                         right_attribute = 'test_attribute2')
+        excl_choice_1.connect_if(cond, c2)
 
         c3 = Activity(self.wf, "activity_c3")
-        excl_choice_1.connect_if(('test_attribute1', ExclusiveChoice.EQUAL, 'test_attribute2'), c3)
+        excl_choice_1.connect_if(cond, c3)
 
         # If-condition that matches.
         excl_choice_2 = ExclusiveChoice(self.wf, "excl_choice_2")
@@ -135,10 +138,13 @@ class WorkflowTest(unittest.TestCase):
         excl_choice_2.connect(d1)
 
         d2 = Activity(self.wf, "activity_d2")
-        excl_choice_2.connect_if(('test_attribute1', ExclusiveChoice.EQUAL, 'test_attribute2'), d2)
+        excl_choice_2.connect_if(cond, d2)
 
         d3 = Activity(self.wf, "activity_d3")
-        excl_choice_2.connect_if(('test_attribute1', ExclusiveChoice.EQUAL, 'test_attribute1'), d3)
+        cond = Condition(Condition.EQUAL,
+                         left_attribute  = 'test_attribute1',
+                         right_attribute = 'test_attribute1')
+        excl_choice_2.connect_if(cond, d3)
 
         # If-condition that does not match.
         multichoice = MultiChoice(self.wf, "multi_choice_1")
@@ -147,13 +153,19 @@ class WorkflowTest(unittest.TestCase):
         d3.connect(multichoice)
 
         e1 = Activity(self.wf, "activity_e1")
-        multichoice.connect_if(('test_attribute1', ExclusiveChoice.EQUAL, 'test_attribute1'), e1)
+        multichoice.connect_if(cond, e1)
 
         e2 = Activity(self.wf, "activity_e2")
-        multichoice.connect_if(('test_attribute1', ExclusiveChoice.EQUAL, 'test_attribute2'), e2)
+        cond = Condition(Condition.EQUAL,
+                         left_attribute  = 'test_attribute1',
+                         right_attribute = 'test_attribute2')
+        multichoice.connect_if(cond, e2)
 
         e3 = Activity(self.wf, "activity_e3")
-        multichoice.connect_if(('test_attribute2', ExclusiveChoice.EQUAL, 'test_attribute2'), e3)
+        cond = Condition(Condition.EQUAL,
+                         left_attribute  = 'test_attribute2',
+                         right_attribute = 'test_attribute2')
+        multichoice.connect_if(cond, e3)
 
         # StructuredSynchronizingMerge
         syncmerge = Synchronization(self.wf, "struct_synch_merge_1", multichoice)
@@ -180,10 +192,13 @@ class WorkflowTest(unittest.TestCase):
         # Loop back to the first exclusive choice.
         excl_choice_3 = ExclusiveChoice(self.wf, 'excl_choice_3')
         discrim_1.connect(excl_choice_3)
-        excl_choice_3.connect_if(('excl_choice_3_reached', ExclusiveChoice.NOT_EQUAL, 'two'), excl_choice_1)
+        cond = Condition(Condition.NOT_EQUAL,
+                         left_attribute  = 'excl_choice_3_reached',
+                         right_attribute = 'two')
+        excl_choice_3.connect_if(cond, excl_choice_1)
 
         # Split into 3 branches, and implicitly split twice in addition.
-        multi_instance_1 = MultiInstance(self.wf, 'multi_instance_1', 'three')
+        multi_instance_1 = MultiInstance(self.wf, 'multi_instance_1', times = 3)
         excl_choice_3.connect(multi_instance_1)
 
         # Parallel activities.

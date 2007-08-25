@@ -123,12 +123,11 @@ class BranchNode(object):
         self.children.append(child)
 
 
-    def activity_status_changed_notify(self, activity, status):
+    def set_status(self, status):
         """
         Called by the associated activity to let us know that its status
         has changed (e.g. from WAITING to COMPLETED.)
         """
-        assert activity == self.activity
         self.state = status
 
 

@@ -54,7 +54,7 @@ class PersistenceTest(WorkflowTest):
 
     def testPickle(self):
         # Read a complete workflow.
-        workflow_list = self.reader.parse_file('xml/test_workflow_1.xml')
+        workflow_list = self.reader.parse_file('xml/workflow1.xml')
         for activity in workflow_list[0].activities:
             activity.user_func = print_name
 

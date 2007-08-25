@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<process-definition name="flow" revision="1.0">
+    <description>Pattern 2 (Parallel Split)</description>
+
+    <!-- Start with an implicit simple split. -->
+    <startactivity>
+        <successor>first</successor>
+    </startactivity>
+    
+    <activity name="first">
+        <successor>activity_f1</successor>
+        <successor>activity_f2</successor>
+        <successor>activity_f3</successor>
+    </activity>
+
+    <activity name="activity_f1">
+        <successor>last</successor>
+    </activity>
+    <activity name="activity_f2">
+        <successor>last</successor>
+    </activity>
+    <activity name="activity_f3">
+        <successor>last</successor>
+    </activity>
+
+    <!-- A final activity. -->
+    <activity name="last">
+        <successor>end</successor>
+    </activity>
+</process-definition>

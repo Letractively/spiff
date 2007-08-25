@@ -18,17 +18,67 @@ from BranchNode import *
 from Exception  import WorkflowException
 from Activity   import Activity
 
+class Condition(object):
+    EQUAL,          \
+    NOT_EQUAL,      \
+    LESS_THAN,      \
+    GREATER_THAN,   \
+    MATCHES         = range(5)
+
+    def __init__(self, op, **kwargs):
+        """
+        Constructor.
+
+        op -- one of EQUAL, NOT_EQUAL, LESS_THAN, GREATER_THAN, MATCHES.
+        kwargs -- must contain one of left_attribute/left and one of
+                  right_attribute/right.
+        """
+        assert op is not None
+        assert kwargs.has_key('left_attribute') or kwargs.has_key('left')
+        assert kwargs.has_key('right_attribute') or kwargs.has_key('right')
+        self.op = op
+        self.left_attribute  = kwargs.get('left_attribute',  None)
+        self.left            = kwargs.get('left',            None)
+        self.right_attribute = kwargs.get('right_attribute', None)
+        self.right           = kwargs.get('right',           None)
+
+    def matches(self, job):
+        # Fetch the value of the left and right expression.
+        if self.left is not None:
+            left = self.left
+        else:
+            left = job.get_attribute(self.left_attribute)
+        if self.right is not None:
+            right = self.right
+        else:
+            right = job.get_attribute(self.right_attribute)
+
+        # Compare according to the operator.
+        if self.op == self.EQUAL:
+            if unicode(left) == unicode(right):
+                return True
+        elif self.op == self.NOT_EQUAL:
+            if unicode(left) != unicode(right):
+                return True
+        elif self.op == self.LESS_THAN:
+            if int(left) < int(right):
+                return True
+        elif self.op == self.GREATER_THAN:
+            if int(left) > int(right):
+                return True
+        elif self.op == self.MATCHES:
+            if re.search(right, left):
+                return True
+        else:
+            assert False  # Invalid operator.
+        return False
+
 class MultiChoice(Activity):
     """
     This class represents an if condition where multiple conditions may match
     at the same time, creating multiple branch_nodees.
     It has two or more inputs and two or more outputs.
     """
-    EQUAL,          \
-    NOT_EQUAL,      \
-    LESS_THAN,      \
-    GREATER_THAN,   \
-    MATCHES         = range(5)
 
     def __init__(self, parent, name):
         """
@@ -38,7 +88,6 @@ class MultiChoice(Activity):
         name -- a name for the pattern (string)
         """
         Activity.__init__(self, parent, name)
-        self.outputs          = []
         self.cond_activities  = []
 
 
@@ -53,10 +102,8 @@ class MultiChoice(Activity):
         """
         Connects an activity that is executed if the condition DOES match.
         
-        condition -- a tuple of (term1, operator, term2), where term1 and
-                     term2 are attribute names, and operator is one of EQUAL,
-                     NOT_EQUAL, LESS_THAN, GREATER_THAN, MATCHES.
-        activity -- the following activity
+        condition -- a condition (Condition)
+        activity -- the conditional activity
         """
         assert activity is not None
         self.outputs.append(activity)
@@ -79,19 +126,15 @@ class MultiChoice(Activity):
         if an error was detected.
         """
         Activity.test(self)
-        if len(self.outputs) < 2:
-            raise WorkflowException(self, 'At least two outputs required.')
+        if len(self.cond_activities) < 1:
+            raise WorkflowException(self, 'At least one output required.')
         for condition, activity in self.cond_activities:
             if activity is None:
                 raise WorkflowException(self, 'Condition with no activity.')
             if condition is None:
                 continue
-            elif condition[0] is None:
-                raise WorkflowException(self, 'Term 1 not specified.')
-            elif condition[1] is None:
-                raise WorkflowException(self, 'Unknown operator.')
-            elif condition[2] is None:
-                raise WorkflowException(self, 'Term 2 not specified.')
+            if condition is None:
+                raise WorkflowException(self, 'Condition is None.')
 
 
     def execute(self, job, branch_node):
@@ -110,42 +153,17 @@ class MultiChoice(Activity):
         # Find all matching conditions.
         activated_branch_nodes = []
         for condition, output in self.cond_activities:
-            matches = False
-            if condition is None:
-                matches = True
-            else:
-                term1 = job.get_attribute(condition[0])
-                term2 = job.get_attribute(condition[2])
-                op    = condition[1]
-                if op == self.EQUAL:
-                    if term1 == term2:
-                        matches = True
-                elif op == self.NOT_EQUAL:
-                    if term1 != term2:
-                        matches = True
-                elif op == self.LESS_THAN:
-                    if int(term1) < int(term2):
-                        matches = True
-                elif op == self.GREATER_THAN:
-                    if int(term1) > int(term2):
-                        matches = True
-                elif op == self.MATCHES:
-                    if re.search(term2, term1):
-                        matches = True
-                else:
-                    assert False  # Invalid operator.
-            if not matches:
+            if condition is not None and not condition.matches(job):
                 continue
 
             # Create a new branch_node.
             new_branch_node = branch_node.add_child(output)
-            output.completed_notify(job, branch_node, self)
+            output.completed_notify(job, branch_node)
             activated_branch_nodes.append(new_branch_node)
 
         # Store the info of how many branch_nodes were activated, because
         # a subsequent structured merge may require the information.
         context = branch_node.find_path(None, self)
         job.set_context_data(context, activated_branch_nodes = activated_branch_nodes)
-        branch_node.activity_status_changed_notify(self, COMPLETED)
-
+        branch_node.set_status(COMPLETED)
         return True

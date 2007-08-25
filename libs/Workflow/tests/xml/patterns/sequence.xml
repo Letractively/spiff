@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<process-definition name="flow" revision="1.0">
+    <description>Pattern 1 (Sequence)</description>
+
+    <startactivity>
+        <successor>first</successor>
+    </startactivity>
+    
+    <activity name="first">
+        <successor>second</successor>
+    </activity>
+
+    <activity name="second">
+        <successor>last</successor>
+    </activity>
+
+    <activity name="last">
+        <successor>end</successor>
+    </activity>
+</process-definition>

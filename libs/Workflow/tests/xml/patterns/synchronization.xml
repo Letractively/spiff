@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<process-definition name="flow" revision="1.0">
+    <description>Pattern 3 (Synchronization)</description>
+
+    <!-- Start with an implicit simple split. -->
+    <startactivity>
+        <successor>first</successor>
+    </startactivity>
+    
+    <activity name="first">
+        <successor>activity_f1</successor>
+        <successor>activity_f2</successor>
+        <successor>activity_f3</successor>
+    </activity>
+
+    <!-- Implicit split. -->
+    <activity name="activity_f1">
+        <successor>synchronization</successor>
+    </activity>
+    <activity name="activity_f2">
+        <successor>synchronization</successor>
+    </activity>
+    <activity name="activity_f3">
+        <successor>synchronization</successor>
+    </activity>
+
+    <!-- A final activity. -->
+    <synchronization name="synchronization">
+        <successor>end</successor>
+    </synchronization>
+</process-definition>

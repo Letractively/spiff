@@ -1,4 +1,6 @@
 __all__ = ['Activity',
+           'AddInstance',
+           'Condition',
            'ExclusiveChoice',
            'MultiChoice',
            'MultiInstance',
@@ -8,8 +10,9 @@ __all__ = ['Activity',
            'Synchronization']
 
 from Activity        import Activity
+from AddInstance     import AddInstance
 from ExclusiveChoice import ExclusiveChoice
-from MultiChoice     import MultiChoice
+from MultiChoice     import MultiChoice, Condition
 from MultiInstance   import MultiInstance
 from StartActivity   import StartActivity
 from Discriminator   import Discriminator

@@ -37,11 +37,11 @@
     <exclusivechoice name="excl_choice_1">
         <default-successor>activity_c1</default-successor>
         <conditional-successor>
-            <equals field-value="test_attribute1" other-value="test_attribute2" />
+            <equals left-field="test_attribute1" right-field="test_attribute2" />
             <successor>activity_c2</successor>
         </conditional-successor>
         <conditional-successor>
-            <equals field-value="test_attribute1" other-value="test_attribute2" />
+            <equals left-field="test_attribute1" right-field="test_attribute2" />
             <successor>activity_c3</successor>
         </conditional-successor>
     </exclusivechoice>
@@ -61,11 +61,11 @@
     <exclusivechoice name="excl_choice_2">
         <default-successor>activity_d1</default-successor>
         <conditional-successor>
-            <equals field-value="test_attribute1" other-value="test_attribute2" />
+            <equals left-field="test_attribute1" right-field="test_attribute2" />
             <successor>activity_d2</successor>
         </conditional-successor>
         <conditional-successor>
-            <equals field-value="test_attribute1" other-value="test_attribute1" />
+            <equals left-field="test_attribute1" right-field="test_attribute1" />
             <successor>activity_d3</successor>
         </conditional-successor>
     </exclusivechoice>
@@ -84,15 +84,15 @@
     <!-- Split branches using a multi-choice. -->
     <multichoice name="multi_choice_1">
         <conditional-successor>
-            <equals field-value="test_attribute1" other-value="test_attribute1" />
+            <equals left-field="test_attribute1" right-field="test_attribute1" />
             <successor>activity_e1</successor>
         </conditional-successor>
         <conditional-successor>
-            <equals field-value="test_attribute1" other-value="test_attribute2" />
+            <equals left-field="test_attribute1" right-field="test_attribute2" />
             <successor>activity_e2</successor>
         </conditional-successor>
         <conditional-successor>
-            <equals field-value="test_attribute2" other-value="test_attribute2" />
+            <equals left-field="test_attribute2" right-field="test_attribute2" />
             <successor>activity_e3</successor>
         </conditional-successor>
     </multichoice>
@@ -136,13 +136,13 @@
     <exclusivechoice name="excl_choice_3">
         <default-successor>multi_instance_1</default-successor>
         <conditional-successor>
-            <not-equals field-value="excl_choice_3_reached" other-value="two" />
+            <not-equals left-field="excl_choice_3_reached" right-field="two" />
             <successor>excl_choice_1</successor>
         </conditional-successor>
     </exclusivechoice>
 
     <!-- Split into 3 branches, and implicitly split twice in addition. -->
-    <multiinstance name="multi_instance_1" times="three">
+    <multiinstance name="multi_instance_1" times-field="three">
         <successor>activity_g1</successor>
         <successor>activity_g2</successor>
     </multiinstance>

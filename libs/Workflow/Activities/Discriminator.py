@@ -51,7 +51,7 @@ class Discriminator(Activity):
             raise WorkflowException(self, error)
 
 
-    def completed_notify(self, job, branch_node, activity):
+    def completed_notify(self, job, branch_node):
         # The context is the path up to the point where the split happened.
         context = branch_node.find_path(None, self.split_activity)
 
@@ -60,8 +60,8 @@ class Discriminator(Activity):
         completed = job.get_context_data(context, 'completed', default)
 
         # Make sure that the current notification is not a duplicate.
-        assert completed[repr(activity.id)] == False
-        completed[repr(activity.id)] = True
+        assert completed[repr(branch_node.activity.id)] == False
+        completed[repr(branch_node.activity.id)] = True
 
         # If this is the first notification, activate, else discontinue the
         # branch_node.

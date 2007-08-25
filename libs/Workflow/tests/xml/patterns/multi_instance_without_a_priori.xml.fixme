@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<process-definition name="flow" revision="1.0">
+    <description>
+    Pattern 15 (Multiple Instances without a priori Run-Time Knowledge)
+    </description>
+
+    <!-- Start with an implicit simple split. -->
+    <startactivity>
+        <successor>add_instance_1</successor>
+        <successor>multi_instance_1</successor>
+    </startactivity>
+
+    <!-- Branch 2 -->
+        <!-- Split into 2 branches, and implicitly split twice in addition. -->
+        <multiinstance name="multi_instance_1" times="2">
+            <successor>activity_g1</successor>
+            <successor>activity_g2</successor>
+        </multiinstance>
+
+        <!-- Parallel activities. -->
+        <activity name="activity_g1">
+            <successor>struct_synch_merge_2</successor>
+        </activity>
+        <activity name="activity_g2">
+            <successor>struct_synch_merge_2</successor>
+        </activity>
+
+        <!-- Structured synchronizing merge. -->
+        <synchronization name="struct_synch_merge_2"
+                         context="multi_instance_1">
+            <successor>last</successor>
+        </synchronization>
+    <!-- End branch 2 -->
+
+    <!-- Branch 1 -->
+        <addinstance name="add_instance_1" context="multi_instance_1">
+            <successor>last</successor>
+        </addinstance>
+    <!-- End branch 1 -->
+
+    <!-- A final activity. -->
+    <synchronization name="last">
+        <successor>end</successor>
+    </synchronization>
+</process-definition>

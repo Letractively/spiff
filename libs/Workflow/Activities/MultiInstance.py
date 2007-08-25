@@ -28,18 +28,22 @@ class MultiInstance(Activity):
     This task has one or more inputs and may have any number of outputs.
     """
 
-    def __init__(self, parent, name, attribute_name):
+    def __init__(self, parent, name, **kwargs):
         """
         Constructor.
         
         parent -- a reference to the parent (Activity)
         name -- a name for the pattern (string)
-        attribute_name -- the name of the attribute that specifies the number
-                          of outgoing branch_nodes.
+        kwargs -- must contain one of the following:
+                    times -- the number of instances to create.
+                    times-attribute -- the name of the attribute that
+                                       specifies the number of outgoing
+                                       instances.
         """
-        assert attribute_name is not None
+        assert kwargs.has_key('times_attribute') or kwargs.has_key('times')
         Activity.__init__(self, parent, name)
-        self.attribute_name = attribute_name
+        self.times_attribute = kwargs.get('times_attribute', None)
+        self.times           = kwargs.get('times',           None)
 
 
     def get_activated_branch_nodes(self, job, branch_node):
@@ -49,6 +53,21 @@ class MultiInstance(Activity):
         """
         context = branch_node.find_path(None, self)
         return job.get_context_data(context, 'activated_branch_nodes', [])
+
+
+    def add_instance(self, job, branch_node):
+        """
+        May be called after execute() was already completed to create an
+        additional outbound instance.
+        """
+        context        = branch_node.find_path(None, self)
+        my_branch_node = branch_node.find_ancestor(self)
+        activated_branch_nodes = job.get_context_data(context, 'activated_branch_nodes', [])
+        for output in self.outputs:
+            new_branch_node = my_branch_node.add_child(output)
+            output.completed_notify(job, my_branch_node)
+            activated_branch_nodes.append(new_branch_node)
+        job.set_context_data(context, activated_branch_nodes = activated_branch_nodes)
 
 
     def execute(self, job, branch_node):
@@ -66,11 +85,13 @@ class MultiInstance(Activity):
 
         # Split.
         activated_branch_nodes = []
-        split_n = job.get_attribute(self.attribute_name)
+        split_n = self.times
+        if split_n is None:
+            split_n = job.get_attribute(self.times_attribute)
         for i in range(split_n):
             for output in self.outputs:
                 new_branch_node = branch_node.add_child(output)
-                output.completed_notify(job, branch_node, self)
+                output.completed_notify(job, branch_node)
                 activated_branch_nodes.append(new_branch_node)
 
         # Store how many branch_nodes were activated, because
@@ -78,5 +99,5 @@ class MultiInstance(Activity):
         context = branch_node.find_path(None, self)
         job.set_context_data(context, activated_branch_nodes = activated_branch_nodes)
 
-        branch_node.activity_status_changed_notify(self, COMPLETED)
-        return False
+        branch_node.set_status(COMPLETED)
+        return True
