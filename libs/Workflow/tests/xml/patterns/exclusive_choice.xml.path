@@ -1,0 +1,8 @@
+Start
+  first
+    excl_choice_1
+      activity_c1
+        excl_choice_2
+          activity_d2
+            last
+              End

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<process-definition name="flow" revision="1.6">
+    <description>Pattern 4 (Exclusive Choice)</description>
+
+    <!-- Start with an implicit simple split. -->
+    <startactivity>
+        <successor>first</successor>
+    </startactivity>
+
+    <!-- Merge branches -->
+    <activity name="first">
+        <successor>excl_choice_1</successor>
+    </activity>
+
+    <!-- Add an if-condition that does not match. -->
+    <exclusivechoice name="excl_choice_1">
+        <default-successor>activity_c1</default-successor>
+        <conditional-successor>
+            <equals left-value="1" right-value="2" />
+            <successor>activity_c2</successor>
+        </conditional-successor>
+        <conditional-successor>
+            <equals left-field="test_attribute1" right-field="test_attribute2" />
+            <successor>activity_c3</successor>
+        </conditional-successor>
+    </exclusivechoice>
+
+    <!-- Conditional activities. -->
+    <activity name="activity_c1">
+        <successor>excl_choice_2</successor>
+    </activity>
+    <activity name="activity_c2">
+        <successor>excl_choice_2</successor>
+    </activity>
+    <activity name="activity_c3">
+        <successor>excl_choice_2</successor>
+    </activity>
+
+    <!-- An if-condition that matches. -->
+    <exclusivechoice name="excl_choice_2">
+        <default-successor>activity_d1</default-successor>
+        <conditional-successor>
+            <equals left-value="1" right-value="1" />
+            <successor>activity_d2</successor>
+        </conditional-successor>
+        <conditional-successor>
+            <equals left-field="test_attribute1" right-field="test_attribute1" />
+            <successor>activity_d3</successor>
+        </conditional-successor>
+    </exclusivechoice>
+
+    <!-- Conditional activities. -->
+    <activity name="activity_d1">
+        <successor>last</successor>
+    </activity>
+    <activity name="activity_d2">
+        <successor>last</successor>
+    </activity>
+    <activity name="activity_d3">
+        <successor>last</successor>
+    </activity>
+
+    <!-- A final activity. -->
+    <activity name="last">
+        <successor>end</successor>
+    </activity>
+</process-definition>
