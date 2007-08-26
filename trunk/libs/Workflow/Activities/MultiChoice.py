@@ -150,7 +150,6 @@ class MultiChoice(Activity):
 
             # Create a new branch_node.
             new_branch_node = branch_node.add_child(output)
-            output.completed_notify(job, branch_node)
             activated_branch_nodes.append(new_branch_node)
 
         # Store the info of how many branch_nodes were activated, because

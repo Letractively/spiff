@@ -30,6 +30,8 @@ Supported Workflow Patterns
 32. Cancelling Partial Join [xml/patterns/cancelling_partial_join.xml]
 33. Generalized AND-Join [xml/patterns/generalized_and_join.xml]
 
+37. Acyclic Synchronizing Merge [xml/patterns/acyclic_synchronizing_merge.xml]
+
 
 Contact
 --------

@@ -66,16 +66,6 @@ class Activity(object):
         self.inputs.append(activity)
 
 
-    def completed_notify(self, job, branch_node):
-        """
-        Called by the previous activity to let us know that it has finished.
-
-        job -- the job in which this method is executed
-        branch_node -- the branch_node in which this method is executed
-        """
-        pass
-
-
     def get_activated_branch_nodes(self, job, branch_node):
         """
         Returns the list of branch_nodes that were activated in the previous call
@@ -121,7 +111,6 @@ class Activity(object):
         activated_branch_nodes = []
         for output in self.outputs:
             new_branch_node = branch_node.add_child(output)
-            output.completed_notify(job, branch_node)
             activated_branch_nodes.append(new_branch_node)
 
         # Store the info of how many branch_nodes were activated, because

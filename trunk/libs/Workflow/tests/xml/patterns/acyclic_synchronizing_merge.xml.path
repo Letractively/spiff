@@ -1,0 +1,9 @@
+Start
+  first
+    activity_f1
+    activity_f2
+    activity_f3
+      excl_choice_1
+        activity_g2
+      join
+        End

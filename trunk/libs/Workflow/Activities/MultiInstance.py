@@ -56,7 +56,6 @@ class MultiInstance(Activity):
         activated_branch_nodes = job.get_context_data(context, 'activated_branch_nodes', [])
         for output in self.outputs:
             new_branch_node = my_branch_node.add_child(output)
-            output.completed_notify(job, my_branch_node)
             activated_branch_nodes.append(new_branch_node)
         job.set_context_data(context, activated_branch_nodes = activated_branch_nodes)
 
@@ -82,7 +81,6 @@ class MultiInstance(Activity):
         for i in range(split_n):
             for output in self.outputs:
                 new_branch_node = branch_node.add_child(output)
-                output.completed_notify(job, branch_node)
                 activated_branch_nodes.append(new_branch_node)
 
         # Store how many branch_nodes were activated, because

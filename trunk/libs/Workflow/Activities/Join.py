@@ -47,102 +47,81 @@ class Join(Activity):
         self.cancel         = kwargs.get('cancel',    False)
 
 
-    def _completed_notify_structured(self, job, branch_node):
-        # The context is the path up to the point where the split happened.
-        context = branch_node.find_path(None, self.split_activity)
+    def _branch_is_complete(self, branch_node):
+        # Determine whether that branch is now completed by checking whether
+        # it has any waiting items other than myself in it.
+        for node in BranchNode.Iterator(branch_node, WAITING):
+            if node.activity == self:
+                continue
+            return False
+        return True
 
+
+    def _may_fire(self, job, branch_node, context, branch_nodes, threshold):
         # If the threshold was already reached, there is nothing else to do.
-        if job.get_context_data(context, 'may_fire', 'no') != 'no':
-            return
+        if job.get_context_data(context, 'fired', 'no') == 'yes':
+            branch_node.set_status(COMPLETED)
+            return False
+
+        # Look up which branch_nodes have already completed.
+        waiting_nodes = []
+        completed     = 0
+        for node in branch_nodes:
+            if self._branch_is_complete(node):
+                completed += 1
+            else:
+                waiting_nodes.append(node)
+
+        # If the threshold was reached, get ready to fire.
+        if completed >= threshold:
+            job.set_context_data(context, fired = 'yes')
+
+            # If this is a cancelling join, cancel all incoming branches,
+            # except for the one that just completed.
+            if self.cancel:
+                for node in waiting_nodes:
+                    node.cancel()
+
+            return True
+
+        # We do NOT set the branch_node status to COMPLETED, because in
+        # case all other incoming activities get cancelled (or never reach
+        # the Join for other reasons, such as reaching a StubActivity), we
+        # need to revisit it.
+        return False
+
+
+    def may_fire(self, job, branch_node):
+        threshold = None
+        if self.threshold is not None:
+            threshold = self.threshold
+
+        # Unstructured context.
+        if self.split_activity is None:
+            # Look at the tree to find all places where this activity is used.
+            nodes = []
+            for node in job.branch_tree:
+                if node.activity != self:
+                    continue
+                nodes.append(node)
+
+            if threshold is None:
+                threshold = len(self.inputs)
+
+            return self._may_fire(job, branch_node, self.id, nodes, threshold)
+
+        # In structured context, the context is the path up to the point where
+        # the split happened.
+        context = branch_node.find_path(None, self.split_activity)
 
         # Retrieve a list of all activated branch_nodes from the associated
         # activity that did the conditional parallel split.
-        branch_nodes = self.split_activity.get_activated_branch_nodes(job, branch_node)
+        nodes = self.split_activity.get_activated_branch_nodes(job, branch_node)
 
-        # Look up which branch_nodes have already completed.
-        default   = dict([(repr(br.id), False) for br in branch_nodes])
-        completed = job.get_context_data(context, 'completed', {})
-        default.update(completed)
-        completed = default
+        if threshold is None:
+            threshold = len(nodes)
 
-        # Find the point at which the branch started.
-        split_node = branch_node.find_ancestor(self.split_activity)
-        start_node = branch_node.get_child_of(split_node)
-
-        # Determine whether that branch is now completed by checking whether
-        # it has any waiting items in it, other than the node that sent the
-        # notification.
-        branch_complete = True
-        for node in BranchNode.Iterator(start_node, WAITING):
-            if node == branch_node or node.activity == self:
-                continue
-            branch_complete = False
-            break
-        completed[repr(start_node.id)] = branch_complete
-
-        # If the threshold was reached, get ready to fire.
-        n_completed = completed.values().count(True)
-        if n_completed == len(completed) \
-          or (self.threshold is not None and n_completed >= self.threshold):
-            job.set_context_data(context, may_fire = 'yes')
-
-            # If this is a cancelling join, cancel all incoming branches,
-            # except for the one that just completed.
-            if self.cancel:
-                nodes = self.split_activity.get_activated_branch_nodes(job, branch_node)
-                nodes.remove(start_node)
-                for node in nodes:
-                    node.cancel()
-
-            return
-
-        # Merge all except for the last branch_node.
-        job.set_context_data(context, completed = completed)
-        branch_node.drop_children()
-        branch_node.set_status(COMPLETED)
-
-
-    def _completed_notify_unstructured(self, job, branch_node):
-        # If the threshold was already reached, there is nothing else to do.
-        context = self.id
-        if job.get_context_data(context, 'may_fire', 'no') != 'no':
-            return
-
-        # Look up which branch_nodes have already completed.
-        default   = dict([(repr(input.id), False) for input in self.inputs])
-        completed = job.get_context_data(context, 'completed', default)
-        completed[repr(branch_node.activity.id)] = True
-
-        # If all branch_nodes are now completed, reset the state.
-        n_completed = completed.values().count(True)
-        if n_completed == len(completed):
-            job.set_context_data(context, completed = default)
-
-        # If the threshold was reached, get ready to fire.
-        if n_completed == len(completed) \
-          or (self.threshold is not None and n_completed >= self.threshold):
-            job.set_context_data(context, may_fire = 'yes')
-
-            # If this is a cancelling join, cancel all incoming branches,
-            # except for the one that just completed.
-            if self.cancel:
-                nodes = self.split_activity.get_activated_branch_nodes(job, branch_node)
-                nodes.remove(start_node)
-                for node in nodes:
-                    node.cancel()
-
-            return
-
-        # Merge all except for the last branch_node.
-        job.set_context_data(context, completed = completed)
-        branch_node.drop_children()
-        branch_node.set_status(COMPLETED)
-
-
-    def completed_notify(self, job, branch_node):
-        if self.split_activity is None:
-            return self._completed_notify_unstructured(job, branch_node)
-        return self._completed_notify_structured(job, branch_node)
+        return self._may_fire(job, branch_node, context, nodes, threshold)
 
 
     def execute(self, job, branch_node):
@@ -161,7 +140,7 @@ class Join(Activity):
             context = branch_node.find_path(None, self.split_activity)
 
         # Make sure that all inputs have completed.
-        if job.get_context_data(context, 'may_fire', 'no') != 'yes':
+        if not self.may_fire(job, branch_node):
             return False
 
         job.set_context_data(context, may_fire = 'done')

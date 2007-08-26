@@ -1,7 +1,3 @@
-* Join.py: Make notifications (completed_notify()) obsolete and find
-  the number of completed branches based solely on the state of the
-  branch tree. That has the advantage that supporting Acyclic
-  Synchronizing Merge will be trivial.
 * Test AddInstance.py.
 * As soon as it is possible to trigger an action twice without
   creating another branch (some kind of asynchronous notification,

@@ -31,6 +31,7 @@ class Job(object):
         self.workflow     = workflow
         self.attributes   = {}
         self.context_data = {}
+        self.last_node    = None
         self.branch_tree  = BranchNode(self, Activity(workflow, 'Root'))
 
         # Prevent the root node from being executed.
@@ -117,7 +118,20 @@ class Job(object):
         Runs the next activity.
         Returns True if completed, False otherwise.
         """
+        # Try to pick up where we left off.
         blacklist = []
+        if self.last_node is not None:
+            try:
+                next = BranchNode.Iterator(self.last_node, WAITING).next()
+            except:
+                next = None
+            self.last_node = None
+            if next is not None and next.activity.execute(self, next):
+                self.last_node = next
+                return True
+            blacklist.append(next)
+
+        # Walk through all waiting activities.
         for node in BranchNode.Iterator(self.branch_tree, WAITING):
             for blacklisted_node in blacklist:
                 if node.is_descendant_of(blacklisted_node):
@@ -125,6 +139,7 @@ class Job(object):
             if not node.activity.execute(self, node):
                 blacklist.append(node)
                 continue
+            self.last_node = node
             return True
         return False
 
