@@ -20,10 +20,11 @@ Supported Workflow Patterns
 10. Arbitrary Cycles [xml/patterns/arbitrary_cycles.xml]
 11. Implicit Termination [xml/patterns/implicit_termination.xml]
 12. Multiple Instances without Synchronization [xml/patterns/multi_instance_without_synch.xml]
-13. Multiple Instances with a Priori Design-Time Knowledge
-14. Multiple Instances with a Priori Run-Time Knowledge
+13. Multiple Instances with a Priori Design-Time Knowledge [xml/patterns/multi_instance_with_a_priori_design_time_knowledge.xml]
+14. Multiple Instances with a Priori Run-Time Knowledge [xml/patterns/multi_instance_with_a_priori_run_time_knowledge.xml]
 
 28. Blocking Discriminator [xml/patterns/blocking_discriminator.xml]
+29. Cancelling Discriminator [xml/patterns/cancelling_discriminator.xml]
 
 
 Contact

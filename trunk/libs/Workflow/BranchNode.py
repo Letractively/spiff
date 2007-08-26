@@ -123,12 +123,27 @@ class BranchNode(object):
         self.children.append(child)
 
 
-    def set_status(self, status):
+    def cancel(self):
+        """
+        Cancels all items in this branch. The status of any items that are
+        already completed is not changed.
+        """
+        if self.state != COMPLETED:
+            self.state = CANCELLED
+        for child in self.children:
+            child.cancel(status)
+
+
+    def set_status(self, status, recursive = False):
         """
         Called by the associated activity to let us know that its status
         has changed (e.g. from WAITING to COMPLETED.)
+        If recursive is True, the status is applied to the tree recursively.
         """
         self.state = status
+        if recursive == True:
+            for child in self.children:
+                child.set_status(status)
 
 
     def get_copy(self):

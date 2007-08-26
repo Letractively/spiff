@@ -111,15 +111,6 @@ class MultiChoice(Activity):
         activity.connect_notify(self)
 
 
-    def get_activated_branch_nodes(self, job, branch_node):
-        """
-        Returns the list of branch_nodes that were activated in the previous call
-        of execute().
-        """
-        context = branch_node.find_path(None, self)
-        return job.get_context_data(context, 'activated_branch_nodes', [])
-
-
     def test(self):
         """
         Checks whether all required attributes are set. Throws an exception

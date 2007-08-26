@@ -153,6 +153,15 @@ class XmlReader(object):
                 activity = module(workflow,
                                   name,
                                   times_attribute = times_field)
+        elif type == 'discriminator':
+            if not self.read_activities.has_key(context):
+                self._raise('Context %s does not exist' % context)
+            context = self.read_activities[context][0]
+            cancel  = start_node.getAttribute('cancel').lower()
+            if cancel == '' or cancel == u'0':
+                activity = module(workflow, name, context)
+            else:
+                activity = module(workflow, name, context, cancel = True)
         elif context == '':
             activity = module(workflow, name)
         else:

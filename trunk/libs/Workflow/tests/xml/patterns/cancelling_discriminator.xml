@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<process-definition name="flow" revision="1.0">
+    <description>Pattern 29 (Cancelling Discriminator)</description>
+
+    <!-- Start with an implicit simple split. -->
+    <startactivity>
+        <successor>first</successor>
+    </startactivity>
+    
+    <activity name="first">
+        <successor>activity_f1</successor>
+        <successor>activity_f2</successor>
+        <successor>activity_f3</successor>
+    </activity>
+
+    <!-- Implicit split. -->
+    <activity name="activity_f1">
+        <successor>struct_discriminator_1</successor>
+    </activity>
+    <activity name="activity_f2">
+        <successor>struct_discriminator_1</successor>
+    </activity>
+    <activity name="activity_f3">
+        <successor>struct_discriminator_1</successor>
+    </activity>
+
+    <!-- Structured discriminator. -->
+    <discriminator name="struct_discriminator_1" context="first" cancel="1">
+        <successor>excl_choice_1</successor>
+    </discriminator>
+
+    <!-- Loop back to the start (once). -->
+    <exclusivechoice name="excl_choice_1">
+        <default-successor>last</default-successor>
+        <conditional-successor>
+            <not-equals left-field="excl_choice_1_reached" right-value="2" />
+            <successor>first</successor>
+        </conditional-successor>
+    </exclusivechoice>
+
+    <!-- A final activity. -->
+    <activity name="last">
+        <successor>end</successor>
+    </activity>
+</process-definition>

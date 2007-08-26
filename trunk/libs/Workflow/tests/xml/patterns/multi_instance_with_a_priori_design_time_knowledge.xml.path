@@ -1,0 +1,9 @@
+Start
+  multi_instance_1
+    activity_g1
+      activity_g2
+    activity_g1
+      activity_g2
+        struct_synch_merge_1
+          last
+            End

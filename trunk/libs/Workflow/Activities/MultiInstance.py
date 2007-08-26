@@ -46,15 +46,6 @@ class MultiInstance(Activity):
         self.times           = kwargs.get('times',           None)
 
 
-    def get_activated_branch_nodes(self, job, branch_node):
-        """
-        Returns the list of branch_nodes that were activated in the previous call
-        of execute().
-        """
-        context = branch_node.find_path(None, self)
-        return job.get_context_data(context, 'activated_branch_nodes', [])
-
-
     def add_instance(self, job, branch_node):
         """
         May be called after execute() was already completed to create an
