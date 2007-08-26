@@ -28,6 +28,7 @@ Supported Workflow Patterns
 30. Structured Partial Join [xml/patterns/structured_partial_join.xml]
 31. Blocking Partial Join [xml/patterns/blocking_partial_join.xml]
 32. Cancelling Partial Join [xml/patterns/cancelling_partial_join.xml]
+33. Generalized AND-Join [xml/patterns/generalized_and_join.xml]
 
 
 Contact

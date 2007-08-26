@@ -2,7 +2,8 @@
 
 	* Activities/Join.py: Replaces Synchronization and Discriminator, now
 	newly supporting: Cancelling Partial Join, Blocking Partial Join,
-	Structured Partial Join, Cancelling Discriminator, Blocking Discriminator.
+	Structured Partial Join, Cancelling Discriminator, Blocking Discriminator,
+	and Generalized AND-Join.
 	* Activities/Synchronization.py: Replaced by Join.
 	* Activities/Discriminator.py: Replaced by Join.
 

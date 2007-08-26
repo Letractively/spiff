@@ -3,5 +3,7 @@ Start
     activity_f1
     activity_f2
     activity_f3
-      join
-        End
+      activity_g3a
+      activity_g3b
+        join
+          End
