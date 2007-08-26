@@ -30,6 +30,14 @@
         <successor>struct_synch_merge_1</successor>
     </activity>
     <activity name="activity_e3">
+        <successor>activity_g3a</successor>
+        <successor>activity_g3b</successor>
+    </activity>
+
+    <activity name="activity_g3a">
+        <successor>struct_synch_merge_1</successor>
+    </activity>
+    <activity name="activity_g3b">
         <successor>struct_synch_merge_1</successor>
     </activity>
 

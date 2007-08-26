@@ -69,9 +69,16 @@ class Join(Activity):
         split_node = branch_node.find_ancestor(self.split_activity)
         start_node = branch_node.get_child_of(split_node)
 
-        # Make sure that the current notification is not a duplicate.
-        assert completed[repr(start_node.id)] == False
-        completed[repr(start_node.id)] = True
+        # Determine whether that branch is now completed by checking whether
+        # it has any waiting items in it, other than the node that sent the
+        # notification.
+        branch_complete = True
+        for node in BranchNode.Iterator(start_node, WAITING):
+            if node == branch_node or node.activity == self:
+                continue
+            branch_complete = False
+            break
+        completed[repr(start_node.id)] = branch_complete
 
         # If the threshold was reached, get ready to fire.
         n_completed = completed.values().count(True)
@@ -104,9 +111,6 @@ class Join(Activity):
         # Look up which branch_nodes have already completed.
         default   = dict([(repr(input.id), False) for input in self.inputs])
         completed = job.get_context_data(context, 'completed', default)
-
-        # Make sure that the current notification is not a duplicate.
-        assert completed[repr(branch_node.activity.id)] == False
         completed[repr(branch_node.activity.id)] = True
 
         # If all branch_nodes are now completed, reset the state.

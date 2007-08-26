@@ -21,6 +21,14 @@
         <successor>join</successor>
     </activity>
     <activity name="activity_f3">
+        <successor>activity_g3a</successor>
+        <successor>activity_g3b</successor>
+    </activity>
+
+    <activity name="activity_g3a">
+        <successor>join</successor>
+    </activity>
+    <activity name="activity_g3b">
         <successor>join</successor>
     </activity>
 

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<process-definition name="flow" revision="1.0">
+    <description>Pattern 33 (Generalized AND-Join)</description>
+
+    <startactivity>
+        <successor>first</successor>
+    </startactivity>
+
+    <!-- Implicitly create 3 branches. -->
+    <!-- FIXME: Currently, there is no way to trigger an activity twice
+         without (implicitly) creating an additional branch. As such,
+         this pattern is not fully tested in this way, because at least
+         one of the branches should be triggered twice. However, in theory
+         it should already work. -->
+    <activity name="first">
+        <successor>activity_e1</successor>
+        <successor>activity_e2</successor>
+        <successor>activity_e3</successor>
+    </activity>
+
+    <!-- Conditional branches. -->
+    <activity name="activity_e1">
+        <successor>activity_f1</successor>
+    </activity>
+    <activity name="activity_e2">
+        <successor>activity_f2</successor>
+    </activity>
+    <activity name="activity_e3">
+        <successor>activity_f3</successor>
+    </activity>
+
+    <!-- Conditional branches. -->
+    <activity name="activity_f1">
+        <successor>struct_synch_merge_1</successor>
+    </activity>
+    <activity name="activity_f2">
+        <successor>struct_synch_merge_1</successor>
+    </activity>
+    <activity name="activity_f3">
+        <successor>struct_synch_merge_1</successor>
+    </activity>
+
+    <!-- Structured synchronizing merge. -->
+    <join name="struct_synch_merge_1" context="first">
+        <successor>excl_choice_1</successor>
+    </join>
+
+    <!-- Loop back to the start (once). -->
+    <exclusivechoice name="excl_choice_1">
+        <default-successor>last</default-successor>
+        <conditional-successor>
+            <not-equals left-field="excl_choice_1_reached" right-value="2" />
+            <successor>first</successor>
+        </conditional-successor>
+    </exclusivechoice>
+
+    <!-- A final activity. -->
+    <activity name="last">
+        <successor>end</successor>
+    </activity>
+</process-definition>
