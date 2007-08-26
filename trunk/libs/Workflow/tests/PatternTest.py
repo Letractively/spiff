@@ -47,11 +47,11 @@ class PatternTest(unittest.TestCase):
                 continue
             xml_filename  = os.path.join(xml_path, filename)
             path_filename = os.path.join(xml_path, filename + '.path')
-            workflow_list = self.reader.parse_file(xml_filename)
             file          = open(path_filename, 'r')
             expected      = file.read()
             file.close()
             try:
+                workflow_list = self.reader.parse_file(xml_filename)
                 self.testWorkflow(workflow_list[0], expected, filename)
             except:
                 print '%s:' % xml_filename

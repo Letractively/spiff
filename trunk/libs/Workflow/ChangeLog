@@ -1,3 +1,11 @@
+2007-08-26 Samuel Abels <http://debain.org>
+
+	* Activities/Join.py: Replaces Synchronization and Discriminator, now
+	newly supporting: Cancelling Partial Join, Blocking Partial Join,
+	Structured Partial Join, Cancelling Discriminator, Blocking Discriminator.
+	* Activities/Synchronization.py: Replaced by Join.
+	* Activities/Discriminator.py: Replaced by Join.
+
 2007-08-25 Samuel Abels <http://debain.org>
 
 	* BranchNode.py: New tree-based model for branches.

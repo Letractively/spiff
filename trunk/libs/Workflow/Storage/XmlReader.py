@@ -123,9 +123,12 @@ class XmlReader(object):
         start_node -- the xml structure (xml.dom.minidom.Node)
         """
         # Extract attributes from the node.
-        type    = start_node.nodeName.lower()
-        name    = start_node.getAttribute('name').lower()
-        context = start_node.getAttribute('context').lower()
+        type      = start_node.nodeName.lower()
+        name      = start_node.getAttribute('name').lower()
+        context   = start_node.getAttribute('context').lower()
+        cancel    = start_node.getAttribute('cancel').lower()
+        threshold = start_node.getAttribute('threshold').lower()
+        kwargs    = {}
         if not self.activity_map.has_key(type):
             self._raise('Invalid activity type "%s"' % type)
         if type == 'startactivity':
@@ -134,6 +137,10 @@ class XmlReader(object):
             self._raise('Invalid activity name "%s"' % name)
         if self.read_activities.has_key(name):
             self._raise('Duplicate activity name "%s"' % name)
+        if cancel != '' and cancel != u'0':
+            kwargs['cancel'] = True
+        if threshold != '':
+            kwargs['threshold'] = int(threshold)
 
         # Create a new instance of the activity.
         module = self.activity_map[type]
@@ -153,22 +160,13 @@ class XmlReader(object):
                 activity = module(workflow,
                                   name,
                                   times_attribute = times_field)
-        elif type == 'discriminator':
-            if not self.read_activities.has_key(context):
-                self._raise('Context %s does not exist' % context)
-            context = self.read_activities[context][0]
-            cancel  = start_node.getAttribute('cancel').lower()
-            if cancel == '' or cancel == u'0':
-                activity = module(workflow, name, context)
-            else:
-                activity = module(workflow, name, context, cancel = True)
         elif context == '':
-            activity = module(workflow, name)
+            activity = module(workflow, name, **kwargs)
         else:
             if not self.read_activities.has_key(context):
                 self._raise('Context %s does not exist' % context)
             context  = self.read_activities[context][0]
-            activity = module(workflow, name, context)
+            activity = module(workflow, name, context, **kwargs)
 
         # Walk through the children of the node.
         successors = []

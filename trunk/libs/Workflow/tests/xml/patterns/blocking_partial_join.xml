@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?> 
-<process-definition name="flow" revision="1.6">
-    <description>Pattern 7 (Structured Synchronizing Merge)</description>
+<process-definition name="flow" revision="1.0">
+    <description>Pattern 31 (Blocking Partial Join)</description>
 
     <startactivity>
         <successor>multi_choice_1</successor>
     </startactivity>
 
-    <!-- Split branches using a multi-choice. -->
+    <!-- Split branches using a multi-choice. This creates 3 branches. -->
     <multichoice name="multi_choice_1">
         <conditional-successor>
             <equals left-field="test_attribute1" right-field="test_attribute1" />
@@ -20,6 +20,10 @@
             <equals left-field="test_attribute2" right-field="test_attribute2" />
             <successor>activity_e3</successor>
         </conditional-successor>
+        <conditional-successor>
+            <equals left-field="test_attribute2" right-field="test_attribute2" />
+            <successor>activity_e4</successor>
+        </conditional-successor>
     </multichoice>
 
     <!-- Conditional branches. -->
@@ -32,11 +36,23 @@
     <activity name="activity_e3">
         <successor>struct_synch_merge_1</successor>
     </activity>
+    <activity name="activity_e4">
+        <successor>struct_synch_merge_1</successor>
+    </activity>
 
     <!-- Structured synchronizing merge. -->
-    <join name="struct_synch_merge_1" context="multi_choice_1">
-        <successor>last</successor>
+    <join name="struct_synch_merge_1" context="multi_choice_1" threshold="2">
+        <successor>excl_choice_1</successor>
     </join>
+
+    <!-- Loop back to the start (once). -->
+    <exclusivechoice name="excl_choice_1">
+        <default-successor>last</default-successor>
+        <conditional-successor>
+            <not-equals left-field="excl_choice_1_reached" right-value="2" />
+            <successor>multi_choice_1</successor>
+        </conditional-successor>
+    </exclusivechoice>
 
     <!-- A final activity. -->
     <activity name="last">

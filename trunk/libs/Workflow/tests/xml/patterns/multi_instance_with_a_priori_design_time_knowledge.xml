@@ -21,12 +21,12 @@
     </activity>
 
     <!-- Structured synchronizing merge. -->
-    <synchronization name="struct_synch_merge_1" context="multi_instance_1">
+    <join name="struct_synch_merge_1" context="multi_instance_1">
         <successor>last</successor>
-    </synchronization>
+    </join>
 
     <!-- A final activity. -->
-    <synchronization name="last">
+    <join name="last">
         <successor>end</successor>
-    </synchronization>
+    </join>
 </process-definition>

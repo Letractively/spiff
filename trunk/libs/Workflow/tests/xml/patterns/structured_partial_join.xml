@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?> 
 <process-definition name="flow" revision="1.6">
-    <description>Pattern 7 (Structured Synchronizing Merge)</description>
+    <description>Pattern 30 (Structured Partial Join)</description>
 
     <startactivity>
         <successor>multi_choice_1</successor>
     </startactivity>
 
-    <!-- Split branches using a multi-choice. -->
+    <!-- Split branches using a multi-choice. This creates 3 branches. -->
     <multichoice name="multi_choice_1">
         <conditional-successor>
             <equals left-field="test_attribute1" right-field="test_attribute1" />
@@ -20,6 +20,10 @@
             <equals left-field="test_attribute2" right-field="test_attribute2" />
             <successor>activity_e3</successor>
         </conditional-successor>
+        <conditional-successor>
+            <equals left-field="test_attribute2" right-field="test_attribute2" />
+            <successor>activity_e4</successor>
+        </conditional-successor>
     </multichoice>
 
     <!-- Conditional branches. -->
@@ -32,9 +36,12 @@
     <activity name="activity_e3">
         <successor>struct_synch_merge_1</successor>
     </activity>
+    <activity name="activity_e4">
+        <successor>struct_synch_merge_1</successor>
+    </activity>
 
     <!-- Structured synchronizing merge. -->
-    <join name="struct_synch_merge_1" context="multi_choice_1">
+    <join name="struct_synch_merge_1" context="multi_choice_1" threshold="2">
         <successor>last</successor>
     </join>
 

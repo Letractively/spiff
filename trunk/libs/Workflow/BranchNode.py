@@ -101,7 +101,7 @@ class BranchNode(object):
         self.__dict__.update(dict)
         # If unpickled in the same Python process in which a workflow
         # (BranchNode) is built through the API, we need to make sure
-        # that there iwill not be any ID collisions.
+        # that there will not be any ID collisions.
         if dict['id'] >= self.__class__.id_pool:
             self.__class__.id_pool = dict['id']
 
@@ -131,7 +131,7 @@ class BranchNode(object):
         if self.state != COMPLETED:
             self.state = CANCELLED
         for child in self.children:
-            child.cancel(status)
+            child.cancel()
 
 
     def set_status(self, status, recursive = False):

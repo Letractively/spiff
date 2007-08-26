@@ -19,8 +19,8 @@ from Activity   import Activity
 
 class AddInstance(Activity):
     """
-    This class implements a activity with one or more inputs and
-    one or more outputs.
+    This class implements a activity sends a trigger to a MultiInstance, such
+    that the MultiInstance creates an additional outgoing instance.
     If more than one input is connected, the activity performs an implicit
     multi merge.
     If more than one output is connected, the activity performs an implicit

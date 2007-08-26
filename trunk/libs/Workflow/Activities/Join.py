@@ -17,14 +17,14 @@ from BranchNode import *
 from Exception  import WorkflowException
 from Activity   import Activity
 
-class Synchronization(Activity):
+class Join(Activity):
     """
     This class represents an activity for synchronizing branch_nodes that were
     previously split using a conditional activity, such as MultiChoice.
     It has two or more incoming branches and one or more outputs.
     """
 
-    def __init__(self, parent, name, split_activity = None):
+    def __init__(self, parent, name, split_activity = None, **kwargs):
         """
         Constructor.
         
@@ -32,19 +32,28 @@ class Synchronization(Activity):
         name -- a name for the pattern (string)
         split_activity -- the activity that was previously used to split the
                           branch_node
+        kwargs -- may contain the following keys:
+                      threshold -- an integer that specifies how many incoming
+                      branches need to complete before the activity triggers.
+                      When the limit is reached, the activity fires but still
+                      expects all other branches to complete.
+                      cancel -- when set to True, remaining incoming branches
+                      are cancelled as soon as the discriminator is activated.
         """
         #assert split_activity is not None
         Activity.__init__(self, parent, name)
         self.split_activity = split_activity
+        self.threshold      = kwargs.get('threshold', None)
+        self.cancel         = kwargs.get('cancel',    False)
 
 
     def _completed_notify_structured(self, job, branch_node):
         # The context is the path up to the point where the split happened.
         context = branch_node.find_path(None, self.split_activity)
 
-        # It is an error if this method is called after all inputs were
-        # already received.
-        assert job.get_context_data(context, 'may_fire', False) == False
+        # If the threshold was already reached, there is nothing else to do.
+        if job.get_context_data(context, 'may_fire', 'no') != 'no':
+            return
 
         # Retrieve a list of all activated branch_nodes from the associated
         # activity that did the conditional parallel split.
@@ -64,10 +73,20 @@ class Synchronization(Activity):
         assert completed[repr(start_node.id)] == False
         completed[repr(start_node.id)] = True
 
-        # If all branch_nodes are now completed, reset the state.
-        if completed.values().count(False) == 0:
-            job.del_context_data(context, 'completed')
-            job.set_context_data(context, may_fire  = True)
+        # If the threshold was reached, get ready to fire.
+        n_completed = completed.values().count(True)
+        if n_completed == len(completed) \
+          or (self.threshold is not None and n_completed >= self.threshold):
+            job.set_context_data(context, may_fire = 'yes')
+
+            # If this is a cancelling join, cancel all incoming branches,
+            # except for the one that just completed.
+            if self.cancel:
+                nodes = self.split_activity.get_activated_branch_nodes(job, branch_node)
+                nodes.remove(start_node)
+                for node in nodes:
+                    node.cancel()
+
             return
 
         # Merge all except for the last branch_node.
@@ -77,10 +96,10 @@ class Synchronization(Activity):
 
 
     def _completed_notify_unstructured(self, job, branch_node):
-        # It is an error if this method is called after all inputs were
-        # already received,
+        # If the threshold was already reached, there is nothing else to do.
         context = self.id
-        assert job.get_context_data(context, 'may_fire', False) == False
+        if job.get_context_data(context, 'may_fire', 'no') != 'no':
+            return
 
         # Look up which branch_nodes have already completed.
         default   = dict([(repr(input.id), False) for input in self.inputs])
@@ -91,9 +110,23 @@ class Synchronization(Activity):
         completed[repr(branch_node.activity.id)] = True
 
         # If all branch_nodes are now completed, reset the state.
-        if completed.values().count(False) == 0:
+        n_completed = completed.values().count(True)
+        if n_completed == len(completed):
             job.set_context_data(context, completed = default)
-            job.set_context_data(context, may_fire  = True)
+
+        # If the threshold was reached, get ready to fire.
+        if n_completed == len(completed) \
+          or (self.threshold is not None and n_completed >= self.threshold):
+            job.set_context_data(context, may_fire = 'yes')
+
+            # If this is a cancelling join, cancel all incoming branches,
+            # except for the one that just completed.
+            if self.cancel:
+                nodes = self.split_activity.get_activated_branch_nodes(job, branch_node)
+                nodes.remove(start_node)
+                for node in nodes:
+                    node.cancel()
+
             return
 
         # Merge all except for the last branch_node.
@@ -124,8 +157,8 @@ class Synchronization(Activity):
             context = branch_node.find_path(None, self.split_activity)
 
         # Make sure that all inputs have completed.
-        if job.get_context_data(context, 'may_fire', False) == False:
+        if job.get_context_data(context, 'may_fire', 'no') != 'yes':
             return False
 
-        job.set_context_data(context, may_fire = False)
+        job.set_context_data(context, may_fire = 'done')
         return Activity.execute(self, job, branch_node)
