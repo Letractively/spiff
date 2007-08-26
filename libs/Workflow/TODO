@@ -1,4 +1,3 @@
-* Build an XML file as a test for each supported pattern.
 * Test AddInstance.py.
-* Make it possible to define attributes in the XML.
+* Make it possible to define workflow attributes in the XML.
 * Implement more workflow activities.

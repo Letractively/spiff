@@ -21,7 +21,7 @@ class Synchronization(Activity):
     """
     This class represents an activity for synchronizing branch_nodes that were
     previously split using a conditional activity, such as MultiChoice.
-    It has two or more inputs and one or more outputs.
+    It has two or more incoming branches and one or more outputs.
     """
 
     def __init__(self, parent, name, split_activity = None):
@@ -36,17 +36,6 @@ class Synchronization(Activity):
         #assert split_activity is not None
         Activity.__init__(self, parent, name)
         self.split_activity = split_activity
-
-
-    def test(self):
-        """
-        Checks whether all required attributes are set. Throws an exception
-        if an error was detected.
-        """
-        Activity.test(self)
-        if len(self.inputs) < 2:
-            error = 'Less than two input activities connected.'
-            raise WorkflowException(self, error)
 
 
     def _completed_notify_structured(self, job, branch_node):

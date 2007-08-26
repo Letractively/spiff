@@ -51,7 +51,11 @@ class PatternTest(unittest.TestCase):
             file          = open(path_filename, 'r')
             expected      = file.read()
             file.close()
-            self.testWorkflow(workflow_list[0], expected, filename)
+            try:
+                self.testWorkflow(workflow_list[0], expected, filename)
+            except:
+                print '%s:' % xml_filename
+                raise
 
 
     def testWorkflow(self, wf, expected, name):

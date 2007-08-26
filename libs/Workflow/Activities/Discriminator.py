@@ -26,7 +26,7 @@ class Discriminator(Activity):
     This task has two or more inputs and one or more outputs.
     """
 
-    def __init__(self, parent, name, split_activity):
+    def __init__(self, parent, name, split_activity, **kwargs):
         """
         Constructor.
         
@@ -36,6 +36,7 @@ class Discriminator(Activity):
                           branch_node
         """
         assert split_activity is not None
+        self.cancel = kwargs.get('cancel', False)
         Activity.__init__(self, parent, name)
         self.split_activity = split_activity
 
@@ -54,6 +55,18 @@ class Discriminator(Activity):
     def completed_notify(self, job, branch_node):
         # The context is the path up to the point where the split happened.
         context = branch_node.find_path(None, self.split_activity)
+
+        # If this is a cancelling discriminator, cancel all incoming branches,
+        # except for the one that just completed.
+        if self.cancel:
+            nodes      = self.split_activity.get_activated_branch_nodes(job, branch_node)
+            split_node = branch_node.find_ancestor(self.split_activity)
+            start_node = branch_node.get_child_of(split_node)
+            nodes.remove(start_node)
+            for node in nodes:
+                node.cancel()
+            job.set_context_data(context, may_fire = True)
+            return
 
         # Look up which inputs have already completed.
         default   = dict([(repr(i.id), False) for i in self.inputs])
@@ -76,7 +89,6 @@ class Discriminator(Activity):
             completed = default
 
         job.set_context_data(context, completed = completed)
-
 
 
     def execute(self, job, branch_node):

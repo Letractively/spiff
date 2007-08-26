@@ -74,6 +74,15 @@ class Activity(object):
         pass
 
 
+    def get_activated_branch_nodes(self, job, branch_node):
+        """
+        Returns the list of branch_nodes that were activated in the previous call
+        of execute().
+        """
+        context = branch_node.find_path(None, self)
+        return job.get_context_data(context, 'activated_branch_nodes', [])
+
+
     def test(self):
         """
         Checks whether all required attributes are set. Throws an exception
@@ -104,9 +113,15 @@ class Activity(object):
             self.user_func(job, branch_node, self)
 
         # If we have more than one output, implicitly split.
+        activated_branch_nodes = []
         for output in self.outputs:
             new_branch_node = branch_node.add_child(output)
             output.completed_notify(job, branch_node)
+            activated_branch_nodes.append(new_branch_node)
 
+        # Store the info of how many branch_nodes were activated, because
+        # a subsequent structured merge may require the information.
+        context = branch_node.find_path(None, self)
+        job.set_context_data(context, activated_branch_nodes = activated_branch_nodes)
         branch_node.set_status(COMPLETED)
         return True
