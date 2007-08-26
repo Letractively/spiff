@@ -17,10 +17,10 @@ from BranchNode import *
 from Exception  import WorkflowException
 from Activity   import Activity
 
-class AddInstance(Activity):
+class Trigger(Activity):
     """
-    This class implements a activity sends a trigger to a MultiInstance, such
-    that the MultiInstance creates an additional outgoing instance.
+    This class implements an activity that triggers an event on another 
+    activity.
     If more than one input is connected, the activity performs an implicit
     multi merge.
     If more than one output is connected, the activity performs an implicit
@@ -55,6 +55,6 @@ class AddInstance(Activity):
         assert branch_node is not None
         self.test()
 
-        self.context.add_instance(job, branch_node)
+        self.context.trigger(job, branch_node)
 
         return Activity.execute(self, job, branch_node)

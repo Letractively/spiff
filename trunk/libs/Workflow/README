@@ -8,29 +8,32 @@ It is based on http://www.workflowpatterns.com and implemented in pure Python.
 
 Supported Workflow Patterns
 ----------------------------
- 1. Sequence [xml/patterns/sequence.xml]
- 2. Parallel Split [xml/patterns/parallel_split.xml]
- 3. Synchronization [xml/patterns/synchronization.xml]
- 4. Exclusive Choice [xml/patterns/exclusive_choice.xml]
- 5. Simple Merge [xml/patterns/simple_merge.xml]
- 6. Multi-Choice [xml/patterns/multi_choice.xml]
- 7. Structured Synchronizing Merge [xml/patterns/structured_synchronizing_merge.xml]
- 8. Multi-Merge [xml/patterns/multi_merge.xml]
- 9. Structured Discriminator [xml/patterns/structured_discriminator.xml]
-10. Arbitrary Cycles [xml/patterns/arbitrary_cycles.xml]
-11. Implicit Termination [xml/patterns/implicit_termination.xml]
-12. Multiple Instances without Synchronization [xml/patterns/multi_instance_without_synch.xml]
-13. Multiple Instances with a Priori Design-Time Knowledge [xml/patterns/multi_instance_with_a_priori_design_time_knowledge.xml]
-14. Multiple Instances with a Priori Run-Time Knowledge [xml/patterns/multi_instance_with_a_priori_run_time_knowledge.xml]
+ 1. Sequence [tests/xml/patterns/sequence.xml]
+ 2. Parallel Split [tests/xml/patterns/parallel_split.xml]
+ 3. Synchronization [tests/xml/patterns/synchronization.xml]
+ 4. Exclusive Choice [tests/xml/patterns/exclusive_choice.xml]
+ 5. Simple Merge [tests/xml/patterns/simple_merge.xml]
+ 6. Multi-Choice [tests/xml/patterns/multi_choice.xml]
+ 7. Structured Synchronizing Merge [tests/xml/patterns/structured_synchronizing_merge.xml]
+ 8. Multi-Merge [tests/xml/patterns/multi_merge.xml]
+ 9. Structured Discriminator [tests/xml/patterns/structured_discriminator.xml]
+10. Arbitrary Cycles [tests/xml/patterns/arbitrary_cycles.xml]
+11. Implicit Termination [tests/xml/patterns/implicit_termination.xml]
+12. Multiple Instances without Synchronization [tests/xml/patterns/multi_instance_without_synch.xml]
+13. Multiple Instances with a Priori Design-Time Knowledge [tests/xml/patterns/multi_instance_with_a_priori_design_time_knowledge.xml]
+14. Multiple Instances with a Priori Run-Time Knowledge [tests/xml/patterns/multi_instance_with_a_priori_run_time_knowledge.xml]
+15. Multiple Instances without a Priori Run-Time Knowledge [tests/xml/patterns/multi_instance_without_a_priori.xml]
 
-28. Blocking Discriminator [xml/patterns/blocking_discriminator.xml]
-29. Cancelling Discriminator [xml/patterns/cancelling_discriminator.xml]
-30. Structured Partial Join [xml/patterns/structured_partial_join.xml]
-31. Blocking Partial Join [xml/patterns/blocking_partial_join.xml]
-32. Cancelling Partial Join [xml/patterns/cancelling_partial_join.xml]
-33. Generalized AND-Join [xml/patterns/generalized_and_join.xml]
+23. Transient Trigger [tests/xml/patterns/transient_trigger.xml]
 
-37. Acyclic Synchronizing Merge [xml/patterns/acyclic_synchronizing_merge.xml]
+28. Blocking Discriminator [tests/xml/patterns/blocking_discriminator.xml]
+29. Cancelling Discriminator [tests/xml/patterns/cancelling_discriminator.xml]
+30. Structured Partial Join [tests/xml/patterns/structured_partial_join.xml]
+31. Blocking Partial Join [tests/xml/patterns/blocking_partial_join.xml]
+32. Cancelling Partial Join [tests/xml/patterns/cancelling_partial_join.xml]
+33. Generalized AND-Join [tests/xml/patterns/generalized_and_join.xml]
+
+37. Acyclic Synchronizing Merge [tests/xml/patterns/acyclic_synchronizing_merge.xml]
 
 
 Contact

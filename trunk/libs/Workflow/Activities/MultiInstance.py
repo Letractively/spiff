@@ -46,18 +46,26 @@ class MultiInstance(Activity):
         self.times           = kwargs.get('times',           None)
 
 
-    def add_instance(self, job, branch_node):
+    def _find_my_branch_node(self, job):
+        for node in job.branch_tree:
+            if node.activity == self:
+                return node
+        return None
+
+
+    def trigger(self, job, branch_node):
         """
         May be called after execute() was already completed to create an
         additional outbound instance.
         """
-        context        = branch_node.find_path(None, self)
-        my_branch_node = branch_node.find_ancestor(self)
-        activated_branch_nodes = job.get_context_data(context, 'activated_branch_nodes', [])
+        # Find a BranchNode for this activity.
+        my_branch_node = self._find_my_branch_node(job)
+        context        = my_branch_node.find_path(None, self)
+        activated      = job.get_context_data(context, 'activated_branch_nodes', [])
         for output in self.outputs:
             new_branch_node = my_branch_node.add_child(output)
-            activated_branch_nodes.append(new_branch_node)
-        job.set_context_data(context, activated_branch_nodes = activated_branch_nodes)
+            activated.append(new_branch_node)
+        job.set_context_data(context, activated_branch_nodes = activated)
 
 
     def execute(self, job, branch_node):
