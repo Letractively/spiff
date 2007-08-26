@@ -15,17 +15,14 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 from Exception import WorkflowException
 
-WAITING   = 1
-CANCELLED = 2
-COMPLETED = 4
-
-id_pool  = 0
-
 class BranchNode(object):
     """
     This class implements a node for composing a tree that represents the
     taken/not yet taken path within the workflow.
     """
+    WAITING   = 1
+    CANCELLED = 2
+    COMPLETED = 4
 
     class Iterator(object):
         """
@@ -85,7 +82,7 @@ class BranchNode(object):
         self.job      = job
         self.parent   = parent
         self.children = []
-        self.state    = WAITING
+        self.state    = BranchNode.WAITING
         self.activity = activity
         self.id       = self.__class__.id_pool
         self.name     = 'BranchNode for ' + self.activity.name
@@ -128,8 +125,8 @@ class BranchNode(object):
         Cancels all items in this branch. The status of any items that are
         already completed is not changed.
         """
-        if self.state != COMPLETED:
-            self.state = CANCELLED
+        if self.state != BranchNode.COMPLETED:
+            self.state = BranchNode.CANCELLED
         for child in self.children:
             child.cancel()
 

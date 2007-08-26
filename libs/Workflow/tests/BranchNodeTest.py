@@ -38,7 +38,7 @@ class BranchNodeTest(unittest.TestCase):
         c2        = BranchNode(object, activity8, root)
         c3        = BranchNode(object, activity9, root)
         c1.split()
-        c3.state = COMPLETED
+        c3.state = BranchNode.COMPLETED
         c11.drop_children()
 
         # Check whether the tree is built properly.
@@ -68,7 +68,7 @@ class BranchNodeTest(unittest.TestCase):
 
         # Run the iterator test.
         result = ''
-        for node in BranchNode.Iterator(root, WAITING):
+        for node in BranchNode.Iterator(root, BranchNode.WAITING):
             result += '%s: ' % node.id
             result += '%s/'  % node.state
             result += '%s/'  % len(node.children)

@@ -156,5 +156,5 @@ class MultiChoice(Activity):
         # a subsequent structured merge may require the information.
         context = branch_node.find_path(None, self)
         job.set_context_data(context, activated_branch_nodes = activated_branch_nodes)
-        branch_node.set_status(COMPLETED)
+        branch_node.set_status(BranchNode.COMPLETED)
         return True

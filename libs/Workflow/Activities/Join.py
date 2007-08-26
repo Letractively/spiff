@@ -50,7 +50,7 @@ class Join(Activity):
     def _branch_is_complete(self, branch_node):
         # Determine whether that branch is now completed by checking whether
         # it has any waiting items other than myself in it.
-        for node in BranchNode.Iterator(branch_node, WAITING):
+        for node in BranchNode.Iterator(branch_node, BranchNode.WAITING):
             if node.activity == self:
                 continue
             return False
@@ -60,7 +60,7 @@ class Join(Activity):
     def _may_fire(self, job, branch_node, context, branch_nodes, threshold):
         # If the threshold was already reached, there is nothing else to do.
         if job.get_context_data(context, 'fired', 'no') == 'yes':
-            branch_node.set_status(COMPLETED)
+            branch_node.set_status(BranchNode.COMPLETED)
             return False
 
         # Look up which branch_nodes have already completed.
