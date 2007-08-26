@@ -75,7 +75,7 @@ class PatternTest(unittest.TestCase):
                      '%s:\nExpected:\n%s\nbut got:\n%s\n' % (name, expected, taken_path))
 
         # Make sure that there are no waiting activities in the tree.
-        for node in BranchNode.Iterator(job.branch_tree, WAITING):
+        for node in BranchNode.Iterator(job.branch_tree, BranchNode.WAITING):
             job.branch_tree.dump()
             raise Exception('Node with state WAITING: %s' % node.name)
 

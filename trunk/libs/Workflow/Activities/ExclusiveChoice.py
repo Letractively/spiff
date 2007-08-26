@@ -79,5 +79,5 @@ class ExclusiveChoice(MultiChoice):
                 break
 
         new_branch_node = branch_node.add_child(output)
-        branch_node.set_status(COMPLETED)
+        branch_node.set_status(BranchNode.COMPLETED)
         return True
