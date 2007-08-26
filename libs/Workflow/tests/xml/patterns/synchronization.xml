@@ -15,17 +15,17 @@
 
     <!-- Implicit split. -->
     <activity name="activity_f1">
-        <successor>synchronization</successor>
+        <successor>join</successor>
     </activity>
     <activity name="activity_f2">
-        <successor>synchronization</successor>
+        <successor>join</successor>
     </activity>
     <activity name="activity_f3">
-        <successor>synchronization</successor>
+        <successor>join</successor>
     </activity>
 
     <!-- A final activity. -->
-    <synchronization name="synchronization">
+    <join name="join">
         <successor>end</successor>
-    </synchronization>
+    </join>
 </process-definition>

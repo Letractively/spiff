@@ -108,7 +108,7 @@ class WorkflowTest(unittest.TestCase):
         b1.connect(b2)
 
         # Merge both branches (synchronized).
-        synch_1 = Synchronization(self.wf, "synch_1")
+        synch_1 = Join(self.wf, "synch_1")
         a2.connect(synch_1)
         b2.connect(synch_1)
 
@@ -168,7 +168,7 @@ class WorkflowTest(unittest.TestCase):
         multichoice.connect_if(cond, e3)
 
         # StructuredSynchronizingMerge
-        syncmerge = Synchronization(self.wf, "struct_synch_merge_1", multichoice)
+        syncmerge = Join(self.wf, "struct_synch_merge_1", multichoice)
         e1.connect(syncmerge)
         e2.connect(syncmerge)
         e3.connect(syncmerge)
@@ -184,7 +184,10 @@ class WorkflowTest(unittest.TestCase):
         syncmerge.connect(f3)
 
         # Discriminator
-        discrim_1 = Discriminator(self.wf, "struct_discriminator_1", syncmerge)
+        discrim_1 = Join(self.wf,
+                         "struct_discriminator_1",
+                         syncmerge,
+                         threshold = 1)
         f1.connect(discrim_1)
         f2.connect(discrim_1)
         f3.connect(discrim_1)
@@ -208,7 +211,7 @@ class WorkflowTest(unittest.TestCase):
         multi_instance_1.connect(g2)
 
         # StructuredSynchronizingMerge
-        syncmerge2 = Synchronization(self.wf, "struct_synch_merge_2", multi_instance_1)
+        syncmerge2 = Join(self.wf, "struct_synch_merge_2", multi_instance_1)
         g1.connect(syncmerge2)
         g2.connect(syncmerge2)
 

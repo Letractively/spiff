@@ -50,6 +50,8 @@ class Activity(object):
         """
         Connect the *following* activity to this one. In other words, the
         given activity is added as an output activity.
+
+        activity -- the activity to connect to.
         """
         self.outputs.append(activity)
         activity.connect_notify(self)
@@ -59,7 +61,7 @@ class Activity(object):
         """
         Called by the previous activity to let us know that it exists.
 
-        activity -- the activity in which this method is executed
+        activity -- the activity by which this method is executed
         """
         self.inputs.append(activity)
 
@@ -78,6 +80,9 @@ class Activity(object):
         """
         Returns the list of branch_nodes that were activated in the previous call
         of execute().
+
+        job -- the job in which this method is executed
+        branch_node -- the branch_node in which this method is executed
         """
         context = branch_node.find_path(None, self)
         return job.get_context_data(context, 'activated_branch_nodes', [])

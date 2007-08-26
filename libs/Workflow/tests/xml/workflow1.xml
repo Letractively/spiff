@@ -29,9 +29,9 @@
         <!-- End second branch -->
 
     <!-- Merge branches -->
-    <synchronization name="synch_1">
+    <join name="synch_1">
         <successor>excl_choice_1</successor>
-    </synchronization>
+    </join>
 
     <!-- Add an if-condition that does not match. -->
     <exclusivechoice name="excl_choice_1">
@@ -109,11 +109,11 @@
     </activity>
 
     <!-- Structured synchronizing merge. -->
-    <synchronization name="struct_synch_merge_1" context="multi_choice_1">
+    <join name="struct_synch_merge_1" context="multi_choice_1">
         <successor>activity_f1</successor>
         <successor>activity_f2</successor>
         <successor>activity_f3</successor>
-    </synchronization>
+    </join>
 
     <!-- Implicit split. -->
     <activity name="activity_f1">
@@ -127,10 +127,11 @@
     </activity>
 
     <!-- Structured discriminator. -->
-    <discriminator name="struct_discriminator_1"
-                   context="struct_synch_merge_1">
+    <join name="struct_discriminator_1"
+          context="struct_synch_merge_1"
+          threshold="1">
         <successor>excl_choice_3</successor>
-    </discriminator>
+    </join>
 
     <!-- Loop to excl_choice_1 (once). -->
     <exclusivechoice name="excl_choice_3">
@@ -156,10 +157,9 @@
     </activity>
 
     <!-- Structured synchronizing merge. -->
-    <synchronization name="struct_synch_merge_2"
-                     context="multi_instance_1">
+    <join name="struct_synch_merge_2" context="multi_instance_1">
         <successor>last</successor>
-    </synchronization>
+    </join>
 
     <!-- A final activity. -->
     <activity name="last">

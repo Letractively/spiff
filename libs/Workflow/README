@@ -25,6 +25,9 @@ Supported Workflow Patterns
 
 28. Blocking Discriminator [xml/patterns/blocking_discriminator.xml]
 29. Cancelling Discriminator [xml/patterns/cancelling_discriminator.xml]
+30. Structured Partial Join [xml/patterns/structured_partial_join.xml]
+31. Blocking Partial Join [xml/patterns/blocking_partial_join.xml]
+32. Cancelling Partial Join [xml/patterns/cancelling_partial_join.xml]
 
 
 Contact

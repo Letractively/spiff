@@ -77,7 +77,8 @@ class MultiChoice(Activity):
     """
     This class represents an if condition where multiple conditions may match
     at the same time, creating multiple branch_nodees.
-    It has two or more inputs and two or more outputs.
+    This task has one or more inputs, and one or more incoming branches.
+    This task has one or more outputs.
     """
 
     def __init__(self, parent, name):

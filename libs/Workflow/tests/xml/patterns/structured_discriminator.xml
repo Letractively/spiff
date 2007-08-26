@@ -2,7 +2,6 @@
 <process-definition name="flow" revision="1.6">
     <description>Pattern 9 (Structured Discriminator)</description>
 
-    <!-- Start with an implicit simple split. -->
     <startactivity>
         <successor>multi_choice_1</successor>
     </startactivity>
@@ -35,9 +34,9 @@
     </activity>
 
     <!-- Structured discriminator. -->
-    <discriminator name="discriminator" context="multi_choice_1">
+    <join name="discriminator" context="multi_choice_1" threshold="1">
         <successor>last</successor>
-    </discriminator>
+    </join>
 
     <!-- A final activity. -->
     <activity name="last">

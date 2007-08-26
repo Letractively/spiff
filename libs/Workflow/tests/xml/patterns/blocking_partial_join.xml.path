@@ -1,0 +1,15 @@
+Start
+  multi_choice_1
+    activity_e1
+    activity_e3
+      struct_synch_merge_1
+        excl_choice_1
+          multi_choice_1
+            activity_e1
+            activity_e3
+              struct_synch_merge_1
+                excl_choice_1
+                  last
+                    End
+            activity_e4
+    activity_e4
