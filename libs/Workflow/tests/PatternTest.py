@@ -8,6 +8,7 @@ def suite():
 from Activities        import *
 from Workflow          import Workflow
 from Job               import Job
+from BranchNode        import *
 from Storage           import XmlReader
 from xml.parsers.expat import ExpatError
 
@@ -72,6 +73,11 @@ class PatternTest(unittest.TestCase):
         taken_path = job.get_attribute('taken_path', '')
         self.assert_(taken_path == expected,
                      '%s:\nExpected:\n%s\nbut got:\n%s\n' % (name, expected, taken_path))
+
+        # Make sure that there are no waiting activities in the tree.
+        for node in BranchNode.Iterator(job.branch_tree, WAITING):
+            job.branch_tree.dump()
+            raise Exception('Node with state WAITING: %s' % node.name)
 
 if __name__ == '__main__':
     unittest.TextTestRunner(verbosity = 2).run(suite())
