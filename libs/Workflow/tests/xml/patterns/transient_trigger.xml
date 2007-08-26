@@ -10,34 +10,27 @@
 
     <!-- Branch 2 -->
         <!-- Split into 2 branches, and implicitly split twice in addition. -->
-        <multiinstance name="multi_instance_1" times="2">
+        <multiinstance name="multi_instance_1" times="0">
             <successor>activity_g1</successor>
-            <successor>activity_g2</successor>
         </multiinstance>
 
         <!-- Parallel activities. -->
         <activity name="activity_g1">
-            <successor>struct_synch_merge_2</successor>
-        </activity>
-        <activity name="activity_g2">
-            <successor>struct_synch_merge_2</successor>
-        </activity>
-
-        <!-- Structured synchronizing merge. -->
-        <synchronization name="struct_synch_merge_2"
-                         context="multi_instance_1">
             <successor>last</successor>
-        </synchronization>
+        </activity>
     <!-- End branch 2 -->
 
     <!-- Branch 1 -->
-        <addinstance name="add_instance_1" context="multi_instance_1">
+        <trigger name="add_instance_1" context="multi_instance_1">
+            <successor>add_instance_2</successor>
+        </trigger>
+        <trigger name="add_instance_2" context="multi_instance_1">
             <successor>last</successor>
-        </addinstance>
+        </trigger>
     <!-- End branch 1 -->
 
     <!-- A final activity. -->
-    <synchronization name="last">
+    <activity name="last">
         <successor>end</successor>
-    </synchronization>
+    </activity>
 </process-definition>

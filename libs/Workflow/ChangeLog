@@ -8,6 +8,8 @@
 	* Activities/Discriminator.py: Replaced by Join.
 	* Activities/*.py: Removed the need to call completed_notify in every
 	activity.
+	* Activities/AddInstance.py: Removed.
+	* Activities/Trigger.py: Replaces AddInstance.py.
 
 2007-08-25 Samuel Abels <http://debain.org>
 

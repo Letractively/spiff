@@ -13,8 +13,9 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
-from BranchNode import *
-from Exception  import WorkflowException
+from AbstractMethod import AbstractMethod
+from BranchNode     import *
+from Exception      import WorkflowException
 
 class Activity(object):
     """
@@ -89,6 +90,14 @@ class Activity(object):
             raise WorkflowException(self, 'No input activity connected.')
         elif len(self.outputs) < 1:
             raise WorkflowException(self, 'No output activity connected.')
+
+
+    def trigger(self, job, branch_node):
+        """
+        May be called by another activity to trigger an activity-specific
+        event.
+        """
+        AbstractMethod()
 
 
     def execute(self, job, branch_node):
