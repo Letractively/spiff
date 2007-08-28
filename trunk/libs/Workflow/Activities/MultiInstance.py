@@ -60,12 +60,23 @@ class MultiInstance(Activity):
         """
         # Find a BranchNode for this activity.
         my_branch_node = self._find_my_branch_node(job)
-        context        = my_branch_node.find_path(None, self)
-        activated      = job.get_context_data(context, 'activated_branch_nodes', [])
         for output in self.outputs:
-            new_branch_node = my_branch_node.add_child(output)
-            activated.append(new_branch_node)
-        job.set_context_data(context, activated_branch_nodes = activated)
+            state           = BranchNode.WAITING | BranchNode.TRIGGERED
+            new_branch_node = my_branch_node.add_child(output, state)
+
+
+    def _get_predicted_outputs(self, job, branch_node):
+        # Split.
+        outputs = []
+        split_n = self.times
+        if split_n is None:
+            split_n = job.get_attribute(self.times_attribute)
+        if split_n is None:
+            split_n = 1
+        for i in range(split_n):
+            for output in self.outputs:
+                outputs.append(output)
+        return outputs
 
 
     def execute(self, job, branch_node):
@@ -82,19 +93,7 @@ class MultiInstance(Activity):
             self.user_func(job, branch_node, self)
 
         # Split.
-        activated_branch_nodes = []
-        split_n = self.times
-        if split_n is None:
-            split_n = job.get_attribute(self.times_attribute)
-        for i in range(split_n):
-            for output in self.outputs:
-                new_branch_node = branch_node.add_child(output)
-                activated_branch_nodes.append(new_branch_node)
-
-        # Store how many branch_nodes were activated, because
-        # a subsequent structured merge may require the information.
-        context = branch_node.find_path(None, self)
-        job.set_context_data(context, activated_branch_nodes = activated_branch_nodes)
-
+        outputs = self._get_predicted_outputs(job, branch_node)
+        branch_node.update_children(outputs)
         branch_node.set_status(BranchNode.COMPLETED)
         return True

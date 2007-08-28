@@ -143,18 +143,11 @@ class MultiChoice(Activity):
             self.user_func(job, branch_node, self)
 
         # Find all matching conditions.
-        activated_branch_nodes = []
+        outputs = []
         for condition, output in self.cond_activities:
-            if condition is not None and not condition.matches(job):
-                continue
+            if condition is None or condition.matches(job):
+                outputs.append(output)
 
-            # Create a new branch_node.
-            new_branch_node = branch_node.add_child(output)
-            activated_branch_nodes.append(new_branch_node)
-
-        # Store the info of how many branch_nodes were activated, because
-        # a subsequent structured merge may require the information.
-        context = branch_node.find_path(None, self)
-        job.set_context_data(context, activated_branch_nodes = activated_branch_nodes)
+        branch_node.update_children(outputs)
         branch_node.set_status(BranchNode.COMPLETED)
         return True

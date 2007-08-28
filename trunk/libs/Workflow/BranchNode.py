@@ -20,9 +20,11 @@ class BranchNode(object):
     This class implements a node for composing a tree that represents the
     taken/not yet taken path within the workflow.
     """
-    WAITING   = 1
-    CANCELLED = 2
-    COMPLETED = 4
+    WAITING   =  1
+    CANCELLED =  2
+    COMPLETED =  4
+    PREDICTED =  8
+    TRIGGERED = 16
 
     class Iterator(object):
         """
@@ -39,14 +41,23 @@ class BranchNode(object):
         def __iter__(self):
             return self
 
+
         def next(self):
             # Make sure that the end is not yet reached.
             if len(self.path) == 0:
                 raise StopIteration()
 
             # If the current node has children, the first child is the next item.
-            current = self.path[-1]
-            if len(current.children) > 0:
+            # If the current node is PREDICTED, and predicted nodes are not
+            # specificly searched, we can ignore the children, because predicted
+            # nodes should only have predicted children.
+            current     = self.path[-1]
+            ignore_node = False
+            if self.filter is not None:
+                search_predicted = self.filter   & BranchNode.PREDICTED != 0
+                is_predicted     = current.state & BranchNode.PREDICTED != 0
+                ignore_node      = is_predicted and not search_predicted
+            if len(current.children) > 0 and not ignore_node:
                 self.path.append(current.children[0])
                 if self.filter is not None and current.state & self.filter == 0:
                     return self.next()
@@ -68,6 +79,7 @@ class BranchNode(object):
             if self.filter is not None and current.state & self.filter == 0:
                 return self.next()
             return current
+
 
     # Pool for assigning a unique id to every new BranchNode.
     id_pool = 0
@@ -125,7 +137,7 @@ class BranchNode(object):
         Cancels all items in this branch. The status of any items that are
         already completed is not changed.
         """
-        if self.state != BranchNode.COMPLETED:
+        if self.state & BranchNode.COMPLETED == 0:
             self.state = BranchNode.CANCELLED
         for child in self.children:
             child.cancel()
@@ -169,15 +181,71 @@ class BranchNode(object):
         return new_node
 
 
-    def add_child(self, activity):
+    def add_child(self, activity, status = WAITING):
         """
         Adds a new child node and assigns the given activity to the new node.
 
         activity -- the activity that is assigned to the new node.
+        status -- the initial node state
         """
         if activity is None:
             raise WorkflowException(self, 'add_child() requires an activity.')
-        return BranchNode(self.job, activity, self)
+        if self.state & self.PREDICTED != 0 and status & self.PREDICTED == 0:
+            msg = 'Attempt to add non-predicted child to predicted node'
+            raise WorkflowException(self, msg)
+        node = BranchNode(self.job, activity, self)
+        node.state = status
+        return node
+
+
+    def update_children(self, activities, status = WAITING):
+        """
+        This method adds one child for each given activity, unless that
+        child already exists.
+        The status for newly added children, as well as the state for
+        existing PREDICTED children is set to the given value.
+        The state of existing non-PREDICTED children is left unchanged.
+
+        If the node currently has a PREDICTED child that is not given in the
+        activities, the child is removed.
+        It is an error if the node has a non-PREDICTED child that is not given
+        in the activities.
+
+        Special case: Children with the state flag TRIGGERED set are ignored
+        and never touched.
+
+        activity -- the list of activities that may become children.
+        status -- the status for newly added children
+        """
+        if activities is None:
+            raise WorkflowException(self, '"activities" argument is None.')
+        if type(activities) != type([]):
+            activities = [activities]
+
+        # Create a list of all children that are no longer needed, and
+        # set the status of all others.
+        add    = activities[:]
+        remove = []
+        for child in self.children:
+            if child.state & BranchNode.TRIGGERED != 0:
+                continue
+            if child.activity not in add:
+                if child.state & BranchNode.PREDICTED != 0:
+                    remove.append(child)
+                else:
+                    msg = '"activities" does not contain %s' % child.name
+                    raise WorkflowException(self, msg)
+                continue
+            child.state = status
+            add.remove(child.activity)
+
+        # Remove all children that are no longer specified.
+        for child in remove:
+            self.children.remove(child)
+
+        # Add a new child for each of the remaining activities.
+        for activity in add:
+            self.add_child(activity, status)
 
 
     def drop_children(self):
