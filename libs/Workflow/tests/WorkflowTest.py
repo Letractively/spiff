@@ -246,10 +246,5 @@ class WorkflowTest(unittest.TestCase):
         self.assert_(len(taken_path) == len(self.expected_path),
                      'Taken route is too long: %s' % taken_path)
 
-        # Check whether all activities were in the correct branch.
-        for i, (branch, name) in enumerate(self.expected_path):
-            self.assert_(branch == taken_path[i][0],
-                         'Step %s (%s) in incorrect branch:\n%s' % (i + 1, taken_path[i][1], self.format_path(taken_path)))
-
 if __name__ == '__main__':
     unittest.TextTestRunner(verbosity = 2).run(suite())

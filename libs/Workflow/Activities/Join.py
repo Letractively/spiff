@@ -47,27 +47,116 @@ class Join(Activity):
         self.cancel         = kwargs.get('cancel',    False)
 
 
-    def _branch_is_complete(self, branch_node):
+    def _branch_is_complete(self, job, branch_node):
         # Determine whether that branch is now completed by checking whether
         # it has any waiting items other than myself in it.
-        for node in BranchNode.Iterator(branch_node, BranchNode.WAITING):
+        state = BranchNode.WAITING | BranchNode.PREDICTED
+        skip  = None
+        for node in BranchNode.Iterator(branch_node, state):
+            # If the current node is a child of myself, ignore it.
+            if skip is not None and node.is_descendant_of(skip):
+                continue
             if node.activity == self:
+                skip = node
                 continue
             return False
         return True
 
 
-    def _may_fire(self, job, branch_node, context, branch_nodes, threshold):
+    def _branch_may_merge_at(self, job, branch_node):
+        for node in branch_node:
+            # Ignore nodes that were created by a trigger.
+            if node.state & BranchNode.TRIGGERED != 0:
+                continue
+            # Merge found.
+            if node.activity == self:
+                return True
+            # If the node has outputs even though it is predicted with no
+            # children, that means the prediction may be incomplete (for
+            # example, because a prediction is not yet possible at this time).
+            if node.state & BranchNode.PREDICTED != 0 \
+                and len(node.children) == 0           \
+                and len(node.activity.outputs) > 0:
+                return True
+        return False
+
+
+    def _may_fire_unstructured(self, job, branch_node):
+        # If the threshold was already reached, there is nothing else to do.
+        context = self.id
+        if job.get_context_data(context, 'fired', 'no') == 'yes':
+            branch_node.set_status(BranchNode.COMPLETED)
+            return False
+
+        # The default threshold is the number of inputs.
+        threshold = self.threshold
+        if threshold is None:
+            threshold = len(self.inputs)
+
+        # Look at the tree to find all places where this activity is used.
+        nodes = []
+        for node in job.branch_tree:
+            if node.activity != self:
+                continue
+            nodes.append(node)
+
+        # Look up which branch_nodes have already completed.
+        waiting_nodes = []
+        completed     = 0
+        for node in nodes:
+            if node.parent is None or node.parent.state & BranchNode.COMPLETED != 0:
+                completed += 1
+            else:
+                waiting_nodes.append(node)
+
+        # If the threshold was reached, get ready to fire.
+        if completed >= threshold:
+            job.set_context_data(context, fired = 'yes')
+
+            # If this is a cancelling join, cancel all incoming branches,
+            # except for the one that just completed.
+            if self.cancel:
+                for node in waiting_nodes:
+                    node.cancel()
+
+            return True
+
+        # We do NOT set the branch_node status to COMPLETED, because in
+        # case all other incoming activities get cancelled (or never reach
+        # the Join for other reasons, such as reaching a StubActivity), we
+        # need to revisit it.
+        return False
+
+
+    def _may_fire_structured(self, job, branch_node):
+        # In structured context, the context is the path up to the point where
+        # the split happened.
+        context = branch_node.find_path(None, self.split_activity)
+
         # If the threshold was already reached, there is nothing else to do.
         if job.get_context_data(context, 'fired', 'no') == 'yes':
             branch_node.set_status(BranchNode.COMPLETED)
             return False
 
+        # Retrieve a list of all activated branch_nodes from the associated
+        # activity that did the conditional parallel split.
+        nodes = self.split_activity.get_activated_branch_nodes(job, branch_node)
+
+        # The default threshold is the number of branches that were started.
+        threshold = self.threshold
+        if threshold is None:
+            threshold = len(nodes)
+
         # Look up which branch_nodes have already completed.
         waiting_nodes = []
         completed     = 0
-        for node in branch_nodes:
-            if self._branch_is_complete(node):
+        for node in nodes:
+            # Referesh path prediction.
+            node.activity.predict(job, node)
+
+            if not self._branch_may_merge_at(job, node):
+                completed += 1
+            elif self._branch_is_complete(job, node):
                 completed += 1
             else:
                 waiting_nodes.append(node)
@@ -92,36 +181,9 @@ class Join(Activity):
 
 
     def may_fire(self, job, branch_node):
-        threshold = None
-        if self.threshold is not None:
-            threshold = self.threshold
-
-        # Unstructured context.
         if self.split_activity is None:
-            # Look at the tree to find all places where this activity is used.
-            nodes = []
-            for node in job.branch_tree:
-                if node.activity != self:
-                    continue
-                nodes.append(node)
-
-            if threshold is None:
-                threshold = len(self.inputs)
-
-            return self._may_fire(job, branch_node, self.id, nodes, threshold)
-
-        # In structured context, the context is the path up to the point where
-        # the split happened.
-        context = branch_node.find_path(None, self.split_activity)
-
-        # Retrieve a list of all activated branch_nodes from the associated
-        # activity that did the conditional parallel split.
-        nodes = self.split_activity.get_activated_branch_nodes(job, branch_node)
-
-        if threshold is None:
-            threshold = len(nodes)
-
-        return self._may_fire(job, branch_node, context, nodes, threshold)
+            return self._may_fire_unstructured(job, branch_node)
+        return self._may_fire_structured(job, branch_node)
 
 
     def execute(self, job, branch_node):

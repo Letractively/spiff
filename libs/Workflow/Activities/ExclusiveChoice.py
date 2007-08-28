@@ -78,6 +78,6 @@ class ExclusiveChoice(MultiChoice):
                 output = activity
                 break
 
-        new_branch_node = branch_node.add_child(output)
+        branch_node.update_children(output)
         branch_node.set_status(BranchNode.COMPLETED)
         return True

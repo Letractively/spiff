@@ -1,5 +1,9 @@
 2007-08-26 Samuel Abels <http://debain.org>
 
+	* BranchNode.py, Activities/*.py: Implemented path prediction.
+
+2007-08-26 Samuel Abels <http://debain.org>
+
 	* Activities/Join.py: Replaces Synchronization and Discriminator, now
 	newly supporting: Cancelling Partial Join, Blocking Partial Join,
 	Structured Partial Join, Cancelling Discriminator, Blocking Discriminator,

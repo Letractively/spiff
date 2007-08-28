@@ -47,11 +47,6 @@ class PersistenceTest(WorkflowTest):
         self.assert_(len(taken_path) == len(self.expected_path),
                      'Taken route is too long: %s' % taken_path)
 
-        # Check whether all activities were in the correct branch.
-        for i, (branch, name) in enumerate(self.expected_path):
-            self.assert_(branch == taken_path[i][0],
-                         'Step %s (%s) in incorrect branch:\n%s' % (i + 1, taken_path[i][1], self.format_path(taken_path)))
-
     def testPickle(self):
         # Read a complete workflow.
         workflow_list = self.reader.parse_file('xml/workflow1.xml')

@@ -36,7 +36,10 @@ class Job(object):
 
         # Prevent the root node from being executed.
         self.branch_tree.state = BranchNode.COMPLETED
-        self.branch_tree.add_child(workflow.start)
+        start = self.branch_tree.add_child(workflow.start)
+
+        workflow.start.predict(self, start)
+        #start.dump()
 
 
     def is_defined(self, name):

@@ -75,8 +75,8 @@ class Activity(object):
         job -- the job in which this method is executed
         branch_node -- the branch_node in which this method is executed
         """
-        context = branch_node.find_path(None, self)
-        return job.get_context_data(context, 'activated_branch_nodes', [])
+        my_branch_node = branch_node.find_ancestor(self)
+        return my_branch_node.children
 
 
     def test(self):
@@ -100,6 +100,30 @@ class Activity(object):
         AbstractMethod()
 
 
+    def predict(self, job, branch_node, seen = None):
+        """
+        Updates the branch such that all possible future routes are added
+        with the PREDICTED flag.
+
+        Should NOT be overwritten! Instead, overwrite the hook (_predict_hook).
+        """
+        if seen is None:
+            seen = []
+        if self in seen \
+            or branch_node.state & BranchNode.COMPLETED != 0 \
+            or branch_node.state & BranchNode.CANCELLED != 0:
+            return
+        seen.append(self)
+        outputs = self._get_predicted_outputs(job, branch_node)
+        branch_node.update_children(outputs, BranchNode.PREDICTED)
+        for node in branch_node.children:
+            node.activity.predict(job, node, seen)
+
+
+    def _get_predicted_outputs(self, job, branch_node):
+        return self.outputs
+
+
     def execute(self, job, branch_node):
         """
         Runs the activity. Should not be called directly.
@@ -117,14 +141,6 @@ class Activity(object):
             self.user_func(job, branch_node, self)
 
         # If we have more than one output, implicitly split.
-        activated_branch_nodes = []
-        for output in self.outputs:
-            new_branch_node = branch_node.add_child(output)
-            activated_branch_nodes.append(new_branch_node)
-
-        # Store the info of how many branch_nodes were activated, because
-        # a subsequent structured merge may require the information.
-        context = branch_node.find_path(None, self)
-        job.set_context_data(context, activated_branch_nodes = activated_branch_nodes)
+        branch_node.update_children(self.outputs)
         branch_node.set_status(BranchNode.COMPLETED)
         return True

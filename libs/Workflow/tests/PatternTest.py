@@ -37,26 +37,30 @@ def print_name(job, branch_node, activity):
 
 class PatternTest(unittest.TestCase):
     def setUp(self):
-        self.reader = XmlReader()
-        self.wf     = None
+        self.xml_path = 'xml/patterns/'
+        self.reader   = XmlReader()
+        self.wf       = None
 
 
     def testPattern(self):
-        xml_path = 'xml/patterns/'
-        for filename in os.listdir(xml_path):
+        for filename in os.listdir(self.xml_path):
             if not filename.endswith('.xml'):
                 continue
-            xml_filename  = os.path.join(xml_path, filename)
-            path_filename = os.path.join(xml_path, filename + '.path')
-            file          = open(path_filename, 'r')
-            expected      = file.read()
-            file.close()
-            try:
-                workflow_list = self.reader.parse_file(xml_filename)
-                self.testWorkflow(workflow_list[0], expected, filename)
-            except:
-                print '%s:' % xml_filename
-                raise
+            self.testFile(filename)
+
+
+    def testFile(self, filename):
+        xml_filename  = os.path.join(self.xml_path, filename)
+        path_filename = os.path.join(self.xml_path, filename + '.path')
+        file          = open(path_filename, 'r')
+        expected      = file.read()
+        file.close()
+        try:
+            workflow_list = self.reader.parse_file(xml_filename)
+            self.testWorkflow(workflow_list[0], expected, filename)
+        except:
+            print '%s:' % xml_filename
+            raise
 
 
     def testWorkflow(self, wf, expected, name):
@@ -80,4 +84,9 @@ class PatternTest(unittest.TestCase):
             raise Exception('Node with state WAITING: %s' % node.name)
 
 if __name__ == '__main__':
+    if len(sys.argv) == 2:
+        test = PatternTest('testFile')
+        test.setUp()
+        test.testFile(sys.argv[1])
+        sys.exit(0)
     unittest.TextTestRunner(verbosity = 2).run(suite())
