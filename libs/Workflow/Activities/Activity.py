@@ -109,13 +109,14 @@ class Activity(object):
         """
         if seen is None:
             seen = []
-        if self in seen \
-            or branch_node.state & BranchNode.COMPLETED != 0 \
-            or branch_node.state & BranchNode.CANCELLED != 0:
+        elif self in seen:
             return
-        seen.append(self)
-        outputs = self._get_predicted_outputs(job, branch_node)
-        branch_node.update_children(outputs, BranchNode.PREDICTED)
+        if branch_node.state & BranchNode.PREDICTED != 0:
+            seen.append(self)
+        if branch_node.state & BranchNode.COMPLETED == 0 \
+            and branch_node.state & BranchNode.CANCELLED == 0:
+            outputs = self._get_predicted_outputs(job, branch_node)
+            branch_node.update_children(outputs, BranchNode.PREDICTED)
         for node in branch_node.children:
             node.activity.predict(job, node, seen)
 

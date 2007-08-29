@@ -7,6 +7,7 @@ Start
     activity_g2
     activity_g1
     activity_g2
-      struct_synch_merge_2
-        last
-          End
+      struct_synch_merge_1
+    join
+      last
+        End

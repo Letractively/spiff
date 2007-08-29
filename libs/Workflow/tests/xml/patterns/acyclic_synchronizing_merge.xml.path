@@ -4,7 +4,7 @@ Start
     activity_f2
     activity_f3
       excl_choice_1
-        activity_g2
-          foo
       join
         End
+        activity_g2
+          foo

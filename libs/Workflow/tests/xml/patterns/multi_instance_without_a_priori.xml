@@ -17,24 +17,28 @@
 
         <!-- Parallel activities. -->
         <activity name="activity_g1">
-            <successor>struct_synch_merge_2</successor>
+            <successor>struct_synch_merge_1</successor>
         </activity>
         <activity name="activity_g2">
-            <successor>struct_synch_merge_2</successor>
+            <successor>struct_synch_merge_1</successor>
         </activity>
 
         <!-- Structured synchronizing merge. -->
-        <join name="struct_synch_merge_2"
-                         context="multi_instance_1">
-            <successor>last</successor>
+        <join name="struct_synch_merge_1" context="multi_instance_1">
+            <successor>join</successor>
         </join>
     <!-- End branch 2 -->
 
     <!-- Branch 1 -->
         <trigger name="add_instance_1" context="multi_instance_1">
-            <successor>last</successor>
+            <successor>join</successor>
         </trigger>
     <!-- End branch 1 -->
+
+    <!-- Join all branches. -->
+    <join name="join">
+        <successor>last</successor>
+    </join>
 
     <!-- A final activity. -->
     <join name="last">

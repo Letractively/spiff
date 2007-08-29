@@ -116,14 +116,19 @@ class Job(object):
         return self.context_data[repr(context)][name]
 
 
-    def execute_next(self):
+    def execute_next(self, pick_up = True):
         """
         Runs the next activity.
         Returns True if completed, False otherwise.
+
+        pick_up -- when True, this method attempts to choose the next activity
+                   not by searching beginning at the root, but by searching
+                   from the position at which the last call of execute_next()
+                   left off.
         """
         # Try to pick up where we left off.
         blacklist = []
-        if self.last_node is not None:
+        if pick_up and self.last_node is not None:
             try:
                 iter = BranchNode.Iterator(self.last_node, BranchNode.WAITING)
                 next = iter.next()
@@ -148,9 +153,9 @@ class Job(object):
         return False
 
 
-    def execute_all(self):
+    def execute_all(self, pick_up = True):
         """
         Runs all branches until completion.
         """
-        while self.execute_next():
+        while self.execute_next(pick_up):
             pass

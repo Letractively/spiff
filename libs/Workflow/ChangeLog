@@ -1,4 +1,9 @@
-2007-08-26 Samuel Abels <http://debain.org>
+2007-08-29 Samuel Abels <http://debain.org>
+
+	* Activities/Join.py, Activities/Activity.py: Support General Synchronizing
+	Merge.
+
+2007-08-27 Samuel Abels <http://debain.org>
 
 	* BranchNode.py, Activities/*.py: Implemented path prediction.
 

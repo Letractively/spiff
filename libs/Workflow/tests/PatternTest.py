@@ -69,7 +69,7 @@ class PatternTest(unittest.TestCase):
 
         # Execute all activities within the Job.
         job = Job(wf)
-        job.execute_all()
+        job.execute_all(False)
 
         #job.branch_tree.dump()
 
