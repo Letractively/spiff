@@ -4,6 +4,6 @@ Start
     activity_e3
       activity_g3a
       activity_g3b
-        struct_synch_merge_1
-          last
-            End
+      struct_synch_merge_1
+        last
+          End

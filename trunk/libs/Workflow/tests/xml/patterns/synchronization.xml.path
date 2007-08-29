@@ -5,5 +5,5 @@ Start
     activity_f3
       activity_g3a
       activity_g3b
-        join
-          End
+      join
+        End

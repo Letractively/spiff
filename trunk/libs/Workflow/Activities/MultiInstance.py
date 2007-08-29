@@ -66,13 +66,15 @@ class MultiInstance(Activity):
 
 
     def _get_predicted_outputs(self, job, branch_node):
-        # Split.
+        # Since the attribute value might have changed by the time a future
+        # activity calls this method, we store the number of splits in the
+        # context data.
+        split_n = job.get_context_data('split_n', self.times)
+        if split_n is None:
+            split_n = job.get_attribute(self.times_attribute, 1)
+
+        # Predict the outputs.
         outputs = []
-        split_n = self.times
-        if split_n is None:
-            split_n = job.get_attribute(self.times_attribute)
-        if split_n is None:
-            split_n = 1
         for i in range(split_n):
             for output in self.outputs:
                 outputs.append(output)
@@ -92,8 +94,17 @@ class MultiInstance(Activity):
         if self.user_func is not None:
             self.user_func(job, branch_node, self)
 
-        # Split.
-        outputs = self._get_predicted_outputs(job, branch_node)
+        # Split, and remember the number of splits in the context data.
+        split_n = self.times
+        if split_n is None:
+            split_n = job.get_attribute(self.times_attribute)
+        job.set_context_data(branch_node.id, split_n = split_n)
+
+        # Create the outgoing nodes.
+        outputs = []
+        for i in range(split_n):
+            for output in self.outputs:
+                outputs.append(output)
         branch_node.update_children(outputs)
         branch_node.set_status(BranchNode.COMPLETED)
         return True
