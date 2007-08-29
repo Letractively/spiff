@@ -319,8 +319,8 @@ class Item:
 
         @type  item: Item
         @param item: Another item.
-        @rtype: list[string]
-        @return: A list containing the result of Python's Differ.compare().
+        @rtype: SequenceMatcher
+        @return: A reference to an instance of Python's SequenceMatcher.
         """
         assert item is not None
         content1 = self.get_content()
