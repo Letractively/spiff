@@ -61,22 +61,22 @@ class OpenWfeXmlReaderTest(unittest.TestCase):
             job.branch_tree.dump()
             raise
 
-        path = [(1, 'Start'),
-                (1, 'concurrence_1'),
-                (4, 'activity_a1'),
-                (4, 'activity_a2'),
-                (4, 'if_condition_1'),
-                (4, 'activity_a3'),
-                (4, 'if_condition_1_end'),
-                (4, 'if_condition_2'),
-                (4, 'activity_a5'),
-                (4, 'if_condition_2_end'),
-                (5, 'activity_b1'),
-                (5, 'activity_b2'),
-                (5, 'concurrence_1_end'),
-                (5, 'activity_c1'),
-                (5, 'activity_c2'),
-                (5, 'End')]
+        path = [(0, 'Start'),
+                (0, 'concurrence_1'),
+                (0, 'activity_a1'),
+                (0, 'activity_a2'),
+                (0, 'if_condition_1'),
+                (0, 'activity_a3'),
+                (0, 'if_condition_1_end'),
+                (0, 'if_condition_2'),
+                (0, 'activity_a5'),
+                (0, 'if_condition_2_end'),
+                (0, 'activity_b1'),
+                (0, 'activity_b2'),
+                (0, 'concurrence_1_end'),
+                (0, 'activity_c1'),
+                (0, 'activity_c2'),
+                (0, 'End')]
 
         # Check whether the correct route was taken.
         for i, (branch_node, name) in enumerate(path):

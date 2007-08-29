@@ -22,9 +22,7 @@ def print_name(job, branch_node, activity):
 
     # Record the path in an attribute.
     taken_path  = job.get_attribute('taken_path', [])
-    split_point = branch_node.get_branch_start()
-    root_id     = branch_node._get_root().id
-    id          = split_point.id - root_id + 1
+    id          = branch_node.thread_id
     taken_path.append((id, activity.name))
     job.set_attribute(taken_path = taken_path)
     #print "%s. Branch '%s': %s reached %s times" % (step, id, activity.name, n_reached)

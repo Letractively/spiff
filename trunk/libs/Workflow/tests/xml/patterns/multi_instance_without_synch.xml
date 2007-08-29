@@ -2,7 +2,6 @@
 <process-definition name="flow" revision="1.0">
     <description>Pattern 12 (Multiple Instances without Synchronization)</description>
 
-    <!-- Start with an implicit simple split. -->
     <startactivity>
         <successor>multi_instance_1</successor>
     </startactivity>

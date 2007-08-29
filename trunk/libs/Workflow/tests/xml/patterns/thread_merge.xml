@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<process-definition name="flow" revision="1.0">
+    <description>Pattern 41 (Thread Merge)</description>
+
+    <!-- Start with an implicit simple split. -->
+    <startactivity>
+        <successor>thread_split_1</successor>
+    </startactivity>
+
+    <!-- Split into 3 branches, implicitly split twice in addition. -->
+    <threadsplit name="thread_split_1" times="3">
+        <successor>activity_f1</successor>
+        <successor>activity_g1</successor>
+    </threadsplit>
+
+    <!-- Parallel activities. -->
+    <activity name="activity_f1">
+        <successor>activity_f2</successor>
+    </activity>
+    <activity name="activity_f2">
+        <successor>join</successor>
+    </activity>
+
+    <!-- Parallel activities. -->
+    <activity name="activity_g1">
+        <successor>activity_g2</successor>
+    </activity>
+    <activity name="activity_g2">
+        <successor>join</successor>
+    </activity>
+
+    <!-- Merge the implicit split. -->
+    <join name="join" context="thread_split_1">
+        <successor>thread_merge_1</successor>
+    </join>
+
+    <!-- Merge threads. -->
+    <threadmerge name="thread_merge_1" context="thread_split_1">
+        <successor>last</successor>
+    </threadmerge>
+
+    <!-- A final activity. -->
+    <activity name="last">
+        <successor>end</successor>
+    </activity>
+</process-definition>

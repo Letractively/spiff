@@ -7,7 +7,7 @@
         <successor>multi_instance_1</successor>
     </startactivity>
 
-    <!-- Split into 2 branches, and implicitly split twice in addition. -->
+    <!-- Split into 2 branches. -->
     <multiinstance name="multi_instance_1" times="2">
         <successor>activity_g1</successor>
     </multiinstance>

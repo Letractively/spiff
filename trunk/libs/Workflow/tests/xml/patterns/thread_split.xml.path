@@ -1,0 +1,26 @@
+Start
+  thread_split_1
+    ThreadStart
+      activity_f1
+        activity_f2
+      activity_g1
+        activity_g2
+          join
+            last
+              End
+    ThreadStart
+      activity_f1
+        activity_f2
+      activity_g1
+        activity_g2
+          join
+            last
+              End
+    ThreadStart
+      activity_f1
+        activity_f2
+      activity_g1
+        activity_g2
+          join
+            last
+              End
