@@ -1,5 +1,9 @@
 2007-08-29 Samuel Abels <http://debain.org>
 
+	* Release 0.0.2
+
+2007-08-29 Samuel Abels <http://debain.org>
+
 	* Activities/Join.py, Activities/Activity.py: Support General Synchronizing
 	Merge.
 	* Activities/Thread*.py: New, support for ThreadMerge and ThreadSplit
