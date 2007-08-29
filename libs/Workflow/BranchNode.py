@@ -82,7 +82,8 @@ class BranchNode(object):
 
 
     # Pool for assigning a unique id to every new BranchNode.
-    id_pool = 0
+    id_pool        = 0
+    thread_id_pool = 0
 
     def __init__(self, job, activity, parent = None):
         """
@@ -91,13 +92,14 @@ class BranchNode(object):
         assert job      is not None
         assert activity is not None
         self.__class__.id_pool += 1
-        self.job      = job
-        self.parent   = parent
-        self.children = []
-        self.state    = BranchNode.WAITING
-        self.activity = activity
-        self.id       = self.__class__.id_pool
-        self.name     = 'BranchNode for ' + self.activity.name
+        self.job       = job
+        self.parent    = parent
+        self.children  = []
+        self.state     = BranchNode.WAITING
+        self.activity  = activity
+        self.id        = self.__class__.id_pool
+        self.thread_id = self.__class__.thread_id_pool
+        self.name      = 'BranchNode for ' + self.activity.name
         if parent is not None:
             self.parent._child_added_notify(self)
 
@@ -113,6 +115,8 @@ class BranchNode(object):
         # that there will not be any ID collisions.
         if dict['id'] >= self.__class__.id_pool:
             self.__class__.id_pool = dict['id']
+        if dict['thread_id'] >= self.__class__.thread_id_pool:
+            self.__class__.thread_id_pool = dict['thread_id']
 
 
     def _get_root(self):
@@ -194,8 +198,23 @@ class BranchNode(object):
             msg = 'Attempt to add non-predicted child to predicted node'
             raise WorkflowException(self, msg)
         node = BranchNode(self.job, activity, self)
-        node.state = status
+        node.thread_id = self.thread_id
+        node.state     = status
         return node
+
+
+    def assign_new_thread_id(self, recursive = True):
+        """
+        Assigns a new thread id to the node.
+        Returns the new id.
+        """
+        self.__class__.thread_id_pool += 1
+        self.thread_id = self.__class__.thread_id_pool
+        if not recursive:
+            return self.thread_id
+        for node in self:
+            node.thread_id = self.thread_id
+        return self.thread_id
 
 
     def update_children(self, activities, status = WAITING):
@@ -270,34 +289,6 @@ class BranchNode(object):
         return self.parent.is_descendant_of(parent)
 
 
-    def get_branch_start(self):
-        """
-        Returns the first activity from the position in the path after a
-        split happened. In other words, returns the first ancestor that
-        has at least one sibling.
-        If no such parent was found, the root node is returned.
-        """
-        if self.parent is None:
-            return self
-        if len(self.parent.children) > 1:
-            return self
-        return self.parent.get_branch_start()
-
-
-    def get_last_split(self):
-        """
-        Returns the last activity from the path at which a
-        split happened. In other words, returns the first ancestor that
-        has more than one child.
-        If no such parent was found, the root node is returned.
-        """
-        if self.parent is None:
-            return self
-        if len(self.parent.children) > 1:
-            return self.parent
-        return self.parent.get_last_split()
-
-
     def get_child_of(self, parent):
         """
         Returns the ancestor that has the given BranchNode as a parent.
@@ -310,6 +301,21 @@ class BranchNode(object):
         if self.parent == parent:
             return self
         return self.parent.get_child_of(parent)
+
+
+    def find_child_of(self, parent_activity):
+        """
+        Returns the ancestor that has a BranchNode with the given Activity
+        as a parent.
+        If no such ancestor was found, the root node is returned.
+
+        parent_activity -- the wanted parent Activity
+        """
+        if self.parent is None:
+            return self
+        if self.parent.activity == parent_activity:
+            return self
+        return self.parent.find_child_of(parent_activity)
 
 
     def find_ancestor(self, activity):
@@ -360,10 +366,11 @@ class BranchNode(object):
         Returns the subtree as a string for debugging.
         """
         dbg  = (' ' * indent * 2)
-        dbg += '%s: ' % self.id
-        dbg += '%s/'  % self.state
-        dbg += '%s/'  % len(self.children)
-        dbg += '%s'   % self.name
+        dbg += '%s/'           % self.id
+        dbg += '%s:'           % self.thread_id
+        dbg += ' %s'           % self.name
+        dbg += ' State: %s'    % self.state
+        dbg += ' Children: %s' % len(self.children)
         for child in self.children:
             dbg += '\n' + child.get_dump(indent + 1)
         return dbg

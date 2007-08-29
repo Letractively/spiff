@@ -14,5 +14,6 @@ Start
                       loop_back_to_stub_1_once
       join
         End
-                        stub_2
-                          foo
+                        go_to_stub_3
+                          stub_3
+                            foo

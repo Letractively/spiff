@@ -146,7 +146,7 @@ class XmlReader(object):
         module = self.activity_map[type]
         if type == 'startactivity':
             activity = module(workflow)
-        elif type == 'multiinstance':
+        elif type == 'multiinstance' or type == 'threadsplit':
             times_field = start_node.getAttribute('times-field').lower()
             times       = start_node.getAttribute('times').lower()
             if times == '' and times_field == '':

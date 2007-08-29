@@ -2,6 +2,8 @@
 
 	* Activities/Join.py, Activities/Activity.py: Support General Synchronizing
 	Merge.
+	* Activities/Thread*.py: New, support for ThreadMerge and ThreadSplit
+	patterns.
 
 2007-08-27 Samuel Abels <http://debain.org>
 

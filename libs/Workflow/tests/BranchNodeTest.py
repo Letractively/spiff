@@ -42,18 +42,18 @@ class BranchNodeTest(unittest.TestCase):
         c11.drop_children()
 
         # Check whether the tree is built properly.
-        expected = """1: 1/4/BranchNode for Activity 1
-  2: 1/2/BranchNode for Activity 2
-    3: 1/0/BranchNode for Activity 3
-    7: 1/0/BranchNode for Activity 7
-  8: 1/0/BranchNode for Activity 8
-  9: 4/0/BranchNode for Activity 9
-  10: 1/2/BranchNode for Activity 2
-    11: 1/2/BranchNode for Activity 3
-      12: 1/1/BranchNode for Activity 4
-        13: 1/0/BranchNode for Activity 5
-      14: 1/0/BranchNode for Activity 6
-    15: 1/0/BranchNode for Activity 7"""
+        expected = """1/0: BranchNode for Activity 1 State: 1 Children: 4
+  2/0: BranchNode for Activity 2 State: 1 Children: 2
+    3/0: BranchNode for Activity 3 State: 1 Children: 0
+    7/0: BranchNode for Activity 7 State: 1 Children: 0
+  8/0: BranchNode for Activity 8 State: 1 Children: 0
+  9/0: BranchNode for Activity 9 State: 4 Children: 0
+  10/0: BranchNode for Activity 2 State: 1 Children: 2
+    11/0: BranchNode for Activity 3 State: 1 Children: 2
+      12/0: BranchNode for Activity 4 State: 1 Children: 1
+        13/0: BranchNode for Activity 5 State: 1 Children: 0
+      14/0: BranchNode for Activity 6 State: 1 Children: 0
+    15/0: BranchNode for Activity 7 State: 1 Children: 0"""
         self.assert_(expected == root.get_dump(),
                      'Expected:\n' + expected + '\n' + \
                      'but got:\n'  + root.get_dump())
@@ -69,10 +69,11 @@ class BranchNodeTest(unittest.TestCase):
         # Run the iterator test.
         result = ''
         for node in BranchNode.Iterator(root, BranchNode.WAITING):
-            result += '%s: ' % node.id
-            result += '%s/'  % node.state
-            result += '%s/'  % len(node.children)
-            result += '%s\n' % node.name
+            result += '%s/'             % node.id
+            result += '%s:'             % node.thread_id
+            result += ' %s'             % node.name
+            result += ' State: %s'      % node.state
+            result += ' Children: %s\n' % len(node.children)
         self.assert_(expected2 == result,
                      'Expected:\n' + expected2 + '\n' + \
                      'but got:\n'  + result)

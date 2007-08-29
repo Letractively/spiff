@@ -40,7 +40,6 @@ class Join(Activity):
                       cancel -- when set to True, remaining incoming branches
                       are cancelled as soon as the discriminator is activated.
         """
-        #assert split_activity is not None
         Activity.__init__(self, parent, name)
         self.split_activity = split_activity
         self.threshold      = kwargs.get('threshold', None)
@@ -81,9 +80,15 @@ class Join(Activity):
         return False
 
 
+    def _get_structured_context(self, job, branch_node):
+        path       = branch_node.find_path(None, self.split_activity)
+        split_node = branch_node.find_child_of(self.split_activity)
+        return '%s(%s)' % (path, split_node.thread_id)
+
+
     def _may_fire_unstructured(self, job, branch_node):
         # If the threshold was already reached, there is nothing else to do.
-        context = self.id
+        context = '%s(%s)' % (self.id, branch_node.thread_id)
         if job.get_context_data(context, 'fired', 'no') == 'yes':
             branch_node.set_status(BranchNode.COMPLETED)
             return False
@@ -95,16 +100,19 @@ class Join(Activity):
 
         # Look at the tree to find all places where this activity is used.
         nodes = []
-        for node in job.branch_tree:
-            if node.activity != self:
-                continue
-            nodes.append(node)
+        for activity in self.inputs:
+            for node in job.branch_tree:
+                if node.thread_id != branch_node.thread_id:
+                    continue
+                if node.activity != activity:
+                    continue
+                nodes.append(node)
 
         # Look up which branch_nodes have already completed.
         waiting_nodes = []
         completed     = 0
         for node in nodes:
-            if node.parent is None or node.parent.state & BranchNode.COMPLETED != 0:
+            if node.parent is None or node.state & BranchNode.COMPLETED != 0:
                 completed += 1
             else:
                 waiting_nodes.append(node)
@@ -131,7 +139,7 @@ class Join(Activity):
     def _may_fire_structured(self, job, branch_node):
         # In structured context, the context is the path up to the point where
         # the split happened.
-        context = branch_node.find_path(None, self.split_activity)
+        context = self._get_structured_context(job, branch_node)
 
         # If the threshold was already reached, there is nothing else to do.
         if job.get_context_data(context, 'fired', 'no') == 'yes':
@@ -151,7 +159,7 @@ class Join(Activity):
         waiting_nodes = []
         completed     = 0
         for node in nodes:
-            # Referesh path prediction.
+            # Refresh path prediction.
             node.activity.predict(job, node)
 
             if not self._branch_may_merge_at(job, node):
@@ -197,13 +205,21 @@ class Join(Activity):
 
         # The context is the path up to the point where the split happened.
         if self.split_activity is None:
-            context = self.id
+            context = '%s(%s)' % (self.id, branch_node.thread_id)
         else:
-            context = branch_node.find_path(None, self.split_activity)
+            context = self._get_structured_context(job, branch_node)
 
         # Make sure that all inputs have completed.
         if not self.may_fire(job, branch_node):
             return False
-
         job.set_context_data(context, may_fire = 'done')
+
+        # Mark all nodes in the same thread that reference this activity as
+        # COMPLETED.
+        for node in job.branch_tree:
+            if node.thread_id != branch_node.thread_id:
+                continue
+            if node.activity != self:
+                continue
+            node.state = BranchNode.COMPLETED
         return Activity.execute(self, job, branch_node)

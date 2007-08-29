@@ -2,15 +2,13 @@
 <process-definition name="flow" revision="1.0">
     <description>Pattern 14 (Multiple Instances with a priori Run-Time Knowledge)</description>
 
-    <!-- Start with an implicit simple split. -->
     <startactivity>
         <successor>multi_instance_1</successor>
     </startactivity>
 
     <!--
-    Split into 2 branches, and implicitly split twice in addition.
-    Note that the number of branches is read from the attribute "two",
-    which may change at runtime.
+    Split into 2 branches. Note that the number of branches is read from the
+    attribute "two", which may change at runtime.
     -->
     <multiinstance name="multi_instance_1" times-field="two">
         <successor>activity_g1</successor>

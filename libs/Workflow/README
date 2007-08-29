@@ -36,6 +36,9 @@ Supported Workflow Patterns
 37. Acyclic Synchronizing Merge [tests/xml/patterns/acyclic_synchronizing_merge.xml]
 38. General Synchronizing Merge [tests/xml/patterns/general_synchronizing_merge.xml]
 
+41. Thread Merge [tests/xml/patterns/thread_merge.xml]
+42. Thread Split [tests/xml/patterns/thread_split.xml]
+
 
 Contact
 --------

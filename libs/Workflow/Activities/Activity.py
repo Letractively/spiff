@@ -43,6 +43,7 @@ class Activity(object):
         self.outputs   = []
         self.user_func = None
         self.manual    = False
+        self.internal  = False  # Only for easing debugging.
         self._parent.add_notify(self)
         assert self.id is not None
 
@@ -105,7 +106,7 @@ class Activity(object):
         Updates the branch such that all possible future routes are added
         with the PREDICTED flag.
 
-        Should NOT be overwritten! Instead, overwrite the hook (_predict_hook).
+        Should NOT be overwritten! Instead, overwrite the hook (_predict).
         """
         if seen is None:
             seen = []
@@ -115,14 +116,13 @@ class Activity(object):
             seen.append(self)
         if branch_node.state & BranchNode.COMPLETED == 0 \
             and branch_node.state & BranchNode.CANCELLED == 0:
-            outputs = self._get_predicted_outputs(job, branch_node)
-            branch_node.update_children(outputs, BranchNode.PREDICTED)
+            self._predict(job, branch_node)
         for node in branch_node.children:
             node.activity.predict(job, node, seen)
 
 
-    def _get_predicted_outputs(self, job, branch_node):
-        return self.outputs
+    def _predict(self, job, branch_node):
+        branch_node.update_children(self.outputs, BranchNode.PREDICTED)
 
 
     def execute(self, job, branch_node):
