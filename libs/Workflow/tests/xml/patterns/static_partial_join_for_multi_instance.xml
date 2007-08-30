@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?> 
 <process-definition name="flow" revision="1.0">
-    <description>Pattern 15 (Multiple Instances without a priori Run-Time Knowledge)</description>
+    <description>Pattern 34 (Static Partial Join for Multiple Instances)</description>
 
     <!-- Start with an implicit simple split. -->
     <startactivity>
@@ -17,26 +17,26 @@
 
         <!-- Parallel activities. -->
         <activity name="activity_g1">
-            <successor>struct_synch_merge_1</successor>
+            <successor>join_1</successor>
         </activity>
         <activity name="activity_g2">
-            <successor>struct_synch_merge_1</successor>
+            <successor>join_1</successor>
         </activity>
 
-        <!-- Structured synchronizing merge. -->
-        <join name="struct_synch_merge_1" context="multi_instance_1">
-            <successor>join</successor>
+        <!-- Merge instances. -->
+        <join name="join_1" context="multi_instance_1" threshold="4">
+            <successor>join_2</successor>
         </join>
     <!-- End branch 2 -->
 
     <!-- Branch 1 -->
         <trigger name="add_instance_1" context="multi_instance_1">
-            <successor>join</successor>
+            <successor>join_2</successor>
         </trigger>
     <!-- End branch 1 -->
 
     <!-- Join all branches. -->
-    <join name="join">
+    <join name="join_2">
         <successor>last</successor>
     </join>
 

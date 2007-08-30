@@ -62,6 +62,8 @@ class ThreadMerge(Join):
 
         # The default threshold is the number of threads that were started.
         threshold = self.threshold
+        if self.threshold_attr is not None:
+            threshold = job.get_attribute(self.threshold_attr)
         if threshold is None:
             threshold = len(nodes)
 
