@@ -32,7 +32,9 @@ Supported Workflow Patterns
 31. Blocking Partial Join [tests/xml/patterns/blocking_partial_join.xml]
 32. Cancelling Partial Join [tests/xml/patterns/cancelling_partial_join.xml]
 33. Generalized AND-Join [tests/xml/patterns/generalized_and_join.xml]
-
+34. Static Partial Join for Multiple Instances [tests/xml/patterns/static_partial_join_for_multi_instance.xml]
+35. Cancelling Partial Join for Multiple Instances [tests/xml/patterns/cancelling_partial_join_for_multi_instance.xml]
+36. Dynamic Partial Join for Multiple Instances [tests/xml/patterns/dynamic_partial_join_for_multi_instances.xml]
 37. Acyclic Synchronizing Merge [tests/xml/patterns/acyclic_synchronizing_merge.xml]
 38. General Synchronizing Merge [tests/xml/patterns/general_synchronizing_merge.xml]
 

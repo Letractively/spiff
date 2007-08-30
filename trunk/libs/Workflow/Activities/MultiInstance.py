@@ -36,7 +36,7 @@ class MultiInstance(Activity):
         name -- a name for the pattern (string)
         kwargs -- must contain one of the following:
                     times -- the number of instances to create.
-                    times-attribute -- the name of the attribute that
+                    times_attribute -- the name of the attribute that
                                        specifies the number of outgoing
                                        instances.
         """

@@ -37,13 +37,18 @@ class Join(Activity):
                       branches need to complete before the activity triggers.
                       When the limit is reached, the activity fires but still
                       expects all other branches to complete.
+                      threshold_attribute -- like threshold, but the value is
+                      read from the attribute with the given name at runtime.
                       cancel -- when set to True, remaining incoming branches
                       are cancelled as soon as the discriminator is activated.
         """
+        assert not (kwargs.has_key('threshold') \
+                and kwargs.has_key('threshold_attribute'))
         Activity.__init__(self, parent, name)
         self.split_activity = split_activity
-        self.threshold      = kwargs.get('threshold', None)
-        self.cancel         = kwargs.get('cancel',    False)
+        self.threshold      = kwargs.get('threshold',           None)
+        self.threshold_attr = kwargs.get('threshold_attribute', None)
+        self.cancel         = kwargs.get('cancel',              False)
 
 
     def _branch_is_complete(self, job, branch_node):
@@ -95,6 +100,8 @@ class Join(Activity):
 
         # The default threshold is the number of inputs.
         threshold = self.threshold
+        if self.threshold_attr is not None:
+            threshold = job.get_attribute(self.threshold_attr)
         if threshold is None:
             threshold = len(self.inputs)
 
@@ -152,6 +159,8 @@ class Join(Activity):
 
         # The default threshold is the number of branches that were started.
         threshold = self.threshold
+        if self.threshold_attr is not None:
+            threshold = job.get_attribute(self.threshold_attr)
         if threshold is None:
             threshold = len(nodes)
 

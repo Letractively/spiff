@@ -123,11 +123,12 @@ class XmlReader(object):
         start_node -- the xml structure (xml.dom.minidom.Node)
         """
         # Extract attributes from the node.
-        type      = start_node.nodeName.lower()
-        name      = start_node.getAttribute('name').lower()
-        context   = start_node.getAttribute('context').lower()
-        cancel    = start_node.getAttribute('cancel').lower()
-        threshold = start_node.getAttribute('threshold').lower()
+        type            = start_node.nodeName.lower()
+        name            = start_node.getAttribute('name').lower()
+        context         = start_node.getAttribute('context').lower()
+        cancel          = start_node.getAttribute('cancel').lower()
+        threshold       = start_node.getAttribute('threshold').lower()
+        threshold_field = start_node.getAttribute('threshold-field').lower()
         kwargs    = {}
         if not self.activity_map.has_key(type):
             self._raise('Invalid activity type "%s"' % type)
@@ -141,6 +142,8 @@ class XmlReader(object):
             kwargs['cancel'] = True
         if threshold != '':
             kwargs['threshold'] = int(threshold)
+        if threshold_field != '':
+            kwargs['threshold_attribute'] = threshold_field
 
         # Create a new instance of the activity.
         module = self.activity_map[type]
