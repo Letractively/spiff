@@ -2,6 +2,7 @@ __all__ = ['AcquireMutex',
            'Choose',
            'Condition',
            'ExclusiveChoice',
+           'Gate',
            'Join',
            'MultiChoice',
            'MultiInstance',
@@ -16,6 +17,7 @@ __all__ = ['AcquireMutex',
 from AcquireMutex    import AcquireMutex
 from Choose          import Choose
 from ExclusiveChoice import ExclusiveChoice
+from Gate            import Gate
 from Join            import Join
 from MultiChoice     import MultiChoice, Condition
 from MultiInstance   import MultiInstance

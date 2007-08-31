@@ -6,6 +6,7 @@
 	Deferred Choice pattern.
 	* Tasks/AcquireMutex.py, Tasks/ReleaseMutex.py: Add support for Deferred
 	Choice and Interleaved Parallel Routing.
+	* Tasks/Gate.py: Support the Milestone pattern.
 
 2007-08-30 Samuel Abels <http://debain.org>
 

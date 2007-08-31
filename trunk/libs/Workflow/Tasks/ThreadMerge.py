@@ -20,7 +20,7 @@ from Join       import Join
 
 class ThreadMerge(Join):
     """
-    This class represents an task for synchronizing branch_nodes that were
+    This class represents a task for synchronizing branch_nodes that were
     previously split using a a ThreadSplit.
     It has two or more incoming branches and one or more outputs.
     """

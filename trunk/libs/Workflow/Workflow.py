@@ -32,7 +32,7 @@ class Workflow(object):
 
     def add_notify(self, task):
         """
-        Called by an task when it was added into the workflow.
+        Called by a task when it was added into the workflow.
         """
         self.tasks.append(task)
         task.id = len(self.tasks)

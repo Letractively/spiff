@@ -102,7 +102,7 @@ class MultiChoice(Task):
 
     def connect_if(self, condition, task):
         """
-        Connects an task that is executed if the condition DOES match.
+        Connects a task that is executed if the condition DOES match.
         
         condition -- a condition (Condition)
         task -- the conditional task

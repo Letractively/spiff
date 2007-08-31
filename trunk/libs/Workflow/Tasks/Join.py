@@ -19,7 +19,7 @@ from Task       import Task
 
 class Join(Task):
     """
-    This class represents an task for synchronizing branch_nodes that were
+    This class represents a task for synchronizing branch_nodes that were
     previously split using a conditional task, such as MultiChoice.
     It has two or more incoming branches and one or more outputs.
     """

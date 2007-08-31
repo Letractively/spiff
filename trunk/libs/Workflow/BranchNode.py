@@ -100,7 +100,6 @@ class BranchNode(object):
         self.id        = self.__class__.id_pool
         self.thread_id = self.__class__.thread_id_pool
         self.name      = 'BranchNode for ' + self.task.name
-        self.locks   = []
         if parent is not None:
             self.parent._child_added_notify(self)
 
@@ -194,7 +193,7 @@ class BranchNode(object):
         status -- the initial node state
         """
         if task is None:
-            raise WorkflowException(self, 'add_child() requires an task.')
+            raise WorkflowException(self, 'add_child() requires a task.')
         if self.state & self.PREDICTED != 0 and status & self.PREDICTED == 0:
             msg = 'Attempt to add non-predicted child to predicted node'
             raise WorkflowException(self, msg)
