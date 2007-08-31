@@ -144,6 +144,30 @@ class XmlReader(object):
             kwargs['threshold'] = int(threshold)
         if threshold_field != '':
             kwargs['threshold_attribute'] = threshold_field
+        if type == 'choose':
+            kwargs['choice'] = []
+
+        # Walk through the children of the node.
+        successors = []
+        for node in start_node.childNodes:
+            if node.nodeType != minidom.Node.ELEMENT_NODE:
+                continue
+            if node.nodeName == 'description':
+                pass #FIXME: Store this info somewhere.
+            elif node.nodeName == 'successor' \
+              or node.nodeName == 'default-successor':
+                if node.firstChild is None:
+                    self._raise('Empty %s tag' % node.nodeName)
+                successors.append((None, node.firstChild.nodeValue))
+            elif node.nodeName == 'conditional-successor':
+                successors.append(self._read_condition(workflow, node))
+            elif node.nodeName == 'pick':
+                if node.firstChild is None:
+                    self._raise('Empty %s tag' % node.nodeName)
+                task = self.read_tasks[node.firstChild.nodeValue][0]
+                kwargs['choice'].append(task)
+            else:
+                self._raise('Unknown node: %s' % node.nodeName)
 
         # Create a new instance of the task.
         module = self.task_map[type]
@@ -168,25 +192,8 @@ class XmlReader(object):
         else:
             if not self.read_tasks.has_key(context):
                 self._raise('Context %s does not exist' % context)
-            context  = self.read_tasks[context][0]
-            task = module(workflow, name, context, **kwargs)
-
-        # Walk through the children of the node.
-        successors = []
-        for node in start_node.childNodes:
-            if node.nodeType != minidom.Node.ELEMENT_NODE:
-                continue
-            if node.nodeName == 'description':
-                pass
-            elif node.nodeName == 'successor' \
-              or node.nodeName == 'default-successor':
-                if node.firstChild is None:
-                    self._raise('Empty %s tag' % node.nodeName)
-                successors.append((None, node.firstChild.nodeValue))
-            elif node.nodeName == 'conditional-successor':
-                successors.append(self._read_condition(workflow, node))
-            else:
-                self._raise('Unknown node: %s' % node.nodeName)
+            context = self.read_tasks[context][0]
+            task    = module(workflow, name, context, **kwargs)
 
         self.read_tasks[name] = (task, successors)
 

@@ -2,6 +2,8 @@
 
 	* Activities are now "Tasks", to be consistent with WorkflowPatterns
 	terminology.
+	* Activities/Choose.py, Activities/MultiChoice.py: Add support for the
+	Deferred Choice pattern.
 
 2007-08-30 Samuel Abels <http://debain.org>
 

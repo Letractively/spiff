@@ -16,31 +16,35 @@
 from BranchNode import *
 from Exception  import WorkflowException
 from Task       import Task
+from Trigger    import Trigger
 
-class Trigger(Task):
+class Choose(Trigger):
     """
-    This class implements an task that triggers an event on another 
-    task.
+    This class implements a task that causes an associated MultiChoice
+    activity to select the tasks with the specified name.
     If more than one input is connected, the task performs an implicit
     multi merge.
     If more than one output is connected, the task performs an implicit
     parallel split.
     """
 
-    def __init__(self, parent, name, context):
+    def __init__(self, parent, name, context, **kwargs):
         """
         Constructor.
 
         parent -- a reference to the parent (Task)
         name -- a name for the task (string)
-        context -- the MultiInstance task that is instructed to create
-                   another instance.
+        context -- the MultiChoice task that is instructed to select the
+                   specified outputs.
+        kwargs -- may contain the following keys:
+                    choice -- the list of activities that is selected.
         """
         assert parent  is not None
         assert name    is not None
         assert context is not None
         Task.__init__(self, parent, name)
         self.context = context
+        self.choice  = kwargs.get('choice', [])
 
 
     def execute(self, job, branch_node):
@@ -55,6 +59,6 @@ class Trigger(Task):
         assert branch_node is not None
         self.test()
 
-        self.context.trigger(job, branch_node)
+        self.context.trigger(job, branch_node, self.choice)
 
         return Task.execute(self, job, branch_node)
