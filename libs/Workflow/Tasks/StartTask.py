@@ -24,13 +24,13 @@ class StartTask(Task):
     parallel split.
     """
 
-    def __init__(self, parent):
+    def __init__(self, parent, **kwargs):
         """
         Constructor.
         
         parent -- a reference to the parent (Task)
         """
-        Task.__init__(self, parent, 'Start')
+        Task.__init__(self, parent, 'Start', **kwargs)
 
 
     def connect_notify(self, task):

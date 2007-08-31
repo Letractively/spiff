@@ -98,15 +98,11 @@ class ThreadMerge(Join):
         return False
 
 
-    def execute(self, job, branch_node):
+    def _execute(self, job, branch_node):
         """
         Runs the task. Should not be called directly.
         Returns True if completed, False otherwise.
         """
-        assert job    is not None
-        assert branch_node is not None
-        self.test()
-
         # The context is the path up to the point where the split happened.
         split_node = branch_node.find_ancestor(self.split_task)
         context    = split_node.id
@@ -124,4 +120,4 @@ class ThreadMerge(Join):
             if node.task != self:
                 continue
             node.state = BranchNode.COMPLETED
-        return Task.execute(self, job, branch_node)
+        return Task._execute(self, job, branch_node)

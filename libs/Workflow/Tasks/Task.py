@@ -27,12 +27,15 @@ class Task(object):
     parallel split.
     """
 
-    def __init__(self, parent, name):
+    def __init__(self, parent, name, **kwargs):
         """
         Constructor.
 
         parent -- a reference to the parent (Task)
         name -- a name for the task (string)
+        kwargs -- may contain the following keys:
+                  lock -- a list of locks that is aquired on entry of
+                  execute() and released on leave of execute().
         """
         assert parent is not None
         assert name   is not None
@@ -41,9 +44,12 @@ class Task(object):
         self.name      = name
         self.inputs    = []
         self.outputs   = []
+        self.pre_func  = None
         self.user_func = None
+        self.post_func = None
         self.manual    = False
         self.internal  = False  # Only for easing debugging.
+        self.locks     = kwargs.get('lock', [])
         self._parent.add_notify(self)
         assert self.id is not None
 
@@ -137,11 +143,42 @@ class Task(object):
         assert branch_node is not None
         self.test()
 
-        # Run user code, if any.
-        if self.user_func is not None:
-            self.user_func(job, branch_node, self)
+        # Acquire locks, if any.
+        for lock in self.locks:
+            mutex = job.get_mutex(lock)
+            if not mutex.testandset():
+                return False
 
+        # Run user code, if any.
+        if self.pre_func is not None:
+            self.pre_func(job, branch_node, self)
+
+        result = self._execute(job, branch_node)
+
+        # Run user code, if any.
+        if result and self.user_func is not None:
+            result = self.user_func(job, branch_node, self)
+        if self.post_func is not None:
+            self.post_func(job, branch_node, self)
+
+        # Release locks, if any.
+        for lock in self.locks:
+            mutex = job.get_mutex(lock)
+            mutex.unlock()
+
+        if result:
+            branch_node.set_status(BranchNode.COMPLETED)
+
+        return result
+
+
+    def _execute(self, job, branch_node):
+        """
+        A hook into execute() that does the real work.
+
+        job -- the job in which this method is executed
+        branch_node -- the branch_node in which this method is executed
+        """
         # If we have more than one output, implicitly split.
         branch_node.update_children(self.outputs)
-        branch_node.set_status(BranchNode.COMPLETED)
         return True

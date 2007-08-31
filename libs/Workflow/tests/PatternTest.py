@@ -14,8 +14,8 @@ from xml.parsers.expat import ExpatError
 
 def print_name(job, branch_node, task):
     reached_key = "%s_reached" % str(task.name)
-    n_reached   = job.get_attribute(reached_key, 0) + 1
-    step        = job.get_attribute('step', 0) + 1
+    n_reached   = job.get_attribute(reached_key, 1) + 1
+    step        = job.get_attribute('step', 1) + 1
     job.set_attribute(**{reached_key: n_reached})
     job.set_attribute(two             = 2)
     job.set_attribute(three           = 3)
@@ -34,6 +34,7 @@ def print_name(job, branch_node, task):
     #print "%s%s" % (indent, task.name)
     #print "%s%s (reached %s times)" % (indent, task.name, n_reached)
     #print "PATH:", current, branch_node.name, branch_node.id
+    return True
 
 class PatternTest(unittest.TestCase):
     def setUp(self):
@@ -56,6 +57,7 @@ class PatternTest(unittest.TestCase):
         expected      = file.read()
         file.close()
         try:
+            #print '\n%s: ok' % xml_filename,
             workflow_list = self.reader.parse_file(xml_filename)
             self.testWorkflow(workflow_list[0], expected, filename)
         except:

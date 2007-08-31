@@ -13,7 +13,8 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
-from Tasks import Task
+from mutex      import mutex
+from Tasks      import Task
 from BranchNode import *
 
 class Job(object):
@@ -31,6 +32,7 @@ class Job(object):
         self.workflow     = workflow
         self.attributes   = {}
         self.context_data = {}
+        self.locks        = {}
         self.last_node    = None
         self.branch_tree  = BranchNode(self, Task(workflow, 'Root'))
 
@@ -73,6 +75,12 @@ class Job(object):
         if self.attributes.has_key(name):
             return self.attributes[name]
         return default
+
+
+    def get_mutex(self, name):
+        if not self.locks.has_key(name):
+            self.locks[name] = mutex()
+        return self.locks[name]
 
 
     def set_context_data(self, context, *args, **kwargs):
@@ -135,10 +143,11 @@ class Job(object):
             except:
                 next = None
             self.last_node = None
-            if next is not None and next.task.execute(self, next):
-                self.last_node = next
-                return True
-            blacklist.append(next)
+            if next is not None:
+                if next.task.execute(self, next):
+                    self.last_node = next
+                    return True
+                blacklist.append(next)
 
         # Walk through all waiting tasks.
         for node in BranchNode.Iterator(self.branch_tree, BranchNode.WAITING):

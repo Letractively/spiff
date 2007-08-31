@@ -100,6 +100,7 @@ class BranchNode(object):
         self.id        = self.__class__.id_pool
         self.thread_id = self.__class__.thread_id_pool
         self.name      = 'BranchNode for ' + self.task.name
+        self.locks   = []
         if parent is not None:
             self.parent._child_added_notify(self)
 

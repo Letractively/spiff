@@ -11,8 +11,8 @@ from Job        import Job
 
 def print_name(job, branch_node, task):
     reached_key = "%s_reached" % str(task.name)
-    n_reached   = job.get_attribute(reached_key, 0) + 1
-    step        = job.get_attribute('step', 0) + 1
+    n_reached   = job.get_attribute(reached_key, 1) + 1
+    step        = job.get_attribute('step', 1) + 1
     job.set_attribute(**{reached_key: n_reached})
     job.set_attribute(two             = 2)
     job.set_attribute(three           = 3)
@@ -26,6 +26,7 @@ def print_name(job, branch_node, task):
     taken_path.append((id, task.name))
     job.set_attribute(taken_path = taken_path)
     #print "%s. Branch '%s': %s reached %s times" % (step, id, task.name, n_reached)
+    return True
 
 class WorkflowTest(unittest.TestCase):
     """
