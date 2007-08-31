@@ -17,13 +17,13 @@ from AbstractMethod import AbstractMethod
 from BranchNode     import *
 from Exception      import WorkflowException
 
-class Activity(object):
+class Task(object):
     """
-    This class implements a activity with one or more inputs and
+    This class implements a task with one or more inputs and
     one or more outputs.
-    If more than one input is connected, the activity performs an implicit
+    If more than one input is connected, the task performs an implicit
     multi merge.
-    If more than one output is connected, the activity performs an implicit
+    If more than one output is connected, the task performs an implicit
     parallel split.
     """
 
@@ -31,8 +31,8 @@ class Activity(object):
         """
         Constructor.
 
-        parent -- a reference to the parent (Activity)
-        name -- a name for the activity (string)
+        parent -- a reference to the parent (Task)
+        name -- a name for the task (string)
         """
         assert parent is not None
         assert name   is not None
@@ -48,24 +48,24 @@ class Activity(object):
         assert self.id is not None
 
 
-    def connect(self, activity):
+    def connect(self, task):
         """
-        Connect the *following* activity to this one. In other words, the
-        given activity is added as an output activity.
+        Connect the *following* task to this one. In other words, the
+        given task is added as an output task.
 
-        activity -- the activity to connect to.
+        task -- the task to connect to.
         """
-        self.outputs.append(activity)
-        activity.connect_notify(self)
+        self.outputs.append(task)
+        task.connect_notify(self)
 
 
-    def connect_notify(self, activity):
+    def connect_notify(self, task):
         """
-        Called by the previous activity to let us know that it exists.
+        Called by the previous task to let us know that it exists.
 
-        activity -- the activity by which this method is executed
+        task -- the task by which this method is executed
         """
-        self.inputs.append(activity)
+        self.inputs.append(task)
 
 
     def get_activated_branch_nodes(self, job, branch_node):
@@ -86,16 +86,16 @@ class Activity(object):
         if an error was detected.
         """
         if self.id is None:
-            raise WorkflowException(self, 'Activity is not yet instanciated.')
+            raise WorkflowException(self, 'Task is not yet instanciated.')
         if len(self.inputs) < 1:
-            raise WorkflowException(self, 'No input activity connected.')
+            raise WorkflowException(self, 'No input task connected.')
         elif len(self.outputs) < 1:
-            raise WorkflowException(self, 'No output activity connected.')
+            raise WorkflowException(self, 'No output task connected.')
 
 
     def trigger(self, job, branch_node):
         """
-        May be called by another activity to trigger an activity-specific
+        May be called by another task to trigger an task-specific
         event.
         """
         AbstractMethod()
@@ -118,7 +118,7 @@ class Activity(object):
             and branch_node.state & BranchNode.CANCELLED == 0:
             self._predict(job, branch_node)
         for node in branch_node.children:
-            node.activity.predict(job, node, seen)
+            node.task.predict(job, node, seen)
 
 
     def _predict(self, job, branch_node):
@@ -127,7 +127,7 @@ class Activity(object):
 
     def execute(self, job, branch_node):
         """
-        Runs the activity. Should not be called directly.
+        Runs the task. Should not be called directly.
         Returns True if completed, False otherwise.
 
         job -- the job in which this method is executed

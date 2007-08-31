@@ -16,7 +16,7 @@
 import re
 from BranchNode import *
 from Exception  import WorkflowException
-from Activity   import Activity
+from Task   import Task
 
 class Condition(object):
     EQUAL,          \
@@ -73,7 +73,7 @@ class Condition(object):
             assert False  # Invalid operator.
         return False
 
-class MultiChoice(Activity):
+class MultiChoice(Task):
     """
     This class represents an if condition where multiple conditions may match
     at the same time, creating multiple branch_nodees.
@@ -85,31 +85,31 @@ class MultiChoice(Activity):
         """
         Constructor.
         
-        parent -- a reference to the parent (Activity)
+        parent -- a reference to the parent (Task)
         name -- a name for the pattern (string)
         """
-        Activity.__init__(self, parent, name)
-        self.cond_activities  = []
+        Task.__init__(self, parent, name)
+        self.cond_tasks = []
 
 
-    def connect(self, activity):
+    def connect(self, task):
         """
         Convenience wrapper around connect_if() where condition is set to None.
         """
-        return self.connect_if(None, activity)
+        return self.connect_if(None, task)
 
 
-    def connect_if(self, condition, activity):
+    def connect_if(self, condition, task):
         """
-        Connects an activity that is executed if the condition DOES match.
+        Connects an task that is executed if the condition DOES match.
         
         condition -- a condition (Condition)
-        activity -- the conditional activity
+        task -- the conditional task
         """
-        assert activity is not None
-        self.outputs.append(activity)
-        self.cond_activities.append((condition, activity))
-        activity.connect_notify(self)
+        assert task is not None
+        self.outputs.append(task)
+        self.cond_tasks.append((condition, task))
+        task.connect_notify(self)
 
 
     def test(self):
@@ -117,12 +117,12 @@ class MultiChoice(Activity):
         Checks whether all required attributes are set. Throws an exception
         if an error was detected.
         """
-        Activity.test(self)
-        if len(self.cond_activities) < 1:
+        Task.test(self)
+        if len(self.cond_tasks) < 1:
             raise WorkflowException(self, 'At least one output required.')
-        for condition, activity in self.cond_activities:
-            if activity is None:
-                raise WorkflowException(self, 'Condition with no activity.')
+        for condition, task in self.cond_tasks:
+            if task is None:
+                raise WorkflowException(self, 'Condition with no task.')
             if condition is None:
                 continue
             if condition is None:
@@ -131,7 +131,7 @@ class MultiChoice(Activity):
 
     def execute(self, job, branch_node):
         """
-        Runs the activity. Should not be called directly.
+        Runs the task. Should not be called directly.
         Returns True if completed, False otherwise.
         """
         assert job is not None
@@ -144,7 +144,7 @@ class MultiChoice(Activity):
 
         # Find all matching conditions.
         outputs = []
-        for condition, output in self.cond_activities:
+        for condition, output in self.cond_tasks:
             if condition is None or condition.matches(job):
                 outputs.append(output)
 

@@ -1,22 +1,22 @@
-__all__ = ['Activity',
+__all__ = ['Task',
            'Condition',
            'ExclusiveChoice',
            'Join',
            'MultiChoice',
            'MultiInstance',
-           'StartActivity',
-           'StubActivity',
+           'StartTask',
+           'StubTask',
            'ThreadMerge',
            'ThreadSplit',
            'Trigger']
 
-from Activity        import Activity
+from Task        import Task
 from ExclusiveChoice import ExclusiveChoice
 from Join            import Join
 from MultiChoice     import MultiChoice, Condition
 from MultiInstance   import MultiInstance
-from StartActivity   import StartActivity
-from StubActivity    import StubActivity
+from StartTask   import StartTask
+from StubTask    import StubTask
 from ThreadMerge     import ThreadMerge
 from ThreadSplit     import ThreadSplit
 from Trigger         import Trigger

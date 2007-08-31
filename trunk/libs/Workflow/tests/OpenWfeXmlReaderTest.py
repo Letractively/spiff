@@ -16,8 +16,8 @@ class OpenWfeXmlReaderTest(unittest.TestCase):
         self.path   = []
 
 
-    def print_name(self, job, branch_node, activity):
-        print_name(job, branch_node, activity)
+    def print_name(self, job, branch_node, task):
+        print_name(job, branch_node, task)
         job.set_attribute(test_attribute1 = 'false')
         job.set_attribute(test_attribute2 = 'true')
         self.path = job.get_attribute('taken_path')
@@ -51,8 +51,8 @@ class OpenWfeXmlReaderTest(unittest.TestCase):
     def testRunWorkflow(self):
         wf = self.reader.parse_file('xml/openwfe/workflow1.xml')
 
-        for activity in wf[0].activities:
-            activity.user_func = self.print_name
+        for task in wf[0].tasks:
+            task.user_func = self.print_name
 
         job = Job(wf[0])
         try:
@@ -63,19 +63,19 @@ class OpenWfeXmlReaderTest(unittest.TestCase):
 
         path = [(0, 'Start'),
                 (0, 'concurrence_1'),
-                (0, 'activity_a1'),
-                (0, 'activity_a2'),
+                (0, 'task_a1'),
+                (0, 'task_a2'),
                 (0, 'if_condition_1'),
-                (0, 'activity_a3'),
+                (0, 'task_a3'),
                 (0, 'if_condition_1_end'),
                 (0, 'if_condition_2'),
-                (0, 'activity_a5'),
+                (0, 'task_a5'),
                 (0, 'if_condition_2_end'),
-                (0, 'activity_b1'),
-                (0, 'activity_b2'),
+                (0, 'task_b1'),
+                (0, 'task_b2'),
                 (0, 'concurrence_1_end'),
-                (0, 'activity_c1'),
-                (0, 'activity_c2'),
+                (0, 'task_c1'),
+                (0, 'task_c2'),
                 (0, 'End')]
 
         # Check whether the correct route was taken.
@@ -87,7 +87,7 @@ class OpenWfeXmlReaderTest(unittest.TestCase):
         self.assert_(len(self.path) == len(path),
                      'Taken route is too long: %s' % self.path)
 
-        # Check whether all activities were in the correct branch_node.
+        # Check whether all tasks were in the correct branch_node.
         for i, (branch_node, name) in enumerate(path):
             self.assert_(branch_node == self.path[i][0],
                          '%s in incorrect branch_node %s: %s' % (name, branch_node, self.path))

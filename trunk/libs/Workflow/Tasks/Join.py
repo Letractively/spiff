@@ -15,27 +15,27 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 from BranchNode import *
 from Exception  import WorkflowException
-from Activity   import Activity
+from Task   import Task
 
-class Join(Activity):
+class Join(Task):
     """
-    This class represents an activity for synchronizing branch_nodes that were
-    previously split using a conditional activity, such as MultiChoice.
+    This class represents an task for synchronizing branch_nodes that were
+    previously split using a conditional task, such as MultiChoice.
     It has two or more incoming branches and one or more outputs.
     """
 
-    def __init__(self, parent, name, split_activity = None, **kwargs):
+    def __init__(self, parent, name, split_task = None, **kwargs):
         """
         Constructor.
         
-        parent -- a reference to the parent (Activity)
+        parent -- a reference to the parent (Task)
         name -- a name for the pattern (string)
-        split_activity -- the activity that was previously used to split the
+        split_task -- the task that was previously used to split the
                           branch_node
         kwargs -- may contain the following keys:
                       threshold -- an integer that specifies how many incoming
-                      branches need to complete before the activity triggers.
-                      When the limit is reached, the activity fires but still
+                      branches need to complete before the task triggers.
+                      When the limit is reached, the task fires but still
                       expects all other branches to complete.
                       threshold_attribute -- like threshold, but the value is
                       read from the attribute with the given name at runtime.
@@ -44,8 +44,8 @@ class Join(Activity):
         """
         assert not (kwargs.has_key('threshold') \
                 and kwargs.has_key('threshold_attribute'))
-        Activity.__init__(self, parent, name)
-        self.split_activity = split_activity
+        Task.__init__(self, parent, name)
+        self.split_task     = split_task
         self.threshold      = kwargs.get('threshold',           None)
         self.threshold_attr = kwargs.get('threshold_attribute', None)
         self.cancel         = kwargs.get('cancel',              False)
@@ -60,7 +60,7 @@ class Join(Activity):
             # If the current node is a child of myself, ignore it.
             if skip is not None and node.is_descendant_of(skip):
                 continue
-            if node.activity == self:
+            if node.task == self:
                 skip = node
                 continue
             return False
@@ -73,21 +73,21 @@ class Join(Activity):
             if node.state & BranchNode.TRIGGERED != 0:
                 continue
             # Merge found.
-            if node.activity == self:
+            if node.task == self:
                 return True
             # If the node has outputs even though it is predicted with no
             # children, that means the prediction may be incomplete (for
             # example, because a prediction is not yet possible at this time).
             if node.state & BranchNode.PREDICTED != 0 \
                 and len(node.children) == 0           \
-                and len(node.activity.outputs) > 0:
+                and len(node.task.outputs) > 0:
                 return True
         return False
 
 
     def _get_structured_context(self, job, branch_node):
-        path       = branch_node.find_path(None, self.split_activity)
-        split_node = branch_node.find_child_of(self.split_activity)
+        path       = branch_node.find_path(None, self.split_task)
+        split_node = branch_node.find_child_of(self.split_task)
         return '%s(%s)' % (path, split_node.thread_id)
 
 
@@ -105,13 +105,13 @@ class Join(Activity):
         if threshold is None:
             threshold = len(self.inputs)
 
-        # Look at the tree to find all places where this activity is used.
+        # Look at the tree to find all places where this task is used.
         nodes = []
-        for activity in self.inputs:
+        for task in self.inputs:
             for node in job.branch_tree:
                 if node.thread_id != branch_node.thread_id:
                     continue
-                if node.activity != activity:
+                if node.task != task:
                     continue
                 nodes.append(node)
 
@@ -137,8 +137,8 @@ class Join(Activity):
             return True
 
         # We do NOT set the branch_node status to COMPLETED, because in
-        # case all other incoming activities get cancelled (or never reach
-        # the Join for other reasons, such as reaching a StubActivity), we
+        # case all other incoming tasks get cancelled (or never reach
+        # the Join for other reasons, such as reaching a StubTask), we
         # need to revisit it.
         return False
 
@@ -154,8 +154,8 @@ class Join(Activity):
             return False
 
         # Retrieve a list of all activated branch_nodes from the associated
-        # activity that did the conditional parallel split.
-        nodes = self.split_activity.get_activated_branch_nodes(job, branch_node)
+        # task that did the conditional parallel split.
+        nodes = self.split_task.get_activated_branch_nodes(job, branch_node)
 
         # The default threshold is the number of branches that were started.
         threshold = self.threshold
@@ -169,7 +169,7 @@ class Join(Activity):
         completed     = 0
         for node in nodes:
             # Refresh path prediction.
-            node.activity.predict(job, node)
+            node.task.predict(job, node)
 
             if not self._branch_may_merge_at(job, node):
                 completed += 1
@@ -191,21 +191,21 @@ class Join(Activity):
             return True
 
         # We do NOT set the branch_node status to COMPLETED, because in
-        # case all other incoming activities get cancelled (or never reach
-        # the Join for other reasons, such as reaching a StubActivity), we
+        # case all other incoming tasks get cancelled (or never reach
+        # the Join for other reasons, such as reaching a StubTask), we
         # need to revisit it.
         return False
 
 
     def may_fire(self, job, branch_node):
-        if self.split_activity is None:
+        if self.split_task is None:
             return self._may_fire_unstructured(job, branch_node)
         return self._may_fire_structured(job, branch_node)
 
 
     def execute(self, job, branch_node):
         """
-        Runs the activity. Should not be called directly.
+        Runs the task. Should not be called directly.
         Returns True if completed, False otherwise.
         """
         assert job    is not None
@@ -213,7 +213,7 @@ class Join(Activity):
         self.test()
 
         # The context is the path up to the point where the split happened.
-        if self.split_activity is None:
+        if self.split_task is None:
             context = '%s(%s)' % (self.id, branch_node.thread_id)
         else:
             context = self._get_structured_context(job, branch_node)
@@ -223,12 +223,12 @@ class Join(Activity):
             return False
         job.set_context_data(context, may_fire = 'done')
 
-        # Mark all nodes in the same thread that reference this activity as
+        # Mark all nodes in the same thread that reference this task as
         # COMPLETED.
         for node in job.branch_tree:
             if node.thread_id != branch_node.thread_id:
                 continue
-            if node.activity != self:
+            if node.task != self:
                 continue
             node.state = BranchNode.COMPLETED
-        return Activity.execute(self, job, branch_node)
+        return Task.execute(self, job, branch_node)

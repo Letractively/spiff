@@ -15,40 +15,40 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 from BranchNode import *
 from Exception  import WorkflowException
-from Activity   import Activity
+from Task   import Task
 from Join       import Join
 
 class ThreadMerge(Join):
     """
-    This class represents an activity for synchronizing branch_nodes that were
+    This class represents an task for synchronizing branch_nodes that were
     previously split using a a ThreadSplit.
     It has two or more incoming branches and one or more outputs.
     """
 
-    def __init__(self, parent, name, split_activity, **kwargs):
+    def __init__(self, parent, name, split_task, **kwargs):
         """
         Constructor.
         
-        parent -- a reference to the parent (Activity)
+        parent -- a reference to the parent (Task)
         name -- a name for the pattern (string)
-        split_activity -- the activity that was previously used to split the
+        split_task -- the task that was previously used to split the
                           branch_node
         kwargs -- may contain the following keys:
                       threshold -- an integer that specifies how many incoming
-                      branches need to complete before the activity triggers.
-                      When the limit is reached, the activity fires but still
+                      branches need to complete before the task triggers.
+                      When the limit is reached, the task fires but still
                       expects all other branches to complete.
                       cancel -- when set to True, remaining incoming branches
                       are cancelled as soon as the discriminator is activated.
         """
-        assert split_activity is not None
-        Join.__init__(self, parent, name, split_activity, **kwargs)
+        assert split_task is not None
+        Join.__init__(self, parent, name, split_task, **kwargs)
 
 
     def may_fire(self, job, branch_node):
         # In structured context, the context is the path up to the point where
         # the split happened.
-        split_node = branch_node.find_ancestor(self.split_activity)
+        split_node = branch_node.find_ancestor(self.split_task)
         context    = split_node.id
 
         # If the threshold was already reached, there is nothing else to do.
@@ -57,7 +57,7 @@ class ThreadMerge(Join):
             return False
 
         # Retrieve a list of all activated branch_nodes from the associated
-        # activity that did the conditional parallel split.
+        # task that did the conditional parallel split.
         nodes = split_node.children
 
         # The default threshold is the number of threads that were started.
@@ -72,7 +72,7 @@ class ThreadMerge(Join):
         completed     = 0
         for node in nodes:
             # Refresh path prediction.
-            node.activity.predict(job, node)
+            node.task.predict(job, node)
 
             if self._branch_is_complete(job, node):
                 completed += 1
@@ -92,15 +92,15 @@ class ThreadMerge(Join):
             return True
 
         # We do NOT set the branch_node status to COMPLETED, because in
-        # case all other incoming activities get cancelled (or never reach
-        # the ThreadMerge for other reasons, such as reaching a StubActivity), we
+        # case all other incoming tasks get cancelled (or never reach
+        # the ThreadMerge for other reasons, such as reaching a StubTask), we
         # need to revisit it.
         return False
 
 
     def execute(self, job, branch_node):
         """
-        Runs the activity. Should not be called directly.
+        Runs the task. Should not be called directly.
         Returns True if completed, False otherwise.
         """
         assert job    is not None
@@ -108,7 +108,7 @@ class ThreadMerge(Join):
         self.test()
 
         # The context is the path up to the point where the split happened.
-        split_node = branch_node.find_ancestor(self.split_activity)
+        split_node = branch_node.find_ancestor(self.split_task)
         context    = split_node.id
 
         # Make sure that all inputs have completed.
@@ -116,12 +116,12 @@ class ThreadMerge(Join):
             return False
         job.set_context_data(context, may_fire = 'done')
 
-        # Mark all nodes in the same thread that reference this activity as
+        # Mark all nodes in the same thread that reference this task as
         # COMPLETED.
         for node in job.branch_tree:
             if node.thread_id != branch_node.thread_id:
                 continue
-            if node.activity != self:
+            if node.task != self:
                 continue
             node.state = BranchNode.COMPLETED
-        return Activity.execute(self, job, branch_node)
+        return Task.execute(self, job, branch_node)

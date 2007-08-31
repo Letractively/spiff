@@ -15,15 +15,15 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 from BranchNode import *
 from Exception  import WorkflowException
-from Activity   import Activity
+from Task   import Task
 
-class Trigger(Activity):
+class Trigger(Task):
     """
-    This class implements an activity that triggers an event on another 
-    activity.
-    If more than one input is connected, the activity performs an implicit
+    This class implements an task that triggers an event on another 
+    task.
+    If more than one input is connected, the task performs an implicit
     multi merge.
-    If more than one output is connected, the activity performs an implicit
+    If more than one output is connected, the task performs an implicit
     parallel split.
     """
 
@@ -31,21 +31,21 @@ class Trigger(Activity):
         """
         Constructor.
 
-        parent -- a reference to the parent (Activity)
-        name -- a name for the activity (string)
-        context -- the MultiInstance activity that is instructed to create
+        parent -- a reference to the parent (Task)
+        name -- a name for the task (string)
+        context -- the MultiInstance task that is instructed to create
                    another instance.
         """
         assert parent  is not None
         assert name    is not None
         assert context is not None
-        Activity.__init__(self, parent, name)
+        Task.__init__(self, parent, name)
         self.context = context
 
 
     def execute(self, job, branch_node):
         """
-        Runs the activity. Should not be called directly.
+        Runs the task. Should not be called directly.
         Returns True if completed, False otherwise.
 
         job -- the job in which this method is executed
@@ -57,4 +57,4 @@ class Trigger(Activity):
 
         self.context.trigger(job, branch_node)
 
-        return Activity.execute(self, job, branch_node)
+        return Task.execute(self, job, branch_node)

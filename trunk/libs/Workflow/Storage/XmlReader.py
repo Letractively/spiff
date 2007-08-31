@@ -15,10 +15,10 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 import os
 import xml.dom.minidom as minidom
-import Activities
+import Tasks
 from Exception  import StorageException
 from Workflow   import Workflow
-from Activities import *
+from Tasks import *
 
 class XmlReader(object):
     """
@@ -29,15 +29,15 @@ class XmlReader(object):
         """
         Constructor.
         """
-        self.read_activities = {}
+        self.read_tasks = {}
 
-        # Create a list of all activities.
-        self.activity_map = {}
-        for name in dir(Activities):
+        # Create a list of all tasks.
+        self.task_map = {}
+        for name in dir(Tasks):
             if name.startswith('_'):
                 continue
-            module = Activities.__dict__[name]
-            self.activity_map[name.lower()] = module
+            module = Tasks.__dict__[name]
+            self.task_map[name.lower()] = module
 
         self.logical_tags = {'equals':     Condition.EQUAL,
                              'not-equals': Condition.NOT_EQUAL}
@@ -88,17 +88,17 @@ class XmlReader(object):
         start_node -- the xml structure (xml.dom.minidom.Node)
         """
         # Collect all information.
-        condition     = None
-        activity_name = None
+        condition = None
+        task_name = None
         for node in start_node.childNodes:
             if node.nodeType != minidom.Node.ELEMENT_NODE:
                 continue
             if node.nodeName.lower() == 'successor':
-                if activity_name is not None:
-                    self._raise('Duplicate activity name %s' % activity_name)
+                if task_name is not None:
+                    self._raise('Duplicate task name %s' % task_name)
                 if node.firstChild is None:
-                    self._raise('Successor tag without an activity name')
-                activity_name = node.firstChild.nodeValue
+                    self._raise('Successor tag without an task name')
+                task_name = node.firstChild.nodeValue
             elif node.nodeName.lower() in self.logical_tags:
                 if condition is not None:
                     self._raise('Multiple conditions are not yet supported')
@@ -108,18 +108,18 @@ class XmlReader(object):
 
         if condition is None:
             self._raise('Missing condition in conditional statement')
-        if activity_name is None:
-            self._raise('A %s has no activity specified' % start_node.nodeName)
-        return (condition, activity_name)
+        if task_name is None:
+            self._raise('A %s has no task specified' % start_node.nodeName)
+        return (condition, task_name)
 
 
-    def read_activity(self, workflow, start_node):
+    def read_task(self, workflow, start_node):
         """
-        Reads the activity from the given node and returns a tuple
+        Reads the task from the given node and returns a tuple
         (start, end) that contains the stream of objects that model
         the behavior.
         
-        workflow -- the workflow with which the activity is associated
+        workflow -- the workflow with which the task is associated
         start_node -- the xml structure (xml.dom.minidom.Node)
         """
         # Extract attributes from the node.
@@ -130,14 +130,14 @@ class XmlReader(object):
         threshold       = start_node.getAttribute('threshold').lower()
         threshold_field = start_node.getAttribute('threshold-field').lower()
         kwargs    = {}
-        if not self.activity_map.has_key(type):
-            self._raise('Invalid activity type "%s"' % type)
-        if type == 'startactivity':
+        if not self.task_map.has_key(type):
+            self._raise('Invalid task type "%s"' % type)
+        if type == 'starttask':
             name = 'start'
         if name == '':
-            self._raise('Invalid activity name "%s"' % name)
-        if self.read_activities.has_key(name):
-            self._raise('Duplicate activity name "%s"' % name)
+            self._raise('Invalid task name "%s"' % name)
+        if self.read_tasks.has_key(name):
+            self._raise('Duplicate task name "%s"' % name)
         if cancel != '' and cancel != u'0':
             kwargs['cancel'] = True
         if threshold != '':
@@ -145,10 +145,10 @@ class XmlReader(object):
         if threshold_field != '':
             kwargs['threshold_attribute'] = threshold_field
 
-        # Create a new instance of the activity.
-        module = self.activity_map[type]
-        if type == 'startactivity':
-            activity = module(workflow)
+        # Create a new instance of the task.
+        module = self.task_map[type]
+        if type == 'starttask':
+            task = module(workflow)
         elif type == 'multiinstance' or type == 'threadsplit':
             times_field = start_node.getAttribute('times-field').lower()
             times       = start_node.getAttribute('times').lower()
@@ -158,18 +158,18 @@ class XmlReader(object):
                 self._raise('Both, "times" and "times-field" in "%s"' % name)
             elif times != '':
                 times    = int(times)
-                activity = module(workflow, name, times = times)
+                task = module(workflow, name, times = times)
             else:
-                activity = module(workflow,
+                task = module(workflow,
                                   name,
                                   times_attribute = times_field)
         elif context == '':
-            activity = module(workflow, name, **kwargs)
+            task = module(workflow, name, **kwargs)
         else:
-            if not self.read_activities.has_key(context):
+            if not self.read_tasks.has_key(context):
                 self._raise('Context %s does not exist' % context)
-            context  = self.read_activities[context][0]
-            activity = module(workflow, name, context, **kwargs)
+            context  = self.read_tasks[context][0]
+            task = module(workflow, name, context, **kwargs)
 
         # Walk through the children of the node.
         successors = []
@@ -188,7 +188,7 @@ class XmlReader(object):
             else:
                 self._raise('Unknown node: %s' % node.nodeName)
 
-        self.read_activities[name] = (activity, successors)
+        self.read_tasks[name] = (task, successors)
 
 
     def _read_workflow(self, start_node):
@@ -202,34 +202,34 @@ class XmlReader(object):
         if name == '':
             self._raise('%s without a name attribute' % start_node.nodeName)
 
-        # Read all activities and create a list of successors.
+        # Read all tasks and create a list of successors.
         workflow             = Workflow(name)
-        self.read_activities = {'end': (StubActivity(workflow, 'End'), [])}
+        self.read_tasks = {'end': (StubTask(workflow, 'End'), [])}
         for node in start_node.childNodes:
             if node.nodeType != minidom.Node.ELEMENT_NODE:
                 continue
             if node.nodeName == 'description':
                 pass
-            elif self.activity_map.has_key(node.nodeName.lower()):
-                self.read_activity(workflow, node)
+            elif self.task_map.has_key(node.nodeName.lower()):
+                self.read_task(workflow, node)
             else:
                 self._raise('Unknown node: %s' % node.nodeName)
 
-        # Remove the default start-activity from the workflow.
-        workflow.start = self.read_activities['start'][0]
-        workflow.activities.pop(0)
+        # Remove the default start-task from the workflow.
+        workflow.start = self.read_tasks['start'][0]
+        workflow.tasks.pop(0)
 
-        # Connect all activities.
-        for name in self.read_activities:
-            activity, successors = self.read_activities[name]
+        # Connect all tasks.
+        for name in self.read_tasks:
+            task, successors = self.read_tasks[name]
             for condition, successor_name in successors:
-                if not self.read_activities.has_key(successor_name):
+                if not self.read_tasks.has_key(successor_name):
                     self._raise('Unknown successor: "%s"' % successor_name)
-                successor, foo = self.read_activities[successor_name]
+                successor, foo = self.read_tasks[successor_name]
                 if condition is None:
-                    activity.connect(successor)
+                    task.connect(successor)
                 else:
-                    activity.connect_if(condition, successor)
+                    task.connect_if(condition, successor)
         return workflow
 
 

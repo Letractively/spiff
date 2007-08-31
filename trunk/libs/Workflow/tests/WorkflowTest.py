@@ -5,12 +5,12 @@ def suite():
     tests = ['testWorkflow']
     return unittest.TestSuite(map(WorkflowTest, tests))
 
-from Activities import *
+from Tasks import *
 from Workflow   import Workflow
 from Job        import Job
 
-def print_name(job, branch_node, activity):
-    reached_key = "%s_reached" % str(activity.name)
+def print_name(job, branch_node, task):
+    reached_key = "%s_reached" % str(task.name)
     n_reached   = job.get_attribute(reached_key, 0) + 1
     step        = job.get_attribute('step', 0) + 1
     job.set_attribute(**{reached_key: n_reached})
@@ -23,9 +23,9 @@ def print_name(job, branch_node, activity):
     # Record the path in an attribute.
     taken_path  = job.get_attribute('taken_path', [])
     id          = branch_node.thread_id
-    taken_path.append((id, activity.name))
+    taken_path.append((id, task.name))
     job.set_attribute(taken_path = taken_path)
-    #print "%s. Branch '%s': %s reached %s times" % (step, id, activity.name, n_reached)
+    #print "%s. Branch '%s': %s reached %s times" % (step, id, task.name, n_reached)
 
 class WorkflowTest(unittest.TestCase):
     """
@@ -35,47 +35,47 @@ class WorkflowTest(unittest.TestCase):
     def setUp(self):
         self.wf            = Workflow()
         self.expected_path = [( 1, 'Start'),
-                              ( 3, 'activity_a1'),
-                              ( 3, 'activity_a2'),
-                              ( 4, 'activity_b1'),
-                              ( 4, 'activity_b2'),
+                              ( 3, 'task_a1'),
+                              ( 3, 'task_a2'),
+                              ( 4, 'task_b1'),
+                              ( 4, 'task_b2'),
                               ( 4, 'synch_1'),
                               ( 4, 'excl_choice_1'),
-                              ( 4, 'activity_c1'),
+                              ( 4, 'task_c1'),
                               ( 4, 'excl_choice_2'),
-                              ( 4, 'activity_d3'),
+                              ( 4, 'task_d3'),
                               ( 4, 'multi_choice_1'),
-                              (14, 'activity_e1'),
-                              (15, 'activity_e3'),
+                              (14, 'task_e1'),
+                              (15, 'task_e3'),
                               (15, 'struct_synch_merge_1'),
-                              (18, 'activity_f1'),
+                              (18, 'task_f1'),
                               (18, 'struct_discriminator_1'),
                               (18, 'excl_choice_3'),
                               (18, 'excl_choice_1'),
-                              (18, 'activity_c1'),
+                              (18, 'task_c1'),
                               (18, 'excl_choice_2'),
-                              (18, 'activity_d3'),
+                              (18, 'task_d3'),
                               (18, 'multi_choice_1'),
-                              (28, 'activity_e1'),
-                              (29, 'activity_e3'),
+                              (28, 'task_e1'),
+                              (29, 'task_e3'),
                               (29, 'struct_synch_merge_1'),
-                              (32, 'activity_f1'),
+                              (32, 'task_f1'),
                               (32, 'struct_discriminator_1'),
                               (32, 'excl_choice_3'),
                               (32, 'multi_instance_1'),
-                              (38, 'activity_g1'),
-                              (39, 'activity_g2'),
-                              (40, 'activity_g1'),
-                              (41, 'activity_g2'),
-                              (42, 'activity_g1'),
-                              (43, 'activity_g2'),
+                              (38, 'task_g1'),
+                              (39, 'task_g2'),
+                              (40, 'task_g1'),
+                              (41, 'task_g2'),
+                              (42, 'task_g1'),
+                              (43, 'task_g2'),
                               (43, 'struct_synch_merge_2'),
                               (43, 'last'),
                               (43, 'End'),
-                              (33, 'activity_f2'),
-                              (34, 'activity_f3'),
-                              (19, 'activity_f2'),
-                              (20, 'activity_f3')]
+                              (33, 'task_f2'),
+                              (34, 'task_f3'),
+                              (19, 'task_f2'),
+                              (20, 'task_f3')]
 
 
     def format_path(self, path):
@@ -92,17 +92,17 @@ class WorkflowTest(unittest.TestCase):
 
     def testWorkflow(self):
         # Build one branch.
-        a1 = Activity(self.wf, "activity_a1")
+        a1 = Task(self.wf, "task_a1")
         self.wf.start.connect(a1)
 
-        a2 = Activity(self.wf, "activity_a2")
+        a2 = Task(self.wf, "task_a2")
         a1.connect(a2)
 
         # Build another branch.
-        b1 = Activity(self.wf, "activity_b1")
+        b1 = Task(self.wf, "task_b1")
         self.wf.start.connect(b1)
 
-        b2 = Activity(self.wf, "activity_b2")
+        b2 = Task(self.wf, "task_b2")
         b1.connect(b2)
 
         # Merge both branches (synchronized).
@@ -114,16 +114,16 @@ class WorkflowTest(unittest.TestCase):
         excl_choice_1 = ExclusiveChoice(self.wf, "excl_choice_1")
         synch_1.connect(excl_choice_1)
 
-        c1 = Activity(self.wf, "activity_c1")
+        c1 = Task(self.wf, "task_c1")
         excl_choice_1.connect(c1)
 
-        c2 = Activity(self.wf, "activity_c2")
+        c2 = Task(self.wf, "task_c2")
         cond = Condition(Condition.EQUAL,
                          left_attribute  = 'test_attribute1',
                          right_attribute = 'test_attribute2')
         excl_choice_1.connect_if(cond, c2)
 
-        c3 = Activity(self.wf, "activity_c3")
+        c3 = Task(self.wf, "task_c3")
         excl_choice_1.connect_if(cond, c3)
 
         # If-condition that matches.
@@ -132,13 +132,13 @@ class WorkflowTest(unittest.TestCase):
         c2.connect(excl_choice_2)
         c3.connect(excl_choice_2)
 
-        d1 = Activity(self.wf, "activity_d1")
+        d1 = Task(self.wf, "task_d1")
         excl_choice_2.connect(d1)
 
-        d2 = Activity(self.wf, "activity_d2")
+        d2 = Task(self.wf, "task_d2")
         excl_choice_2.connect_if(cond, d2)
 
-        d3 = Activity(self.wf, "activity_d3")
+        d3 = Task(self.wf, "task_d3")
         cond = Condition(Condition.EQUAL,
                          left_attribute  = 'test_attribute1',
                          right_attribute = 'test_attribute1')
@@ -150,16 +150,16 @@ class WorkflowTest(unittest.TestCase):
         d2.connect(multichoice)
         d3.connect(multichoice)
 
-        e1 = Activity(self.wf, "activity_e1")
+        e1 = Task(self.wf, "task_e1")
         multichoice.connect_if(cond, e1)
 
-        e2 = Activity(self.wf, "activity_e2")
+        e2 = Task(self.wf, "task_e2")
         cond = Condition(Condition.EQUAL,
                          left_attribute  = 'test_attribute1',
                          right_attribute = 'test_attribute2')
         multichoice.connect_if(cond, e2)
 
-        e3 = Activity(self.wf, "activity_e3")
+        e3 = Task(self.wf, "task_e3")
         cond = Condition(Condition.EQUAL,
                          left_attribute  = 'test_attribute2',
                          right_attribute = 'test_attribute2')
@@ -172,13 +172,13 @@ class WorkflowTest(unittest.TestCase):
         e3.connect(syncmerge)
 
         # Implicit parallel split.
-        f1 = Activity(self.wf, "activity_f1")
+        f1 = Task(self.wf, "task_f1")
         syncmerge.connect(f1)
 
-        f2 = Activity(self.wf, "activity_f2")
+        f2 = Task(self.wf, "task_f2")
         syncmerge.connect(f2)
 
-        f3 = Activity(self.wf, "activity_f3")
+        f3 = Task(self.wf, "task_f3")
         syncmerge.connect(f3)
 
         # Discriminator
@@ -202,9 +202,9 @@ class WorkflowTest(unittest.TestCase):
         multi_instance_1 = MultiInstance(self.wf, 'multi_instance_1', times = 3)
         excl_choice_3.connect(multi_instance_1)
 
-        # Parallel activities.
-        g1 = Activity(self.wf, "activity_g1")
-        g2 = Activity(self.wf, "activity_g2")
+        # Parallel tasks.
+        g1 = Task(self.wf, "task_g1")
+        g2 = Task(self.wf, "task_g2")
         multi_instance_1.connect(g1)
         multi_instance_1.connect(g2)
 
@@ -213,22 +213,22 @@ class WorkflowTest(unittest.TestCase):
         g1.connect(syncmerge2)
         g2.connect(syncmerge2)
 
-        # Add a final activity.
-        last = Activity(self.wf, "last")
+        # Add a final task.
+        last = Task(self.wf, "last")
         syncmerge2.connect(last)
 
-        # Add another final activity :-).
-        end = StubActivity(self.wf, "End")
+        # Add another final task :-).
+        end = StubTask(self.wf, "End")
         last.connect(end)
 
         self.runWorkflow(self.wf)
 
 
     def runWorkflow(self, wf):
-        for activity in wf.activities:
-            activity.user_func = print_name
+        for task in wf.tasks:
+            task.user_func = print_name
 
-        # Execute all activities within the Job.
+        # Execute all tasks within the Job.
         job = Job(wf)
         job.execute_all()
 

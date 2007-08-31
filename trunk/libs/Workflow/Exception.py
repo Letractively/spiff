@@ -18,7 +18,7 @@ class WorkflowException(Exception):
         """
         Standard exception class.
         
-        sender -- the activity that threw the exception.
+        sender -- the task that threw the exception.
         error -- string
         """
         Exception.__init__(self, '%s: %s' % (sender.name, error))
