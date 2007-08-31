@@ -1,4 +1,4 @@
-__all__ = ['Task',
+__all__ = ['Choose',
            'Condition',
            'ExclusiveChoice',
            'Join',
@@ -6,17 +6,19 @@ __all__ = ['Task',
            'MultiInstance',
            'StartTask',
            'StubTask',
+           'Task',
            'ThreadMerge',
            'ThreadSplit',
            'Trigger']
 
-from Task        import Task
+from Choose          import Choose
 from ExclusiveChoice import ExclusiveChoice
 from Join            import Join
 from MultiChoice     import MultiChoice, Condition
 from MultiInstance   import MultiInstance
-from StartTask   import StartTask
-from StubTask    import StubTask
+from StartTask       import StartTask
+from StubTask        import StubTask
+from Task            import Task
 from ThreadMerge     import ThreadMerge
 from ThreadSplit     import ThreadSplit
 from Trigger         import Trigger

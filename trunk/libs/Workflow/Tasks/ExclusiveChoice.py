@@ -23,7 +23,7 @@ class ExclusiveChoice(MultiChoice):
     This class represents an exclusive choice (an if condition) task
     where precisely one outgoing branch_node is selected. If none of the
     given condition matches, a default task is selected.
-    It has two or more inputs and two or more outputs.
+    It has one or more inputs and two or more outputs.
     """
     def __init__(self, parent, name):
         """

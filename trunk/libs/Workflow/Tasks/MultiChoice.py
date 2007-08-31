@@ -16,7 +16,7 @@
 import re
 from BranchNode import *
 from Exception  import WorkflowException
-from Task   import Task
+from Task       import Task
 
 class Condition(object):
     EQUAL,          \
@@ -76,7 +76,7 @@ class Condition(object):
 class MultiChoice(Task):
     """
     This class represents an if condition where multiple conditions may match
-    at the same time, creating multiple branch_nodees.
+    at the same time, creating multiple branch_nodes.
     This task has one or more inputs, and one or more incoming branches.
     This task has one or more outputs.
     """
@@ -90,6 +90,7 @@ class MultiChoice(Task):
         """
         Task.__init__(self, parent, name)
         self.cond_tasks = []
+        self.choice     = None
 
 
     def connect(self, task):
@@ -129,6 +130,13 @@ class MultiChoice(Task):
                 raise WorkflowException(self, 'Condition is None.')
 
 
+    def trigger(self, job, branch_node, choice):
+        """
+        Lets a caller narrow down the choice by using a Choose trigger.
+        """
+        self.choice = choice
+
+
     def execute(self, job, branch_node):
         """
         Runs the task. Should not be called directly.
@@ -145,8 +153,11 @@ class MultiChoice(Task):
         # Find all matching conditions.
         outputs = []
         for condition, output in self.cond_tasks:
-            if condition is None or condition.matches(job):
-                outputs.append(output)
+            if condition is not None and not condition.matches(job):
+                continue
+            if self.choice is not None and output not in self.choice:
+                continue
+            outputs.append(output)
 
         branch_node.update_children(outputs)
         branch_node.set_status(BranchNode.COMPLETED)

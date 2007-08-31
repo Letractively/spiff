@@ -23,6 +23,7 @@ Supported Workflow Patterns
 13. Multiple Instances with a Priori Design-Time Knowledge [tests/xml/patterns/multi_instance_with_a_priori_design_time_knowledge.xml]
 14. Multiple Instances with a Priori Run-Time Knowledge [tests/xml/patterns/multi_instance_with_a_priori_run_time_knowledge.xml]
 15. Multiple Instances without a Priori Run-Time Knowledge [tests/xml/patterns/multi_instance_without_a_priori.xml]
+16. Deferred Choice [tests/xml/patterns/deferred_choice.xml]
 
 23. Transient Trigger [tests/xml/patterns/transient_trigger.xml]
 

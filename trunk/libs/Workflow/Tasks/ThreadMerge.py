@@ -15,7 +15,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 from BranchNode import *
 from Exception  import WorkflowException
-from Task   import Task
+from Task       import Task
 from Join       import Join
 
 class ThreadMerge(Join):
