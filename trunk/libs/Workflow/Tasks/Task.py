@@ -20,7 +20,7 @@ from Exception      import WorkflowException
 class Task(object):
     """
     This class implements a task with one or more inputs and
-    one or more outputs.
+    any number of outputs.
     If more than one input is connected, the task performs an implicit
     multi merge.
     If more than one output is connected, the task performs an implicit
@@ -95,8 +95,6 @@ class Task(object):
             raise WorkflowException(self, 'Task is not yet instanciated.')
         if len(self.inputs) < 1:
             raise WorkflowException(self, 'No input task connected.')
-        elif len(self.outputs) < 1:
-            raise WorkflowException(self, 'No output task connected.')
 
 
     def trigger(self, job, branch_node):

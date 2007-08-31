@@ -3,31 +3,31 @@
     <description>Pattern 10 (Arbitrary Cycles)</description>
 
     <!-- Start with an implicit simple split. -->
-    <startactivity>
+    <starttask>
         <successor>first</successor>
-    </startactivity>
+    </starttask>
 
     <!-- Merge branches -->
-    <activity name="first">
+    <task name="first">
         <successor>excl_choice_1</successor>
-    </activity>
+    </task>
 
     <!-- Add an if-condition that does not match. -->
     <exclusivechoice name="excl_choice_1">
-        <default-successor>activity_c1</default-successor>
+        <default-successor>task_c1</default-successor>
         <conditional-successor>
             <not-equals left-field="excl_choice_1_reached" right-value="3" />
             <successor>first</successor>
         </conditional-successor>
     </exclusivechoice>
 
-    <!-- Conditional activities. -->
-    <activity name="activity_c1">
+    <!-- Conditional tasks. -->
+    <task name="task_c1">
         <successor>last</successor>
-    </activity>
+    </task>
 
-    <!-- A final activity. -->
-    <activity name="last">
+    <!-- A final task. -->
+    <task name="last">
         <successor>end</successor>
-    </activity>
+    </task>
 </process-definition>

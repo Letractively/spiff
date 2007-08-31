@@ -4,9 +4,9 @@ Start
       last
         End
   multi_instance_1
-    activity_g1
+    task_g1
       last
         End
-    activity_g1
+    task_g1
       last
         End

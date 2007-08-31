@@ -3,39 +3,39 @@
     <description>Pattern 5 (Simple Merge)</description>
 
     <!-- Start with an implicit simple split. -->
-    <startactivity>
+    <starttask>
         <successor>first</successor>
-    </startactivity>
+    </starttask>
 
     <!-- Merge branches -->
-    <activity name="first">
+    <task name="first">
         <successor>excl_choice_1</successor>
-    </activity>
+    </task>
 
     <!-- Add an if-condition that does not match. -->
     <exclusivechoice name="excl_choice_1">
-        <default-successor>activity_c1</default-successor>
+        <default-successor>task_c1</default-successor>
         <conditional-successor>
             <equals left-value="1" right-value="2" />
-            <successor>activity_c2</successor>
+            <successor>task_c2</successor>
         </conditional-successor>
     </exclusivechoice>
 
-    <!-- Conditional activities. -->
-    <activity name="activity_c1">
-        <successor>activity_d1</successor>
-    </activity>
-    <activity name="activity_c2">
-        <successor>activity_d1</successor>
-    </activity>
+    <!-- Conditional tasks. -->
+    <task name="task_c1">
+        <successor>task_d1</successor>
+    </task>
+    <task name="task_c2">
+        <successor>task_d1</successor>
+    </task>
 
     <!-- Implicit simple merge -->
-    <activity name="activity_d1">
+    <task name="task_d1">
         <successor>last</successor>
-    </activity>
+    </task>
 
-    <!-- A final activity. -->
-    <activity name="last">
+    <!-- A final task. -->
+    <task name="last">
         <successor>end</successor>
-    </activity>
+    </task>
 </process-definition>

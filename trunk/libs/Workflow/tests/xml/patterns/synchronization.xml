@@ -3,36 +3,36 @@
     <description>Pattern 3 (Synchronization)</description>
 
     <!-- Start with an implicit simple split. -->
-    <startactivity>
+    <starttask>
         <successor>first</successor>
-    </startactivity>
+    </starttask>
     
-    <activity name="first">
-        <successor>activity_f1</successor>
-        <successor>activity_f2</successor>
-        <successor>activity_f3</successor>
-    </activity>
+    <task name="first">
+        <successor>task_f1</successor>
+        <successor>task_f2</successor>
+        <successor>task_f3</successor>
+    </task>
 
     <!-- Implicit split. -->
-    <activity name="activity_f1">
+    <task name="task_f1">
         <successor>join</successor>
-    </activity>
-    <activity name="activity_f2">
+    </task>
+    <task name="task_f2">
         <successor>join</successor>
-    </activity>
-    <activity name="activity_f3">
-        <successor>activity_g3a</successor>
-        <successor>activity_g3b</successor>
-    </activity>
+    </task>
+    <task name="task_f3">
+        <successor>task_g3a</successor>
+        <successor>task_g3b</successor>
+    </task>
 
-    <activity name="activity_g3a">
+    <task name="task_g3a">
         <successor>join</successor>
-    </activity>
-    <activity name="activity_g3b">
+    </task>
+    <task name="task_g3b">
         <successor>join</successor>
-    </activity>
+    </task>
 
-    <!-- A final activity. -->
+    <!-- A final task. -->
     <join name="join">
         <successor>end</successor>
     </join>

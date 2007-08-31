@@ -21,7 +21,7 @@ from Trigger    import Trigger
 class Choose(Trigger):
     """
     This class implements a task that causes an associated MultiChoice
-    activity to select the tasks with the specified name.
+    task to select the tasks with the specified name.
     If more than one input is connected, the task performs an implicit
     multi merge.
     If more than one output is connected, the task performs an implicit
@@ -37,7 +37,7 @@ class Choose(Trigger):
         context -- the MultiChoice task that is instructed to select the
                    specified outputs.
         kwargs -- may contain the following keys:
-                    choice -- the list of activities that is selected.
+                    choice -- the list of tasks that is selected.
         """
         assert parent  is not None
         assert name    is not None

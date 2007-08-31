@@ -2,19 +2,19 @@
 <process-definition name="flow" revision="1.0">
     <description>Pattern 1 (Sequence)</description>
 
-    <startactivity>
+    <starttask>
         <successor>first</successor>
-    </startactivity>
+    </starttask>
     
-    <activity name="first">
+    <task name="first">
         <successor>second</successor>
-    </activity>
+    </task>
 
-    <activity name="second">
+    <task name="second">
         <successor>last</successor>
-    </activity>
+    </task>
 
-    <activity name="last">
+    <task name="last">
         <successor>end</successor>
-    </activity>
+    </task>
 </process-definition>

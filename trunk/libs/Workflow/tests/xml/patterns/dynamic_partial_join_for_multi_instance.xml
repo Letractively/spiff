@@ -3,25 +3,25 @@
     <description>Pattern 36 (Dynamic Partial Join for Multiple Instances)</description>
 
     <!-- Start with an implicit simple split. -->
-    <startactivity>
+    <starttask>
         <successor>add_instance_1</successor>
         <successor>multi_instance_1</successor>
-    </startactivity>
+    </starttask>
 
     <!-- Branch 2 -->
         <!-- Split into 2 branches, and implicitly split twice in addition. -->
         <multiinstance name="multi_instance_1" times="2">
-            <successor>activity_g1</successor>
-            <successor>activity_g2</successor>
+            <successor>task_g1</successor>
+            <successor>task_g2</successor>
         </multiinstance>
 
-        <!-- Parallel activities. -->
-        <activity name="activity_g1">
+        <!-- Parallel tasks. -->
+        <task name="task_g1">
             <successor>join_1</successor>
-        </activity>
-        <activity name="activity_g2">
+        </task>
+        <task name="task_g2">
             <successor>join_1</successor>
-        </activity>
+        </task>
 
         <!-- Merge instances. -->
         <join name="join_1" context="multi_instance_1" threshold-field="two">
@@ -40,8 +40,8 @@
         <successor>last</successor>
     </join>
 
-    <!-- A final activity. -->
-    <activity name="last">
+    <!-- A final task. -->
+    <task name="last">
         <successor>end</successor>
-    </activity>
+    </task>
 </process-definition>

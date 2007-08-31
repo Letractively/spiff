@@ -138,7 +138,7 @@ class Join(Task):
 
         # We do NOT set the branch_node status to COMPLETED, because in
         # case all other incoming tasks get cancelled (or never reach
-        # the Join for other reasons, such as reaching a StubTask), we
+        # the Join for other reasons, such as reaching a stub branch), we
         # need to revisit it.
         return False
 
@@ -192,7 +192,7 @@ class Join(Task):
 
         # We do NOT set the branch_node status to COMPLETED, because in
         # case all other incoming tasks get cancelled (or never reach
-        # the Join for other reasons, such as reaching a StubTask), we
+        # the Join for other reasons, such as reaching a stub branch), we
         # need to revisit it.
         return False
 

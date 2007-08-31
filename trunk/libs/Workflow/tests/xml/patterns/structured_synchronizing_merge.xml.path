@@ -1,9 +1,9 @@
 Start
   multi_choice_1
-    activity_e1
-    activity_e3
-      activity_g3a
-      activity_g3b
+    task_e1
+    task_e3
+      task_g3a
+      task_g3b
       struct_synch_merge_1
         last
           End

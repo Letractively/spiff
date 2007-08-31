@@ -2,32 +2,32 @@
 <process-definition name="flow" revision="1.0">
     <description>Pattern 14 (Multiple Instances with a priori Run-Time Knowledge)</description>
 
-    <startactivity>
+    <starttask>
         <successor>multi_instance_1</successor>
-    </startactivity>
+    </starttask>
 
     <!--
     Split into 2 branches. Note that the number of branches is read from the
     attribute "two", which may change at runtime.
     -->
     <multiinstance name="multi_instance_1" times-field="two">
-        <successor>activity_g1</successor>
+        <successor>task_g1</successor>
     </multiinstance>
 
-    <!-- Parallel activities. -->
-    <activity name="activity_g1">
-        <successor>activity_g2</successor>
-    </activity>
-    <activity name="activity_g2">
+    <!-- Parallel tasks. -->
+    <task name="task_g1">
+        <successor>task_g2</successor>
+    </task>
+    <task name="task_g2">
         <successor>struct_synch_merge_1</successor>
-    </activity>
+    </task>
 
     <!-- Structured synchronizing merge. -->
     <join name="struct_synch_merge_1" context="multi_instance_1">
         <successor>last</successor>
     </join>
 
-    <!-- A final activity. -->
+    <!-- A final task. -->
     <join name="last">
         <successor>end</successor>
     </join>

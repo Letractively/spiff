@@ -2,26 +2,26 @@
 <process-definition name="flow" revision="1.0">
     <description>Pattern 12 (Multiple Instances without Synchronization)</description>
 
-    <startactivity>
+    <starttask>
         <successor>multi_instance_1</successor>
-    </startactivity>
+    </starttask>
 
     <!-- Split into 3 branches, and implicitly split twice in addition. -->
     <multiinstance name="multi_instance_1" times="3">
-        <successor>activity_g1</successor>
-        <successor>activity_g2</successor>
+        <successor>task_g1</successor>
+        <successor>task_g2</successor>
     </multiinstance>
 
-    <!-- Parallel activities. -->
-    <activity name="activity_g1">
+    <!-- Parallel tasks. -->
+    <task name="task_g1">
         <successor>last</successor>
-    </activity>
-    <activity name="activity_g2">
+    </task>
+    <task name="task_g2">
         <successor>last</successor>
-    </activity>
+    </task>
 
-    <!-- A final activity. -->
-    <activity name="last">
+    <!-- A final task. -->
+    <task name="last">
         <successor>end</successor>
-    </activity>
+    </task>
 </process-definition>

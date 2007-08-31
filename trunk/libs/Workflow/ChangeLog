@@ -7,6 +7,9 @@
 	* Tasks/AcquireMutex.py, Tasks/ReleaseMutex.py: Add support for Deferred
 	Choice and Interleaved Parallel Routing.
 	* Tasks/Gate.py: Support the Milestone pattern.
+	* Tasks/Task.py: Relaxed constraint checking such that it is now allowed
+	to create a task that has no outputs.
+	* Tasks/StubTask.py: Removed. (obsolete)
 
 2007-08-30 Samuel Abels <http://debain.org>
 

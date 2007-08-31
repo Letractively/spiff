@@ -3,21 +3,21 @@
     <description>Pattern 15 (Multiple Instances without a priori Run-Time Knowledge)</description>
 
     <!-- Start with an implicit simple split. -->
-    <startactivity>
+    <starttask>
         <successor>add_instance_1</successor>
         <successor>multi_instance_1</successor>
-    </startactivity>
+    </starttask>
 
     <!-- Branch 2 -->
         <!-- Split into 2 branches, and implicitly split twice in addition. -->
         <multiinstance name="multi_instance_1" times="0">
-            <successor>activity_g1</successor>
+            <successor>task_g1</successor>
         </multiinstance>
 
-        <!-- Parallel activities. -->
-        <activity name="activity_g1">
+        <!-- Parallel tasks. -->
+        <task name="task_g1">
             <successor>last</successor>
-        </activity>
+        </task>
     <!-- End branch 2 -->
 
     <!-- Branch 1 -->
@@ -29,8 +29,8 @@
         </trigger>
     <!-- End branch 1 -->
 
-    <!-- A final activity. -->
-    <activity name="last">
+    <!-- A final task. -->
+    <task name="last">
         <successor>end</successor>
-    </activity>
+    </task>
 </process-definition>

@@ -1,10 +1,10 @@
 Start
   first
-    activity_f1
+    task_f1
       struct_discriminator_1
         excl_choice_1
           first
-            activity_f1
+            task_f1
               struct_discriminator_1
                 excl_choice_1
                   last

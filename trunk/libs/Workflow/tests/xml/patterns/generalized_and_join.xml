@@ -2,43 +2,43 @@
 <process-definition name="flow" revision="1.0">
     <description>Pattern 33 (Generalized AND-Join)</description>
 
-    <startactivity>
+    <starttask>
         <successor>first</successor>
-    </startactivity>
+    </starttask>
 
     <!-- Implicitly create 3 branches. -->
-    <!-- FIXME: Currently, there is no way to trigger an activity twice
+    <!-- FIXME: Currently, there is no way to trigger a task twice
          without (implicitly) creating an additional branch. As such,
          this pattern is not fully tested in this way, because at least
          one of the branches should be triggered twice. However, in theory
          it should already work. -->
-    <activity name="first">
-        <successor>activity_e1</successor>
-        <successor>activity_e2</successor>
-        <successor>activity_e3</successor>
-    </activity>
+    <task name="first">
+        <successor>task_e1</successor>
+        <successor>task_e2</successor>
+        <successor>task_e3</successor>
+    </task>
 
     <!-- Conditional branches. -->
-    <activity name="activity_e1">
-        <successor>activity_f1</successor>
-    </activity>
-    <activity name="activity_e2">
-        <successor>activity_f2</successor>
-    </activity>
-    <activity name="activity_e3">
-        <successor>activity_f3</successor>
-    </activity>
+    <task name="task_e1">
+        <successor>task_f1</successor>
+    </task>
+    <task name="task_e2">
+        <successor>task_f2</successor>
+    </task>
+    <task name="task_e3">
+        <successor>task_f3</successor>
+    </task>
 
     <!-- Conditional branches. -->
-    <activity name="activity_f1">
+    <task name="task_f1">
         <successor>struct_synch_merge_1</successor>
-    </activity>
-    <activity name="activity_f2">
+    </task>
+    <task name="task_f2">
         <successor>struct_synch_merge_1</successor>
-    </activity>
-    <activity name="activity_f3">
+    </task>
+    <task name="task_f3">
         <successor>struct_synch_merge_1</successor>
-    </activity>
+    </task>
 
     <!-- Structured synchronizing merge. -->
     <join name="struct_synch_merge_1" context="first">
@@ -54,8 +54,8 @@
         </conditional-successor>
     </exclusivechoice>
 
-    <!-- A final activity. -->
-    <activity name="last">
+    <!-- A final task. -->
+    <task name="last">
         <successor>end</successor>
-    </activity>
+    </task>
 </process-definition>

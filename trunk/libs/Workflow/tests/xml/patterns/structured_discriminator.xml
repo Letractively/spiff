@@ -2,44 +2,44 @@
 <process-definition name="flow" revision="1.6">
     <description>Pattern 9 (Structured Discriminator)</description>
 
-    <startactivity>
+    <starttask>
         <successor>multi_choice_1</successor>
-    </startactivity>
+    </starttask>
 
     <!-- Split branches using a multi-choice. -->
     <multichoice name="multi_choice_1">
         <conditional-successor>
             <equals left-field="test_attribute1" right-field="test_attribute1" />
-            <successor>activity_a1</successor>
+            <successor>task_a1</successor>
         </conditional-successor>
         <conditional-successor>
             <equals left-field="test_attribute1" right-field="test_attribute2" />
-            <successor>activity_a2</successor>
+            <successor>task_a2</successor>
         </conditional-successor>
         <conditional-successor>
             <equals left-field="test_attribute2" right-field="test_attribute2" />
-            <successor>activity_a3</successor>
+            <successor>task_a3</successor>
         </conditional-successor>
     </multichoice>
 
     <!-- Conditional branches. -->
-    <activity name="activity_a1">
+    <task name="task_a1">
         <successor>discriminator</successor>
-    </activity>
-    <activity name="activity_a2">
+    </task>
+    <task name="task_a2">
         <successor>discriminator</successor>
-    </activity>
-    <activity name="activity_a3">
+    </task>
+    <task name="task_a3">
         <successor>discriminator</successor>
-    </activity>
+    </task>
 
     <!-- Structured discriminator. -->
     <join name="discriminator" context="multi_choice_1" threshold="1">
         <successor>last</successor>
     </join>
 
-    <!-- A final activity. -->
-    <activity name="last">
+    <!-- A final task. -->
+    <task name="last">
         <successor>end</successor>
-    </activity>
+    </task>
 </process-definition>

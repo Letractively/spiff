@@ -219,7 +219,7 @@ class WorkflowTest(unittest.TestCase):
         syncmerge2.connect(last)
 
         # Add another final task :-).
-        end = StubTask(self.wf, "End")
+        end = Task(self.wf, "End")
         last.connect(end)
 
         self.runWorkflow(self.wf)

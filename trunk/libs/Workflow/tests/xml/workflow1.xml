@@ -1,31 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?> 
 <process-definition name="flow" revision="1.6">
     <description>
-    A test workflow that contains all possible activities.
+    A test workflow that contains all possible tasks.
     </description>
 
     <!-- Start with an implicit simple split. -->
-    <startactivity>
-        <successor>activity_a1</successor>
-        <successor>activity_b1</successor>
-    </startactivity>
+    <starttask>
+        <successor>task_a1</successor>
+        <successor>task_b1</successor>
+    </starttask>
 
         <!-- First branch. -->
-        <activity name="activity_a1">
-            <successor>activity_a2</successor>
-        </activity>
-        <activity name="activity_a2">
+        <task name="task_a1">
+            <successor>task_a2</successor>
+        </task>
+        <task name="task_a2">
             <successor>synch_1</successor>
-        </activity>
+        </task>
         <!-- End first branch -->
 
         <!-- Second branch. -->
-        <activity name="activity_b1">
-            <successor>activity_b2</successor>
-        </activity>
-        <activity name="activity_b2">
+        <task name="task_b1">
+            <successor>task_b2</successor>
+        </task>
+        <task name="task_b2">
             <successor>synch_1</successor>
-        </activity>
+        </task>
         <!-- End second branch -->
 
     <!-- Merge branches -->
@@ -35,96 +35,96 @@
 
     <!-- Add an if-condition that does not match. -->
     <exclusivechoice name="excl_choice_1">
-        <default-successor>activity_c1</default-successor>
+        <default-successor>task_c1</default-successor>
         <conditional-successor>
             <equals left-field="test_attribute1" right-field="test_attribute2" />
-            <successor>activity_c2</successor>
+            <successor>task_c2</successor>
         </conditional-successor>
         <conditional-successor>
             <equals left-field="test_attribute1" right-field="test_attribute2" />
-            <successor>activity_c3</successor>
+            <successor>task_c3</successor>
         </conditional-successor>
     </exclusivechoice>
 
-    <!-- Conditional activities. -->
-    <activity name="activity_c1">
+    <!-- Conditional tasks. -->
+    <task name="task_c1">
         <successor>excl_choice_2</successor>
-    </activity>
-    <activity name="activity_c2">
+    </task>
+    <task name="task_c2">
         <successor>excl_choice_2</successor>
-    </activity>
-    <activity name="activity_c3">
+    </task>
+    <task name="task_c3">
         <successor>excl_choice_2</successor>
-    </activity>
+    </task>
 
     <!-- An if-condition that matches. -->
     <exclusivechoice name="excl_choice_2">
-        <default-successor>activity_d1</default-successor>
+        <default-successor>task_d1</default-successor>
         <conditional-successor>
             <equals left-field="test_attribute1" right-field="test_attribute2" />
-            <successor>activity_d2</successor>
+            <successor>task_d2</successor>
         </conditional-successor>
         <conditional-successor>
             <equals left-field="test_attribute1" right-field="test_attribute1" />
-            <successor>activity_d3</successor>
+            <successor>task_d3</successor>
         </conditional-successor>
     </exclusivechoice>
 
-    <!-- Conditional activities. -->
-    <activity name="activity_d1">
+    <!-- Conditional tasks. -->
+    <task name="task_d1">
         <successor>multi_choice_1</successor>
-    </activity>
-    <activity name="activity_d2">
+    </task>
+    <task name="task_d2">
         <successor>multi_choice_1</successor>
-    </activity>
-    <activity name="activity_d3">
+    </task>
+    <task name="task_d3">
         <successor>multi_choice_1</successor>
-    </activity>
+    </task>
 
     <!-- Split branches using a multi-choice. -->
     <multichoice name="multi_choice_1">
         <conditional-successor>
             <equals left-field="test_attribute1" right-field="test_attribute1" />
-            <successor>activity_e1</successor>
+            <successor>task_e1</successor>
         </conditional-successor>
         <conditional-successor>
             <equals left-field="test_attribute1" right-field="test_attribute2" />
-            <successor>activity_e2</successor>
+            <successor>task_e2</successor>
         </conditional-successor>
         <conditional-successor>
             <equals left-field="test_attribute2" right-field="test_attribute2" />
-            <successor>activity_e3</successor>
+            <successor>task_e3</successor>
         </conditional-successor>
     </multichoice>
 
     <!-- Conditional branches. -->
-    <activity name="activity_e1">
+    <task name="task_e1">
         <successor>struct_synch_merge_1</successor>
-    </activity>
-    <activity name="activity_e2">
+    </task>
+    <task name="task_e2">
         <successor>struct_synch_merge_1</successor>
-    </activity>
-    <activity name="activity_e3">
+    </task>
+    <task name="task_e3">
         <successor>struct_synch_merge_1</successor>
-    </activity>
+    </task>
 
     <!-- Structured synchronizing merge. -->
     <join name="struct_synch_merge_1" context="multi_choice_1">
-        <successor>activity_f1</successor>
-        <successor>activity_f2</successor>
-        <successor>activity_f3</successor>
+        <successor>task_f1</successor>
+        <successor>task_f2</successor>
+        <successor>task_f3</successor>
     </join>
 
     <!-- Implicit split. -->
-    <activity name="activity_f1">
+    <task name="task_f1">
         <successor>struct_discriminator_1</successor>
-    </activity>
-    <activity name="activity_f2">
+    </task>
+    <task name="task_f2">
         <successor>struct_discriminator_1</successor>
-    </activity>
-    <activity name="activity_f3">
+    </task>
+    <task name="task_f3">
         <successor>struct_discriminator_1</successor>
-    </activity>
+    </task>
 
     <!-- Structured discriminator. -->
     <join name="struct_discriminator_1"
@@ -144,25 +144,25 @@
 
     <!-- Split into 3 branches, and implicitly split twice in addition. -->
     <multiinstance name="multi_instance_1" times-field="three">
-        <successor>activity_g1</successor>
-        <successor>activity_g2</successor>
+        <successor>task_g1</successor>
+        <successor>task_g2</successor>
     </multiinstance>
 
-    <!-- Parallel activities. -->
-    <activity name="activity_g1">
+    <!-- Parallel tasks. -->
+    <task name="task_g1">
         <successor>struct_synch_merge_2</successor>
-    </activity>
-    <activity name="activity_g2">
+    </task>
+    <task name="task_g2">
         <successor>struct_synch_merge_2</successor>
-    </activity>
+    </task>
 
     <!-- Structured synchronizing merge. -->
     <join name="struct_synch_merge_2" context="multi_instance_1">
         <successor>last</successor>
     </join>
 
-    <!-- A final activity. -->
-    <activity name="last">
+    <!-- A final task. -->
+    <task name="last">
         <successor>end</successor>
-    </activity>
+    </task>
 </process-definition>

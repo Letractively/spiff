@@ -3,19 +3,19 @@
     <description>Pattern 11 (Implicit Termination)</description>
 
     <!-- Start with an implicit simple split. -->
-    <startactivity>
+    <starttask>
         <successor>first</successor>
-    </startactivity>
+    </starttask>
     
-    <activity name="first">
-        <successor>activity_f1</successor>
-        <successor>activity_f2</successor>
-        <successor>activity_f3</successor>
-    </activity>
+    <task name="first">
+        <successor>task_f1</successor>
+        <successor>task_f2</successor>
+        <successor>task_f3</successor>
+    </task>
 
-    <stubactivity name="activity_f1" />
-    <stubactivity name="activity_f2" />
-    <stubactivity name="activity_f3" />
+    <task name="task_f1" />
+    <task name="task_f2" />
+    <task name="task_f3" />
 
     <!-- Implicit end. -->
 </process-definition>
