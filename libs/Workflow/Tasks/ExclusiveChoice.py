@@ -20,32 +20,32 @@ from MultiChoice import MultiChoice
 
 class ExclusiveChoice(MultiChoice):
     """
-    This class represents an exclusive choice (an if condition) activity
+    This class represents an exclusive choice (an if condition) task
     where precisely one outgoing branch_node is selected. If none of the
-    given condition matches, a default activity is selected.
+    given condition matches, a default task is selected.
     It has two or more inputs and two or more outputs.
     """
     def __init__(self, parent, name):
         """
         Constructor.
         
-        parent -- a reference to the parent (Activity)
+        parent -- a reference to the parent (Task)
         name -- a name for the pattern (string)
         """
         MultiChoice.__init__(self, parent, name)
-        self.default_activity = None
+        self.default_task = None
 
 
-    def connect(self, activity):
+    def connect(self, task):
         """
-        Connects the activity that is executed if no other condition matches.
+        Connects the task that is executed if no other condition matches.
 
-        activity -- the following activity
+        task -- the following task
         """
-        assert self.default_activity is None
-        self.outputs.append(activity)
-        self.default_activity = activity
-        activity.connect_notify(self)
+        assert self.default_task is None
+        self.outputs.append(task)
+        self.default_task = task
+        task.connect_notify(self)
 
 
     def test(self):
@@ -54,13 +54,13 @@ class ExclusiveChoice(MultiChoice):
         if an error was detected.
         """
         MultiChoice.test(self)
-        if self.default_activity is None:
+        if self.default_task is None:
             raise WorkflowException(self, 'A default output is required.')
 
 
     def execute(self, job, branch_node):
         """
-        Runs the activity. Should not be called directly.
+        Runs the task. Should not be called directly.
         Returns True if completed, False otherwise.
         """
         assert job is not None
@@ -72,10 +72,10 @@ class ExclusiveChoice(MultiChoice):
             self.user_func(job, branch_node, self)
 
         # Find the first matching condition.
-        output = self.default_activity
-        for condition, activity in self.cond_activities:
+        output = self.default_task
+        for condition, task in self.cond_tasks:
             if condition is None or condition.matches(job):
-                output = activity
+                output = task
                 break
 
         branch_node.update_children(output)

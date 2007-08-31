@@ -14,13 +14,13 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 from Exception import WorkflowException
-from Activity  import Activity
+from Task  import Task
 
-class StubActivity(Activity):
+class StubTask(Task):
     """
-    This class implements the activity that is placed at the end of each
+    This class implements the task that is placed at the end of each
     workflow. It has one or more inputs and no outputs.
-    If more than one input is connected, the activity does an implicit
+    If more than one input is connected, the task does an implicit
     simple merge.
     """
 
@@ -28,18 +28,18 @@ class StubActivity(Activity):
         """
         Constructor.
         
-        parent -- a reference to the parent (Activity)
+        parent -- a reference to the parent (Task)
         name -- a name for the pattern (string)
         """
-        Activity.__init__(self, parent, name)
+        Task.__init__(self, parent, name)
 
 
-    def connect(self, activity):
+    def connect(self, task):
         """
-        Connect the *following* activity to this one. In other words, the
-        given activity is added as an output activity.
+        Connect the *following* task to this one. In other words, the
+        given task is added as an output task.
         """
-        raise WorkflowException(self, 'StubActivity can not have any outputs.')
+        raise WorkflowException(self, 'StubTask can not have any outputs.')
 
 
     def test(self):
@@ -48,6 +48,6 @@ class StubActivity(Activity):
         if an error was detected.
         """
         if len(self.inputs) < 1:
-            raise WorkflowException(self, 'No input activity connected.')
+            raise WorkflowException(self, 'No input task connected.')
         elif len(self.outputs) != 0:
-            raise WorkflowException(self, 'StubActivity with an output.')
+            raise WorkflowException(self, 'StubTask with an output.')

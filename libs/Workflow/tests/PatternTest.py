@@ -5,15 +5,15 @@ def suite():
     tests = ['testPattern']
     return unittest.TestSuite(map(PatternTest, tests))
 
-from Activities        import *
+from Tasks        import *
 from Workflow          import Workflow
 from Job               import Job
 from BranchNode        import *
 from Storage           import XmlReader
 from xml.parsers.expat import ExpatError
 
-def print_name(job, branch_node, activity):
-    reached_key = "%s_reached" % str(activity.name)
+def print_name(job, branch_node, task):
+    reached_key = "%s_reached" % str(task.name)
     n_reached   = job.get_attribute(reached_key, 0) + 1
     step        = job.get_attribute('step', 0) + 1
     job.set_attribute(**{reached_key: n_reached})
@@ -24,15 +24,15 @@ def print_name(job, branch_node, activity):
     job.set_attribute(test_attribute2 = 'true')
 
     # Record the path in an attribute.
-    current     = branch_node.find_path(None, branch_node.activity)
+    current     = branch_node.find_path(None, branch_node.task)
     depth       = len(current.split('/')) - 1
     indent      = ('  ' * depth)
     taken_path  = job.get_attribute('taken_path', '')
-    taken_path += '%s%s\n' % (indent, activity.name)
+    taken_path += '%s%s\n' % (indent, task.name)
     job.set_attribute(taken_path = taken_path)
     
-    #print "%s%s" % (indent, activity.name)
-    #print "%s%s (reached %s times)" % (indent, activity.name, n_reached)
+    #print "%s%s" % (indent, task.name)
+    #print "%s%s (reached %s times)" % (indent, task.name, n_reached)
     #print "PATH:", current, branch_node.name, branch_node.id
 
 class PatternTest(unittest.TestCase):
@@ -64,10 +64,10 @@ class PatternTest(unittest.TestCase):
 
 
     def testWorkflow(self, wf, expected, name):
-        for activity in wf.activities:
-            activity.user_func = print_name
+        for task in wf.tasks:
+            task.user_func = print_name
 
-        # Execute all activities within the Job.
+        # Execute all tasks within the Job.
         job = Job(wf)
         job.execute_all(False)
 
@@ -78,7 +78,7 @@ class PatternTest(unittest.TestCase):
         self.assert_(taken_path == expected,
                      '%s:\nExpected:\n%s\nbut got:\n%s\n' % (name, expected, taken_path))
 
-        # Make sure that there are no waiting activities in the tree.
+        # Make sure that there are no waiting tasks in the tree.
         for node in BranchNode.Iterator(job.branch_tree, BranchNode.WAITING):
             job.branch_tree.dump()
             raise Exception('Node with state WAITING: %s' % node.name)

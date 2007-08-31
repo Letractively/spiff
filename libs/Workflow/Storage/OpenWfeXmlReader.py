@@ -15,10 +15,10 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 import os
 import xml.dom.minidom as minidom
-import Activities
+import Tasks
 from Workflow   import Workflow
 from Exception  import StorageException
-from Activities import *
+from Tasks import *
 
 class OpenWfeXmlReader(object):
     """
@@ -29,10 +29,10 @@ class OpenWfeXmlReader(object):
         """
         Constructor.
         """
-        self.activity_tags = ('activity',
-                              'concurrence',
-                              'if',
-                              'sequence')
+        self.task_tags = ('task',
+                          'concurrence',
+                          'if',
+                          'sequence')
         self.logical_tags = {'equals':     Condition.EQUAL,
                              'not_equals': Condition.NOT_EQUAL}
 
@@ -74,13 +74,13 @@ class OpenWfeXmlReader(object):
         for node in start_node.childNodes:
             if node.nodeType != minidom.Node.ELEMENT_NODE:
                 continue
-            if node.nodeName.lower() in self.activity_tags:
+            if node.nodeName.lower() in self.task_tags:
                 if match is None:
-                    match = self.read_activity(workflow, node)
+                    match = self.read_task(workflow, node)
                 elif nomatch is None:
-                    nomatch = self.read_activity(workflow, node)
+                    nomatch = self.read_task(workflow, node)
                 else:
-                    assert False # Only two activities in "if" allowed.
+                    assert False # Only two tasks in "if" allowed.
             elif node.nodeName.lower() in self.logical_tags:
                 if condition is None:
                     condition = self.read_condition(node)
@@ -94,7 +94,7 @@ class OpenWfeXmlReader(object):
         assert condition is not None
         assert match     is not None
         choice = ExclusiveChoice(workflow, name)
-        end    = Activity(workflow, name + '_end')
+        end    = Task(workflow, name + '_end')
         if nomatch is None:
             choice.connect(end)
         else:
@@ -122,8 +122,8 @@ class OpenWfeXmlReader(object):
         for node in start_node.childNodes:
             if node.nodeType != minidom.Node.ELEMENT_NODE:
                 continue
-            if node.nodeName.lower() in self.activity_tags:
-                (start, end) = self.read_activity(workflow, node)
+            if node.nodeName.lower() in self.task_tags:
+                (start, end) = self.read_task(workflow, node)
                 if first is None:
                     first = start
                 else:
@@ -149,8 +149,8 @@ class OpenWfeXmlReader(object):
         for node in start_node.childNodes:
             if node.nodeType != minidom.Node.ELEMENT_NODE:
                 continue
-            if node.nodeName.lower() in self.activity_tags:
-                (start, end) = self.read_activity(workflow, node)
+            if node.nodeName.lower() in self.task_tags:
+                (start, end) = self.read_task(workflow, node)
                 multichoice.connect_if(None, start)
                 end.connect(synchronize)
             else:
@@ -159,18 +159,18 @@ class OpenWfeXmlReader(object):
         return (multichoice, synchronize)
 
 
-    def read_activity(self, workflow, start_node):
+    def read_task(self, workflow, start_node):
         """
-        Reads the activity from the given node and returns a tuple
+        Reads the task from the given node and returns a tuple
         (start, end) that contains the stream of objects that model
         the behavior.
         
-        workflow -- the workflow with which the activity is associated
+        workflow -- the workflow with which the task is associated
         start_node -- the xml structure (xml.dom.minidom.Node)
         """
         type = start_node.nodeName.lower()
         name = start_node.getAttribute('name').lower()
-        assert type in self.activity_tags
+        assert type in self.task_tags
 
         if type == 'concurrence':
             return self.read_concurrence(workflow, start_node)
@@ -178,9 +178,9 @@ class OpenWfeXmlReader(object):
             return self.read_if(workflow, start_node)
         elif type == 'sequence':
             return self.read_sequence(workflow, start_node)
-        elif type == 'activity':
-            activity = Activity(workflow, name)
-            return (activity, activity)
+        elif type == 'task':
+            task = Task(workflow, name)
+            return (task, task)
         else:
             print "Unknown type:", type
             assert False # Unknown tag.
@@ -195,22 +195,22 @@ class OpenWfeXmlReader(object):
         """
         name = start_node.getAttribute('name')
         assert name is not None
-        workflow      = Workflow(name)
-        last_activity = workflow.start
+        workflow  = Workflow(name)
+        last_task = workflow.start
         for node in start_node.childNodes:
             if node.nodeType != minidom.Node.ELEMENT_NODE:
                 continue
             if node.nodeName == 'description':
                 pass
-            elif node.nodeName.lower() in self.activity_tags:
-                (start, end) = self.read_activity(workflow, node)
-                last_activity.connect(start)
-                last_activity = end
+            elif node.nodeName.lower() in self.task_tags:
+                (start, end) = self.read_task(workflow, node)
+                last_task.connect(start)
+                last_task = end
             else:
                 print "Unknown type:", type
                 assert False # Unknown tag.
 
-        last_activity.connect(StubActivity(workflow, 'End'))
+        last_task.connect(StubTask(workflow, 'End'))
         return workflow
 
 

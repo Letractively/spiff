@@ -20,7 +20,7 @@ class PersistenceTest(WorkflowTest):
 
     def testPickleSingle(self, workflow, job):
         # Execute a random number of steps.
-        for i in xrange(randint(0, len(workflow.activities))):
+        for i in xrange(randint(0, len(workflow.tasks))):
             job.execute_next()
     
         # Store the workflow instance in a file.
@@ -50,8 +50,8 @@ class PersistenceTest(WorkflowTest):
     def testPickle(self):
         # Read a complete workflow.
         workflow_list = self.reader.parse_file('xml/workflow1.xml')
-        for activity in workflow_list[0].activities:
-            activity.user_func = print_name
+        for task in workflow_list[0].tasks:
+            task.user_func = print_name
 
         for i in xrange(20):
             job = Job(workflow_list[0])

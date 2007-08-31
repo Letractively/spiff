@@ -13,17 +13,16 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
-from BranchNode  import *
-from Exception   import WorkflowException
-from Activity    import Activity
-from ThreadStart import ThreadStart
+from BranchNode import *
+from Exception  import WorkflowException
+from Task   import Task
 
-class ThreadSplit(Activity):
+class MultiInstance(Task):
     """
-    When executed, this activity performs a split on the current branch_node.
+    When executed, this task performs a split on the current branch_node.
     The number of outgoing branch_nodes depends on the runtime value of a
     specified attribute.
-    If more than one input is connected, the activity performs an implicit
+    If more than one input is connected, the task performs an implicit
     multi merge.
 
     This task has one or more inputs and may have any number of outputs.
@@ -33,50 +32,25 @@ class ThreadSplit(Activity):
         """
         Constructor.
         
-        parent -- a reference to the parent (Activity)
+        parent -- a reference to the parent (Task)
         name -- a name for the pattern (string)
         kwargs -- must contain one of the following:
                     times -- the number of instances to create.
-                    times-attribute -- the name of the attribute that
+                    times_attribute -- the name of the attribute that
                                        specifies the number of outgoing
                                        instances.
         """
         assert kwargs.has_key('times_attribute') or kwargs.has_key('times')
-        Activity.__init__(self, parent, name)
+        Task.__init__(self, parent, name)
         self.times_attribute = kwargs.get('times_attribute', None)
         self.times           = kwargs.get('times',           None)
-        self.thread_starter  = ThreadStart(parent)
-        self.outputs.append(self.thread_starter)
-        self.thread_starter.connect_notify(self)
-
-
-    def connect(self, activity):
-        """
-        Connect the *following* activity to this one. In other words, the
-        given activity is added as an output activity.
-
-        activity -- the activity to connect to.
-        """
-        self.thread_starter.outputs.append(activity)
-        activity.connect_notify(self.thread_starter)
 
 
     def _find_my_branch_node(self, job):
         for node in job.branch_tree:
-            if node.activity == self:
+            if node.task == self:
                 return node
         return None
-
-
-    def get_activated_branch_nodes(self, job, branch_node):
-        """
-        Returns the list of branch_nodes that were activated in the previous call
-        of execute().
-
-        job -- the job in which this method is executed
-        branch_node -- the branch_node in which this method is executed
-        """
-        return self.thread_starter.get_activated_branch_nodes(job, branch_node)
 
 
     def trigger(self, job, branch_node):
@@ -84,16 +58,16 @@ class ThreadSplit(Activity):
         May be called after execute() was already completed to create an
         additional outbound instance.
         """
-        # Find a BranchNode for this activity.
+        # Find a BranchNode for this task.
         my_branch_node = self._find_my_branch_node(job)
         for output in self.outputs:
             state           = BranchNode.WAITING | BranchNode.TRIGGERED
             new_branch_node = my_branch_node.add_child(output, state)
 
 
-    def _predict(self, job, branch_node):
+    def _get_predicted_outputs(self, job, branch_node):
         # Since the attribute value might have changed by the time a future
-        # activity calls this method, we store the number of splits in the
+        # task calls this method, we store the number of splits in the
         # context data.
         split_n = job.get_context_data('split_n', self.times)
         if split_n is None:
@@ -102,13 +76,14 @@ class ThreadSplit(Activity):
         # Predict the outputs.
         outputs = []
         for i in range(split_n):
-            outputs.append(self.thread_starter)
-        branch_node.update_children(outputs, BranchNode.PREDICTED)
+            for output in self.outputs:
+                outputs.append(output)
+        return outputs
 
 
     def execute(self, job, branch_node):
         """
-        Runs the activity. Should not be called directly.
+        Runs the task. Should not be called directly.
         Returns True if completed, False otherwise.
         """
         assert job    is not None
@@ -128,7 +103,8 @@ class ThreadSplit(Activity):
         # Create the outgoing nodes.
         outputs = []
         for i in range(split_n):
-            outputs.append(self.thread_starter)
+            for output in self.outputs:
+                outputs.append(output)
         branch_node.update_children(outputs)
         branch_node.set_status(BranchNode.COMPLETED)
         return True

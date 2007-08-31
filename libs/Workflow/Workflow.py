@@ -13,8 +13,8 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
-from Activities import StartActivity
-from Activities import StubActivity
+from Tasks import StartTask
+from Tasks import StubTask
 
 class Workflow(object):
     """
@@ -25,14 +25,14 @@ class Workflow(object):
         """
         Constructor.
         """
-        self.name       = name
-        self.activities = []
-        self.start      = StartActivity(self)
+        self.name  = name
+        self.tasks = []
+        self.start = StartTask(self)
 
 
-    def add_notify(self, activity):
+    def add_notify(self, task):
         """
-        Called by an activity when it was added into the workflow.
+        Called by an task when it was added into the workflow.
         """
-        self.activities.append(activity)
-        activity.id = len(self.activities)
+        self.tasks.append(task)
+        task.id = len(self.tasks)

@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
-from Activities import Activity
+from Tasks import Task
 from BranchNode import *
 
 class Job(object):
@@ -32,7 +32,7 @@ class Job(object):
         self.attributes   = {}
         self.context_data = {}
         self.last_node    = None
-        self.branch_tree  = BranchNode(self, Activity(workflow, 'Root'))
+        self.branch_tree  = BranchNode(self, Task(workflow, 'Root'))
 
         # Prevent the root node from being executed.
         self.branch_tree.state = BranchNode.COMPLETED
@@ -118,10 +118,10 @@ class Job(object):
 
     def execute_next(self, pick_up = True):
         """
-        Runs the next activity.
+        Runs the next task.
         Returns True if completed, False otherwise.
 
-        pick_up -- when True, this method attempts to choose the next activity
+        pick_up -- when True, this method attempts to choose the next task
                    not by searching beginning at the root, but by searching
                    from the position at which the last call of execute_next()
                    left off.
@@ -135,17 +135,17 @@ class Job(object):
             except:
                 next = None
             self.last_node = None
-            if next is not None and next.activity.execute(self, next):
+            if next is not None and next.task.execute(self, next):
                 self.last_node = next
                 return True
             blacklist.append(next)
 
-        # Walk through all waiting activities.
+        # Walk through all waiting tasks.
         for node in BranchNode.Iterator(self.branch_tree, BranchNode.WAITING):
             for blacklisted_node in blacklist:
                 if node.is_descendant_of(blacklisted_node):
                     continue
-            if not node.activity.execute(self, node):
+            if not node.task.execute(self, node):
                 blacklist.append(node)
                 continue
             self.last_node = node

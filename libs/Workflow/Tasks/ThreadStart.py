@@ -14,15 +14,15 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 from Exception import WorkflowException
-from Activity  import Activity
+from Task  import Task
 
-class ThreadStart(Activity):
+class ThreadStart(Task):
     """
-    This class implements the activity the is placed at the beginning
+    This class implements the task the is placed at the beginning
     of each thread. It is NOT supposed to be used by in the API, it is
-    used internally only (by the ThreadSplit activity).
-    The activity has no inputs and at least one output.
-    If more than one output is connected, the activity does an implicit
+    used internally only (by the ThreadSplit task).
+    The task has no inputs and at least one output.
+    If more than one output is connected, the task does an implicit
     parallel split.
     """
 
@@ -30,19 +30,19 @@ class ThreadStart(Activity):
         """
         Constructor.
         
-        parent -- a reference to the parent (Activity)
+        parent -- a reference to the parent (Task)
         """
-        Activity.__init__(self, parent, 'ThreadStart')
+        Task.__init__(self, parent, 'ThreadStart')
         self.internal = True
 
 
     def execute(self, job, branch_node):
         """
-        Runs the activity. Should not be called directly.
+        Runs the task. Should not be called directly.
         Returns True if completed, False otherwise.
         """
         assert job    is not None
         assert branch_node is not None
         self.test()
         branch_node.assign_new_thread_id()
-        return Activity.execute(self, job, branch_node)
+        return Task.execute(self, job, branch_node)
