@@ -8,7 +8,6 @@ __all__ = ['AcquireMutex',
            'MultiInstance',
            'ReleaseMutex',
            'StartTask',
-           'StubTask',
            'Task',
            'ThreadMerge',
            'ThreadSplit',
@@ -23,7 +22,6 @@ from MultiChoice     import MultiChoice, Condition
 from MultiInstance   import MultiInstance
 from ReleaseMutex    import ReleaseMutex
 from StartTask       import StartTask
-from StubTask        import StubTask
 from Task            import Task
 from ThreadMerge     import ThreadMerge
 from ThreadSplit     import ThreadSplit

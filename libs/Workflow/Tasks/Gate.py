@@ -33,7 +33,7 @@ class Gate(Task):
 
         parent -- a reference to the parent (Task)
         name -- a name for the task (string)
-        context -- the task that needs to complete before this activity can
+        context -- the task that needs to complete before this task can
                    execute.
         """
         assert parent  is not None

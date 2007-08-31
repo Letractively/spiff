@@ -219,7 +219,7 @@ class XmlReader(object):
 
         # Read all tasks and create a list of successors.
         workflow             = Workflow(name)
-        self.read_tasks = {'end': (StubTask(workflow, 'End'), [])}
+        self.read_tasks = {'end': (Task(workflow, 'End'), [])}
         for node in start_node.childNodes:
             if node.nodeType != minidom.Node.ELEMENT_NODE:
                 continue

@@ -3,44 +3,44 @@
     <description>Pattern 8 (Mutli-Merge)</description>
 
     <!-- Start with an implicit simple split. -->
-    <startactivity>
+    <starttask>
         <successor>multi_choice_1</successor>
-    </startactivity>
+    </starttask>
 
     <!-- Split branches using a multi-choice. -->
     <multichoice name="multi_choice_1">
         <conditional-successor>
             <equals left-field="test_attribute1" right-field="test_attribute1" />
-            <successor>activity_e1</successor>
+            <successor>task_e1</successor>
         </conditional-successor>
         <conditional-successor>
             <equals left-field="test_attribute1" right-field="test_attribute2" />
-            <successor>activity_e2</successor>
+            <successor>task_e2</successor>
         </conditional-successor>
         <conditional-successor>
             <equals left-field="test_attribute2" right-field="test_attribute2" />
-            <successor>activity_e3</successor>
+            <successor>task_e3</successor>
         </conditional-successor>
     </multichoice>
 
     <!-- Conditional branches. -->
-    <activity name="activity_e1">
+    <task name="task_e1">
         <successor>merge</successor>
-    </activity>
-    <activity name="activity_e2">
+    </task>
+    <task name="task_e2">
         <successor>merge</successor>
-    </activity>
-    <activity name="activity_e3">
+    </task>
+    <task name="task_e3">
         <successor>merge</successor>
-    </activity>
+    </task>
 
     <!-- Implicit multi-merge. -->
-    <activity name="merge">
+    <task name="merge">
         <successor>last</successor>
-    </activity>
+    </task>
 
-    <!-- A final activity. -->
-    <activity name="last">
+    <!-- A final task. -->
+    <task name="last">
         <successor>end</successor>
-    </activity>
+    </task>
 </process-definition>

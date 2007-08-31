@@ -3,29 +3,29 @@
     <description>Pattern 13 (Multiple Instances with a priori Design-Time Knowledge)</description>
 
     <!-- Start with an implicit simple split. -->
-    <startactivity>
+    <starttask>
         <successor>multi_instance_1</successor>
-    </startactivity>
+    </starttask>
 
     <!-- Split into 2 branches. -->
     <multiinstance name="multi_instance_1" times="2">
-        <successor>activity_g1</successor>
+        <successor>task_g1</successor>
     </multiinstance>
 
-    <!-- Parallel activities. -->
-    <activity name="activity_g1">
-        <successor>activity_g2</successor>
-    </activity>
-    <activity name="activity_g2">
+    <!-- Parallel tasks. -->
+    <task name="task_g1">
+        <successor>task_g2</successor>
+    </task>
+    <task name="task_g2">
         <successor>struct_synch_merge_1</successor>
-    </activity>
+    </task>
 
     <!-- Structured synchronizing merge. -->
     <join name="struct_synch_merge_1" context="multi_instance_1">
         <successor>last</successor>
     </join>
 
-    <!-- A final activity. -->
+    <!-- A final task. -->
     <join name="last">
         <successor>end</successor>
     </join>

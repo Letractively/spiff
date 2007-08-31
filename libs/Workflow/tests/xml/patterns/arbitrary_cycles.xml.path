@@ -5,6 +5,6 @@ Start
         excl_choice_1
           first
             excl_choice_1
-              activity_c1
+              task_c1
                 last
                   End

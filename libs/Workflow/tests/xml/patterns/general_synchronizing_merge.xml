@@ -2,57 +2,57 @@
 <process-definition name="flow" revision="1.0">
     <description>Pattern 37 (Acyclic Synchronizing Merge)</description>
 
-    <startactivity>
+    <starttask>
         <successor>first</successor>
-    </startactivity>
+    </starttask>
     
     <!-- Start with an implicit simple split. -->
-    <activity name="first">
-        <successor>activity_a1</successor>
-        <successor>activity_b1</successor>
-        <successor>activity_c1</successor>
-    </activity>
+    <task name="first">
+        <successor>task_a1</successor>
+        <successor>task_b1</successor>
+        <successor>task_c1</successor>
+    </task>
 
     <!-- Implicit split. -->
-    <activity name="activity_a1">
+    <task name="task_a1">
         <successor>join</successor>
-    </activity>
-    <activity name="activity_b1">
+    </task>
+    <task name="task_b1">
         <successor>join</successor>
-    </activity>
-    <activity name="activity_c1">
+    </task>
+    <task name="task_c1">
         <successor>loop_back_to_c1_once</successor>
-    </activity>
+    </task>
 
     <!-- Loop back to c1 (once). -->
     <exclusivechoice name="loop_back_to_c1_once">
-        <default-successor>activity_c1</default-successor>
+        <default-successor>task_c1</default-successor>
         <conditional-successor>
             <equals left-field="loop_back_to_c1_once_reached" right-value="2" />
-            <successor>activity_c2</successor>
+            <successor>task_c2</successor>
         </conditional-successor>
     </exclusivechoice>
 
-    <activity name="activity_c2">
+    <task name="task_c2">
         <successor>go_to_stub</successor>
-    </activity>
+    </task>
 
-    <!-- Choose the a path to a stubactivity. -->
+    <!-- Choose the a path to a task. -->
     <exclusivechoice name="go_to_stub">
-        <default-successor>activity_g1</default-successor>
+        <default-successor>task_g1</default-successor>
         <conditional-successor>
             <equals left-value="1" right-value="1" />
             <successor>stub_1</successor>
         </conditional-successor>
     </exclusivechoice>
 
-    <activity name="activity_g1">
+    <task name="task_g1">
         <successor>join</successor>
-    </activity>
+    </task>
 
-    <activity name="stub_1">
+    <task name="stub_1">
         <successor>loop_back_to_stub_1_once</successor>
-    </activity>
+    </task>
 
     <!-- Loop back to g2 (once). -->
     <exclusivechoice name="loop_back_to_stub_1_once">
@@ -72,15 +72,15 @@
         </conditional-successor>
     </exclusivechoice>
 
-    <activity name="stub_2">
+    <task name="stub_2">
         <successor>foo</successor>
-    </activity>
+    </task>
 
-    <activity name="stub_3">
+    <task name="stub_3">
         <successor>foo</successor>
-    </activity>
+    </task>
 
-    <stubactivity name="foo" />
+    <task name="foo" />
 
     <!-- Structured synchronizing merge. -->
     <join name="join" context="first">

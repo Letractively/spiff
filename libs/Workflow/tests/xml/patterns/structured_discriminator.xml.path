@@ -1,7 +1,7 @@
 Start
   multi_choice_1
-    activity_a1
+    task_a1
       discriminator
         last
           End
-    activity_a3
+    task_a3

@@ -1,20 +1,20 @@
 Start
   first
-    activity_e1
-      activity_f1
-    activity_e2
-      activity_f2
-    activity_e3
-      activity_f3
+    task_e1
+      task_f1
+    task_e2
+      task_f2
+    task_e3
+      task_f3
         struct_synch_merge_1
           excl_choice_1
             first
-              activity_e1
-                activity_f1
-              activity_e2
-                activity_f2
-              activity_e3
-                activity_f3
+              task_e1
+                task_f1
+              task_e2
+                task_f2
+              task_e3
+                task_f3
                   struct_synch_merge_1
                     excl_choice_1
                       last

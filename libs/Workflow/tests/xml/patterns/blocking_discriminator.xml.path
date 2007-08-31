@@ -1,15 +1,15 @@
 Start
   first
-    activity_f1
+    task_f1
       struct_discriminator_1
         excl_choice_1
           first
-            activity_f1
+            task_f1
               struct_discriminator_1
                 excl_choice_1
                   last
                     End
-            activity_f2
-            activity_f3
-    activity_f2
-    activity_f3
+            task_f2
+            task_f3
+    task_f2
+    task_f3

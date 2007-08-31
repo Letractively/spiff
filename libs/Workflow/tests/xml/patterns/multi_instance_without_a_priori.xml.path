@@ -1,12 +1,12 @@
 Start
   add_instance_1
   multi_instance_1
-    activity_g1
-    activity_g2
-    activity_g1
-    activity_g2
-    activity_g1
-    activity_g2
+    task_g1
+    task_g2
+    task_g1
+    task_g2
+    task_g1
+    task_g2
       struct_synch_merge_1
     join
       last

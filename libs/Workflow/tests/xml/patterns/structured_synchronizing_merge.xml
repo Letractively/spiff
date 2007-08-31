@@ -2,52 +2,52 @@
 <process-definition name="flow" revision="1.6">
     <description>Pattern 7 (Structured Synchronizing Merge)</description>
 
-    <startactivity>
+    <starttask>
         <successor>multi_choice_1</successor>
-    </startactivity>
+    </starttask>
 
     <!-- Split branches using a multi-choice. -->
     <multichoice name="multi_choice_1">
         <conditional-successor>
             <equals left-field="test_attribute1" right-field="test_attribute1" />
-            <successor>activity_e1</successor>
+            <successor>task_e1</successor>
         </conditional-successor>
         <conditional-successor>
             <equals left-field="test_attribute1" right-field="test_attribute2" />
-            <successor>activity_e2</successor>
+            <successor>task_e2</successor>
         </conditional-successor>
         <conditional-successor>
             <equals left-field="test_attribute2" right-field="test_attribute2" />
-            <successor>activity_e3</successor>
+            <successor>task_e3</successor>
         </conditional-successor>
     </multichoice>
 
     <!-- Conditional branches. -->
-    <activity name="activity_e1">
+    <task name="task_e1">
         <successor>struct_synch_merge_1</successor>
-    </activity>
-    <activity name="activity_e2">
+    </task>
+    <task name="task_e2">
         <successor>struct_synch_merge_1</successor>
-    </activity>
-    <activity name="activity_e3">
-        <successor>activity_g3a</successor>
-        <successor>activity_g3b</successor>
-    </activity>
+    </task>
+    <task name="task_e3">
+        <successor>task_g3a</successor>
+        <successor>task_g3b</successor>
+    </task>
 
-    <activity name="activity_g3a">
+    <task name="task_g3a">
         <successor>struct_synch_merge_1</successor>
-    </activity>
-    <activity name="activity_g3b">
+    </task>
+    <task name="task_g3b">
         <successor>struct_synch_merge_1</successor>
-    </activity>
+    </task>
 
     <!-- Structured synchronizing merge. -->
     <join name="struct_synch_merge_1" context="multi_choice_1">
         <successor>last</successor>
     </join>
 
-    <!-- A final activity. -->
-    <activity name="last">
+    <!-- A final task. -->
+    <task name="last">
         <successor>end</successor>
-    </activity>
+    </task>
 </process-definition>
