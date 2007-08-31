@@ -24,6 +24,7 @@ Supported Workflow Patterns
 14. Multiple Instances with a Priori Run-Time Knowledge [tests/xml/patterns/multi_instance_with_a_priori_run_time_knowledge.xml]
 15. Multiple Instances without a Priori Run-Time Knowledge [tests/xml/patterns/multi_instance_without_a_priori.xml]
 16. Deferred Choice [tests/xml/patterns/deferred_choice.xml]
+17. [indirectly] Interleaved Parallel Routing [xml/patterns/interleaved_parallel_routing.xml]
 
 23. Transient Trigger [tests/xml/patterns/transient_trigger.xml]
 
@@ -38,6 +39,7 @@ Supported Workflow Patterns
 36. Dynamic Partial Join for Multiple Instances [tests/xml/patterns/dynamic_partial_join_for_multi_instances.xml]
 37. Acyclic Synchronizing Merge [tests/xml/patterns/acyclic_synchronizing_merge.xml]
 38. General Synchronizing Merge [tests/xml/patterns/general_synchronizing_merge.xml]
+39. Critical Section [tests/xml/patterns/critical_section.xml]
 
 41. Thread Merge [tests/xml/patterns/thread_merge.xml]
 42. Thread Split [tests/xml/patterns/thread_split.xml]

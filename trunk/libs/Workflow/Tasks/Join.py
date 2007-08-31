@@ -44,7 +44,7 @@ class Join(Task):
         """
         assert not (kwargs.has_key('threshold') \
                 and kwargs.has_key('threshold_attribute'))
-        Task.__init__(self, parent, name)
+        Task.__init__(self, parent, name, **kwargs)
         self.split_task     = split_task
         self.threshold      = kwargs.get('threshold',           None)
         self.threshold_attr = kwargs.get('threshold_attribute', None)
@@ -203,15 +203,11 @@ class Join(Task):
         return self._may_fire_structured(job, branch_node)
 
 
-    def execute(self, job, branch_node):
+    def _execute(self, job, branch_node):
         """
         Runs the task. Should not be called directly.
         Returns True if completed, False otherwise.
         """
-        assert job    is not None
-        assert branch_node is not None
-        self.test()
-
         # The context is the path up to the point where the split happened.
         if self.split_task is None:
             context = '%s(%s)' % (self.id, branch_node.thread_id)
@@ -231,4 +227,4 @@ class Join(Task):
             if node.task != self:
                 continue
             node.state = BranchNode.COMPLETED
-        return Task.execute(self, job, branch_node)
+        return Task._execute(self, job, branch_node)

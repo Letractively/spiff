@@ -42,10 +42,10 @@ class ThreadSplit(Task):
                                        instances.
         """
         assert kwargs.has_key('times_attribute') or kwargs.has_key('times')
-        Task.__init__(self, parent, name)
+        Task.__init__(self, parent, name, **kwargs)
         self.times_attribute = kwargs.get('times_attribute', None)
         self.times           = kwargs.get('times',           None)
-        self.thread_starter  = ThreadStart(parent)
+        self.thread_starter  = ThreadStart(parent, **kwargs)
         self.outputs.append(self.thread_starter)
         self.thread_starter.connect_notify(self)
 
@@ -106,19 +106,11 @@ class ThreadSplit(Task):
         branch_node.update_children(outputs, BranchNode.PREDICTED)
 
 
-    def execute(self, job, branch_node):
+    def _execute(self, job, branch_node):
         """
         Runs the task. Should not be called directly.
         Returns True if completed, False otherwise.
         """
-        assert job    is not None
-        assert branch_node is not None
-        self.test()
-
-        # Run user code, if any.
-        if self.user_func is not None:
-            self.user_func(job, branch_node, self)
-
         # Split, and remember the number of splits in the context data.
         split_n = self.times
         if split_n is None:
@@ -130,5 +122,4 @@ class ThreadSplit(Task):
         for i in range(split_n):
             outputs.append(self.thread_starter)
         branch_node.update_children(outputs)
-        branch_node.set_status(BranchNode.COMPLETED)
         return True

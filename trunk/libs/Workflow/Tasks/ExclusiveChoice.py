@@ -25,14 +25,14 @@ class ExclusiveChoice(MultiChoice):
     given condition matches, a default task is selected.
     It has one or more inputs and two or more outputs.
     """
-    def __init__(self, parent, name):
+    def __init__(self, parent, name, **kwargs):
         """
         Constructor.
         
         parent -- a reference to the parent (Task)
         name -- a name for the pattern (string)
         """
-        MultiChoice.__init__(self, parent, name)
+        MultiChoice.__init__(self, parent, name, **kwargs)
         self.default_task = None
 
 
@@ -58,19 +58,11 @@ class ExclusiveChoice(MultiChoice):
             raise WorkflowException(self, 'A default output is required.')
 
 
-    def execute(self, job, branch_node):
+    def _execute(self, job, branch_node):
         """
         Runs the task. Should not be called directly.
         Returns True if completed, False otherwise.
         """
-        assert job is not None
-        assert branch_node is not None
-        self.test()
-
-        # Run user code, if any.
-        if self.user_func is not None:
-            self.user_func(job, branch_node, self)
-
         # Find the first matching condition.
         output = self.default_task
         for condition, task in self.cond_tasks:
@@ -79,5 +71,4 @@ class ExclusiveChoice(MultiChoice):
                 break
 
         branch_node.update_children(output)
-        branch_node.set_status(BranchNode.COMPLETED)
         return True

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<process-definition name="flow" revision="1.0">
+    <description>Pattern 39 (Critical Section)</description>
+
+    <!-- Start with an implicit simple split. -->
+    <starttask>
+        <successor>one_1</successor>
+        <successor>two_1</successor>
+    </starttask>
+
+    <!-- Branch 1 -->
+        <task name="one_1">
+            <lock>lock_one</lock>
+            <successor>one_2</successor>
+        </task>
+        <acquiremutex name="one_2" mutex="my_global_mutex">
+            <lock>lock_two</lock>
+            <successor>one_3</successor>
+        </acquiremutex>
+        <task name="one_3">
+            <lock>lock_three</lock>
+            <successor>two_2</successor>
+            <successor>one_4</successor>
+        </task>
+        <releasemutex name="one_4" mutex="my_global_mutex">
+            <lock>lock_four</lock>
+            <successor>last</successor>
+        </releasemutex>
+    <!-- End branch 1 -->
+
+    <!-- Branch 2 -->
+        <task name="two_1">
+            <successor>two_2</successor>
+        </task>
+        <acquiremutex name="two_2" mutex="my_global_mutex">
+            <successor>two_3</successor>
+        </acquiremutex>
+        <task name="two_3">
+            <successor>two_4</successor>
+        </task>
+        <releasemutex name="two_4" mutex="my_global_mutex">
+            <successor>last</successor>
+        </releasemutex>
+    <!-- End branch 2 -->
+
+    <!-- A final task. -->
+    <task name="last">
+        <successor>end</successor>
+    </task>
+</process-definition>

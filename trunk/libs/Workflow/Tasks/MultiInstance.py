@@ -41,7 +41,7 @@ class MultiInstance(Task):
                                        instances.
         """
         assert kwargs.has_key('times_attribute') or kwargs.has_key('times')
-        Task.__init__(self, parent, name)
+        Task.__init__(self, parent, name, **kwargs)
         self.times_attribute = kwargs.get('times_attribute', None)
         self.times           = kwargs.get('times',           None)
 
@@ -81,19 +81,11 @@ class MultiInstance(Task):
         return outputs
 
 
-    def execute(self, job, branch_node):
+    def _execute(self, job, branch_node):
         """
         Runs the task. Should not be called directly.
         Returns True if completed, False otherwise.
         """
-        assert job    is not None
-        assert branch_node is not None
-        self.test()
-
-        # Run user code, if any.
-        if self.user_func is not None:
-            self.user_func(job, branch_node, self)
-
         # Split, and remember the number of splits in the context data.
         split_n = self.times
         if split_n is None:
@@ -106,5 +98,4 @@ class MultiInstance(Task):
             for output in self.outputs:
                 outputs.append(output)
         branch_node.update_children(outputs)
-        branch_node.set_status(BranchNode.COMPLETED)
         return True

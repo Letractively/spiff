@@ -27,7 +27,7 @@ class Trigger(Task):
     parallel split.
     """
 
-    def __init__(self, parent, name, context):
+    def __init__(self, parent, name, context, **kwargs):
         """
         Constructor.
 
@@ -39,11 +39,11 @@ class Trigger(Task):
         assert parent  is not None
         assert name    is not None
         assert context is not None
-        Task.__init__(self, parent, name)
+        Task.__init__(self, parent, name, **kwargs)
         self.context = context
 
 
-    def execute(self, job, branch_node):
+    def _execute(self, job, branch_node):
         """
         Runs the task. Should not be called directly.
         Returns True if completed, False otherwise.
@@ -51,10 +51,5 @@ class Trigger(Task):
         job -- the job in which this method is executed
         branch_node -- the branch_node in which this method is executed
         """
-        assert job         is not None
-        assert branch_node is not None
-        self.test()
-
         self.context.trigger(job, branch_node)
-
-        return Task.execute(self, job, branch_node)
+        return Task._execute(self, job, branch_node)

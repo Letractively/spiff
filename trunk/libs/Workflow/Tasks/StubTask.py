@@ -24,14 +24,14 @@ class StubTask(Task):
     simple merge.
     """
 
-    def __init__(self, parent, name):
+    def __init__(self, parent, name, **kwargs):
         """
         Constructor.
         
         parent -- a reference to the parent (Task)
         name -- a name for the pattern (string)
         """
-        Task.__init__(self, parent, name)
+        Task.__init__(self, parent, name, **kwargs)
 
 
     def connect(self, task):

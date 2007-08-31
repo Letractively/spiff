@@ -2,8 +2,10 @@
 
 	* Activities are now "Tasks", to be consistent with WorkflowPatterns
 	terminology.
-	* Activities/Choose.py, Activities/MultiChoice.py: Add support for the
+	* Tasks/Choose.py, Tasks/MultiChoice.py: Add support for the
 	Deferred Choice pattern.
+	* Tasks/AcquireMutex.py, Tasks/ReleaseMutex.py: Add support for Deferred
+	Choice and Interleaved Parallel Routing.
 
 2007-08-30 Samuel Abels <http://debain.org>
 

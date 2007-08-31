@@ -21,6 +21,7 @@ class OpenWfeXmlReaderTest(unittest.TestCase):
         job.set_attribute(test_attribute1 = 'false')
         job.set_attribute(test_attribute2 = 'true')
         self.path = job.get_attribute('taken_path')
+        return True
 
 
     def testParseString(self):

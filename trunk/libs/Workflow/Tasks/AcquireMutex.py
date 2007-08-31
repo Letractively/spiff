@@ -12,39 +12,32 @@
 # 
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,MA  02110-1301  USA
 from BranchNode import *
 from Exception  import WorkflowException
 from Task       import Task
-from Trigger    import Trigger
 
-class Choose(Trigger):
+class AcquireMutex(Task):
     """
-    This class implements a task that causes an associated MultiChoice
-    activity to select the tasks with the specified name.
+    This class implements a task that acquires a mutex (lock), protecting
+    a section of the workflow from being accessed by other sections.
     If more than one input is connected, the task performs an implicit
     multi merge.
     If more than one output is connected, the task performs an implicit
     parallel split.
     """
 
-    def __init__(self, parent, name, context, **kwargs):
+    def __init__(self, parent, name, mutex, **kwargs):
         """
         Constructor.
 
         parent -- a reference to the parent (Task)
         name -- a name for the task (string)
-        context -- the MultiChoice task that is instructed to select the
-                   specified outputs.
-        kwargs -- may contain the following keys:
-                    choice -- the list of activities that is selected.
+        mutex -- the mutex that should be acquired
         """
-        assert parent  is not None
-        assert name    is not None
-        assert context is not None
+        assert mutex is not None
         Task.__init__(self, parent, name, **kwargs)
-        self.context = context
-        self.choice  = kwargs.get('choice', [])
+        self.mutex = mutex
 
 
     def _execute(self, job, branch_node):
@@ -55,5 +48,7 @@ class Choose(Trigger):
         job -- the job in which this method is executed
         branch_node -- the branch_node in which this method is executed
         """
-        self.context.trigger(job, branch_node, self.choice)
+        mutex = job.get_mutex(self.mutex)
+        if not mutex.testandset():
+            return False
         return Task._execute(self, job, branch_node)

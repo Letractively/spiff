@@ -26,23 +26,20 @@ class ThreadStart(Task):
     parallel split.
     """
 
-    def __init__(self, parent):
+    def __init__(self, parent, **kwargs):
         """
         Constructor.
         
         parent -- a reference to the parent (Task)
         """
-        Task.__init__(self, parent, 'ThreadStart')
+        Task.__init__(self, parent, 'ThreadStart', **kwargs)
         self.internal = True
 
 
-    def execute(self, job, branch_node):
+    def _execute(self, job, branch_node):
         """
         Runs the task. Should not be called directly.
         Returns True if completed, False otherwise.
         """
-        assert job    is not None
-        assert branch_node is not None
-        self.test()
         branch_node.assign_new_thread_id()
-        return Task.execute(self, job, branch_node)
+        return Task._execute(self, job, branch_node)

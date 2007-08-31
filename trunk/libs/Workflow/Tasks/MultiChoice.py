@@ -81,14 +81,14 @@ class MultiChoice(Task):
     This task has one or more outputs.
     """
 
-    def __init__(self, parent, name):
+    def __init__(self, parent, name, **kwargs):
         """
         Constructor.
         
         parent -- a reference to the parent (Task)
         name -- a name for the pattern (string)
         """
-        Task.__init__(self, parent, name)
+        Task.__init__(self, parent, name, **kwargs)
         self.cond_tasks = []
         self.choice     = None
 
@@ -137,19 +137,11 @@ class MultiChoice(Task):
         self.choice = choice
 
 
-    def execute(self, job, branch_node):
+    def _execute(self, job, branch_node):
         """
         Runs the task. Should not be called directly.
         Returns True if completed, False otherwise.
         """
-        assert job is not None
-        assert branch_node is not None
-        self.test()
-
-        # Run user code, if any.
-        if self.user_func is not None:
-            self.user_func(job, branch_node, self)
-
         # Find all matching conditions.
         outputs = []
         for condition, output in self.cond_tasks:
@@ -160,5 +152,4 @@ class MultiChoice(Task):
             outputs.append(output)
 
         branch_node.update_children(outputs)
-        branch_node.set_status(BranchNode.COMPLETED)
         return True

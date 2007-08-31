@@ -126,10 +126,11 @@ class XmlReader(object):
         type            = start_node.nodeName.lower()
         name            = start_node.getAttribute('name').lower()
         context         = start_node.getAttribute('context').lower()
+        mutex           = start_node.getAttribute('mutex').lower()
         cancel          = start_node.getAttribute('cancel').lower()
         threshold       = start_node.getAttribute('threshold').lower()
         threshold_field = start_node.getAttribute('threshold-field').lower()
-        kwargs    = {}
+        kwargs    = {'lock': []}
         if not self.task_map.has_key(type):
             self._raise('Invalid task type "%s"' % type)
         if type == 'starttask':
@@ -146,6 +147,12 @@ class XmlReader(object):
             kwargs['threshold_attribute'] = threshold_field
         if type == 'choose':
             kwargs['choice'] = []
+        if context != '':
+            if not self.read_tasks.has_key(context):
+                self._raise('Context %s does not exist' % context)
+            context = self.read_tasks[context][0]
+        if mutex != '':
+            context = mutex
 
         # Walk through the children of the node.
         successors = []
@@ -161,6 +168,10 @@ class XmlReader(object):
                 successors.append((None, node.firstChild.nodeValue))
             elif node.nodeName == 'conditional-successor':
                 successors.append(self._read_condition(workflow, node))
+            elif node.nodeName == 'lock':
+                if node.firstChild is None:
+                    self._raise('Empty %s tag' % node.nodeName)
+                kwargs['lock'].append(node.firstChild.nodeValue)
             elif node.nodeName == 'pick':
                 if node.firstChild is None:
                     self._raise('Empty %s tag' % node.nodeName)
@@ -181,19 +192,16 @@ class XmlReader(object):
             elif times != '' and times_field != '':
                 self._raise('Both, "times" and "times-field" in "%s"' % name)
             elif times != '':
-                times    = int(times)
-                task = module(workflow, name, times = times)
+                times = int(times)
+                task  = module(workflow, name, times = times)
             else:
                 task = module(workflow,
-                                  name,
-                                  times_attribute = times_field)
+                              name,
+                              times_attribute = times_field)
         elif context == '':
             task = module(workflow, name, **kwargs)
         else:
-            if not self.read_tasks.has_key(context):
-                self._raise('Context %s does not exist' % context)
-            context = self.read_tasks[context][0]
-            task    = module(workflow, name, context, **kwargs)
+            task = module(workflow, name, context, **kwargs)
 
         self.read_tasks[name] = (task, successors)
 
