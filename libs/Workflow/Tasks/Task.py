@@ -101,7 +101,7 @@ class Task(object):
 
     def trigger(self, job, branch_node):
         """
-        May be called by another task to trigger an task-specific
+        May be called by another task to trigger a task-specific
         event.
         """
         AbstractMethod()

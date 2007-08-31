@@ -17,10 +17,10 @@ from BranchNode import *
 from Exception  import WorkflowException
 from Task       import Task
 
-class Trigger(Task):
+class Gate(Task):
     """
-    This class implements a task that triggers an event on another 
-    task.
+    This class implements a task that can only execute when another
+    specified task is completed.
     If more than one input is connected, the task performs an implicit
     multi merge.
     If more than one output is connected, the task performs an implicit
@@ -33,8 +33,8 @@ class Trigger(Task):
 
         parent -- a reference to the parent (Task)
         name -- a name for the task (string)
-        context -- the MultiInstance task that is instructed to create
-                   another instance.
+        context -- the task that needs to complete before this activity can
+                   execute.
         """
         assert parent  is not None
         assert name    is not None
@@ -51,5 +51,7 @@ class Trigger(Task):
         job -- the job in which this method is executed
         branch_node -- the branch_node in which this method is executed
         """
-        self.context.trigger(job, branch_node)
-        return Task._execute(self, job, branch_node)
+        for node in BranchNode.Iterator(job.branch_tree, BranchNode.COMPLETED):
+            if node.task == self.context:
+                return Task._execute(self, job, branch_node)
+        return False

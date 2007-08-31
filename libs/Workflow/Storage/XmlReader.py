@@ -97,7 +97,7 @@ class XmlReader(object):
                 if task_name is not None:
                     self._raise('Duplicate task name %s' % task_name)
                 if node.firstChild is None:
-                    self._raise('Successor tag without an task name')
+                    self._raise('Successor tag without a task name')
                 task_name = node.firstChild.nodeValue
             elif node.nodeName.lower() in self.logical_tags:
                 if condition is not None:

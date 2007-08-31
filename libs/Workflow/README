@@ -25,6 +25,7 @@ Supported Workflow Patterns
 15. Multiple Instances without a Priori Run-Time Knowledge [tests/xml/patterns/multi_instance_without_a_priori.xml]
 16. Deferred Choice [tests/xml/patterns/deferred_choice.xml]
 17. [indirectly] Interleaved Parallel Routing [xml/patterns/interleaved_parallel_routing.xml]
+18. Milestone [tests/xml/patterns/milestone.xml]
 
 23. Transient Trigger [tests/xml/patterns/transient_trigger.xml]
 
