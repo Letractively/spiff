@@ -4,23 +4,23 @@
 
     <!-- Start with an implicit simple split. -->
     <starttask>
-        <successor>one</successor>
-        <successor>two</successor>
+        <successor>one1</successor>
+        <successor>two1</successor>
     </starttask>
 
     <!-- Branch 1 -->
-        <task name="one">
+        <task name="one1">
             <lock>one_task_at_a_time</lock>
             <successor>join</successor>
         </task>
     <!-- End branch 1 -->
 
     <!-- Branch 2 -->
-        <task name="two">
+        <task name="two1">
             <lock>one_task_at_a_time</lock>
-            <successor>three</successor>
+            <successor>two2</successor>
         </task>
-        <task name="three">
+        <task name="two2">
             <lock>one_task_at_a_time</lock>
             <successor>join</successor>
         </task>

@@ -97,6 +97,27 @@ class Task(object):
             raise WorkflowException(self, 'No input task connected.')
 
 
+    def cancel(self, job, branch_node = None):
+        """
+        May be called by another task to cancel the operation before it was
+        completed.
+        If branch_node is None, all positions in the branch that use this
+        task are cancelled. If branch_node is given, only the given branch is
+        cancelled.
+        """
+        if branch_node is not None:
+            if branch_node.task != self:
+                msg = 'Given branch points to another task!'
+                raise WorkflowException(self, msg)
+            branch_node.cancel()
+            return
+        state = BranchNode.WAITING | BranchNode.PREDICTED
+        node  = job.branch_tree.find(self, state)
+        while node is not None:
+            node.cancel()
+            node = job.branch_tree.find(self, state)
+
+
     def trigger(self, job, branch_node):
         """
         May be called by another task to trigger a task-specific

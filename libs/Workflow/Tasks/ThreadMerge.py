@@ -87,7 +87,7 @@ class ThreadMerge(Join):
             # except for the one that just completed.
             if self.cancel:
                 for node in waiting_nodes:
-                    node.cancel()
+                    node.task.cancel(job, node)
 
             return True
 

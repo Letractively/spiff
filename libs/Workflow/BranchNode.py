@@ -141,10 +141,9 @@ class BranchNode(object):
         Cancels all items in this branch. The status of any items that are
         already completed is not changed.
         """
-        if self.state & BranchNode.COMPLETED == 0:
-            self.state = BranchNode.CANCELLED
-        for child in self.children:
-            child.cancel()
+        if self.state & self.COMPLETED == 0:
+            self.state = self.CANCELLED | (self.state & self.TRIGGERED)
+        self.drop_children()
 
 
     def set_status(self, status, recursive = False):
@@ -248,14 +247,14 @@ class BranchNode(object):
         for child in self.children:
             if child.state & BranchNode.TRIGGERED != 0:
                 continue
-            if child.task not in add:
-                if child.state & BranchNode.PREDICTED != 0:
-                    remove.append(child)
-                else:
-                    msg = '"tasks" does not contain %s' % child.name
-                    raise WorkflowException(self, msg)
+            if child.task not in add and child.state & self.PREDICTED != 0:
+                remove.append(child)
                 continue
-            child.state = status
+            if child.task not in add:
+                msg = '"tasks" does not contain %s' % child.name
+                raise WorkflowException(self, msg)
+            if child.state & self.PREDICTED != 0:
+                child.state = status
             add.remove(child.task)
 
         # Remove all children that are no longer specified.
@@ -301,6 +300,23 @@ class BranchNode(object):
         if self.parent == parent:
             return self
         return self.parent.get_child_of(parent)
+
+
+    def find(self, task, state):
+        """
+        Returns the BranchNode that has the given Task with the given
+        state assigned.
+        Returns None if no such node was found.
+
+        task -- the wanted Task
+        state -- the wanted state
+        """
+        for node in self:
+            if node.state & state == 0:
+                continue
+            if node.task == task:
+                return node
+        return None
 
 
     def find_child_of(self, parent_task):
