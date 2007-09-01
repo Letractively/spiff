@@ -31,6 +31,9 @@ Supported Workflow Patterns
 
 23. Transient Trigger [tests/xml/patterns/transient_trigger.xml]
 
+25. Cancel Region [tests/xml/patterns/cancel_region.xml]
+26. Cancel Multiple Instance Task [tests/xml/patterns/cancel_multi_instance_task.xml]
+27. Complete Multiple Instance Task [tests/xml/patterns/complete_multiple_instance_activity.xml]
 28. Blocking Discriminator [tests/xml/patterns/blocking_discriminator.xml]
 29. Cancelling Discriminator [tests/xml/patterns/cancelling_discriminator.xml]
 30. Structured Partial Join [tests/xml/patterns/structured_partial_join.xml]

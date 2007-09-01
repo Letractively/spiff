@@ -2,8 +2,11 @@
 
 	* tests: Support Interleaved Routing.
 	* BranchNode.py, Tasks/*.py: Fixed several bugs related to task cancellation.
-	* Tasks/CancelTask.py: Implemented the Cancel Task pattern.
+	* Tasks/CancelTask.py: Implemented the Cancel Task and Cancel Region
+	patterns.
 	* Tasks/CancelJob.py: Implemented the Cancel Case pattern.
+	* Tasks/Join.py: Support the Cancel Multiple Instance Task and Complete
+	Multiple Instance Task patterns.
 	* all-over: Use task names instead of task references to address a task, in
 	order to relax the strict ordering in which tasks needed to be instanciated.
 

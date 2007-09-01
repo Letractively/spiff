@@ -18,12 +18,10 @@
     <!-- End branch 1 -->
 
     <!-- Branch 2 -->
-        <!-- Split into 2 branches, and implicitly split twice in addition. -->
         <multiinstance name="multi_instance_1" times="0">
             <successor>task_g1</successor>
         </multiinstance>
 
-        <!-- Parallel tasks. -->
         <task name="task_g1">
             <successor>last</successor>
         </task>
