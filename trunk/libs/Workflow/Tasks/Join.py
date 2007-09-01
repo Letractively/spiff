@@ -132,7 +132,7 @@ class Join(Task):
             # except for the one that just completed.
             if self.cancel:
                 for node in waiting_nodes:
-                    node.cancel()
+                    node.task.cancel(job, node)
 
             return True
 
@@ -186,7 +186,7 @@ class Join(Task):
             # except for the one that just completed.
             if self.cancel:
                 for node in waiting_nodes:
-                    node.cancel()
+                    node.task.cancel(job, node)
 
             return True
 
@@ -222,6 +222,8 @@ class Join(Task):
         # Mark all nodes in the same thread that reference this task as
         # COMPLETED.
         for node in job.branch_tree:
+            if node.state & BranchNode.PREDICTED != 0:
+                continue
             if node.thread_id != branch_node.thread_id:
                 continue
             if node.task != self:

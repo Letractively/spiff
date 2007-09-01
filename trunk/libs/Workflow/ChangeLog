@@ -1,3 +1,9 @@
+2007-09-01 Samuel Abels <http://debain.org>
+
+	* tests: Support Interleaved Routing.
+	* BranchNode.py, Tasks/*.py: Fixed several bugs related to task cancellation.
+	* Tasks/Cancel.py: Implemented the Cancel Task pattern.
+
 2007-08-31 Samuel Abels <http://debain.org>
 
 	* Activities are now "Tasks", to be consistent with WorkflowPatterns

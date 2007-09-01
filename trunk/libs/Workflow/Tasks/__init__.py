@@ -1,4 +1,5 @@
 __all__ = ['AcquireMutex',
+           'Cancel',
            'Choose',
            'Condition',
            'ExclusiveChoice',
@@ -14,6 +15,7 @@ __all__ = ['AcquireMutex',
            'Trigger']
 
 from AcquireMutex    import AcquireMutex
+from Cancel          import Cancel
 from Choose          import Choose
 from ExclusiveChoice import ExclusiveChoice
 from Gate            import Gate
