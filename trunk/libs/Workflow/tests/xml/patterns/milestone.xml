@@ -10,18 +10,17 @@
     <task name="task_e1">
         <successor>task_e2</successor>
     </task>
-    <task name="task_f1">
-        <successor>task_f2</successor>
-    </task>
-
-    <task name="task_f2">
-        <successor>last</successor>
-    </task>
     <gate name="task_e2" context="task_f2">
         <successor>task_e3</successor>
     </gate>
-
     <task name="task_e3">
+        <successor>last</successor>
+    </task>
+
+    <task name="task_f1">
+        <successor>task_f2</successor>
+    </task>
+    <task name="task_f2">
         <successor>last</successor>
     </task>
 

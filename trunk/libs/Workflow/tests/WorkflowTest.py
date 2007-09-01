@@ -167,7 +167,7 @@ class WorkflowTest(unittest.TestCase):
         multichoice.connect_if(cond, e3)
 
         # StructuredSynchronizingMerge
-        syncmerge = Join(self.wf, "struct_synch_merge_1", multichoice)
+        syncmerge = Join(self.wf, "struct_synch_merge_1", 'multi_choice_1')
         e1.connect(syncmerge)
         e2.connect(syncmerge)
         e3.connect(syncmerge)
@@ -185,7 +185,7 @@ class WorkflowTest(unittest.TestCase):
         # Discriminator
         discrim_1 = Join(self.wf,
                          "struct_discriminator_1",
-                         syncmerge,
+                         'struct_synch_merge_1',
                          threshold = 1)
         f1.connect(discrim_1)
         f2.connect(discrim_1)
@@ -210,7 +210,7 @@ class WorkflowTest(unittest.TestCase):
         multi_instance_1.connect(g2)
 
         # StructuredSynchronizingMerge
-        syncmerge2 = Join(self.wf, "struct_synch_merge_2", multi_instance_1)
+        syncmerge2 = Join(self.wf, "struct_synch_merge_2", 'multi_instance_1')
         g1.connect(syncmerge2)
         g2.connect(syncmerge2)
 
@@ -226,8 +226,8 @@ class WorkflowTest(unittest.TestCase):
 
 
     def runWorkflow(self, wf):
-        for task in wf.tasks:
-            task.user_func = print_name
+        for name in wf.tasks:
+            wf.tasks[name].user_func = print_name
 
         # Execute all tasks within the Job.
         job = Job(wf)

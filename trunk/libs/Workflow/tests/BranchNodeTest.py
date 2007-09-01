@@ -79,7 +79,6 @@ class BranchNodeTest(unittest.TestCase):
                      'but got:\n'  + result)
 
         # Some simple method tests.
-        self.assert_(c1111.find_path() == '2/3/4/5', 'Invalid path: ' + c1111.find_path())
         self.assertRaises(WorkflowException, root.split)
 
 if __name__ == '__main__':

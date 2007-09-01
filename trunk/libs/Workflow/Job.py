@@ -124,6 +124,22 @@ class Job(object):
         return self.context_data[repr(context)][name]
 
 
+    def cancel(self):
+        """
+        Cancels all open tasks in the job.
+        """
+        cancel = []
+        state  = BranchNode.WAITING | BranchNode.PREDICTED
+        for node in BranchNode.Iterator(self.branch_tree, state):
+            cancel.append(node)
+        for node in cancel:
+            node.cancel()
+    
+
+    def get_task_from_name(self, name):
+        return self.workflow.tasks[name]
+
+
     def execute_next(self, pick_up = True):
         """
         Runs the next task.

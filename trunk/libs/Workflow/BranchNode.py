@@ -136,14 +136,25 @@ class BranchNode(object):
         self.children.append(child)
 
 
-    def cancel(self):
+    def cancel(self, drop_predicted_children = True):
         """
-        Cancels all items in this branch. The status of any items that are
-        already completed is not changed.
+        Cancels the item if it was not yet completed.
+        If drop_predicted_children is True, any children that are PREDICTED
+        are also removed.
+
+        drop_predicted_children -- whether to remove PREDICTED children
         """
-        if self.state & self.COMPLETED == 0:
-            self.state = self.CANCELLED | (self.state & self.TRIGGERED)
-        self.drop_children()
+        if self.state & self.COMPLETED != 0:
+            return
+        self.state = self.CANCELLED | (self.state & self.TRIGGERED)
+        if not drop_predicted_children:
+            return
+        drop = []
+        for child in self.children:
+            if child.state & self.PREDICTED != 0:
+                drop.append(child)
+        for node in drop:
+            self.children.remove(node)
 
 
     def set_status(self, status, recursive = False):
@@ -245,17 +256,25 @@ class BranchNode(object):
         add    = tasks[:]
         remove = []
         for child in self.children:
+            # Must not be TRIGGERED or COMPLETED.
             if child.state & BranchNode.TRIGGERED != 0:
                 continue
-            if child.task not in add and child.state & self.PREDICTED != 0:
+            if child.state & BranchNode.COMPLETED != 0:
+                msg = 'Attempt to update %s, which is completed.' % child.name
+                raise WorkflowException(self, msg)
+
+            # Check whether the item needs to be added or removed.
+            if child.task not in add:
+                if child.state & BranchNode.PREDICTED == 0:
+                    msg = 'Attempt to remove non-predicted %s' % child.name
+                    raise WorkflowException(self, msg)
                 remove.append(child)
                 continue
-            if child.task not in add:
-                msg = '"tasks" does not contain %s' % child.name
-                raise WorkflowException(self, msg)
+            add.remove(child.task)
+
+            # Update the status.
             if child.state & self.PREDICTED != 0:
                 child.state = status
-            add.remove(child.task)
 
         # Remove all children that are no longer specified.
         for child in remove:
@@ -263,6 +282,8 @@ class BranchNode(object):
 
         # Add a new child for each of the remaining tasks.
         for task in add:
+            if task.cancelled:
+                continue
             self.add_child(task, status)
 
 
@@ -346,35 +367,6 @@ class BranchNode(object):
         if self.parent.task == task:
             return self.parent
         return self.parent.find_ancestor(task)
-
-
-    def find_path(self, start = None, end = None):
-        """
-        Returns a copy of the path, beginning from the first occurence
-        of the given start task, and ending at the LAST occurence
-        of the given end task.
-
-        start -- the task at which the path begins. If None is given,
-                 the path starts at the first task.
-        end -- the task at which the path ends. If None is given,
-               the complete path is returned.
-        """
-        path      = []
-        current   = self
-        start_pos = -1
-        while current is not None:
-            if len(path) == 0 \
-                and end is not None \
-                and current.task is not end:
-                current = current.parent
-                continue
-            path.append(current)
-            if current == start:
-                start_pos = current
-            current = current.parent
-        path = path[:start_pos]
-        path.reverse()
-        return '/'.join(['%s' % node.id for node in path])
 
 
     def get_dump(self, indent = 0):

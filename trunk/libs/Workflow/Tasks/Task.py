@@ -49,6 +49,7 @@ class Task(object):
         self.post_func = None
         self.manual    = False
         self.internal  = False  # Only for easing debugging.
+        self.cancelled = False
         self.locks     = kwargs.get('lock', [])
         self._parent.add_notify(self)
         assert self.id is not None
@@ -107,15 +108,24 @@ class Task(object):
         """
         if branch_node is not None:
             if branch_node.task != self:
-                msg = 'Given branch points to another task!'
+                msg = 'Given branch points to %s!' % branch_node.name
                 raise WorkflowException(self, msg)
             branch_node.cancel()
+            for child in branch_node.children:
+                child.task.cancel(job, child)
             return
-        state = BranchNode.WAITING | BranchNode.PREDICTED
-        node  = job.branch_tree.find(self, state)
-        while node is not None:
+        
+        # Cancel my own branch nodes and those of the children.
+        self.cancelled = True
+        cancel         = []
+        state          = BranchNode.WAITING | BranchNode.PREDICTED
+        for node in BranchNode.Iterator(job.branch_tree, state):
+            if node.task == self:
+                cancel.append(node)
+        for node in cancel:
             node.cancel()
-            node = job.branch_tree.find(self, state)
+            for child in node.children:
+                child.task.cancel(job, child)
 
 
     def trigger(self, job, branch_node):
@@ -160,6 +170,7 @@ class Task(object):
         """
         assert job         is not None
         assert branch_node is not None
+        assert not self.cancelled
         self.test()
 
         # Acquire locks, if any.

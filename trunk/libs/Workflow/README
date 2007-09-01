@@ -27,6 +27,7 @@ Supported Workflow Patterns
 17. Interleaved Parallel Routing [tests/xml/patterns/interleaved_parallel_routing.xml]
 18. Milestone [tests/xml/patterns/milestone.xml]
 19. Cancel Task [tests/xml/patterns/cancel_task.xml]
+20. Cancel Case [tests/xml/patterns/cancel_case.xml]
 
 23. Transient Trigger [tests/xml/patterns/transient_trigger.xml]
 

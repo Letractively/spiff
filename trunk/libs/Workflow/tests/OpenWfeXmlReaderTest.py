@@ -52,8 +52,8 @@ class OpenWfeXmlReaderTest(unittest.TestCase):
     def testRunWorkflow(self):
         wf = self.reader.parse_file('xml/openwfe/workflow1.xml')
 
-        for task in wf[0].tasks:
-            task.user_func = self.print_name
+        for name in wf[0].tasks:
+            wf[0].tasks[name].user_func = self.print_name
 
         job = Job(wf[0])
         try:

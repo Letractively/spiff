@@ -145,7 +145,7 @@ class OpenWfeXmlReader(object):
         assert start_node.nodeName.lower() == 'concurrence'
         name = start_node.getAttribute('name').lower()
         multichoice = MultiChoice(workflow, name)
-        synchronize = Join(workflow, name + '_end', multichoice)
+        synchronize = Join(workflow, name + '_end', name)
         for node in start_node.childNodes:
             if node.nodeType != minidom.Node.ELEMENT_NODE:
                 continue
