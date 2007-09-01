@@ -147,7 +147,7 @@ class MultiChoice(Task):
         for condition, output in self.cond_tasks:
             if condition is not None and not condition.matches(job):
                 continue
-            if self.choice is not None and output not in self.choice:
+            if self.choice is not None and output.name not in self.choice:
                 continue
             outputs.append(output)
 

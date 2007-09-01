@@ -31,8 +31,8 @@ class ThreadMerge(Join):
         
         parent -- a reference to the parent (Task)
         name -- a name for the pattern (string)
-        split_task -- the task that was previously used to split the
-                          branch_node
+        split_task -- the name of the task that was previously used to split
+                      the branch_node
         kwargs -- may contain the following keys:
                       threshold -- an integer that specifies how many incoming
                       branches need to complete before the task triggers.
@@ -48,7 +48,8 @@ class ThreadMerge(Join):
     def may_fire(self, job, branch_node):
         # In structured context, the context is the path up to the point where
         # the split happened.
-        split_node = branch_node.find_ancestor(self.split_task)
+        split_task = job.get_task_from_name(self.split_task)
+        split_node = branch_node.find_ancestor(split_task)
         context    = split_node.id
 
         # If the threshold was already reached, there is nothing else to do.
@@ -104,7 +105,8 @@ class ThreadMerge(Join):
         Returns True if completed, False otherwise.
         """
         # The context is the path up to the point where the split happened.
-        split_node = branch_node.find_ancestor(self.split_task)
+        split_task = job.get_task_from_name(self.split_task)
+        split_node = branch_node.find_ancestor(split_task)
         context    = split_node.id
 
         # Make sure that all inputs have completed.

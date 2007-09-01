@@ -18,34 +18,14 @@ from Exception  import WorkflowException
 from Task       import Task
 from Trigger    import Trigger
 
-class Choose(Trigger):
+class CancelTask(Trigger):
     """
-    This class implements a task that causes an associated MultiChoice
-    task to select the tasks with the specified name.
+    This class implements a trigger that cancels another task (branch).
     If more than one input is connected, the task performs an implicit
     multi merge.
     If more than one output is connected, the task performs an implicit
     parallel split.
     """
-
-    def __init__(self, parent, name, context, **kwargs):
-        """
-        Constructor.
-
-        parent -- a reference to the parent (Task)
-        name -- a name for the task (string)
-        context -- the name of the MultiChoice task that is instructed to
-                   select the specified outputs.
-        kwargs -- may contain the following keys:
-                    choice -- the list of tasks that is selected.
-        """
-        assert parent  is not None
-        assert name    is not None
-        assert context is not None
-        Task.__init__(self, parent, name, **kwargs)
-        self.context = context
-        self.choice  = kwargs.get('choice', [])
-
 
     def _execute(self, job, branch_node):
         """
@@ -55,6 +35,6 @@ class Choose(Trigger):
         job -- the job in which this method is executed
         branch_node -- the branch_node in which this method is executed
         """
-        task = job.get_task_from_name(self.context)
-        task.trigger(job, branch_node, self.choice)
+        for task_name in self.context:
+            job.get_task_from_name(task_name).cancel(job)
         return Task._execute(self, job, branch_node)

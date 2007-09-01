@@ -123,17 +123,17 @@ class XmlReader(object):
         start_node -- the xml structure (xml.dom.minidom.Node)
         """
         # Extract attributes from the node.
-        type            = start_node.nodeName.lower()
+        nodetype        = start_node.nodeName.lower()
         name            = start_node.getAttribute('name').lower()
         context         = start_node.getAttribute('context').lower()
         mutex           = start_node.getAttribute('mutex').lower()
         cancel          = start_node.getAttribute('cancel').lower()
         threshold       = start_node.getAttribute('threshold').lower()
         threshold_field = start_node.getAttribute('threshold-field').lower()
-        kwargs    = {'lock': []}
-        if not self.task_map.has_key(type):
-            self._raise('Invalid task type "%s"' % type)
-        if type == 'starttask':
+        kwargs          = {'lock': []}
+        if not self.task_map.has_key(nodetype):
+            self._raise('Invalid task type "%s"' % nodetype)
+        if nodetype == 'starttask':
             name = 'start'
         if name == '':
             self._raise('Invalid task name "%s"' % name)
@@ -145,12 +145,10 @@ class XmlReader(object):
             kwargs['threshold'] = int(threshold)
         if threshold_field != '':
             kwargs['threshold_attribute'] = threshold_field
-        if type == 'choose':
+        if nodetype == 'choose':
             kwargs['choice'] = []
-        if context != '':
-            if not self.read_tasks.has_key(context):
-                self._raise('Context %s does not exist' % context)
-            context = self.read_tasks[context][0]
+        if nodetype == 'trigger':
+            context = [context]
         if mutex != '':
             context = mutex
 
@@ -168,6 +166,14 @@ class XmlReader(object):
                 successors.append((None, node.firstChild.nodeValue))
             elif node.nodeName == 'conditional-successor':
                 successors.append(self._read_condition(workflow, node))
+            elif node.nodeName == 'cancel':
+                if node.firstChild is None:
+                    self._raise('Empty %s tag' % node.nodeName)
+                if context == '':
+                    context = []
+                elif type(context) != type([]):
+                    context = [context]
+                context.append(node.firstChild.nodeValue)
             elif node.nodeName == 'lock':
                 if node.firstChild is None:
                     self._raise('Empty %s tag' % node.nodeName)
@@ -175,16 +181,15 @@ class XmlReader(object):
             elif node.nodeName == 'pick':
                 if node.firstChild is None:
                     self._raise('Empty %s tag' % node.nodeName)
-                task = self.read_tasks[node.firstChild.nodeValue][0]
-                kwargs['choice'].append(task)
+                kwargs['choice'].append(node.firstChild.nodeValue)
             else:
                 self._raise('Unknown node: %s' % node.nodeName)
 
         # Create a new instance of the task.
-        module = self.task_map[type]
-        if type == 'starttask':
+        module = self.task_map[nodetype]
+        if nodetype == 'starttask':
             task = module(workflow)
-        elif type == 'multiinstance' or type == 'threadsplit':
+        elif nodetype == 'multiinstance' or nodetype == 'threadsplit':
             times_field = start_node.getAttribute('times-field').lower()
             times       = start_node.getAttribute('times').lower()
             if times == '' and times_field == '':
@@ -232,7 +237,6 @@ class XmlReader(object):
 
         # Remove the default start-task from the workflow.
         workflow.start = self.read_tasks['start'][0]
-        workflow.tasks.pop(0)
 
         # Connect all tasks.
         for name in self.read_tasks:

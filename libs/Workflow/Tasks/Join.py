@@ -86,9 +86,10 @@ class Join(Task):
 
 
     def _get_structured_context(self, job, branch_node):
-        path       = branch_node.find_path(None, self.split_task)
-        split_node = branch_node.find_child_of(self.split_task)
-        return '%s(%s)' % (path, split_node.thread_id)
+        split_task = job.get_task_from_name(self.split_task)
+        split_node = branch_node.find_ancestor(split_task)
+        start_node = branch_node.find_child_of(split_task)
+        return '%s(%s)' % (split_node.id, start_node.thread_id)
 
 
     def _may_fire_unstructured(self, job, branch_node):
@@ -155,7 +156,8 @@ class Join(Task):
 
         # Retrieve a list of all activated branch_nodes from the associated
         # task that did the conditional parallel split.
-        nodes = self.split_task.get_activated_branch_nodes(job, branch_node)
+        split_task = job.get_task_from_name(self.split_task)
+        nodes      = split_task.get_activated_branch_nodes(job, branch_node)
 
         # The default threshold is the number of branches that were started.
         threshold = self.threshold

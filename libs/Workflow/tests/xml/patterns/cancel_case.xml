@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?> 
 <process-definition name="flow" revision="1.0">
-    <description>Pattern 19 (Cancel Task)</description>
+    <description>Pattern 20 (Cancel Job)</description>
 
     <!-- Start with an implicit simple split. -->
     <starttask>
@@ -20,9 +20,6 @@
             <successor>two3</successor>
         </task>
         <task name="two3">
-            <successor>two4</successor>
-        </task>
-        <task name="two4">
             <successor>last</successor>
         </task>
     <!-- End branch 2 -->
@@ -34,11 +31,7 @@
         <task name="one2">
             <successor>cancel</successor>
         </task>
-        <canceltask name="cancel">
-            <cancel>two2a</cancel>
-            <cancel>two4</cancel>
-            <successor>last</successor>
-        </canceltask>
+        <canceljob name="cancel" />
     <!-- End branch 1 -->
 
     <!-- A final task. -->

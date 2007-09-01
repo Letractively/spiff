@@ -33,12 +33,12 @@ class Trigger(Task):
 
         parent -- a reference to the parent (Task)
         name -- a name for the task (string)
-        context -- the MultiInstance task that is instructed to create
-                   another instance.
+        context -- a list of the names of tasks that are to be triggered
         """
         assert parent  is not None
         assert name    is not None
         assert context is not None
+        assert type(context) == type([])
         Task.__init__(self, parent, name, **kwargs)
         self.context = context
 
@@ -51,5 +51,6 @@ class Trigger(Task):
         job -- the job in which this method is executed
         branch_node -- the branch_node in which this method is executed
         """
-        self.context.trigger(job, branch_node)
+        for task_name in self.context:
+            job.get_task_from_name(task_name).trigger(job, branch_node)
         return Task._execute(self, job, branch_node)

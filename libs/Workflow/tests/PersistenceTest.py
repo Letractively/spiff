@@ -50,10 +50,10 @@ class PersistenceTest(WorkflowTest):
     def testPickle(self):
         # Read a complete workflow.
         workflow_list = self.reader.parse_file('xml/workflow1.xml')
-        for task in workflow_list[0].tasks:
-            task.user_func = print_name
+        for name in workflow_list[0].tasks:
+            workflow_list[0].tasks[name].user_func = print_name
 
-        for i in xrange(20):
+        for i in xrange(5):
             job = Job(workflow_list[0])
             self.testPickleSingle(workflow_list[0], job)
 

@@ -8,6 +8,15 @@
         <successor>multi_instance_1</successor>
     </starttask>
 
+    <!-- Branch 1 -->
+        <trigger name="add_instance_1" context="multi_instance_1">
+            <successor>add_instance_2</successor>
+        </trigger>
+        <trigger name="add_instance_2" context="multi_instance_1">
+            <successor>last</successor>
+        </trigger>
+    <!-- End branch 1 -->
+
     <!-- Branch 2 -->
         <!-- Split into 2 branches, and implicitly split twice in addition. -->
         <multiinstance name="multi_instance_1" times="0">
@@ -19,15 +28,6 @@
             <successor>last</successor>
         </task>
     <!-- End branch 2 -->
-
-    <!-- Branch 1 -->
-        <trigger name="add_instance_1" context="multi_instance_1">
-            <successor>add_instance_2</successor>
-        </trigger>
-        <trigger name="add_instance_2" context="multi_instance_1">
-            <successor>last</successor>
-        </trigger>
-    <!-- End branch 1 -->
 
     <!-- A final task. -->
     <task name="last">

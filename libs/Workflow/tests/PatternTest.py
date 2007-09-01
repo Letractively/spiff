@@ -24,9 +24,12 @@ def print_name(job, branch_node, task):
     job.set_attribute(test_attribute2 = 'true')
 
     # Record the path in an attribute.
-    current     = branch_node.find_path(None, branch_node.task)
-    depth       = len(current.split('/')) - 1
-    indent      = ('  ' * depth)
+    depth = 0
+    node  = branch_node.parent
+    while node is not None:
+        node   = node.parent
+        depth += 1
+    indent      = ('  ' * (depth - 1))
     taken_path  = job.get_attribute('taken_path', '')
     taken_path += '%s%s\n' % (indent, task.name)
     job.set_attribute(taken_path = taken_path)
@@ -66,8 +69,8 @@ class PatternTest(unittest.TestCase):
 
 
     def testWorkflow(self, wf, expected, name):
-        for task in wf.tasks:
-            task.user_func = print_name
+        for name in wf.tasks:
+            wf.tasks[name].user_func = print_name
 
         # Execute all tasks within the Job.
         job = Job(wf)

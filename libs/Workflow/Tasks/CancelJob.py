@@ -16,9 +16,8 @@
 from BranchNode import *
 from Exception  import WorkflowException
 from Task       import Task
-from Trigger    import Trigger
 
-class Cancel(Trigger):
+class CancelJob(Task):
     """
     This class implements a trigger that cancels another task (branch).
     If more than one input is connected, the task performs an implicit
@@ -26,6 +25,16 @@ class Cancel(Trigger):
     If more than one output is connected, the task performs an implicit
     parallel split.
     """
+
+    def test(self):
+        """
+        Checks whether all required attributes are set. Throws an exception
+        if an error was detected.
+        """
+        Task.test(self)
+        if len(self.outputs) > 0:
+            raise WorkflowException(self, 'CancelJob with an output.')
+
 
     def _execute(self, job, branch_node):
         """
@@ -35,5 +44,5 @@ class Cancel(Trigger):
         job -- the job in which this method is executed
         branch_node -- the branch_node in which this method is executed
         """
-        self.context.cancel(job)
+        job.cancel()
         return Task._execute(self, job, branch_node)

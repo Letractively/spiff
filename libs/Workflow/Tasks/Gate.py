@@ -33,8 +33,8 @@ class Gate(Task):
 
         parent -- a reference to the parent (Task)
         name -- a name for the task (string)
-        context -- the task that needs to complete before this task can
-                   execute.
+        context -- the name of the task that needs to complete before this
+                   task can execute.
         """
         assert parent  is not None
         assert name    is not None
@@ -51,7 +51,8 @@ class Gate(Task):
         job -- the job in which this method is executed
         branch_node -- the branch_node in which this method is executed
         """
+        task = job.get_task_from_name(self.context)
         for node in BranchNode.Iterator(job.branch_tree, BranchNode.COMPLETED):
-            if node.task == self.context:
+            if node.task == task:
                 return Task._execute(self, job, branch_node)
         return False

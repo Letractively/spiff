@@ -25,7 +25,7 @@ class Workflow(object):
         Constructor.
         """
         self.name  = name
-        self.tasks = []
+        self.tasks = {}
         self.start = StartTask(self)
 
 
@@ -33,5 +33,5 @@ class Workflow(object):
         """
         Called by a task when it was added into the workflow.
         """
-        self.tasks.append(task)
+        self.tasks[task.name] = task
         task.id = len(self.tasks)
