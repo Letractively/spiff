@@ -118,8 +118,7 @@ class Task(object):
         # Cancel my own branch nodes and those of the children.
         self.cancelled = True
         cancel         = []
-        state          = BranchNode.WAITING | BranchNode.PREDICTED
-        for node in BranchNode.Iterator(job.branch_tree, state):
+        for node in job.branch_tree:
             if node.task == self:
                 cancel.append(node)
         for node in cancel:

@@ -2,11 +2,16 @@
 <process-definition name="flow" revision="1.0">
     <description>Pattern 15 (Multiple Instances without a priori Run-Time Knowledge)</description>
 
-    <!-- Start with an implicit simple split. -->
     <starttask>
+        <successor>first</successor>
+    </starttask>
+
+    <!-- Start with an implicit simple split. -->
+    <task name="first">
         <successor>add_instance_1</successor>
         <successor>multi_instance_1</successor>
-    </starttask>
+        <successor>cancel_multi_instance_1</successor>
+    </task>
 
     <!-- Branch 1 -->
         <trigger name="add_instance_1" context="multi_instance_1">
@@ -30,13 +35,20 @@
         </task>
 
         <!-- Structured synchronizing merge. -->
-        <join name="struct_synch_merge_1" context="multi_instance_1">
+        <join name="struct_synch_merge_1" context="multi_instance_1" threshold="8">
             <successor>join</successor>
         </join>
     <!-- End branch 2 -->
 
+    <!-- Branch 3 -->
+        <canceltask name="cancel_multi_instance_1">
+            <cancel>multi_instance_1</cancel>
+            <successor>join</successor>
+        </canceltask>
+    <!-- End branch 3 -->
+
     <!-- Join all branches. -->
-    <join name="join">
+    <join name="join" context="first">
         <successor>last</successor>
     </join>
 

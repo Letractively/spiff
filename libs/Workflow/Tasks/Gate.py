@@ -53,6 +53,8 @@ class Gate(Task):
         """
         task = job.get_task_from_name(self.context)
         for node in BranchNode.Iterator(job.branch_tree, BranchNode.COMPLETED):
+            if node.thread_id != branch_node.thread_id:
+                continue
             if node.task == task:
                 return Task._execute(self, job, branch_node)
         return False
