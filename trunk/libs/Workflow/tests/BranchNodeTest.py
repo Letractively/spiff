@@ -39,12 +39,14 @@ class BranchNodeTest(unittest.TestCase):
         c3        = BranchNode(object, task9, root)
         c1.split()
         c3.state = BranchNode.COMPLETED
-        c11.drop_children()
 
         # Check whether the tree is built properly.
         expected = """1/0: BranchNode for Task 1 State: 1 Children: 4
   2/0: BranchNode for Task 2 State: 1 Children: 2
-    3/0: BranchNode for Task 3 State: 1 Children: 0
+    3/0: BranchNode for Task 3 State: 1 Children: 2
+      4/0: BranchNode for Task 4 State: 1 Children: 1
+        5/0: BranchNode for Task 5 State: 1 Children: 0
+      6/0: BranchNode for Task 6 State: 1 Children: 0
     7/0: BranchNode for Task 7 State: 1 Children: 0
   8/0: BranchNode for Task 8 State: 1 Children: 0
   9/0: BranchNode for Task 9 State: 4 Children: 0

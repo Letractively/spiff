@@ -16,11 +16,11 @@ class OpenWfeXmlReaderTest(unittest.TestCase):
         self.path   = []
 
 
-    def print_name(self, job, branch_node, task):
-        print_name(job, branch_node, task)
-        job.set_attribute(test_attribute1 = 'false')
-        job.set_attribute(test_attribute2 = 'true')
-        self.path = job.get_attribute('taken_path')
+    def print_name(self, branch_node, task):
+        print_name(branch_node, task)
+        branch_node.job.set_attribute(test_attribute1 = 'false')
+        branch_node.job.set_attribute(test_attribute2 = 'true')
+        self.path = branch_node.job.get_attribute('taken_path')
         return True
 
 

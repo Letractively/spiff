@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<process-definition name="flow" revision="1.0">
+    <description>Pattern 22 (Recursion)</description>
+
+    <starttask>
+        <successor>first</successor>
+    </starttask>
+
+    <task name="first">
+        <successor>excl_choice_1</successor>
+    </task>
+
+    <!-- Add an if-condition that matches only once. -->
+    <exclusivechoice name="excl_choice_1">
+        <default-successor>last</default-successor>
+        <conditional-successor>
+            <equals left-field="excl_choice_1_reached" right-value="1" />
+            <successor>subworkflow_1</successor>
+        </conditional-successor>
+    </exclusivechoice>
+
+    <subworkflow name="subworkflow_1" file="recursion.xml">
+        <in>
+            <assign left-field="excl_choice_1_reached" right-field="excl_choice_1_reached" />
+            <assign left-field="taken_path" right-field="taken_path" />
+        </in>
+        <out>
+            <assign left-field="taken_path" right-field="taken_path" />
+        </out>
+        <successor>last</successor>
+    </subworkflow>
+
+    <task name="last">
+        <successor>end</successor>
+    </task>
+</process-definition>

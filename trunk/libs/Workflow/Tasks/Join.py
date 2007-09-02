@@ -232,20 +232,19 @@ class Join(Task):
             self.try_fire(job, node, True)
 
 
+    def _ready_to_proceed(self, job, branch_node):
+        return self.try_fire(job, branch_node)
+
+
     def _execute(self, job, branch_node):
         """
         Runs the task. Should not be called directly.
         Returns True if completed, False otherwise.
         """
-        # The context is the path up to the point where the split happened.
         if self.split_task is None:
             context = self._get_unstructured_context(job, branch_node)
         else:
             context = self._get_structured_context(job, branch_node)
-
-        # Make sure that all inputs have completed.
-        if not self.try_fire(job, branch_node):
-            return False
         job.set_context_data(context, fired = 'yes')
 
         # Mark all nodes in the same thread that reference this task as

@@ -63,6 +63,8 @@ class ThreadSplit(Task):
 
     def _find_my_branch_node(self, job):
         for node in job.branch_tree:
+            if node.thread_id != branch_node.thread_id:
+                continue
             if node.task == self:
                 return node
         return None

@@ -46,8 +46,10 @@ class MultiInstance(Task):
         self.times           = kwargs.get('times',           None)
 
 
-    def _find_my_branch_node(self, job):
+    def _find_my_branch_node(self, job, branch_node):
         for node in job.branch_tree:
+            if node.thread_id != branch_node.thread_id:
+                continue
             if node.task == self:
                 return node
         return None
@@ -59,7 +61,7 @@ class MultiInstance(Task):
         additional outbound instance.
         """
         # Find a BranchNode for this task.
-        my_branch_node = self._find_my_branch_node(job)
+        my_branch_node = self._find_my_branch_node(job, branch_node)
         for output in self.outputs:
             state           = BranchNode.WAITING | BranchNode.TRIGGERED
             new_branch_node = my_branch_node.add_child(output, state)

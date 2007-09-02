@@ -13,8 +13,8 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+import Tasks
 from mutex      import mutex
-from Tasks      import Task
 from BranchNode import *
 
 class Job(object):
@@ -24,17 +24,19 @@ class Job(object):
     A Job is also the place that holds the attributes of a running workflow.
     """
 
-    def __init__(self, workflow):
+    def __init__(self, workflow, **kwargs):
         """
         Constructor.
         """
         assert workflow is not None
-        self.workflow     = workflow
-        self.attributes   = {}
-        self.context_data = {}
-        self.locks        = {}
-        self.last_node    = None
-        self.branch_tree  = BranchNode(self, Task(workflow, 'Root'))
+        self.workflow         = workflow
+        self.attributes       = {}
+        self.context_data     = {}
+        self.locks            = {}
+        self.last_node        = None
+        self.on_complete      = kwargs.get('on_complete',      None)
+        self.on_complete_data = kwargs.get('on_complete_data', None)
+        self.branch_tree      = BranchNode(self, Tasks.Task(workflow, 'Root'))
 
         # Prevent the root node from being executed.
         self.branch_tree.state = BranchNode.COMPLETED
@@ -42,6 +44,19 @@ class Job(object):
 
         workflow.start.predict(self, start)
         #start.dump()
+
+
+    def task_completed_notify(self, task):
+        if self.on_complete is None:
+            return
+        state = BranchNode.WAITING | BranchNode.PREDICTED
+        iter  = BranchNode.Iterator(self.branch_tree, state)
+        try:
+            next = iter.next()
+            return
+        except:
+            # No waiting nodes found.
+            self.on_complete(self, self.on_complete_data)
 
 
     def is_defined(self, name):
@@ -160,7 +175,7 @@ class Job(object):
                 next = None
             self.last_node = None
             if next is not None:
-                if next.task.execute(self, next):
+                if next.task.execute(next):
                     self.last_node = next
                     return True
                 blacklist.append(next)
@@ -170,7 +185,7 @@ class Job(object):
             for blacklisted_node in blacklist:
                 if node.is_descendant_of(blacklisted_node):
                     continue
-            if not node.task.execute(self, node):
+            if not node.task.execute(node):
                 blacklist.append(node)
                 continue
             self.last_node = node

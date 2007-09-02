@@ -20,11 +20,12 @@ class Workflow(object):
     This class represents an entire workflow.
     """
 
-    def __init__(self, name = ''):
+    def __init__(self, name = '', filename = None):
         """
         Constructor.
         """
         self.name  = name
+        self.file  = filename
         self.tasks = {}
         self.start = StartTask(self)
 
