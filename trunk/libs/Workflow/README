@@ -31,7 +31,7 @@ Supported Workflow Patterns
 
 22. Recursion [tests/xml/patterns/recursion.xml]
 23. Transient Trigger [tests/xml/patterns/transient_trigger.xml]
-
+24. Persistent Trigger [tests/xml/patterns/persistent_trigger.xml]
 25. Cancel Region [tests/xml/patterns/cancel_region.xml]
 26. Cancel Multiple Instance Task [tests/xml/patterns/cancel_multi_instance_task.xml]
 27. Complete Multiple Instance Task [tests/xml/patterns/complete_multiple_instance_activity.xml]

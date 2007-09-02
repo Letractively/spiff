@@ -54,7 +54,6 @@ class Job(object):
         iter  = BranchNode.Iterator(self.branch_tree, state)
         try:
             next = iter.next()
-            return
         except:
             # No waiting nodes found.
             self.on_complete(self, self.on_complete_data)
