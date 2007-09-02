@@ -45,12 +45,16 @@ class ThreadMerge(Join):
         Join.__init__(self, parent, name, split_task, **kwargs)
 
 
-    def may_fire(self, job, branch_node):
+    def _get_structured_context(self, job, branch_node):
         # In structured context, the context is the path up to the point where
         # the split happened.
         split_task = job.get_task_from_name(self.split_task)
         split_node = branch_node.find_ancestor(split_task)
-        context    = split_node.id
+        return split_node.id
+
+
+    def try_fire(self, job, branch_node):
+        context = self._get_structured_context(job, branch_node)
 
         # If the threshold was already reached, there is nothing else to do.
         if job.get_context_data(context, 'fired', 'no') == 'yes':
@@ -59,7 +63,9 @@ class ThreadMerge(Join):
 
         # Retrieve a list of all activated branch_nodes from the associated
         # task that did the conditional parallel split.
-        nodes = split_node.children
+        split_task = job.get_task_from_name(self.split_task)
+        split_node = branch_node.find_ancestor(split_task)
+        nodes      = split_node.children
 
         # The default threshold is the number of threads that were started.
         threshold = self.threshold
@@ -99,19 +105,16 @@ class ThreadMerge(Join):
         return False
 
 
+    def _ready_to_proceed(self, job, branch_node):
+        return self.try_fire(job, branch_node)
+
+
     def _execute(self, job, branch_node):
         """
         Runs the task. Should not be called directly.
         Returns True if completed, False otherwise.
         """
-        # The context is the path up to the point where the split happened.
-        split_task = job.get_task_from_name(self.split_task)
-        split_node = branch_node.find_ancestor(split_task)
-        context    = split_node.id
-
-        # Make sure that all inputs have completed.
-        if not self.may_fire(job, branch_node):
-            return False
+        context = self._get_structured_context(job, branch_node)
         job.set_context_data(context, may_fire = 'done')
 
         # Mark all nodes in the same thread that reference this task as

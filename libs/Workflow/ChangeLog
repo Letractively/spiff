@@ -1,3 +1,9 @@
+2007-09-02 Samuel Abels <http://debain.org>
+
+	* *.py, Tasks/SubWorkflow.py: Support dynamic loading of sub-workflows. This
+	also supports the Recursion pattern.
+	* *.py: Support the assignment of attributes in the XML documents.
+
 2007-09-01 Samuel Abels <http://debain.org>
 
 	* tests: Support Interleaved Routing.

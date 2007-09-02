@@ -43,6 +43,16 @@ class Gate(Task):
         self.context = context
 
 
+    def _ready_to_proceed(self, job, branch_node):
+        task = job.get_task_from_name(self.context)
+        for node in BranchNode.Iterator(job.branch_tree, BranchNode.COMPLETED):
+            if node.thread_id != branch_node.thread_id:
+                continue
+            if node.task == task:
+                return True
+        return False
+
+
     def _execute(self, job, branch_node):
         """
         Runs the task. Should not be called directly.
@@ -51,10 +61,4 @@ class Gate(Task):
         job -- the job in which this method is executed
         branch_node -- the branch_node in which this method is executed
         """
-        task = job.get_task_from_name(self.context)
-        for node in BranchNode.Iterator(job.branch_tree, BranchNode.COMPLETED):
-            if node.thread_id != branch_node.thread_id:
-                continue
-            if node.task == task:
-                return Task._execute(self, job, branch_node)
-        return False
+        return Task._execute(self, job, branch_node)

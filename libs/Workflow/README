@@ -29,6 +29,7 @@ Supported Workflow Patterns
 19. Cancel Task [tests/xml/patterns/cancel_task.xml]
 20. Cancel Case [tests/xml/patterns/cancel_case.xml]
 
+22. Recursion [tests/xml/patterns/recursion.xml]
 23. Transient Trigger [tests/xml/patterns/transient_trigger.xml]
 
 25. Cancel Region [tests/xml/patterns/cancel_region.xml]

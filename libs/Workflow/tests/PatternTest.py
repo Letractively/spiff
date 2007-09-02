@@ -5,17 +5,27 @@ def suite():
     tests = ['testPattern']
     return unittest.TestSuite(map(PatternTest, tests))
 
-from Tasks        import *
+from Tasks             import *
 from Workflow          import Workflow
 from Job               import Job
 from BranchNode        import *
 from Storage           import XmlReader
 from xml.parsers.expat import ExpatError
 
-def print_name(job, branch_node, task):
+def assign_print_name(branch_node, task):
+    # In workflows that load a subworkflow, the newly loaded children
+    # will not have print_name() assigned. By using this function, we
+    # re-assign the function in every step, thus making sure that new
+    # children also call print_name().
+    for child in branch_node.children:
+        child.task.pre_func  = print_name
+        child.task.post_func = assign_print_name
+
+def print_name(branch_node, task):
+    job         = branch_node.job
     reached_key = "%s_reached" % str(task.name)
-    n_reached   = job.get_attribute(reached_key, 1) + 1
-    step        = job.get_attribute('step', 1) + 1
+    n_reached   = job.get_attribute(reached_key, 0) + 1
+    step        = job.get_attribute('step', 0) + 1
     job.set_attribute(**{reached_key: n_reached})
     job.set_attribute(two             = 2)
     job.set_attribute(three           = 3)
@@ -35,8 +45,10 @@ def print_name(job, branch_node, task):
     job.set_attribute(taken_path = taken_path)
     
     #print "%s%s" % (indent, task.name)
+    #print "REACHED:", reached_key, n_reached
     #print "%s%s (reached %s times)" % (indent, task.name, n_reached)
     #print "PATH:", current, branch_node.name, branch_node.id
+
     return True
 
 class PatternTest(unittest.TestCase):
@@ -70,7 +82,8 @@ class PatternTest(unittest.TestCase):
 
     def testWorkflow(self, wf, expected, name):
         for name in wf.tasks:
-            wf.tasks[name].user_func = print_name
+            wf.tasks[name].pre_func  = print_name
+            wf.tasks[name].post_func = assign_print_name
 
         # Execute all tasks within the Job.
         job = Job(wf)

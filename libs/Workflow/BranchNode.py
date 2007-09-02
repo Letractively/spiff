@@ -287,14 +287,6 @@ class BranchNode(object):
             self.add_child(task, status)
 
 
-    def drop_children(self):
-        """
-        Removes all future tasks (i.e. the children of this node) from
-        the tree.
-        """
-        self.children = []
-
-
     def is_descendant_of(self, parent):
         """
         Returns True if parent is in the list of ancestors, returns False
@@ -307,37 +299,6 @@ class BranchNode(object):
         if self.parent == parent:
             return True
         return self.parent.is_descendant_of(parent)
-
-
-    def get_child_of(self, parent):
-        """
-        Returns the ancestor that has the given BranchNode as a parent.
-        If no such ancestor was found, the root node is returned.
-
-        parent -- the wanted parent BranchNode
-        """
-        if self.parent is None:
-            return self
-        if self.parent == parent:
-            return self
-        return self.parent.get_child_of(parent)
-
-
-    def find(self, task, state):
-        """
-        Returns the BranchNode that has the given Task with the given
-        state assigned.
-        Returns None if no such node was found.
-
-        task -- the wanted Task
-        state -- the wanted state
-        """
-        for node in self:
-            if node.state & state == 0:
-                continue
-            if node.task == task:
-                return node
-        return None
 
 
     def find_child_of(self, parent_task):

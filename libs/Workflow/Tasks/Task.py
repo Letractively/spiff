@@ -17,6 +17,30 @@ from AbstractMethod import AbstractMethod
 from BranchNode     import *
 from Exception      import WorkflowException
 
+
+class Assign(object):
+    def __init__(self, left_attribute, **kwargs):
+        """
+        Constructor.
+
+        kwargs -- must contain one of right_attribute/right.
+        """
+        assert left_attribute is not None
+        assert kwargs.has_key('right_attribute') or kwargs.has_key('right')
+        self.left_attribute  = left_attribute
+        self.right_attribute = kwargs.get('right_attribute', None)
+        self.right           = kwargs.get('right',           None)
+
+    def assign(self, from_job, to_job):
+        # Fetch the value of the right expression.
+        if self.right is not None:
+            right = self.right
+        else:
+            right = from_job.get_attribute(self.right_attribute)
+        to_job.set_attribute(**{str(self.left_attribute): right})
+        #print "Assigned:", self.left_attribute, right
+
+
 class Task(object):
     """
     This class implements a task with one or more inputs and
@@ -36,21 +60,25 @@ class Task(object):
         kwargs -- may contain the following keys:
                   lock -- a list of locks that is aquired on entry of
                   execute() and released on leave of execute().
+                  pre_assign -- a list of attribute name/value pairs
+                  post_assign -- a list of attribute name/value pairs
         """
         assert parent is not None
         assert name   is not None
-        self._parent   = parent
-        self.id        = None
-        self.name      = name
-        self.inputs    = []
-        self.outputs   = []
-        self.pre_func  = None
-        self.user_func = None
-        self.post_func = None
-        self.manual    = False
-        self.internal  = False  # Only for easing debugging.
-        self.cancelled = False
-        self.locks     = kwargs.get('lock', [])
+        self._parent     = parent
+        self.id          = None
+        self.name        = name
+        self.inputs      = []
+        self.outputs     = []
+        self.pre_func    = None
+        self.user_func   = None
+        self.post_func   = None
+        self.manual      = False
+        self.internal    = False  # Only for easing debugging.
+        self.cancelled   = False
+        self.pre_assign  = kwargs.get('pre_assign',  [])
+        self.post_assign = kwargs.get('post_assign', [])
+        self.locks       = kwargs.get('lock',        [])
         self._parent.add_notify(self)
         assert self.id is not None
 
@@ -77,8 +105,8 @@ class Task(object):
 
     def get_activated_branch_nodes(self, job, branch_node):
         """
-        Returns the list of branch_nodes that were activated in the previous call
-        of execute().
+        Returns the list of branch_nodes that were activated in the previous
+        call of execute().
 
         job -- the job in which this method is executed
         branch_node -- the branch_node in which this method is executed
@@ -98,7 +126,7 @@ class Task(object):
             raise WorkflowException(self, 'No input task connected.')
 
 
-    def cancel(self, job, branch_node = None):
+    def cancel(self, job, branch_node):
         """
         May be called by another task to cancel the operation before it was
         completed.
@@ -106,7 +134,7 @@ class Task(object):
         task are cancelled. If branch_node is given, only the given branch is
         cancelled.
         """
-        if branch_node is not None:
+        if branch_node.task == self:
             if branch_node.task != self:
                 msg = 'Given branch points to %s!' % branch_node.name
                 raise WorkflowException(self, msg)
@@ -119,6 +147,8 @@ class Task(object):
         self.cancelled = True
         cancel         = []
         for node in job.branch_tree:
+            if node.thread_id != branch_node.thread_id:
+                continue
             if node.task == self:
                 cancel.append(node)
         for node in cancel:
@@ -159,7 +189,11 @@ class Task(object):
         branch_node.update_children(self.outputs, BranchNode.PREDICTED)
 
 
-    def execute(self, job, branch_node):
+    def _ready_to_proceed(self, job, branch_node):
+        return True
+
+
+    def execute(self, branch_node):
         """
         Runs the task. Should not be called directly.
         Returns True if completed, False otherwise.
@@ -167,36 +201,48 @@ class Task(object):
         job -- the job in which this method is executed
         branch_node -- the branch_node in which this method is executed
         """
-        assert job         is not None
         assert branch_node is not None
         assert not self.cancelled
         self.test()
 
         # Acquire locks, if any.
         for lock in self.locks:
-            mutex = job.get_mutex(lock)
+            mutex = branch_node.job.get_mutex(lock)
             if not mutex.testandset():
                 return False
 
-        # Run user code, if any.
-        if self.pre_func is not None:
-            self.pre_func(job, branch_node, self)
+        result = False
+        if self._ready_to_proceed(branch_node.job, branch_node):
+            # Assign variables, if so requested.
+            for assignment in self.pre_assign:
+                assignment.assign(branch_node.job, branch_node.job)
 
-        result = self._execute(job, branch_node)
+            # Run user code, if any.
+            if self.pre_func is not None:
+                self.pre_func(branch_node, self)
 
-        # Run user code, if any.
-        if result and self.user_func is not None:
-            result = self.user_func(job, branch_node, self)
-        if self.post_func is not None:
-            self.post_func(job, branch_node, self)
+            result = self._execute(branch_node.job, branch_node)
+
+            # Run user code, if any.
+            if result and self.user_func is not None:
+                result = self.user_func(branch_node, self)
+
+            # Assign variables, if so requested.
+            for assignment in self.post_assign:
+                assignment.assign(branch_node.job, branch_node.job)
+
+            # Run user code, if any.
+            if self.post_func is not None:
+                self.post_func(branch_node, self)
 
         # Release locks, if any.
         for lock in self.locks:
-            mutex = job.get_mutex(lock)
+            mutex = branch_node.job.get_mutex(lock)
             mutex.unlock()
 
         if result:
             branch_node.set_status(BranchNode.COMPLETED)
+        branch_node.job.task_completed_notify(self)
 
         return result
 

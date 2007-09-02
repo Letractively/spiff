@@ -36,5 +36,5 @@ class CancelTask(Trigger):
         branch_node -- the branch_node in which this method is executed
         """
         for task_name in self.context:
-            job.get_task_from_name(task_name).cancel(job)
+            job.get_task_from_name(task_name).cancel(job, branch_node)
         return Task._execute(self, job, branch_node)

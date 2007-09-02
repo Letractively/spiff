@@ -9,7 +9,8 @@ from Tasks import *
 from Workflow   import Workflow
 from Job        import Job
 
-def print_name(job, branch_node, task):
+def print_name(branch_node, task):
+    job         = branch_node.job
     reached_key = "%s_reached" % str(task.name)
     n_reached   = job.get_attribute(reached_key, 1) + 1
     step        = job.get_attribute('step', 1) + 1

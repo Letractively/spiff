@@ -16,9 +16,9 @@
 import os
 import xml.dom.minidom as minidom
 import Tasks
-from Workflow   import Workflow
+import Workflow
 from Exception  import StorageException
-from Tasks import *
+import Tasks
 
 class OpenWfeXmlReader(object):
     """
@@ -33,8 +33,8 @@ class OpenWfeXmlReader(object):
                           'concurrence',
                           'if',
                           'sequence')
-        self.logical_tags = {'equals':     Condition.EQUAL,
-                             'not_equals': Condition.NOT_EQUAL}
+        self.logical_tags = {'equals':     Tasks.Condition.EQUAL,
+                             'not_equals': Tasks.Condition.NOT_EQUAL}
 
 
     def _raise(self, error):
@@ -52,9 +52,9 @@ class OpenWfeXmlReader(object):
         term2 = node.getAttribute('other-value')
         if not self.logical_tags.has_key(op):
             self._raise('Invalid operator')
-        return Condition(self.logical_tags[op], 
-                         left_attribute  = term1,
-                         right_attribute = term2)
+        return Tasks.Condition(self.logical_tags[op], 
+                               left_attribute  = term1,
+                               right_attribute = term2)
 
 
     def read_if(self, workflow, start_node):
@@ -93,8 +93,8 @@ class OpenWfeXmlReader(object):
         # Model the if statement.
         assert condition is not None
         assert match     is not None
-        choice = ExclusiveChoice(workflow, name)
-        end    = Task(workflow, name + '_end')
+        choice = Tasks.ExclusiveChoice(workflow, name)
+        end    = Tasks.Task(workflow, name + '_end')
         if nomatch is None:
             choice.connect(end)
         else:
@@ -144,8 +144,8 @@ class OpenWfeXmlReader(object):
         """
         assert start_node.nodeName.lower() == 'concurrence'
         name = start_node.getAttribute('name').lower()
-        multichoice = MultiChoice(workflow, name)
-        synchronize = Join(workflow, name + '_end', name)
+        multichoice = Tasks.MultiChoice(workflow, name)
+        synchronize = Tasks.Join(workflow, name + '_end', name)
         for node in start_node.childNodes:
             if node.nodeType != minidom.Node.ELEMENT_NODE:
                 continue
@@ -179,7 +179,7 @@ class OpenWfeXmlReader(object):
         elif type == 'sequence':
             return self.read_sequence(workflow, start_node)
         elif type == 'task':
-            task = Task(workflow, name)
+            task = Tasks.Task(workflow, name)
             return (task, task)
         else:
             print "Unknown type:", type
@@ -195,7 +195,7 @@ class OpenWfeXmlReader(object):
         """
         name = start_node.getAttribute('name')
         assert name is not None
-        workflow  = Workflow(name)
+        workflow  = Workflow.Workflow(name)
         last_task = workflow.start
         for node in start_node.childNodes:
             if node.nodeType != minidom.Node.ELEMENT_NODE:
@@ -210,7 +210,7 @@ class OpenWfeXmlReader(object):
                 print "Unknown type:", type
                 assert False # Unknown tag.
 
-        last_task.connect(Task(workflow, 'End'))
+        last_task.connect(Tasks.Task(workflow, 'End'))
         return workflow
 
 

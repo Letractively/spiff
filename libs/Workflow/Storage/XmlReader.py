@@ -16,9 +16,8 @@
 import os
 import xml.dom.minidom as minidom
 import Tasks
-from Exception  import StorageException
-from Workflow   import Workflow
-from Tasks import *
+import Workflow
+from Exception import StorageException
 
 class XmlReader(object):
     """
@@ -39,12 +38,54 @@ class XmlReader(object):
             module = Tasks.__dict__[name]
             self.task_map[name.lower()] = module
 
-        self.logical_tags = {'equals':     Condition.EQUAL,
-                             'not-equals': Condition.NOT_EQUAL}
+        self.logical_tags = {'equals':     Tasks.Condition.EQUAL,
+                             'not-equals': Tasks.Condition.NOT_EQUAL}
 
 
     def _raise(self, error):
         raise StorageException('%s in XML file.' % error)
+
+
+    def _read_assign(self, workflow, start_node):
+        """
+        Reads the "pre-assign" or "post-assign" tag from the given node.
+        
+        start_node -- the xml node (xml.dom.minidom.Node)
+        """
+        term1_attrib = start_node.getAttribute('left-field')
+        term2_attrib = start_node.getAttribute('right-field')
+        term2_value  = start_node.getAttribute('right-value')
+        kwargs       = {}
+        if term1_attrib == '':
+            self._raise('left-field attribute required')
+        if term2_attrib != '' and term2_value != '':
+            self._raise('Both, right-field and right-value attributes found')
+        elif term2_attrib == '' and term2_value == '':
+            self._raise('right-field or right-value attribute required')
+        elif term2_value != '':
+            kwargs['right'] = term2_value
+        else:
+            kwargs['right_attribute'] = term2_attrib
+        return Tasks.Assign(term1_attrib, **kwargs)
+
+
+    def _read_assign_list(self, workflow, start_node):
+        """
+        Reads a list of assignments from the given node.
+        
+        workflow -- the workflow
+        start_node -- the xml structure (xml.dom.minidom.Node)
+        """
+        # Collect all information.
+        assignments = []
+        for node in start_node.childNodes:
+            if node.nodeType != minidom.Node.ELEMENT_NODE:
+                continue
+            if node.nodeName.lower() == 'assign':
+                assignments.append(self._read_assign(workflow, node))
+            else:
+                self._raise('Unknown node: %s' % node.nodeName)
+        return assignments
 
 
     def _read_logical(self, node):
@@ -77,7 +118,7 @@ class XmlReader(object):
             kwargs['right'] = term2_value
         else:
             kwargs['right_attribute'] = term2_attrib
-        return Condition(self.logical_tags[op], **kwargs)
+        return Tasks.Condition(self.logical_tags[op], **kwargs)
 
 
     def _read_condition(self, workflow, start_node):
@@ -130,7 +171,11 @@ class XmlReader(object):
         cancel          = start_node.getAttribute('cancel').lower()
         threshold       = start_node.getAttribute('threshold').lower()
         threshold_field = start_node.getAttribute('threshold-field').lower()
-        kwargs          = {'lock': []}
+        file            = start_node.getAttribute('file').lower()
+        file_field      = start_node.getAttribute('file-field').lower()
+        kwargs          = {'lock':        [],
+                           'pre_assign':  [],
+                           'post_assign': []}
         if not self.task_map.has_key(nodetype):
             self._raise('Invalid task type "%s"' % nodetype)
         if nodetype == 'starttask':
@@ -145,6 +190,10 @@ class XmlReader(object):
             kwargs['threshold'] = int(threshold)
         if threshold_field != '':
             kwargs['threshold_attribute'] = threshold_field
+        if file != '':
+            kwargs['file'] = file
+        if file_field != '':
+            kwargs['file_attribute'] = file_field
         if nodetype == 'choose':
             kwargs['choice'] = []
         if nodetype == 'trigger':
@@ -153,7 +202,7 @@ class XmlReader(object):
             context = mutex
 
         # Walk through the children of the node.
-        successors = []
+        successors  = []
         for node in start_node.childNodes:
             if node.nodeType != minidom.Node.ELEMENT_NODE:
                 continue
@@ -166,6 +215,14 @@ class XmlReader(object):
                 successors.append((None, node.firstChild.nodeValue))
             elif node.nodeName == 'conditional-successor':
                 successors.append(self._read_condition(workflow, node))
+            elif node.nodeName == 'pre-assign':
+                kwargs['pre_assign'].append(self._read_assign(workflow, node))
+            elif node.nodeName == 'post-assign':
+                kwargs['post_assign'].append(self._read_assign(workflow, node))
+            elif node.nodeName == 'in':
+                kwargs['in_assign'] = self._read_assign_list(workflow, node)
+            elif node.nodeName == 'out':
+                kwargs['out_assign'] = self._read_assign_list(workflow, node)
             elif node.nodeName == 'cancel':
                 if node.firstChild is None:
                     self._raise('Empty %s tag' % node.nodeName)
@@ -188,7 +245,7 @@ class XmlReader(object):
         # Create a new instance of the task.
         module = self.task_map[nodetype]
         if nodetype == 'starttask':
-            task = module(workflow)
+            task = module(workflow, **kwargs)
         elif nodetype == 'multiinstance' or nodetype == 'threadsplit':
             times_field = start_node.getAttribute('times-field').lower()
             times       = start_node.getAttribute('times').lower()
@@ -198,11 +255,12 @@ class XmlReader(object):
                 self._raise('Both, "times" and "times-field" in "%s"' % name)
             elif times != '':
                 times = int(times)
-                task  = module(workflow, name, times = times)
+                task  = module(workflow, name, times = times, **kwargs)
             else:
                 task = module(workflow,
                               name,
-                              times_attribute = times_field)
+                              times_attribute = times_field,
+                              **kwargs)
         elif context == '':
             task = module(workflow, name, **kwargs)
         else:
@@ -211,7 +269,7 @@ class XmlReader(object):
         self.read_tasks[name] = (task, successors)
 
 
-    def _read_workflow(self, start_node):
+    def _read_workflow(self, start_node, filename = None):
         """
         Reads the workflow from the given workflow node and returns a workflow
         object.
@@ -223,8 +281,8 @@ class XmlReader(object):
             self._raise('%s without a name attribute' % start_node.nodeName)
 
         # Read all tasks and create a list of successors.
-        workflow             = Workflow(name)
-        self.read_tasks = {'end': (Task(workflow, 'End'), [])}
+        workflow             = Workflow.Workflow(name, filename)
+        self.read_tasks = {'end': (Tasks.Task(workflow, 'End'), [])}
         for node in start_node.childNodes:
             if node.nodeType != minidom.Node.ELEMENT_NODE:
                 continue
@@ -252,7 +310,7 @@ class XmlReader(object):
         return workflow
 
 
-    def read(self, xml):
+    def read(self, xml, filename = None):
         """
         Reads all workflows from the given XML structure and returns a
         list of workflow object.
@@ -261,7 +319,7 @@ class XmlReader(object):
         """
         workflows = []
         for node in xml.getElementsByTagName('process-definition'):
-            workflows.append(self._read_workflow(node))
+            workflows.append(self._read_workflow(node, filename))
         return workflows
 
 
@@ -282,4 +340,4 @@ class XmlReader(object):
         
         filename -- the name of the file (string)
         """
-        return self.read(minidom.parse(filename))
+        return self.read(minidom.parse(filename), filename)

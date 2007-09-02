@@ -40,6 +40,11 @@ class AcquireMutex(Task):
         self.mutex = mutex
 
 
+    def _ready_to_proceed(self, job, branch_node):
+        mutex = job.get_mutex(self.mutex)
+        return mutex.testandset()
+
+
     def _execute(self, job, branch_node):
         """
         Runs the task. Should not be called directly.
@@ -48,7 +53,4 @@ class AcquireMutex(Task):
         job -- the job in which this method is executed
         branch_node -- the branch_node in which this method is executed
         """
-        mutex = job.get_mutex(self.mutex)
-        if not mutex.testandset():
-            return False
         return Task._execute(self, job, branch_node)

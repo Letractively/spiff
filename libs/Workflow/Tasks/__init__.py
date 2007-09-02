@@ -1,4 +1,5 @@
 __all__ = ['AcquireMutex',
+           'Assign',
            'CancelJob',
            'CancelTask',
            'Choose',
@@ -10,6 +11,7 @@ __all__ = ['AcquireMutex',
            'MultiInstance',
            'ReleaseMutex',
            'StartTask',
+           'SubWorkflow',
            'Task',
            'ThreadMerge',
            'ThreadSplit',
@@ -26,7 +28,8 @@ from MultiChoice     import MultiChoice, Condition
 from MultiInstance   import MultiInstance
 from ReleaseMutex    import ReleaseMutex
 from StartTask       import StartTask
-from Task            import Task
+from SubWorkflow     import SubWorkflow
+from Task            import Task, Assign
 from ThreadMerge     import ThreadMerge
 from ThreadSplit     import ThreadSplit
 from Trigger         import Trigger
