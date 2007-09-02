@@ -41,6 +41,23 @@ class Trigger(Task):
         assert type(context) == type([])
         Task.__init__(self, parent, name, **kwargs)
         self.context = context
+        self.times   = kwargs.get('times', 1)
+        self.queued  = 0
+
+
+    def trigger(self, job, branch_node):
+        """
+        Enqueue a trigger, such that this tasks triggers mutliple times later
+        when execute() is called.
+        """
+        self.queued += 1
+        # All instances that have already completed need to be put into
+        # WAITING again.
+        for node in job.branch_tree:
+            if node.thread_id != branch_node.thread_id:
+                continue
+            if node.task == self and node.state & BranchNode.COMPLETED != 0:
+                node.state = BranchNode.WAITING
 
 
     def _execute(self, job, branch_node):
@@ -51,6 +68,8 @@ class Trigger(Task):
         job -- the job in which this method is executed
         branch_node -- the branch_node in which this method is executed
         """
-        for task_name in self.context:
-            job.get_task_from_name(task_name).trigger(job, branch_node)
+        for i in range(self.times + self.queued):
+            for task_name in self.context:
+                job.get_task_from_name(task_name).trigger(job, branch_node)
+        self.queued = 0
         return Task._execute(self, job, branch_node)

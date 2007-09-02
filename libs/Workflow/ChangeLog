@@ -4,6 +4,7 @@
 	also supports the Recursion pattern.
 	* *.py: Support the assignment of attributes in the XML documents.
 	* Tasks/Cancel.py: Support Explicit Termination.
+	* Tasks/Trigger.py: Support Persistent Trigger.
 
 2007-09-01 Samuel Abels <http://debain.org>
 

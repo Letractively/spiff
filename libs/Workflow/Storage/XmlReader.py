@@ -170,6 +170,8 @@ class XmlReader(object):
         mutex           = start_node.getAttribute('mutex').lower()
         cancel          = start_node.getAttribute('cancel').lower()
         success         = start_node.getAttribute('success').lower()
+        times           = start_node.getAttribute('times').lower()
+        times_field     = start_node.getAttribute('times-field').lower()
         threshold       = start_node.getAttribute('threshold').lower()
         threshold_field = start_node.getAttribute('threshold-field').lower()
         file            = start_node.getAttribute('file').lower()
@@ -189,6 +191,10 @@ class XmlReader(object):
             kwargs['cancel'] = True
         if success != '' and success != u'0':
             kwargs['success'] = True
+        if times != '':
+            kwargs['times'] = int(times)
+        if times_field != '':
+            kwargs['times_attribute'] = times_field
         if threshold != '':
             kwargs['threshold'] = int(threshold)
         if threshold_field != '':
@@ -250,20 +256,11 @@ class XmlReader(object):
         if nodetype == 'starttask':
             task = module(workflow, **kwargs)
         elif nodetype == 'multiinstance' or nodetype == 'threadsplit':
-            times_field = start_node.getAttribute('times-field').lower()
-            times       = start_node.getAttribute('times').lower()
             if times == '' and times_field == '':
                 self._raise('Missing "times" or "times-field" in "%s"' % name)
             elif times != '' and times_field != '':
                 self._raise('Both, "times" and "times-field" in "%s"' % name)
-            elif times != '':
-                times = int(times)
-                task  = module(workflow, name, times = times, **kwargs)
-            else:
-                task = module(workflow,
-                              name,
-                              times_attribute = times_field,
-                              **kwargs)
+            task  = module(workflow, name, **kwargs)
         elif context == '':
             task = module(workflow, name, **kwargs)
         else:
