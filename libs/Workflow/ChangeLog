@@ -3,6 +3,7 @@
 	* *.py, Tasks/SubWorkflow.py: Support dynamic loading of sub-workflows. This
 	also supports the Recursion pattern.
 	* *.py: Support the assignment of attributes in the XML documents.
+	* Tasks/Cancel.py: Support Explicit Termination.
 
 2007-09-01 Samuel Abels <http://debain.org>
 

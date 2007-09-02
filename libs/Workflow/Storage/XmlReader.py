@@ -169,6 +169,7 @@ class XmlReader(object):
         context         = start_node.getAttribute('context').lower()
         mutex           = start_node.getAttribute('mutex').lower()
         cancel          = start_node.getAttribute('cancel').lower()
+        success         = start_node.getAttribute('success').lower()
         threshold       = start_node.getAttribute('threshold').lower()
         threshold_field = start_node.getAttribute('threshold-field').lower()
         file            = start_node.getAttribute('file').lower()
@@ -186,6 +187,8 @@ class XmlReader(object):
             self._raise('Duplicate task name "%s"' % name)
         if cancel != '' and cancel != u'0':
             kwargs['cancel'] = True
+        if success != '' and success != u'0':
+            kwargs['success'] = True
         if threshold != '':
             kwargs['threshold'] = int(threshold)
         if threshold_field != '':
