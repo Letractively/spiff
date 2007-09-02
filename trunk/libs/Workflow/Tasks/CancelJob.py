@@ -26,6 +26,22 @@ class CancelJob(Task):
     parallel split.
     """
 
+    def __init__(self, parent, name, **kwargs):
+        """
+        Constructor.
+
+        parent -- a reference to the parent (Task)
+        name -- a name for the task (string)
+        kwargs -- may contain the following keys:
+                  lock -- a list of locks that is aquired on entry of
+                  execute() and released on leave of execute().
+                  pre_assign -- a list of attribute name/value pairs
+                  post_assign -- a list of attribute name/value pairs
+        """
+        Task.__init__(self, parent, name, **kwargs)
+        self.cancel_successfully = kwargs.get('success', False)
+
+
     def test(self):
         """
         Checks whether all required attributes are set. Throws an exception
@@ -44,5 +60,5 @@ class CancelJob(Task):
         job -- the job in which this method is executed
         branch_node -- the branch_node in which this method is executed
         """
-        job.cancel()
+        job.cancel(self.cancel_successfully)
         return Task._execute(self, job, branch_node)

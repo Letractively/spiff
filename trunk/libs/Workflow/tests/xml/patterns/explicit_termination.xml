@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?> 
 <process-definition name="flow" revision="1.0">
-    <description>Pattern 20 (Cancel Job)</description>
+    <description>Pattern 43 (Explicit Termination)</description>
 
     <!-- Start with an implicit simple split. -->
     <starttask>
@@ -15,7 +15,7 @@
         <task name="one2">
             <successor>cancel</successor>
         </task>
-        <canceljob name="cancel" />
+        <canceljob name="cancel" success="1" />
     <!-- End branch 1 -->
 
     <!-- Branch 2 -->

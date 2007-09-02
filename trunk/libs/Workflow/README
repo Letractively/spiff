@@ -50,6 +50,7 @@ Supported Workflow Patterns
 40. Interleaved Routing [tests/xml/patterns/interleaved_routing.xml]
 41. Thread Merge [tests/xml/patterns/thread_merge.xml]
 42. Thread Split [tests/xml/patterns/thread_split.xml]
+43. Explicit Termination [tests/xml/patterns/explicit_termination.xml]
 
 
 Contact

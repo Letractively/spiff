@@ -163,7 +163,7 @@ class BranchNode(object):
         has changed (e.g. from WAITING to COMPLETED.)
         If recursive is True, the status is applied to the tree recursively.
         """
-        self.state = status
+        self.state = status | (self.state & self.TRIGGERED)
         if recursive == True:
             for child in self.children:
                 child.set_status(status)
@@ -259,9 +259,6 @@ class BranchNode(object):
             # Must not be TRIGGERED or COMPLETED.
             if child.state & BranchNode.TRIGGERED != 0:
                 continue
-            if child.state & BranchNode.COMPLETED != 0:
-                msg = 'Attempt to update %s, which is completed.' % child.name
-                raise WorkflowException(self, msg)
 
             # Check whether the item needs to be added or removed.
             if child.task not in add:

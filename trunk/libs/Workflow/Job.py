@@ -37,6 +37,7 @@ class Job(object):
         self.on_complete      = kwargs.get('on_complete',      None)
         self.on_complete_data = kwargs.get('on_complete_data', None)
         self.branch_tree      = BranchNode(self, Tasks.Task(workflow, 'Root'))
+        self.success          = True
 
         # Prevent the root node from being executed.
         self.branch_tree.state = BranchNode.COMPLETED
@@ -139,10 +140,14 @@ class Job(object):
         return self.context_data[repr(context)][name]
 
 
-    def cancel(self):
+    def cancel(self, success = False):
         """
         Cancels all open tasks in the job.
+
+        success -- whether the Job should be marked as successfully completed
+                   vs. unsuccessful
         """
+        self.success = success
         cancel = []
         state  = BranchNode.WAITING | BranchNode.PREDICTED
         for node in BranchNode.Iterator(self.branch_tree, state):

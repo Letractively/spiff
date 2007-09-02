@@ -75,12 +75,11 @@ class Join(Task):
             # Merge found.
             if node.task == self:
                 return True
-            # If the node has outputs even though it is predicted with no
+            # If the node is predicted with less outputs than he has
             # children, that means the prediction may be incomplete (for
             # example, because a prediction is not yet possible at this time).
             if node.state & BranchNode.PREDICTED != 0 \
-                and len(node.children) == 0           \
-                and len(node.task.outputs) > 0:
+                and len(node.task.outputs) > len(node.children):
                 return True
         return False
 

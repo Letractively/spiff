@@ -64,8 +64,9 @@ class SubWorkflow(Task):
         # Assign variables, if so requested.
         for assignment in self.out_assign:
             assignment.assign(subjob, branch_node.job)
-        for output in self.outputs:
-            branch_node.add_child(output)
+        outputs = [child.task for child in subjob.branch_tree.children]
+        outputs = outputs + self.outputs
+        branch_node.update_children(outputs, BranchNode.WAITING)
 
 
     def _execute(self, job, branch_node):
@@ -88,5 +89,11 @@ class SubWorkflow(Task):
         # Assign variables, if so requested.
         for assignment in self.in_assign:
             assignment.assign(branch_node.job, subjob)
-        branch_node.children = subjob.branch_tree.children
+
+        # Integrate the tree of the subjob into the tree of this job.
+        branch_node.update_children(self.outputs, BranchNode.PREDICTED)
+        for child in subjob.branch_tree.children:
+            branch_node.children.append(child)
+            child.set_status(BranchNode.WAITING)
+            child.parent = branch_node
         return True
