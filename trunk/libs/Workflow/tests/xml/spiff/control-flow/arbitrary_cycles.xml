@@ -4,7 +4,7 @@
 
     <!-- Start with an implicit simple split. -->
     <starttask>
-        <pre-assign left-field="repeat" right-value="1" />
+        <pre-assign name="repeat" value="1" />
         <successor>first</successor>
     </starttask>
 
@@ -24,7 +24,7 @@
 
     <!-- Conditional tasks. -->
     <task name="go_to_repetition">
-        <pre-assign left-field="repeat" right-value="0" />
+        <pre-assign name="repeat" value="0" />
         <successor>first</successor>
     </task>
     <task name="task_c1">

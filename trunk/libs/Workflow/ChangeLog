@@ -1,3 +1,10 @@
+2007-09-03 Samuel Abels <http://debain.org>
+
+	* tests/*: Changed tests and directory structure to support testing data
+	patterns. Added a test for the Block Data pattern.
+	* Tasks/Task.py, Storage/XmlReader: Support local task data in the form of
+	properties (Task Data pattern).
+
 2007-09-02 Samuel Abels <http://debain.org>
 
 	* *.py, Tasks/SubWorkflow.py: Support dynamic loading of sub-workflows. This

@@ -35,11 +35,11 @@ class XmlReaderTest(WorkflowTest):
         self.reader.parse_file('xml/empty2.xml')
 
         # Read a complete workflow.
-        self.reader.parse_file('xml/workflow1.xml')
+        self.reader.parse_file('xml/spiff/workflow1.xml')
 
 
     def testRunWorkflow(self):
-        workflow_list = self.reader.parse_file('xml/workflow1.xml')
+        workflow_list = self.reader.parse_file('xml/spiff/workflow1.xml')
         for wf in workflow_list:
             self.runWorkflow(wf)
 

@@ -84,7 +84,7 @@ class Job(object):
         default value if the attribute does not exist.
 
         name -- an attribute name (string)
-        default -- the default value the be returned if the attribute does not
+        default -- the default value that is returned if the attribute does not
                    exist.
         """
         if self.attributes.has_key(name):

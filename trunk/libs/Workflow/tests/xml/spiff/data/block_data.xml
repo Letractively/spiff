@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<process-definition name="flow" revision="1.0">
+    <description>Pattern 2 (Block Data)</description>
+
+    <starttask>
+        <pre-assign name="data_1" value="outer" />
+        <successor>first</successor>
+    </starttask>
+
+    <task name="first">
+        <successor>subworkflow_1</successor>
+    </task>
+
+    <subworkflow name="subworkflow_1" file="block_data_inner.xml">
+        <in>
+            <assign name="data_1" value="inner" />
+            <assign name="excl_choice_1_reached" field="excl_choice_1_reached" />
+            <assign name="data" field="data" />
+        </in>
+        <out>
+            <assign name="data" field="data" />
+        </out>
+        <successor>last</successor>
+    </subworkflow>
+
+    <task name="last">
+        <successor>end</successor>
+    </task>
+</process-definition>
