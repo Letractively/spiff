@@ -3,9 +3,9 @@
     <description>Pattern 40 (Interleaved Routing)</description>
 
     <!-- Start with an implicit simple split. -->
-    <starttask>
+    <start-task>
         <successor>first</successor>
-    </starttask>
+    </start-task>
 
     <!-- Implicit split -->
     <task name="first">

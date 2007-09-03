@@ -2,12 +2,12 @@
 <process-definition name="flow" revision="1.0">
     <description>Pattern 32 (Cancelling Partial Join)</description>
 
-    <starttask>
+    <start-task>
         <successor>multi_choice_1</successor>
-    </starttask>
+    </start-task>
 
     <!-- Split branches using a multi-choice. This creates 3 branches. -->
-    <multichoice name="multi_choice_1">
+    <multi-choice name="multi_choice_1">
         <conditional-successor>
             <equals left-field="test_attribute1" right-field="test_attribute1" />
             <successor>task_e1</successor>
@@ -24,7 +24,7 @@
             <equals left-field="test_attribute2" right-field="test_attribute2" />
             <successor>task_e4</successor>
         </conditional-successor>
-    </multichoice>
+    </multi-choice>
 
     <!-- Conditional branches. -->
     <task name="task_e1">
@@ -46,13 +46,13 @@
     </join>
 
     <!-- Loop back to the start (once). -->
-    <exclusivechoice name="excl_choice_1">
+    <exclusive-choice name="excl_choice_1">
         <default-successor>last</default-successor>
         <conditional-successor>
             <not-equals left-field="excl_choice_1_reached" right-value="2" />
             <successor>multi_choice_1</successor>
         </conditional-successor>
-    </exclusivechoice>
+    </exclusive-choice>
 
     <!-- A final task. -->
     <task name="last">

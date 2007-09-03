@@ -3,16 +3,16 @@
     <description>Pattern 27 (Complete Multiple Instance Task)</description>
 
     <!-- Start with an implicit simple split. -->
-    <starttask>
+    <start-task>
         <successor>multi_instance_1</successor>
         <successor>trigger_join</successor>
-    </starttask>
+    </start-task>
 
     <!-- Branch 1 -->
         <!-- Create 3 branches, such that the join can never complete. -->
-        <multiinstance name="multi_instance_1" times="3">
+        <multi-instance name="multi_instance_1" times="3">
             <successor>task_g1</successor>
-        </multiinstance>
+        </multi-instance>
 
         <task name="task_g1">
             <successor>join_1</successor>

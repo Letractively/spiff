@@ -2,17 +2,17 @@
 <process-definition name="flow" revision="1.0">
     <description>Pattern 14 (Multiple Instances with a priori Run-Time Knowledge)</description>
 
-    <starttask>
+    <start-task>
         <successor>multi_instance_1</successor>
-    </starttask>
+    </start-task>
 
     <!--
     Split into 2 branches. Note that the number of branches is read from the
     attribute "two", which may change at runtime.
     -->
-    <multiinstance name="multi_instance_1" times-field="two">
+    <multi-instance name="multi_instance_1" times-field="two">
         <successor>task_g1</successor>
-    </multiinstance>
+    </multi-instance>
 
     <!-- Parallel tasks. -->
     <task name="task_g1">

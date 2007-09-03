@@ -2,9 +2,9 @@
 <process-definition name="flow" revision="1.0">
     <description>Pattern 37 (Acyclic Synchronizing Merge)</description>
 
-    <starttask>
+    <start-task>
         <successor>first</successor>
-    </starttask>
+    </start-task>
     
     <!-- Start with an implicit simple split. -->
     <task name="first">
@@ -25,13 +25,13 @@
     </task>
 
     <!-- Choose the a path to a stubtask. -->
-    <exclusivechoice name="excl_choice_1">
+    <exclusive-choice name="excl_choice_1">
         <default-successor>task_g1</default-successor>
         <conditional-successor>
             <equals left-value="1" right-value="1" />
             <successor>task_g2</successor>
         </conditional-successor>
-    </exclusivechoice>
+    </exclusive-choice>
 
     <task name="task_g1">
         <successor>join</successor>

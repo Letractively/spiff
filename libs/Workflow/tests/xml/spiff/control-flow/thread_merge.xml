@@ -3,15 +3,15 @@
     <description>Pattern 41 (Thread Merge)</description>
 
     <!-- Start with an implicit simple split. -->
-    <starttask>
+    <start-task>
         <successor>thread_split_1</successor>
-    </starttask>
+    </start-task>
 
     <!-- Split into 3 branches, implicitly split twice in addition. -->
-    <threadsplit name="thread_split_1" times="3">
+    <thread-split name="thread_split_1" times="3">
         <successor>task_f1</successor>
         <successor>task_g1</successor>
-    </threadsplit>
+    </thread-split>
 
     <!-- Parallel tasks. -->
     <task name="task_f1">
@@ -35,9 +35,9 @@
     </join>
 
     <!-- Merge threads. -->
-    <threadmerge name="thread_merge_1" context="thread_split_1">
+    <thread-merge name="thread_merge_1" context="thread_split_1">
         <successor>last</successor>
-    </threadmerge>
+    </thread-merge>
 
     <!-- A final task. -->
     <task name="last">

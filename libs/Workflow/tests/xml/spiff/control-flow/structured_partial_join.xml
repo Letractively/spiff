@@ -2,12 +2,12 @@
 <process-definition name="flow" revision="1.6">
     <description>Pattern 30 (Structured Partial Join)</description>
 
-    <starttask>
+    <start-task>
         <successor>multi_choice_1</successor>
-    </starttask>
+    </start-task>
 
     <!-- Split branches using a multi-choice. This creates 3 branches. -->
-    <multichoice name="multi_choice_1">
+    <multi-choice name="multi_choice_1">
         <conditional-successor>
             <equals left-field="test_attribute1" right-field="test_attribute1" />
             <successor>task_e1</successor>
@@ -24,7 +24,7 @@
             <equals left-field="test_attribute2" right-field="test_attribute2" />
             <successor>task_e4</successor>
         </conditional-successor>
-    </multichoice>
+    </multi-choice>
 
     <!-- Conditional branches. -->
     <task name="task_e1">

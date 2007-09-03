@@ -2,9 +2,9 @@
 <process-definition name="flow" revision="1.0">
     <description>Pattern 28 (Blocking Discriminator)</description>
 
-    <starttask>
+    <start-task>
         <successor>first</successor>
-    </starttask>
+    </start-task>
     
     <!-- Start with an implicit simple split. -->
     <task name="first">
@@ -30,13 +30,13 @@
     </join>
 
     <!-- Loop back to the start (once). -->
-    <exclusivechoice name="excl_choice_1">
+    <exclusive-choice name="excl_choice_1">
         <default-successor>last</default-successor>
         <conditional-successor>
             <not-equals left-field="excl_choice_1_reached" right-value="2" />
             <successor>first</successor>
         </conditional-successor>
-    </exclusivechoice>
+    </exclusive-choice>
 
     <!-- A final task. -->
     <task name="last">

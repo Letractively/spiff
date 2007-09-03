@@ -3,10 +3,10 @@
     <description>Pattern 20 (Cancel Job)</description>
 
     <!-- Start with an implicit simple split. -->
-    <starttask>
+    <start-task>
         <successor>one1</successor>
         <successor>two1</successor>
-    </starttask>
+    </start-task>
 
     <!-- Branch 1 -->
         <task name="one1">
@@ -15,7 +15,7 @@
         <task name="one2">
             <successor>cancel</successor>
         </task>
-        <canceljob name="cancel" />
+        <cancel-job name="cancel" />
     <!-- End branch 1 -->
 
     <!-- Branch 2 -->

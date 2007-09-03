@@ -2,10 +2,10 @@
 <process-definition name="flow" revision="1.6">
     <description>Pattern 18 (Milestone)</description>
 
-    <starttask>
+    <start-task>
         <successor>task_e1</successor>
         <successor>task_f1</successor>
-    </starttask>
+    </start-task>
 
     <task name="task_e1">
         <successor>task_e2</successor>

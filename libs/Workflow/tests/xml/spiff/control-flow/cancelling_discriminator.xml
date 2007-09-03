@@ -3,9 +3,9 @@
     <description>Pattern 29 (Cancelling Discriminator)</description>
 
     <!-- Start with an implicit simple split. -->
-    <starttask>
+    <start-task>
         <successor>first</successor>
-    </starttask>
+    </start-task>
     
     <task name="first">
         <successor>task_f1</successor>
@@ -30,13 +30,13 @@
     </join>
 
     <!-- Loop back to the start (once). -->
-    <exclusivechoice name="excl_choice_1">
+    <exclusive-choice name="excl_choice_1">
         <default-successor>last</default-successor>
         <conditional-successor>
             <not-equals left-field="excl_choice_1_reached" right-value="2" />
             <successor>first</successor>
         </conditional-successor>
-    </exclusivechoice>
+    </exclusive-choice>
 
     <!-- A final task. -->
     <task name="last">

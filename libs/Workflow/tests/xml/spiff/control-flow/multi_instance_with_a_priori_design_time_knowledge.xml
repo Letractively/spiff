@@ -3,14 +3,14 @@
     <description>Pattern 13 (Multiple Instances with a priori Design-Time Knowledge)</description>
 
     <!-- Start with an implicit simple split. -->
-    <starttask>
+    <start-task>
         <successor>multi_instance_1</successor>
-    </starttask>
+    </start-task>
 
     <!-- Split into 2 branches. -->
-    <multiinstance name="multi_instance_1" times="2">
+    <multi-instance name="multi_instance_1" times="2">
         <successor>task_g1</successor>
-    </multiinstance>
+    </multi-instance>
 
     <!-- Parallel tasks. -->
     <task name="task_g1">
