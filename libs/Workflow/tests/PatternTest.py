@@ -25,11 +25,9 @@ def print_name(branch_node, task):
     job         = branch_node.job
     reached_key = "%s_reached" % str(task.name)
     n_reached   = job.get_attribute(reached_key, 0) + 1
-    step        = job.get_attribute('step', 0) + 1
     job.set_attribute(**{reached_key: n_reached})
     job.set_attribute(two             = 2)
     job.set_attribute(three           = 3)
-    job.set_attribute(step            = step)
     job.set_attribute(test_attribute1 = 'false')
     job.set_attribute(test_attribute2 = 'true')
 
@@ -43,6 +41,30 @@ def print_name(branch_node, task):
     taken_path  = job.get_attribute('taken_path', '')
     taken_path += '%s%s\n' % (indent, task.name)
     job.set_attribute(taken_path = taken_path)
+
+    # Collect a list of all attributes.
+    atts  = []
+    for key in job.attributes:
+        if key in ['data',
+                   'taken_path',
+                   'two',
+                   'three',
+                   'test_attribute1',
+                   'test_attribute2']:
+            continue
+        if key.endswith('reached'):
+            continue
+        atts.append('%s=%s' % (key, job.get_attribute(key)))
+
+    # Collect a list of all task properties.
+    props = []
+    for key in task.properties:
+        props.append('%s=%s' % (key, task.get_attribute(key)))
+
+    # Store the list of attributes and properties in the job.
+    data  = job.get_attribute('data', '')
+    data += task.name + ': ' + ';'.join(atts) + '/' + ';'.join(props) + '\n'
+    job.set_attribute(data = data)
     
     #print "%s%s" % (indent, task.name)
     #print "REACHED:", reached_key, n_reached
@@ -53,34 +75,32 @@ def print_name(branch_node, task):
 
 class PatternTest(unittest.TestCase):
     def setUp(self):
-        self.xml_path = 'xml/patterns/'
+        self.xml_path = ['xml/spiff/control-flow/',
+                         'xml/spiff/data/',
+                         'xml/spiff/resource/']
         self.reader   = XmlReader()
         self.wf       = None
 
 
     def testPattern(self):
-        for filename in os.listdir(self.xml_path):
-            if not filename.endswith('.xml'):
-                continue
-            self.testFile(filename)
+        for dirname in self.xml_path:
+            for filename in os.listdir(dirname):
+                if not filename.endswith('.xml'):
+                    continue
+                self.testFile(os.path.join(dirname, filename))
 
 
-    def testFile(self, filename):
-        xml_filename  = os.path.join(self.xml_path, filename)
-        path_filename = os.path.join(self.xml_path, filename + '.path')
-        file          = open(path_filename, 'r')
-        expected      = file.read()
-        file.close()
+    def testFile(self, xml_filename):
         try:
             #print '\n%s: ok' % xml_filename,
             workflow_list = self.reader.parse_file(xml_filename)
-            self.testWorkflow(workflow_list[0], expected, filename)
+            self.testWorkflow(workflow_list[0], xml_filename)
         except:
             print '%s:' % xml_filename
             raise
 
 
-    def testWorkflow(self, wf, expected, name):
+    def testWorkflow(self, wf, xml_filename):
         for name in wf.tasks:
             wf.tasks[name].pre_func  = print_name
             wf.tasks[name].post_func = assign_print_name
@@ -91,15 +111,39 @@ class PatternTest(unittest.TestCase):
 
         #job.branch_tree.dump()
 
-        # Check whether the correct route was taken.
-        taken_path = job.get_attribute('taken_path', '')
-        self.assert_(taken_path == expected,
-                     '%s:\nExpected:\n%s\nbut got:\n%s\n' % (name, expected, taken_path))
-
-        # Make sure that there are no waiting tasks in the tree.
+        # Make sure that there are no waiting tasks left in the tree.
         for node in BranchNode.Iterator(job.branch_tree, BranchNode.WAITING):
             job.branch_tree.dump()
             raise Exception('Node with state WAITING: %s' % node.name)
+
+        # Check whether the correct route was taken.
+        filename = xml_filename + '.path'
+        if os.path.exists(filename):
+            file     = open(filename, 'r')
+            expected = file.read()
+            file.close()
+            taken_path = job.get_attribute('taken_path', '')
+            error      = '%s:\n'       % name
+            error     += 'Expected:\n'
+            error     += '%s\n'        % expected
+            error     += 'but got:\n'
+            error     += '%s\n'        % taken_path
+            self.assert_(taken_path == expected, error)
+
+        # Check attribute availibility.
+        filename = xml_filename + '.data'
+        if os.path.exists(filename):
+            file     = open(filename, 'r')
+            expected = file.read()
+            file.close()
+            result   = job.get_attribute('data', '')
+            error    = '%s:\n'       % name
+            error   += 'Expected:\n'
+            error   += '%s\n'        % expected
+            error   += 'but got:\n'
+            error   += '%s\n'        % result
+            self.assert_(result == expected, error)
+
 
 if __name__ == '__main__':
     if len(sys.argv) == 2:

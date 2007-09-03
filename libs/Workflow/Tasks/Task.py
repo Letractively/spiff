@@ -76,11 +76,34 @@ class Task(object):
         self.manual      = False
         self.internal    = False  # Only for easing debugging.
         self.cancelled   = False
-        self.pre_assign  = kwargs.get('pre_assign',  [])
-        self.post_assign = kwargs.get('post_assign', [])
-        self.locks       = kwargs.get('lock',        [])
+        self.properties  = {}
+        self.prop_assign = kwargs.get('property_assign', [])
+        self.pre_assign  = kwargs.get('pre_assign',      [])
+        self.post_assign = kwargs.get('post_assign',     [])
+        self.locks       = kwargs.get('lock',            [])
         self._parent.add_notify(self)
         assert self.id is not None
+
+
+    def set_attribute(self, **kwargs):
+        """
+        Defines the given attribute/value pairs.
+        """
+        self.properties.update(kwargs)
+
+
+    def get_attribute(self, name, default = None):
+        """
+        Returns the value of the property with the given name, or the given
+        default value if the property does not exist.
+
+        name -- a property name (string)
+        default -- the default value that is returned if the property does not
+                   exist.
+        """
+        if self.properties.has_key(name):
+            return self.properties[name]
+        return default
 
 
     def connect(self, task):
@@ -214,6 +237,8 @@ class Task(object):
         result = False
         if self._ready_to_proceed(branch_node.job, branch_node):
             # Assign variables, if so requested.
+            for assignment in self.prop_assign:
+                assignment.assign(branch_node.job, self)
             for assignment in self.pre_assign:
                 assignment.assign(branch_node.job, branch_node.job)
 

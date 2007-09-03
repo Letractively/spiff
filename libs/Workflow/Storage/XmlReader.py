@@ -52,21 +52,21 @@ class XmlReader(object):
         
         start_node -- the xml node (xml.dom.minidom.Node)
         """
-        term1_attrib = start_node.getAttribute('left-field')
-        term2_attrib = start_node.getAttribute('right-field')
-        term2_value  = start_node.getAttribute('right-value')
-        kwargs       = {}
-        if term1_attrib == '':
-            self._raise('left-field attribute required')
-        if term2_attrib != '' and term2_value != '':
-            self._raise('Both, right-field and right-value attributes found')
-        elif term2_attrib == '' and term2_value == '':
-            self._raise('right-field or right-value attribute required')
-        elif term2_value != '':
-            kwargs['right'] = term2_value
+        name   = start_node.getAttribute('name')
+        attrib = start_node.getAttribute('field')
+        value  = start_node.getAttribute('value')
+        kwargs = {}
+        if name == '':
+            self._raise('name attribute required')
+        if attrib != '' and value != '':
+            self._raise('Both, field and right-value attributes found')
+        elif attrib == '' and value == '':
+            self._raise('field or value attribute required')
+        elif value != '':
+            kwargs['right'] = value
         else:
-            kwargs['right_attribute'] = term2_attrib
-        return Tasks.Assign(term1_attrib, **kwargs)
+            kwargs['right_attribute'] = attrib
+        return Tasks.Assign(name, **kwargs)
 
 
     def _read_assign_list(self, workflow, start_node):
@@ -176,9 +176,10 @@ class XmlReader(object):
         threshold_field = start_node.getAttribute('threshold-field').lower()
         file            = start_node.getAttribute('file').lower()
         file_field      = start_node.getAttribute('file-field').lower()
-        kwargs          = {'lock':        [],
-                           'pre_assign':  [],
-                           'post_assign': []}
+        kwargs          = {'lock':            [],
+                           'property_assign': [],
+                           'pre_assign':      [],
+                           'post_assign':     []}
         if not self.task_map.has_key(nodetype):
             self._raise('Invalid task type "%s"' % nodetype)
         if nodetype == 'starttask':
@@ -224,6 +225,8 @@ class XmlReader(object):
                 successors.append((None, node.firstChild.nodeValue))
             elif node.nodeName == 'conditional-successor':
                 successors.append(self._read_condition(workflow, node))
+            elif node.nodeName == 'property':
+                kwargs['property_assign'].append(self._read_assign(workflow, node))
             elif node.nodeName == 'pre-assign':
                 kwargs['pre_assign'].append(self._read_assign(workflow, node))
             elif node.nodeName == 'post-assign':

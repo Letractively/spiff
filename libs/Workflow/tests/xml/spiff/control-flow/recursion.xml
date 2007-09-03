@@ -21,11 +21,11 @@
 
     <subworkflow name="subworkflow_1" file="recursion.xml">
         <in>
-            <assign left-field="excl_choice_1_reached" right-field="excl_choice_1_reached" />
-            <assign left-field="taken_path" right-field="taken_path" />
+            <assign name="excl_choice_1_reached" field="excl_choice_1_reached" />
+            <assign name="taken_path" field="taken_path" />
         </in>
         <out>
-            <assign left-field="taken_path" right-field="taken_path" />
+            <assign name="taken_path" field="taken_path" />
         </out>
         <successor>last</successor>
     </subworkflow>
