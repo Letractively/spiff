@@ -3,19 +3,19 @@
     <description>Pattern 16 (Deferred Choice)</description>
 
     <!-- Start with an implicit simple split. -->
-    <starttask>
+    <start-task>
         <successor>make_choice</successor>
         <successor>first</successor>
-    </starttask>
+    </start-task>
 
     <!-- Branch 2 -->
         <task name="first">
             <successor>deferred_choice_1</successor>
         </task>
 
-        <!-- If this multichoice were not triggered by the "choose" task,
+        <!-- If this multi-choice were not triggered by the "choose" task,
              four of the successors would be selected. -->
-        <multichoice name="deferred_choice_1">
+        <multi-choice name="deferred_choice_1">
             <successor>task_e1</successor>
             <successor>task_e2</successor>
             <conditional-successor>
@@ -34,7 +34,7 @@
                 <equals left-value="1" right-value="2" />
                 <successor>task_e6</successor>
             </conditional-successor>
-        </multichoice>
+        </multi-choice>
 
         <task name="task_e1">
             <successor>join_1</successor>

@@ -2,24 +2,24 @@
 <process-definition name="flow" revision="1.0">
     <description>Pattern 22 (Recursion)</description>
 
-    <starttask>
+    <start-task>
         <successor>first</successor>
-    </starttask>
+    </start-task>
 
     <task name="first">
         <successor>excl_choice_1</successor>
     </task>
 
     <!-- Add an if-condition that matches only once. -->
-    <exclusivechoice name="excl_choice_1">
+    <exclusive-choice name="excl_choice_1">
         <default-successor>last</default-successor>
         <conditional-successor>
             <equals left-field="excl_choice_1_reached" right-value="1" />
-            <successor>subworkflow_1</successor>
+            <successor>sub_workflow_1</successor>
         </conditional-successor>
-    </exclusivechoice>
+    </exclusive-choice>
 
-    <subworkflow name="subworkflow_1" file="recursion.xml">
+    <sub-workflow name="sub_workflow_1" file="recursion.xml">
         <in>
             <assign name="excl_choice_1_reached" field="excl_choice_1_reached" />
             <assign name="taken_path" field="taken_path" />
@@ -28,7 +28,7 @@
             <assign name="taken_path" field="taken_path" />
         </out>
         <successor>last</successor>
-    </subworkflow>
+    </sub-workflow>
 
     <task name="last">
         <successor>end</successor>

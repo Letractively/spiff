@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
-import os
+import os, re
 import xml.dom.minidom as minidom
 import Tasks
 import Workflow
@@ -30,13 +30,14 @@ class XmlReader(object):
         """
         self.read_tasks = {}
 
-        # Create a list of all tasks.
+        # Create a list of tag names out of the task names.
         self.task_map = {}
         for name in dir(Tasks):
             if name.startswith('_'):
                 continue
             module = Tasks.__dict__[name]
-            self.task_map[name.lower()] = module
+            name   = re.sub(r'(.)([A-Z])', r'\1-\2', name).lower()
+            self.task_map[name] = module
 
         self.logical_tags = {'equals':     Tasks.Condition.EQUAL,
                              'not-equals': Tasks.Condition.NOT_EQUAL}
@@ -182,7 +183,7 @@ class XmlReader(object):
                            'post_assign':     []}
         if not self.task_map.has_key(nodetype):
             self._raise('Invalid task type "%s"' % nodetype)
-        if nodetype == 'starttask':
+        if nodetype == 'start-task':
             name = 'start'
         if name == '':
             self._raise('Invalid task name "%s"' % name)
@@ -256,9 +257,9 @@ class XmlReader(object):
 
         # Create a new instance of the task.
         module = self.task_map[nodetype]
-        if nodetype == 'starttask':
+        if nodetype == 'start-task':
             task = module(workflow, **kwargs)
-        elif nodetype == 'multiinstance' or nodetype == 'threadsplit':
+        elif nodetype == 'multi-instance' or nodetype == 'thread-split':
             if times == '' and times_field == '':
                 self._raise('Missing "times" or "times-field" in "%s"' % name)
             elif times != '' and times_field != '':

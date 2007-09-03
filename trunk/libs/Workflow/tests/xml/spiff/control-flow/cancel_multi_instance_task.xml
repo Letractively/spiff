@@ -2,9 +2,9 @@
 <process-definition name="flow" revision="1.0">
     <description>Pattern 15 (Multiple Instances without a priori Run-Time Knowledge)</description>
 
-    <starttask>
+    <start-task>
         <successor>first</successor>
-    </starttask>
+    </start-task>
 
     <!-- Start with an implicit simple split. -->
     <task name="first">
@@ -21,10 +21,10 @@
 
     <!-- Branch 2 -->
         <!-- Split into 2 branches, and implicitly split twice in addition. -->
-        <multiinstance name="multi_instance_1" times="2">
+        <multi-instance name="multi_instance_1" times="2">
             <successor>task_g1</successor>
             <successor>task_g2</successor>
-        </multiinstance>
+        </multi-instance>
 
         <!-- Parallel tasks. -->
         <task name="task_g1">
@@ -41,10 +41,10 @@
     <!-- End branch 2 -->
 
     <!-- Branch 3 -->
-        <canceltask name="cancel_multi_instance_1">
+        <cancel-task name="cancel_multi_instance_1">
             <cancel>multi_instance_1</cancel>
             <successor>join</successor>
-        </canceltask>
+        </cancel-task>
     <!-- End branch 3 -->
 
     <!-- Join all branches. -->

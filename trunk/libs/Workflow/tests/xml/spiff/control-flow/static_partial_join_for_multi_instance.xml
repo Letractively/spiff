@@ -3,17 +3,17 @@
     <description>Pattern 34 (Static Partial Join for Multiple Instances)</description>
 
     <!-- Start with an implicit simple split. -->
-    <starttask>
+    <start-task>
         <successor>add_instance_1</successor>
         <successor>multi_instance_1</successor>
-    </starttask>
+    </start-task>
 
     <!-- Branch 2 -->
         <!-- Split into 2 branches, and implicitly split twice in addition. -->
-        <multiinstance name="multi_instance_1" times="2">
+        <multi-instance name="multi_instance_1" times="2">
             <successor>task_g1</successor>
             <successor>task_g2</successor>
-        </multiinstance>
+        </multi-instance>
 
         <!-- Parallel tasks. -->
         <task name="task_g1">

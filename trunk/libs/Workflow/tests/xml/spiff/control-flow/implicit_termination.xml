@@ -3,9 +3,9 @@
     <description>Pattern 11 (Implicit Termination)</description>
 
     <!-- Start with an implicit simple split. -->
-    <starttask>
+    <start-task>
         <successor>first</successor>
-    </starttask>
+    </start-task>
     
     <task name="first">
         <successor>task_f1</successor>

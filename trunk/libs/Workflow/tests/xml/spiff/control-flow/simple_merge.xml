@@ -3,9 +3,9 @@
     <description>Pattern 5 (Simple Merge)</description>
 
     <!-- Start with an implicit simple split. -->
-    <starttask>
+    <start-task>
         <successor>first</successor>
-    </starttask>
+    </start-task>
 
     <!-- Merge branches -->
     <task name="first">
@@ -13,13 +13,13 @@
     </task>
 
     <!-- Add an if-condition that does not match. -->
-    <exclusivechoice name="excl_choice_1">
+    <exclusive-choice name="excl_choice_1">
         <default-successor>task_c1</default-successor>
         <conditional-successor>
             <equals left-value="1" right-value="2" />
             <successor>task_c2</successor>
         </conditional-successor>
-    </exclusivechoice>
+    </exclusive-choice>
 
     <!-- Conditional tasks. -->
     <task name="task_c1">

@@ -5,10 +5,10 @@
     </description>
 
     <!-- Start with an implicit simple split. -->
-    <starttask>
+    <start-task>
         <successor>task_a1</successor>
         <successor>task_b1</successor>
-    </starttask>
+    </start-task>
 
         <!-- First branch. -->
         <task name="task_a1">
@@ -34,7 +34,7 @@
     </join>
 
     <!-- Add an if-condition that does not match. -->
-    <exclusivechoice name="excl_choice_1">
+    <exclusive-choice name="excl_choice_1">
         <default-successor>task_c1</default-successor>
         <conditional-successor>
             <equals left-field="test_attribute1" right-field="test_attribute2" />
@@ -44,7 +44,7 @@
             <equals left-field="test_attribute1" right-field="test_attribute2" />
             <successor>task_c3</successor>
         </conditional-successor>
-    </exclusivechoice>
+    </exclusive-choice>
 
     <!-- Conditional tasks. -->
     <task name="task_c1">
@@ -58,7 +58,7 @@
     </task>
 
     <!-- An if-condition that matches. -->
-    <exclusivechoice name="excl_choice_2">
+    <exclusive-choice name="excl_choice_2">
         <default-successor>task_d1</default-successor>
         <conditional-successor>
             <equals left-field="test_attribute1" right-field="test_attribute2" />
@@ -68,7 +68,7 @@
             <equals left-field="test_attribute1" right-field="test_attribute1" />
             <successor>task_d3</successor>
         </conditional-successor>
-    </exclusivechoice>
+    </exclusive-choice>
 
     <!-- Conditional tasks. -->
     <task name="task_d1">
@@ -82,7 +82,7 @@
     </task>
 
     <!-- Split branches using a multi-choice. -->
-    <multichoice name="multi_choice_1">
+    <multi-choice name="multi_choice_1">
         <conditional-successor>
             <equals left-field="test_attribute1" right-field="test_attribute1" />
             <successor>task_e1</successor>
@@ -95,7 +95,7 @@
             <equals left-field="test_attribute2" right-field="test_attribute2" />
             <successor>task_e3</successor>
         </conditional-successor>
-    </multichoice>
+    </multi-choice>
 
     <!-- Conditional branches. -->
     <task name="task_e1">
@@ -134,19 +134,19 @@
     </join>
 
     <!-- Loop to excl_choice_1 (once). -->
-    <exclusivechoice name="excl_choice_3">
+    <exclusive-choice name="excl_choice_3">
         <default-successor>multi_instance_1</default-successor>
         <conditional-successor>
             <not-equals left-field="excl_choice_3_reached" right-field="two" />
             <successor>excl_choice_1</successor>
         </conditional-successor>
-    </exclusivechoice>
+    </exclusive-choice>
 
     <!-- Split into 3 branches, and implicitly split twice in addition. -->
-    <multiinstance name="multi_instance_1" times-field="three">
+    <multi-instance name="multi_instance_1" times-field="three">
         <successor>task_g1</successor>
         <successor>task_g2</successor>
-    </multiinstance>
+    </multi-instance>
 
     <!-- Parallel tasks. -->
     <task name="task_g1">

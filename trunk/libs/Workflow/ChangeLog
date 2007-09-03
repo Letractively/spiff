@@ -1,7 +1,9 @@
 2007-09-03 Samuel Abels <http://debain.org>
 
 	* tests/*: Changed tests and directory structure to support testing data
-	patterns. Added a test for the Block Data pattern.
+	patterns. Added a test for the Block Data, Task To Task, Block Task To
+	Sub-Workflow Decomposition, and Sub-Workflow Decomposition to Block Task
+	patterns.
 	* Tasks/Task.py, Storage/XmlReader: Support local task data in the form of
 	properties (Task Data pattern).
 

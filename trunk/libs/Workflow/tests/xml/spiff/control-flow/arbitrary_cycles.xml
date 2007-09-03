@@ -3,10 +3,10 @@
     <description>Pattern 10 (Arbitrary Cycles)</description>
 
     <!-- Start with an implicit simple split. -->
-    <starttask>
+    <start-task>
         <pre-assign name="repeat" value="1" />
         <successor>first</successor>
-    </starttask>
+    </start-task>
 
     <!-- Merge branches -->
     <task name="first">
@@ -14,13 +14,13 @@
     </task>
 
     <!-- Add an if-condition that matches once. -->
-    <exclusivechoice name="excl_choice_1">
+    <exclusive-choice name="excl_choice_1">
         <default-successor>task_c1</default-successor>
         <conditional-successor>
             <equals left-field="repeat" right-value="1" />
             <successor>go_to_repetition</successor>
         </conditional-successor>
-    </exclusivechoice>
+    </exclusive-choice>
 
     <!-- Conditional tasks. -->
     <task name="go_to_repetition">

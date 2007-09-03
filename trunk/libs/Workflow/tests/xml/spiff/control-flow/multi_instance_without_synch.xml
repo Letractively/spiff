@@ -2,15 +2,15 @@
 <process-definition name="flow" revision="1.0">
     <description>Pattern 12 (Multiple Instances without Synchronization)</description>
 
-    <starttask>
+    <start-task>
         <successor>multi_instance_1</successor>
-    </starttask>
+    </start-task>
 
     <!-- Split into 3 branches, and implicitly split twice in addition. -->
-    <multiinstance name="multi_instance_1" times="3">
+    <multi-instance name="multi_instance_1" times="3">
         <successor>task_g1</successor>
         <successor>task_g2</successor>
-    </multiinstance>
+    </multi-instance>
 
     <!-- Parallel tasks. -->
     <task name="task_g1">

@@ -3,9 +3,9 @@
     <description>Pattern 4 (Exclusive Choice)</description>
 
     <!-- Start with an implicit simple split. -->
-    <starttask>
+    <start-task>
         <successor>first</successor>
-    </starttask>
+    </start-task>
 
     <!-- Merge branches -->
     <task name="first">
@@ -13,7 +13,7 @@
     </task>
 
     <!-- Add an if-condition that does not match. -->
-    <exclusivechoice name="excl_choice_1">
+    <exclusive-choice name="excl_choice_1">
         <default-successor>task_c1</default-successor>
         <conditional-successor>
             <equals left-value="1" right-value="2" />
@@ -23,7 +23,7 @@
             <equals left-field="test_attribute1" right-field="test_attribute2" />
             <successor>task_c3</successor>
         </conditional-successor>
-    </exclusivechoice>
+    </exclusive-choice>
 
     <!-- Conditional tasks. -->
     <task name="task_c1">
@@ -37,7 +37,7 @@
     </task>
 
     <!-- An if-condition that matches. -->
-    <exclusivechoice name="excl_choice_2">
+    <exclusive-choice name="excl_choice_2">
         <default-successor>task_d1</default-successor>
         <conditional-successor>
             <equals left-value="1" right-value="1" />
@@ -47,7 +47,7 @@
             <equals left-field="test_attribute1" right-field="test_attribute1" />
             <successor>task_d3</successor>
         </conditional-successor>
-    </exclusivechoice>
+    </exclusive-choice>
 
     <!-- Conditional tasks. -->
     <task name="task_d1">
