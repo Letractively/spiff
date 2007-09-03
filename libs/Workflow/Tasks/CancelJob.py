@@ -52,13 +52,12 @@ class CancelJob(Task):
             raise WorkflowException(self, 'CancelJob with an output.')
 
 
-    def _execute(self, job, branch_node):
+    def _execute(self, branch_node):
         """
         Runs the task. Should not be called directly.
         Returns True if completed, False otherwise.
 
-        job -- the job in which this method is executed
         branch_node -- the branch_node in which this method is executed
         """
-        job.cancel(self.cancel_successfully)
-        return Task._execute(self, job, branch_node)
+        branch_node.job.cancel(self.cancel_successfully)
+        return Task._execute(self, branch_node)

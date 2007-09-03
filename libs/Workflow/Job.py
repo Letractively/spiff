@@ -43,7 +43,7 @@ class Job(object):
         self.branch_tree.state = BranchNode.COMPLETED
         start = self.branch_tree.add_child(workflow.start)
 
-        workflow.start.predict(self, start)
+        workflow.start.predict(start)
         #start.dump()
 
 

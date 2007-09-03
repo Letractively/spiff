@@ -126,12 +126,11 @@ class Task(object):
         self.inputs.append(task)
 
 
-    def get_activated_branch_nodes(self, job, branch_node):
+    def get_activated_branch_nodes(self, branch_node):
         """
         Returns the list of branch_nodes that were activated in the previous
         call of execute().
 
-        job -- the job in which this method is executed
         branch_node -- the branch_node in which this method is executed
         """
         my_branch_node = branch_node.find_ancestor(self)
@@ -149,7 +148,7 @@ class Task(object):
             raise WorkflowException(self, 'No input task connected.')
 
 
-    def cancel(self, job, branch_node):
+    def cancel(self, branch_node):
         """
         May be called by another task to cancel the operation before it was
         completed.
@@ -163,13 +162,13 @@ class Task(object):
                 raise WorkflowException(self, msg)
             branch_node.cancel()
             for child in branch_node.children:
-                child.task.cancel(job, child)
+                child.task.cancel(child)
             return
         
         # Cancel my own branch nodes and those of the children.
         self.cancelled = True
         cancel         = []
-        for node in job.branch_tree:
+        for node in branch_node.job.branch_tree:
             if node.thread_id != branch_node.thread_id:
                 continue
             if node.task == self:
@@ -177,10 +176,10 @@ class Task(object):
         for node in cancel:
             node.cancel()
             for child in node.children:
-                child.task.cancel(job, child)
+                child.task.cancel(child)
 
 
-    def trigger(self, job, branch_node):
+    def trigger(self, branch_node):
         """
         May be called by another task to trigger a task-specific
         event.
@@ -188,7 +187,7 @@ class Task(object):
         AbstractMethod()
 
 
-    def predict(self, job, branch_node, seen = None):
+    def predict(self, branch_node, seen = None):
         """
         Updates the branch such that all possible future routes are added
         with the PREDICTED flag.
@@ -203,16 +202,16 @@ class Task(object):
             seen.append(self)
         if branch_node.state & BranchNode.COMPLETED == 0 \
             and branch_node.state & BranchNode.CANCELLED == 0:
-            self._predict(job, branch_node)
+            self._predict(branch_node)
         for node in branch_node.children:
-            node.task.predict(job, node, seen)
+            node.task.predict(node, seen)
 
 
-    def _predict(self, job, branch_node):
+    def _predict(self, branch_node):
         branch_node.update_children(self.outputs, BranchNode.PREDICTED)
 
 
-    def _ready_to_proceed(self, job, branch_node):
+    def _ready_to_proceed(self, branch_node):
         return True
 
 
@@ -221,7 +220,6 @@ class Task(object):
         Runs the task. Should not be called directly.
         Returns True if completed, False otherwise.
 
-        job -- the job in which this method is executed
         branch_node -- the branch_node in which this method is executed
         """
         assert branch_node is not None
@@ -235,7 +233,7 @@ class Task(object):
                 return False
 
         result = False
-        if self._ready_to_proceed(branch_node.job, branch_node):
+        if self._ready_to_proceed(branch_node):
             # Assign variables, if so requested.
             for assignment in self.prop_assign:
                 assignment.assign(branch_node.job, self)
@@ -246,7 +244,7 @@ class Task(object):
             if self.pre_func is not None:
                 self.pre_func(branch_node, self)
 
-            result = self._execute(branch_node.job, branch_node)
+            result = self._execute(branch_node)
 
             # Run user code, if any.
             if result and self.user_func is not None:
@@ -272,11 +270,10 @@ class Task(object):
         return result
 
 
-    def _execute(self, job, branch_node):
+    def _execute(self, branch_node):
         """
         A hook into execute() that does the real work.
 
-        job -- the job in which this method is executed
         branch_node -- the branch_node in which this method is executed
         """
         # If we have more than one output, implicitly split.

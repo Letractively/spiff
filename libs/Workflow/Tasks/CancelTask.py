@@ -27,14 +27,13 @@ class CancelTask(Trigger):
     parallel split.
     """
 
-    def _execute(self, job, branch_node):
+    def _execute(self, branch_node):
         """
         Runs the task. Should not be called directly.
         Returns True if completed, False otherwise.
 
-        job -- the job in which this method is executed
         branch_node -- the branch_node in which this method is executed
         """
         for task_name in self.context:
-            job.get_task_from_name(task_name).cancel(job, branch_node)
-        return Task._execute(self, job, branch_node)
+            branch_node.job.get_task_from_name(task_name).cancel(branch_node)
+        return Task._execute(self, branch_node)

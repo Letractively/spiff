@@ -70,36 +70,35 @@ class ThreadSplit(Task):
         return None
 
 
-    def get_activated_branch_nodes(self, job, branch_node):
+    def get_activated_branch_nodes(self, branch_node):
         """
         Returns the list of branch_nodes that were activated in the previous call
         of execute().
 
-        job -- the job in which this method is executed
         branch_node -- the branch_node in which this method is executed
         """
-        return self.thread_starter.get_activated_branch_nodes(job, branch_node)
+        return self.thread_starter.get_activated_branch_nodes(branch_node)
 
 
-    def trigger(self, job, branch_node):
+    def trigger(self, branch_node):
         """
         May be called after execute() was already completed to create an
         additional outbound instance.
         """
         # Find a BranchNode for this task.
-        my_branch_node = self._find_my_branch_node(job)
+        my_branch_node = self._find_my_branch_node(branch_node.job)
         for output in self.outputs:
             state           = BranchNode.WAITING | BranchNode.TRIGGERED
             new_branch_node = my_branch_node.add_child(output, state)
 
 
-    def _predict(self, job, branch_node):
+    def _predict(self, branch_node):
         # Since the attribute value might have changed by the time a future
         # task calls this method, we store the number of splits in the
         # context data.
-        split_n = job.get_context_data('split_n', self.times)
+        split_n = branch_node.job.get_context_data('split_n', self.times)
         if split_n is None:
-            split_n = job.get_attribute(self.times_attribute, 1)
+            split_n = branch_node.job.get_attribute(self.times_attribute, 1)
 
         # Predict the outputs.
         outputs = []
@@ -108,7 +107,7 @@ class ThreadSplit(Task):
         branch_node.update_children(outputs, BranchNode.PREDICTED)
 
 
-    def _execute(self, job, branch_node):
+    def _execute(self, branch_node):
         """
         Runs the task. Should not be called directly.
         Returns True if completed, False otherwise.
@@ -116,8 +115,8 @@ class ThreadSplit(Task):
         # Split, and remember the number of splits in the context data.
         split_n = self.times
         if split_n is None:
-            split_n = job.get_attribute(self.times_attribute)
-        job.set_context_data(branch_node.id, split_n = split_n)
+            split_n = branch_node.job.get_attribute(self.times_attribute)
+        branch_node.job.set_context_data(branch_node.id, split_n = split_n)
 
         # Create the outgoing nodes.
         outputs = []
