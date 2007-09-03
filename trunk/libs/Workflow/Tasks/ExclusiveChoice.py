@@ -58,7 +58,7 @@ class ExclusiveChoice(MultiChoice):
             raise WorkflowException(self, 'A default output is required.')
 
 
-    def _execute(self, job, branch_node):
+    def _execute(self, branch_node):
         """
         Runs the task. Should not be called directly.
         Returns True if completed, False otherwise.
@@ -66,7 +66,7 @@ class ExclusiveChoice(MultiChoice):
         # Find the first matching condition.
         output = self.default_task
         for condition, task in self.cond_tasks:
-            if condition is None or condition.matches(job):
+            if condition is None or condition.matches(branch_node.job):
                 output = task
                 break
 

@@ -69,17 +69,16 @@ class SubWorkflow(Task):
         branch_node.update_children(outputs, BranchNode.WAITING)
 
 
-    def _execute(self, job, branch_node):
+    def _execute(self, branch_node):
         """
         Runs the task. Should not be called directly.
         Returns True if completed, False otherwise.
 
-        job -- the job in which this method is executed
         branch_node -- the branch_node in which this method is executed
         """
         file = self.file
         if file is None:
-            file = job.get_attribute(self.file_attribute)
+            file = branch_node.job.get_attribute(self.file_attribute)
         xml_reader    = XmlReader()
         workflow_list = xml_reader.parse_file(self.file)
         workflow      = workflow_list[0]

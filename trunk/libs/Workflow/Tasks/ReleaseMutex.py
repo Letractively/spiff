@@ -40,14 +40,13 @@ class ReleaseMutex(Task):
         self.mutex = mutex
 
 
-    def _execute(self, job, branch_node):
+    def _execute(self, branch_node):
         """
         Runs the task. Should not be called directly.
         Returns True if completed, False otherwise.
 
-        job -- the job in which this method is executed
         branch_node -- the branch_node in which this method is executed
         """
-        mutex = job.get_mutex(self.mutex)
+        mutex = branch_node.job.get_mutex(self.mutex)
         mutex.unlock()
-        return Task._execute(self, job, branch_node)
+        return Task._execute(self, branch_node)

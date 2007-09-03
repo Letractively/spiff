@@ -45,7 +45,7 @@ class Trigger(Task):
         self.queued  = 0
 
 
-    def trigger(self, job, branch_node):
+    def trigger(self, branch_node):
         """
         Enqueue a trigger, such that this tasks triggers mutliple times later
         when execute() is called.
@@ -53,23 +53,23 @@ class Trigger(Task):
         self.queued += 1
         # All instances that have already completed need to be put into
         # WAITING again.
-        for node in job.branch_tree:
+        for node in branch_node.job.branch_tree:
             if node.thread_id != branch_node.thread_id:
                 continue
             if node.task == self and node.state & BranchNode.COMPLETED != 0:
                 node.state = BranchNode.WAITING
 
 
-    def _execute(self, job, branch_node):
+    def _execute(self, branch_node):
         """
         Runs the task. Should not be called directly.
         Returns True if completed, False otherwise.
 
-        job -- the job in which this method is executed
         branch_node -- the branch_node in which this method is executed
         """
         for i in range(self.times + self.queued):
             for task_name in self.context:
-                job.get_task_from_name(task_name).trigger(job, branch_node)
+                task = branch_node.job.get_task_from_name(task_name)
+                task.trigger(branch_node)
         self.queued = 0
-        return Task._execute(self, job, branch_node)
+        return Task._execute(self, branch_node)

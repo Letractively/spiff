@@ -36,10 +36,10 @@ class ThreadStart(Task):
         self.internal = True
 
 
-    def _execute(self, job, branch_node):
+    def _execute(self, branch_node):
         """
         Runs the task. Should not be called directly.
         Returns True if completed, False otherwise.
         """
         branch_node.assign_new_thread_id()
-        return Task._execute(self, job, branch_node)
+        return Task._execute(self, branch_node)

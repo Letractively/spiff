@@ -45,32 +45,32 @@ class ThreadMerge(Join):
         Join.__init__(self, parent, name, split_task, **kwargs)
 
 
-    def _get_structured_context(self, job, branch_node):
+    def _get_structured_context(self, branch_node):
         # In structured context, the context is the path up to the point where
         # the split happened.
-        split_task = job.get_task_from_name(self.split_task)
+        split_task = branch_node.job.get_task_from_name(self.split_task)
         split_node = branch_node.find_ancestor(split_task)
         return split_node.id
 
 
-    def try_fire(self, job, branch_node):
-        context = self._get_structured_context(job, branch_node)
+    def try_fire(self, branch_node):
+        context = self._get_structured_context(branch_node)
 
         # If the threshold was already reached, there is nothing else to do.
-        if job.get_context_data(context, 'fired', 'no') == 'yes':
+        if branch_node.job.get_context_data(context, 'fired', 'no') == 'yes':
             branch_node.set_status(BranchNode.COMPLETED)
             return False
 
         # Retrieve a list of all activated branch_nodes from the associated
         # task that did the conditional parallel split.
-        split_task = job.get_task_from_name(self.split_task)
+        split_task = branch_node.job.get_task_from_name(self.split_task)
         split_node = branch_node.find_ancestor(split_task)
         nodes      = split_node.children
 
         # The default threshold is the number of threads that were started.
         threshold = self.threshold
         if self.threshold_attr is not None:
-            threshold = job.get_attribute(self.threshold_attr)
+            threshold = branch_node.job.get_attribute(self.threshold_attr)
         if threshold is None:
             threshold = len(nodes)
 
@@ -79,22 +79,22 @@ class ThreadMerge(Join):
         completed     = 0
         for node in nodes:
             # Refresh path prediction.
-            node.task.predict(job, node)
+            node.task.predict(node)
 
-            if self._branch_is_complete(job, node):
+            if self._branch_is_complete(node):
                 completed += 1
             else:
                 waiting_nodes.append(node)
 
         # If the threshold was reached, get ready to fire.
         if completed >= threshold:
-            job.set_context_data(context, fired = 'yes')
+            branch_node.job.set_context_data(context, fired = 'yes')
 
             # If this is a cancelling join, cancel all incoming branches,
             # except for the one that just completed.
             if self.cancel:
                 for node in waiting_nodes:
-                    node.task.cancel(job, node)
+                    node.task.cancel(node)
 
             return True
 
@@ -105,24 +105,24 @@ class ThreadMerge(Join):
         return False
 
 
-    def _ready_to_proceed(self, job, branch_node):
-        return self.try_fire(job, branch_node)
+    def _ready_to_proceed(self, branch_node):
+        return self.try_fire(branch_node)
 
 
-    def _execute(self, job, branch_node):
+    def _execute(self, branch_node):
         """
         Runs the task. Should not be called directly.
         Returns True if completed, False otherwise.
         """
-        context = self._get_structured_context(job, branch_node)
-        job.set_context_data(context, may_fire = 'done')
+        context = self._get_structured_context(branch_node)
+        branch_node.job.set_context_data(context, may_fire = 'done')
 
         # Mark all nodes in the same thread that reference this task as
         # COMPLETED.
-        for node in job.branch_tree:
+        for node in branch_node.job.branch_tree:
             if node.thread_id != branch_node.thread_id:
                 continue
             if node.task != self:
                 continue
             node.state = BranchNode.COMPLETED
-        return Task._execute(self, job, branch_node)
+        return Task._execute(self, branch_node)

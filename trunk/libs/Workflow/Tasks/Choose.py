@@ -47,14 +47,13 @@ class Choose(Trigger):
         self.choice  = kwargs.get('choice', [])
 
 
-    def _execute(self, job, branch_node):
+    def _execute(self, branch_node):
         """
         Runs the task. Should not be called directly.
         Returns True if completed, False otherwise.
 
-        job -- the job in which this method is executed
         branch_node -- the branch_node in which this method is executed
         """
-        task = job.get_task_from_name(self.context)
-        task.trigger(job, branch_node, self.choice)
-        return Task._execute(self, job, branch_node)
+        task = branch_node.job.get_task_from_name(self.context)
+        task.trigger(branch_node, self.choice)
+        return Task._execute(self, branch_node)

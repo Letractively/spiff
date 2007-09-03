@@ -136,19 +136,14 @@ class BranchNode(object):
         self.children.append(child)
 
 
-    def cancel(self, drop_predicted_children = True):
+    def cancel(self):
         """
-        Cancels the item if it was not yet completed.
-        If drop_predicted_children is True, any children that are PREDICTED
-        are also removed.
-
-        drop_predicted_children -- whether to remove PREDICTED children
+        Cancels the item if it was not yet completed, and removes
+        any children that are PREDICTED.
         """
         if self.state & self.COMPLETED != 0:
             return
         self.state = self.CANCELLED | (self.state & self.TRIGGERED)
-        if not drop_predicted_children:
-            return
         drop = []
         for child in self.children:
             if child.state & self.PREDICTED != 0:
@@ -157,42 +152,13 @@ class BranchNode(object):
             self.children.remove(node)
 
 
-    def set_status(self, status, recursive = False):
+    def set_status(self, status):
         """
         Called by the associated task to let us know that its status
         has changed (e.g. from WAITING to COMPLETED.)
         If recursive is True, the status is applied to the tree recursively.
         """
         self.state = status | (self.state & self.TRIGGERED)
-        if recursive == True:
-            for child in self.children:
-                child.set_status(status)
-
-
-    def get_copy(self):
-        """
-        Creates a copy of this subtree, and returns a reference to the new
-        node.
-        """
-        new_node = BranchNode(self.job, self.task)
-        for child in self.children:
-            new_child = child.get_copy()
-            new_child.parent = new_node
-            new_node._child_added_notify(new_child)
-        return new_node
-
-
-    def split(self):
-        """
-        Like get_copy(), but also makes the new node a sibling of the current
-        node. It is not possible to split the root node.
-        """
-        if self.parent is None:
-            raise WorkflowException(self, 'Attempt to split the root node.')
-        new_node = self.get_copy()
-        new_node.parent = self.parent
-        self.parent._child_added_notify(new_node)
-        return new_node
 
 
     def add_child(self, task, status = WAITING):

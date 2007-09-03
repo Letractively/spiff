@@ -46,8 +46,8 @@ class MultiInstance(Task):
         self.times           = kwargs.get('times',           None)
 
 
-    def _find_my_branch_node(self, job, branch_node):
-        for node in job.branch_tree:
+    def _find_my_branch_node(self, branch_node):
+        for node in branch_node.job.branch_tree:
             if node.thread_id != branch_node.thread_id:
                 continue
             if node.task == self:
@@ -55,25 +55,25 @@ class MultiInstance(Task):
         return None
 
 
-    def trigger(self, job, branch_node):
+    def trigger(self, branch_node):
         """
         May be called after execute() was already completed to create an
         additional outbound instance.
         """
         # Find a BranchNode for this task.
-        my_branch_node = self._find_my_branch_node(job, branch_node)
+        my_branch_node = self._find_my_branch_node(branch_node)
         for output in self.outputs:
             state           = BranchNode.WAITING | BranchNode.TRIGGERED
             new_branch_node = my_branch_node.add_child(output, state)
 
 
-    def _get_predicted_outputs(self, job, branch_node):
+    def _get_predicted_outputs(self, branch_node):
         # Since the attribute value might have changed by the time a future
         # task calls this method, we store the number of splits in the
         # context data.
-        split_n = job.get_context_data('split_n', self.times)
+        split_n = branch_node.job.get_context_data('split_n', self.times)
         if split_n is None:
-            split_n = job.get_attribute(self.times_attribute, 1)
+            split_n = branch_node.job.get_attribute(self.times_attribute, 1)
 
         # Predict the outputs.
         outputs = []
@@ -83,7 +83,7 @@ class MultiInstance(Task):
         return outputs
 
 
-    def _execute(self, job, branch_node):
+    def _execute(self, branch_node):
         """
         Runs the task. Should not be called directly.
         Returns True if completed, False otherwise.
@@ -91,8 +91,8 @@ class MultiInstance(Task):
         # Split, and remember the number of splits in the context data.
         split_n = self.times
         if split_n is None:
-            split_n = job.get_attribute(self.times_attribute)
-        job.set_context_data(branch_node.id, split_n = split_n)
+            split_n = branch_node.job.get_attribute(self.times_attribute)
+        branch_node.job.set_context_data(branch_node.id, split_n = split_n)
 
         # Create the outgoing nodes.
         outputs = []

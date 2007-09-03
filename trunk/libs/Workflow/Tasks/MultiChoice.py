@@ -130,14 +130,14 @@ class MultiChoice(Task):
                 raise WorkflowException(self, 'Condition is None.')
 
 
-    def trigger(self, job, branch_node, choice):
+    def trigger(self, branch_node, choice):
         """
         Lets a caller narrow down the choice by using a Choose trigger.
         """
         self.choice = choice
 
 
-    def _execute(self, job, branch_node):
+    def _execute(self, branch_node):
         """
         Runs the task. Should not be called directly.
         Returns True if completed, False otherwise.
@@ -145,7 +145,7 @@ class MultiChoice(Task):
         # Find all matching conditions.
         outputs = []
         for condition, output in self.cond_tasks:
-            if condition is not None and not condition.matches(job):
+            if condition is not None and not condition.matches(branch_node.job):
                 continue
             if self.choice is not None and output.name not in self.choice:
                 continue

@@ -37,11 +37,10 @@ class BranchNodeTest(unittest.TestCase):
         c12       = BranchNode(object, task7, c1)
         c2        = BranchNode(object, task8, root)
         c3        = BranchNode(object, task9, root)
-        c1.split()
         c3.state = BranchNode.COMPLETED
 
         # Check whether the tree is built properly.
-        expected = """1/0: BranchNode for Task 1 State: 1 Children: 4
+        expected = """1/0: BranchNode for Task 1 State: 1 Children: 3
   2/0: BranchNode for Task 2 State: 1 Children: 2
     3/0: BranchNode for Task 3 State: 1 Children: 2
       4/0: BranchNode for Task 4 State: 1 Children: 1
@@ -49,13 +48,7 @@ class BranchNodeTest(unittest.TestCase):
       6/0: BranchNode for Task 6 State: 1 Children: 0
     7/0: BranchNode for Task 7 State: 1 Children: 0
   8/0: BranchNode for Task 8 State: 1 Children: 0
-  9/0: BranchNode for Task 9 State: 4 Children: 0
-  10/0: BranchNode for Task 2 State: 1 Children: 2
-    11/0: BranchNode for Task 3 State: 1 Children: 2
-      12/0: BranchNode for Task 4 State: 1 Children: 1
-        13/0: BranchNode for Task 5 State: 1 Children: 0
-      14/0: BranchNode for Task 6 State: 1 Children: 0
-    15/0: BranchNode for Task 7 State: 1 Children: 0"""
+  9/0: BranchNode for Task 9 State: 4 Children: 0"""
         self.assert_(expected == root.get_dump(),
                      'Expected:\n' + expected + '\n' + \
                      'but got:\n'  + root.get_dump())
@@ -79,9 +72,6 @@ class BranchNodeTest(unittest.TestCase):
         self.assert_(expected2 == result,
                      'Expected:\n' + expected2 + '\n' + \
                      'but got:\n'  + result)
-
-        # Some simple method tests.
-        self.assertRaises(WorkflowException, root.split)
 
 if __name__ == '__main__':
     unittest.TextTestRunner(verbosity = 2).run(suite())
