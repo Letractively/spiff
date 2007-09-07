@@ -16,7 +16,7 @@ from functions import is_valid_uri
 
 class Api:
     def __init__(self):
-        self._manager   = None
+        self._manager = None
 
 
     def activate(self, manager):
@@ -49,25 +49,3 @@ class Api:
 
     def emit_sync(self, uri, args = None):
         return self.__emit(uri, args, True)
-
-
-if __name__ == '__main__':
-    import unittest
-    from Manager  import Manager
-    from EventBus import EventBus
-
-    class ApiTest(unittest.TestCase):
-        def dummy(self):
-            pass
-
-        def runTest(self):
-            eb  = EventBus()
-            api = Api()
-
-            #Note: Methods are not tested here, but in the
-            #test of the Manager class, whose constructor instantiates an
-            #Api object.
-
-    testcase = ApiTest()
-    runner   = unittest.TextTestRunner()
-    runner.run(testcase)

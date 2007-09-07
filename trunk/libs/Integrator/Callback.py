@@ -40,29 +40,3 @@ class Callback:
         if self.__event_re is None:
             return True
         return self.__event_re.match(uri)
-
-
-if __name__ == '__main__':
-    import unittest
-
-    class CallbackTest(unittest.TestCase):
-        def callback_function(self):
-            pass
-            
-        def runTest(self):
-            event_uri = 'test:/my/uri/should/work/'
-            callback = Callback(self.callback_function)
-            assert callback.get_function()  == self.callback_function
-            assert callback.get_event_uri() == None
-            assert callback.matches_uri(event_uri)
-            assert callback.matches_uri('asdasd')
-            
-            callback = Callback(self.callback_function, event_uri)
-            assert callback.get_function()  == self.callback_function
-            assert callback.get_event_uri() == event_uri
-            assert callback.matches_uri(event_uri)
-            assert not callback.matches_uri('asdasd')
-
-    testcase = CallbackTest()
-    runner   = unittest.TextTestRunner()
-    runner.run(testcase)
