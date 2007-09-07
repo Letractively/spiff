@@ -1,22 +1,3 @@
-__all__ = ['AcquireMutex',
-           'Assign',
-           'CancelJob',
-           'CancelTask',
-           'Choose',
-           'Condition',
-           'ExclusiveChoice',
-           'Gate',
-           'Join',
-           'MultiChoice',
-           'MultiInstance',
-           'ReleaseMutex',
-           'StartTask',
-           'SubWorkflow',
-           'Task',
-           'ThreadMerge',
-           'ThreadSplit',
-           'Trigger']
-
 from AcquireMutex    import AcquireMutex
 from CancelJob       import CancelJob
 from CancelTask      import CancelTask
@@ -33,3 +14,7 @@ from Task            import Task, Assign
 from ThreadMerge     import ThreadMerge
 from ThreadSplit     import ThreadSplit
 from Trigger         import Trigger
+
+import inspect
+__all__ = [name for name, obj in locals().items()
+           if not (name.startswith('_') or inspect.ismodule(obj))]
