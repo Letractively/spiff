@@ -1,15 +1,3 @@
-__all__ = ['Acl',
-           'Action',
-           'ActionSection',
-           'Actor',
-           'ActorGroup',
-           'DB',
-           'DBReader',
-           'Resource',
-           'ResourceGroup',
-           'ResourcePath',
-           'ResourceSection']
-
 from Acl             import Acl
 from Action          import Action
 from ActionSection   import ActionSection
@@ -21,3 +9,7 @@ from Resource        import Resource
 from ResourceGroup   import ResourceGroup
 from ResourcePath    import ResourcePath
 from ResourceSection import ResourceSection
+
+import inspect 
+__all__ = [name for name, obj in locals().items()
+           if not (name.startswith('_') or inspect.ismodule(obj))]

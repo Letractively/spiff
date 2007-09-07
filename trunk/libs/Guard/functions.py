@@ -62,24 +62,3 @@ def make_handle_from_string(name):
     name   = name.lower().replace(' ', '_')
     regexp = re.compile('[^\w\-_\/\.]+')
     return regexp.sub('', name)
-
-
-if __name__ == '__main__':
-    import unittest
-
-    class FunctionTest(unittest.TestCase):
-        def runTest(self):
-            # int2hex()
-            assert int2hex(10, 8) == '0000000a'
-
-            # make_handle_from_string()
-            foo = 'Some Weird 123 String, with %$[]\/ Stuff'
-            bar = 'some_weird_123_string_with_/_stuff'
-            res = make_handle_from_string(foo)
-            assert res == bar
-            res = make_handle_from_string(bar)
-            assert res == bar
-
-    testcase = FunctionTest()
-    runner   = unittest.TextTestRunner()
-    runner.run(testcase)
