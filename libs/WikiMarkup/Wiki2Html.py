@@ -297,29 +297,3 @@ class Wiki2Html:
                 method(token[1])
         infile.close()
         self.__flush()
-
-
-if __name__ == '__main__':
-    import unittest
-
-    class Wiki2HtmlTest(unittest.TestCase):
-        def runTest(self):
-            # Read the entire file into one string.
-            filename = 'markup.txt'
-            infile   = open(filename, 'r')
-            in_str   = infile.read()
-            infile.close()
-
-            # Parse the file.
-            parser = Wiki2Html()
-            parser.read(filename)
-            html = parser.html
-            #print html
-
-            # Now *that's* a poor test, huh? For a better test, look
-            # at the test in Html2Wiki.py.
-            assert len(html) > 1000
-
-    testcase = Wiki2HtmlTest()
-    runner   = unittest.TextTestRunner()
-    runner.run(testcase)

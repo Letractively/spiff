@@ -373,39 +373,3 @@ class WikiParser(Scanner):
         (wiki_force,    _wiki_word),
         (AnyChar,       _text)
     ])
-
-
-if __name__ == '__main__':
-    import unittest
-
-    class ParserTest(unittest.TestCase):
-        def runTest(self):
-            # Read the entire file into one string.
-            filename  = 'markup.txt'
-            infile    = open(filename, "U")
-            in_text   = infile.read()
-            infile.close()
-
-            # Re-open and parse the entire file.
-            infile  = open(filename, "r")
-            scanner = WikiParser(infile, filename)
-            content = ''
-            nonecount = 0
-            while True:
-                token    = scanner.read()
-                position = scanner.position()
-                if token[0] is None:
-                    nonecount += 1  # This is because Plex is broken.
-                if nonecount >= 2:
-                    break
-                #print "Token type: %s, Token: '%s'" % (token[0], token[1])
-                if not token[0] in ['indent', 'dedent']:
-                    content += token[1]
-
-            # Make sure that every single string was extracted.
-            #print content
-            assert content == in_text
-
-    testcase = ParserTest()
-    runner   = unittest.TextTestRunner()
-    runner.run(testcase)
