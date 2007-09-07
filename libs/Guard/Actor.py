@@ -39,25 +39,3 @@ class Actor(Resource):
         salt      = auth_hash[0:self.__salt_length]
         hash      = auth_hash[self.__salt_length:]
         return sha.new(auth_string + salt).hexdigest() == hash
-
-
-if __name__ == '__main__':
-    import unittest
-
-    class ActorTest(unittest.TestCase):
-        def runTest(self):
-            name   = 'Test Actor'
-            actor = Actor(name)
-            assert actor.get_id()     == -1
-            assert actor.get_name()   == name
-            assert actor.get_handle() == make_handle_from_string(name)
-            assert actor.is_actor()   == True
-            
-            pwd = 'Testpwd'
-            actor.set_auth_string(pwd)
-            assert actor.has_auth_string(pwd)         == True
-            assert actor.has_auth_string('incorrect') == False
-
-    testcase = ActorTest()
-    runner   = unittest.TextTestRunner()
-    runner.run(testcase)

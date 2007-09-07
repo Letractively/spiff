@@ -69,23 +69,3 @@ class Acl(object):
         Returns True if the Acl was inherited from a parent actor.
         """
         return self.__inherited
-
-
-if __name__ == '__main__':
-    import unittest
-
-    class AclTest(unittest.TestCase):
-        def runTest(self):
-            actor_id    = 10
-            action      = Action("Test Action")
-            resource_id = 12
-            permit      = True
-            acl = Acl(10, action, resource_id, permit)
-            assert acl.get_actor_id()    == actor_id
-            assert acl.get_action()      == action
-            assert acl.get_resource_id() == resource_id
-            assert acl.get_permit()      == permit
-
-    testcase = AclTest()
-    runner   = unittest.TextTestRunner()
-    runner.run(testcase)
