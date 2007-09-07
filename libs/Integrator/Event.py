@@ -33,19 +33,3 @@ class Event:
 
     def get_args(self):
         return self.__args
-
-
-if __name__ == '__main__':
-    import unittest
-
-    class EventTest(unittest.TestCase):
-        def runTest(self):
-            event_uri = 'test:/my/uri/should/work/'
-            args      = 'anything'
-            event = Event(event_uri, args)
-            assert event.get_uri()  == event_uri
-            assert event.get_args() == args
-
-    testcase = EventTest()
-    runner   = unittest.TextTestRunner()
-    runner.run(testcase)

@@ -87,18 +87,3 @@ class Parser:
             info.set_attribute(name, value)
 
         self.info = info
-
-
-if __name__ == '__main__':
-    import unittest
-
-    class ParserTest(unittest.TestCase):
-        def runTest(self):
-            filename = 'samples/SpiffExtension/Extension.xml'
-            parser   = Parser()
-            parser.parse_file(filename)
-            assert parser.info.get_name() == 'My Spiff Extension'
-
-    testcase = ParserTest()
-    runner   = unittest.TextTestRunner()
-    runner.run(testcase)

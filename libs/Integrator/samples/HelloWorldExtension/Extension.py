@@ -13,7 +13,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 class Extension:
-   def __init__(self, api):
-      api.emit('render_start')
-      api.append_content('Hello World!')
-      api.emit('render_end')
+    def __init__(self, api):
+        api.emit('render_start')
+        api.emit('render_end')
+    
+    def on_spiff_render_start(self, **args):
+        pass
