@@ -12,27 +12,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-from Api      import Api
-from DB       import *
-from tempfile import *
-from EventBus import EventBus
-from Callback import Callback
-from Parser   import Parser
+from Api       import Api
+from DB        import *
+from tempfile  import *
+from EventBus  import EventBus
+from Callback  import Callback
+from Parser    import Parser
+from Exception import IntegratorException
 import os
 import os.path
 import shutil
 import zipfile
 
 class Manager:
-    __no_such_file_error,     \
-    __copy_error,             \
-    __load_error,             \
-    __install_error,          \
-    __parse_error,            \
-    __unmet_dependency_error, \
-    __database_error,         \
-    __permission_denied_error = range(-1, -9, -1)
-    
     def  __init__(self, guard_db, extension_api):
         assert guard_db      is not None
         assert extension_api is not None
@@ -88,7 +80,8 @@ class Manager:
         @type  dirname: os.path
         @param dirname: The extension directory.
         """
-        assert os.path.isdir(dirname)
+        if not os.path.isdir(dirname):
+            raise IOError('%s: No such directory' % dirname)
         if dirname in sys.path and self.__install_dir in sys.path:
             # This is a little evil. But soo easy.
             sys.path.remove(self.__install_dir)
@@ -141,7 +134,7 @@ class Manager:
                  installed, <0 otherwise.
         """
         if not os.path.exists(filename):
-            return self.__no_such_file_error
+            raise IOError('%s: No such file or direcory' % filename)
 
         # Install files.
         if os.path.isdir(filename):
@@ -151,7 +144,7 @@ class Manager:
             # Unpack the extension into the target directory.
             install_dir = self.__install_archive(filename)
         if not install_dir:
-            return self.__install_error
+            raise IntegratorException('Unable to copy or unpack %s' % filename)
 
         # Read the extension info.
         class_file = os.path.join(install_dir, 'Extension.xml')
@@ -159,14 +152,14 @@ class Manager:
         parser.parse_file(class_file)
         info = parser.info
         if info is None:
-            return self.__parse_error
+            raise IntegratorException('Unable to parse %s' % class_file)
 
         # Check dependencies.
         for descriptor in info.get_dependency_list():
             #print "Descriptor:", descriptor
             if not self.__extension_db.get_extension_from_descriptor(descriptor):
                 shutil.rmtree(install_dir)
-                return self.__unmet_dependency_error
+                raise IntegratorException('Unmet dependency: %s' % descriptor)
 
         # Check whether the extension has permission to listen to the
         # requested events.
@@ -176,7 +169,7 @@ class Manager:
                 permit = event_request_func(info, uri)
                 if not permit:
                     shutil.rmtree(install_dir)
-                    return self.__permission_denied_error
+                    raise IntegratorException('Listening on %s denied' % uri)
 
         # Check whether the extension has permission to send the
         # requested events.
@@ -186,14 +179,14 @@ class Manager:
                 permit = signal_request_func(info, uri)
                 if not permit:
                     shutil.rmtree(install_dir)
-                    return self.__permission_denied_error
+                    raise IntegratorException('Permission to %s denied' % uri)
                 #FIXME: Store list of permitted signals in the database.
 
         # Register the extension in the database, including dependencies.
         result = self.__extension_db.register_extension(info)
         if not result:
             shutil.rmtree(install_dir)
-            return self.__database_error
+            raise IntegratorException('DB error: register_extension() failed')
         id = info.get_id()
         assert id > 0
 
@@ -202,7 +195,7 @@ class Manager:
                 self.__extension_db.link_extension_id_to_callback(id, uri)
             except:
                 shutil.rmtree(install_dir)
-                return self.__database_error
+                raise IntegratorException('Database error: %s' % e)
 
         # Rename the directory so that the id can be used to look the
         # extension up.
@@ -215,7 +208,7 @@ class Manager:
         except:
             shutil.rmtree(install_dir)
             self.remove_extension_from_id(id)
-            return self.__copy_error
+            raise IOError('Unable to copy: %s' % e)
 
         # Ending up here, the extension was properly installed in the target
         # directory. Load it.
@@ -233,7 +226,8 @@ class Manager:
             pass
         if install_func is not None:
             if not install_func():
-                return self.__install_error
+                msg = 'install_func() of %s returned False' % info.get_name()
+                raise IntegratorException(msg)
 
         return info.get_id()
 

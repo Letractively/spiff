@@ -18,6 +18,9 @@ class ManagerTest(DBTest):
         self.manager.set_extension_dir('tmp')
         
     def testManager(self):
+        self.assertRaises(IOError, self.manager.add_extension, 'no_such_file')
+        self.assertRaises(IOError, self.manager.set_extension_dir, 'dir')
+
         # Install first extension.
         filename = '../samples/SpiffExtension'
         id1      = self.manager.add_extension(filename)
