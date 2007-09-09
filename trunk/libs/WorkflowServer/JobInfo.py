@@ -18,12 +18,18 @@ class JobInfo(object):
     """
     This class represents an instance of a workflow.
     """
+    RUNNING, \
+    COMPLETED = range(2)
 
-    def __init__(self):
+    def __init__(self, workflow_id = None, instance = None):
         """
         Constructor.
         """
         self.id          = None
-        self.workflow_id = None
-        self.status      = None
+        self.workflow_id = workflow_id
+        self.status      = self.RUNNING
         self.last_change = None
+        self.instance    = instance
+        if instance is not None:
+            if instance.is_completed():
+                self.status = self.COMPLETED

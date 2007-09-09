@@ -14,21 +14,5 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-class WorkflowInfo(object):
-    """
-    This class represents a workflow definition.
-    """
-
-    def __init__(self, handle, **kwargs):
-        """
-        Constructor.
-        """
-        assert not (kwargs.has_key('xml') and kwargs.has_key('file'))
-        self.id     = None
-        self.handle = handle
-        self.name   = handle
-        self.xml    = kwargs.get('xml', None)
-        if kwargs.has_key('file'):
-            file     = open(kwargs.get('file'), 'r')
-            self.xml = file.read()
-            file.close()
+class WorkflowServerException(Exception):
+    pass

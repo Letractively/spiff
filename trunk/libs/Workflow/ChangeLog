@@ -1,3 +1,8 @@
+2007-09-09 Samuel Abels <http://debain.org>
+
+	* Workflow/Job.py: Added is_completed(), get_waiting_tasks() and
+	execute_task_from_id().
+
 2007-09-03 Samuel Abels <http://debain.org>
 
 	* tests/*: Changed tests and directory structure to support testing data

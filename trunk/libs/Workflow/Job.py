@@ -47,15 +47,24 @@ class Job(object):
         #start.dump()
 
 
-    def task_completed_notify(self, task):
-        if self.on_complete is None:
-            return
+    def is_completed(self):
+        """
+        Returns True if the entire Job is completed, False otherwise.
+        """
         state = BranchNode.WAITING | BranchNode.PREDICTED
         iter  = BranchNode.Iterator(self.branch_tree, state)
         try:
             next = iter.next()
         except:
             # No waiting nodes found.
+            return True
+        return False
+
+
+    def task_completed_notify(self, task):
+        if self.on_complete is None:
+            return
+        if self.is_completed():
             self.on_complete(self, self.on_complete_data)
 
 
@@ -157,6 +166,36 @@ class Job(object):
 
     def get_task_from_name(self, name):
         return self.workflow.tasks[name]
+
+
+    def get_waiting_tasks(self):
+        """
+        Returns a list of objects that each reference a task that is
+        ready for execution.
+        """
+        tasks     = []
+        blacklist = []
+        for node in BranchNode.Iterator(self.branch_tree, BranchNode.WAITING):
+            for blacklisted_node in blacklist:
+                if node.is_descendant_of(blacklisted_node):
+                    continue
+            if not node.task._ready_to_proceed(node):
+                blacklist.append(node)
+                continue
+            tasks.append(node)
+        return tasks
+
+
+    def execute_task_from_id(self, node_id):
+        """
+        Runs the given task.
+        """
+        if node_id is None:
+            raise WorkflowException('node_id is None')
+        for node in self.branch_tree:
+            if node.id == node_id:
+                return node.task.execute(node)
+        raise WorkflowException('A node with the given node_id was not found')
 
 
     def execute_next(self, pick_up = True):

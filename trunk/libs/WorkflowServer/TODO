@@ -1,0 +1,3 @@
+* DriverTest: Execute more tasks such that the Job is saved in a state where
+  it has more than one branch active. Test whether a completed job is marked
+  as such.

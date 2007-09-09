@@ -109,8 +109,9 @@ class DB:
                       self.db_metadata,
                       Column('id',          Integer,      primary_key = True),
                       Column('job_id',      Integer,      index       = True),
+                      Column('node_id',     Integer,      index       = True),
                       Column('name',        String(230)),
-                      Column('status',      String(50)),
+                      Column('status',      Integer),
                       Column('last_change', DateTime()),
                       ForeignKeyConstraint(['job_id'],
                                            [pfx + 'job.id'],
@@ -210,15 +211,15 @@ class DB:
         return self.xml_parser
 
 
-    def get_workflow(self, **filter):
+    def get_workflow_info(self, **filter):
         return self.session.query(WorkflowInfo).select_by(**filter)
 
 
-    def get_job(self, **filter):
+    def get_job_info(self, **filter):
         return self.session.query(JobInfo).select_by(**filter)
 
 
-    def get_task(self, **filter):
+    def get_task_info(self, **filter):
         return self.session.query(TaskInfo).select_by(**filter)
 
 

@@ -18,13 +18,23 @@ class TaskInfo(object):
     """
     This class represents a task in an instance of a workflow.
     """
+    WAITING   =  1
+    CANCELLED =  2
+    COMPLETED =  4
+    PREDICTED =  8
+    TRIGGERED = 16
 
-    def __init__(self):
+    def __init__(self, job_id = None, node = None):
         """
         Constructor.
         """
         self.id          = None
-        self.job_id      = None
+        self.job_id      = job_id
+        self.node_id     = None
         self.name        = None
         self.status      = None
         self.last_change = None
+        if node is not None:
+            self.node_id = node.id
+            self.name    = node.task.name
+            self.status  = node.state
