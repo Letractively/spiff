@@ -20,7 +20,7 @@ from JobInfo        import JobInfo
 from TaskInfo       import TaskInfo
 
 class DBTest(unittest.TestCase):
-    def setUp(self):
+    def connectDB(self):
         # Read config.
         cfg = RawConfigParser()
         cfg.read('unit_test.cfg')
@@ -30,11 +30,15 @@ class DBTest(unittest.TestCase):
         password = cfg.get('database', 'password')
 
         # Connect to MySQL.
-        auth    = user + ':' + password
-        dbn     = 'mysql://' + auth + '@' + host + '/' + db_name
-        engine  = create_engine(dbn)
+        auth        = user + ':' + password
+        dbn         = 'mysql://' + auth + '@' + host + '/' + db_name
+        self.engine = create_engine(dbn)
         clear_mappers()
-        self.db = DB(engine)
+
+
+    def setUp(self):
+        self.connectDB()
+        self.db = DB(self.engine)
 
 
     def testInstall(self):
@@ -46,33 +50,33 @@ class DBTest(unittest.TestCase):
 
 
     def testWorkflow(self):
-        self.assert_(len(self.db.get_workflow(id = 1)) == 0)
+        self.assert_(len(self.db.get_workflow_info(id = 1)) == 0)
         obj = WorkflowInfo('my/handle')
         self.db.save(obj)
         assert obj.id >= 0
-        self.assert_(len(self.db.get_workflow(id = obj.id)) == 1)
+        self.assert_(len(self.db.get_workflow_info(id = obj.id)) == 1)
         self.db.delete(obj)
-        self.assert_(len(self.db.get_workflow(id = obj.id)) == 0)
+        self.assert_(len(self.db.get_workflow_info(id = obj.id)) == 0)
 
 
     def testJob(self):
-        self.assert_(len(self.db.get_job(id = 1)) == 0)
+        self.assert_(len(self.db.get_job_info(id = 1)) == 0)
         obj = JobInfo()
         self.db.save(obj)
         assert obj.id >= 0
-        self.assert_(len(self.db.get_job(id = obj.id)) == 1)
+        self.assert_(len(self.db.get_job_info(id = obj.id)) == 1)
         self.db.delete(obj)
-        self.assert_(len(self.db.get_job(id = obj.id)) == 0)
+        self.assert_(len(self.db.get_job_info(id = obj.id)) == 0)
 
 
     def testTask(self):
-        self.assert_(len(self.db.get_task(id = 1)) == 0)
+        self.assert_(len(self.db.get_task_info(id = 1)) == 0)
         obj = TaskInfo()
         self.db.save(obj)
         assert obj.id >= 0
-        self.assert_(len(self.db.get_task(id = obj.id)) == 1)
+        self.assert_(len(self.db.get_task_info(id = obj.id)) == 1)
         self.db.delete(obj)
-        self.assert_(len(self.db.get_task(id = obj.id)) == 0)
+        self.assert_(len(self.db.get_task_info(id = obj.id)) == 0)
 
 
 if __name__ == '__main__':
