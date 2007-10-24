@@ -70,7 +70,7 @@ class Join(Task):
     def _branch_may_merge_at(self, branch_node):
         for node in branch_node:
             # Ignore nodes that were created by a trigger.
-            if node.state & BranchNode.TRIGGERED != 0:
+            if node.has_state(BranchNode.TRIGGERED):
                 continue
             # Merge found.
             if node.task == self:
@@ -78,7 +78,7 @@ class Join(Task):
             # If the node is predicted with less outputs than he has
             # children, that means the prediction may be incomplete (for
             # example, because a prediction is not yet possible at this time).
-            if node.state & BranchNode.PREDICTED != 0 \
+            if node.has_state(BranchNode.PREDICTED) \
                 and len(node.task.outputs) > len(node.children):
                 return True
         return False
@@ -117,10 +117,10 @@ class Join(Task):
         # If the threshold was already reached, there is nothing else to do.
         context = self._get_unstructured_context(branch_node)
         if branch_node.job.get_context_data(context, 'fired', 'no') == 'yes':
-            branch_node.set_status(BranchNode.COMPLETED)
+            branch_node.set_state(BranchNode.COMPLETED)
             return False
         if branch_node.job.get_context_data(context, 'fired', 'no') == 'ready':
-            branch_node.set_status(BranchNode.COMPLETED)
+            branch_node.set_state(BranchNode.COMPLETED)
             return True
 
         # The default threshold is the number of inputs.
@@ -144,7 +144,7 @@ class Join(Task):
         waiting_nodes = []
         completed     = 0
         for node in nodes:
-            if node.parent is None or node.state & BranchNode.COMPLETED != 0:
+            if node.parent is None or node.has_state(BranchNode.COMPLETED):
                 completed += 1
             else:
                 waiting_nodes.append(node)
@@ -154,10 +154,10 @@ class Join(Task):
             self._fire(branch_node, waiting_nodes)
             return True
 
-        # We do NOT set the branch_node status to COMPLETED, because in
+        # We do NOT set the branch_node state to COMPLETED, because in
         # case all other incoming tasks get cancelled (or never reach
         # the Join for other reasons, such as reaching a stub branch), we
-        # need to revisit it.
+        # we need to revisit it.
         return False
 
 
@@ -168,10 +168,10 @@ class Join(Task):
 
         # If the threshold was already reached, there is nothing else to do.
         if branch_node.job.get_context_data(context, 'fired', 'no') == 'yes':
-            branch_node.set_status(BranchNode.COMPLETED)
+            branch_node.set_state(BranchNode.COMPLETED)
             return False
         if branch_node.job.get_context_data(context, 'fired', 'no') == 'ready':
-            branch_node.set_status(BranchNode.COMPLETED)
+            branch_node.set_state(BranchNode.COMPLETED)
             return True
 
         # Retrieve a list of all activated branch_nodes from the associated
@@ -205,7 +205,7 @@ class Join(Task):
             self._fire(branch_node, waiting_nodes)
             return True
 
-        # We do NOT set the branch_node status to COMPLETED, because in
+        # We do NOT set the branch_node state to COMPLETED, because in
         # case all other incoming tasks get cancelled (or never reach
         # the Join for other reasons, such as reaching a stub branch), we
         # need to revisit it.
@@ -248,12 +248,11 @@ class Join(Task):
 
         # Mark all nodes in the same thread that reference this task as
         # COMPLETED.
-        for node in branch_node.job.branch_tree:
-            if node.state & BranchNode.PREDICTED != 0:
+        for node in branch_node.job.branch_tree.find_any(self):
+            if node.has_state(BranchNode.PREDICTED):
                 continue
             if node.thread_id != branch_node.thread_id:
                 continue
-            if node.task != self:
-                continue
             node.state = BranchNode.COMPLETED
+
         return Task._execute(self, branch_node)

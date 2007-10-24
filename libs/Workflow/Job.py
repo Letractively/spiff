@@ -51,7 +51,7 @@ class Job(object):
         """
         Returns True if the entire Job is completed, False otherwise.
         """
-        state = BranchNode.WAITING | BranchNode.PREDICTED
+        state = BranchNode.WAITING #| BranchNode.PREDICTED
         iter  = BranchNode.Iterator(self.branch_tree, state)
         try:
             next = iter.next()
