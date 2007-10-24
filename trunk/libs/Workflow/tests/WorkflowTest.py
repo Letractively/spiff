@@ -234,6 +234,8 @@ class WorkflowTest(unittest.TestCase):
         job = Job(wf)
         job.execute_all()
 
+        self.assert_(job.is_completed(),
+                     'execute_all() returned, but job is not complete')
         #job.branch_tree.dump()
 
         # Check whether the correct route was taken.

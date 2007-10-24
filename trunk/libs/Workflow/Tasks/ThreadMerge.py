@@ -58,7 +58,7 @@ class ThreadMerge(Join):
 
         # If the threshold was already reached, there is nothing else to do.
         if branch_node.job.get_context_data(context, 'fired', 'no') == 'yes':
-            branch_node.set_status(BranchNode.COMPLETED)
+            branch_node.set_state(BranchNode.COMPLETED)
             return False
 
         # Retrieve a list of all activated branch_nodes from the associated
@@ -98,7 +98,7 @@ class ThreadMerge(Join):
 
             return True
 
-        # We do NOT set the branch_node status to COMPLETED, because in
+        # We do NOT set the branch_node state to COMPLETED, because in
         # case all other incoming tasks get cancelled (or never reach
         # the ThreadMerge for other reasons, such as reaching a stub branch),
         # we need to revisit it.
@@ -116,13 +116,4 @@ class ThreadMerge(Join):
         """
         context = self._get_structured_context(branch_node)
         branch_node.job.set_context_data(context, may_fire = 'done')
-
-        # Mark all nodes in the same thread that reference this task as
-        # COMPLETED.
-        for node in branch_node.job.branch_tree:
-            if node.thread_id != branch_node.thread_id:
-                continue
-            if node.task != self:
-                continue
-            node.state = BranchNode.COMPLETED
         return Task._execute(self, branch_node)

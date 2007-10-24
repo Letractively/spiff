@@ -105,11 +105,20 @@ class PatternTest(unittest.TestCase):
             wf.tasks[name].pre_func  = print_name
             wf.tasks[name].post_func = assign_print_name
 
-        # Execute all tasks within the Job.
         job = Job(wf)
-        job.execute_all(False)
+        self.assert_(not job.is_completed(),
+                     'Job is not complete before start')
+
+        # Execute all tasks within the Job.
+        try:
+            job.execute_all(False)
+        except:
+            job.branch_tree.dump()
+            raise
 
         #job.branch_tree.dump()
+        self.assert_(job.is_completed(),
+                     'execute_all() returned, but job is not complete')
 
         # Make sure that there are no waiting tasks left in the tree.
         for node in BranchNode.Iterator(job.branch_tree, BranchNode.WAITING):

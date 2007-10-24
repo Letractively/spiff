@@ -198,10 +198,10 @@ class Task(object):
             seen = []
         elif self in seen:
             return
-        if branch_node.state & BranchNode.PREDICTED != 0:
+        if branch_node.has_state(BranchNode.PREDICTED):
             seen.append(self)
-        if branch_node.state & BranchNode.COMPLETED == 0 \
-            and branch_node.state & BranchNode.CANCELLED == 0:
+        if not branch_node.has_state(BranchNode.COMPLETED) \
+            and not branch_node.has_state(BranchNode.CANCELLED):
             self._predict(branch_node)
         for node in branch_node.children:
             node.task.predict(node, seen)
@@ -264,7 +264,7 @@ class Task(object):
             mutex.unlock()
 
         if result:
-            branch_node.set_status(BranchNode.COMPLETED)
+            branch_node.set_state(BranchNode.COMPLETED)
         branch_node.job.task_completed_notify(self)
 
         return result
@@ -278,4 +278,5 @@ class Task(object):
         """
         # If we have more than one output, implicitly split.
         branch_node.update_children(self.outputs)
+
         return True

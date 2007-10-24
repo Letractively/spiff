@@ -29,7 +29,7 @@ class BranchNode(object):
     class Iterator(object):
         """
         This is a tree iterator that supports filtering such that a client
-        may walk through all nodes that have a specific status.
+        may walk through all nodes that have a specific state.
         """
         def __init__(self, current, filter = None):
             """
@@ -144,6 +144,10 @@ class BranchNode(object):
         if self.state & self.COMPLETED != 0:
             return
         self.state = self.CANCELLED | (self.state & self.TRIGGERED)
+        self.drop_predicted_children()
+
+
+    def drop_predicted_children(self):
         drop = []
         for child in self.children:
             if child.state & self.PREDICTED != 0:
@@ -152,30 +156,37 @@ class BranchNode(object):
             self.children.remove(node)
 
 
-    def set_status(self, status):
+    def set_state(self, state):
         """
-        Called by the associated task to let us know that its status
+        Called by the associated task to let us know that its state
         has changed (e.g. from WAITING to COMPLETED.)
-        If recursive is True, the status is applied to the tree recursively.
+        If recursive is True, the state is applied to the tree recursively.
         """
-        self.state = status | (self.state & self.TRIGGERED)
+        self.state = state | (self.state & self.TRIGGERED)
 
 
-    def add_child(self, task, status = WAITING):
+    def has_state(self, state):
+        """
+        Returns True if the BranchNode has the given state flag set.
+        """
+        return (self.state & state) != 0
+
+
+    def add_child(self, task, state = WAITING):
         """
         Adds a new child node and assigns the given task to the new node.
 
         task -- the task that is assigned to the new node.
-        status -- the initial node state
+        state -- the initial node state
         """
         if task is None:
             raise WorkflowException(self, 'add_child() requires a task.')
-        if self.state & self.PREDICTED != 0 and status & self.PREDICTED == 0:
+        if self.state & self.PREDICTED != 0 and state & self.PREDICTED == 0:
             msg = 'Attempt to add non-predicted child to predicted node'
             raise WorkflowException(self, msg)
         node = BranchNode(self.job, task, self)
         node.thread_id = self.thread_id
-        node.state     = status
+        node.state     = state
         return node
 
 
@@ -193,11 +204,11 @@ class BranchNode(object):
         return self.thread_id
 
 
-    def update_children(self, tasks, status = WAITING):
+    def update_children(self, tasks, state = WAITING):
         """
         This method adds one child for each given task, unless that
         child already exists.
-        The status for newly added children, as well as the state for
+        The state for newly added children, as well as the state for
         existing PREDICTED children is set to the given value.
         The state of existing non-PREDICTED children is left unchanged.
 
@@ -210,7 +221,7 @@ class BranchNode(object):
         and never touched.
 
         task -- the list of tasks that may become children.
-        status -- the status for newly added children
+        state -- the state for newly added children
         """
         if tasks is None:
             raise WorkflowException(self, '"tasks" argument is None.')
@@ -218,7 +229,7 @@ class BranchNode(object):
             tasks = [tasks]
 
         # Create a list of all children that are no longer needed, and
-        # set the status of all others.
+        # set the state of all others.
         add    = tasks[:]
         remove = []
         for child in self.children:
@@ -235,9 +246,9 @@ class BranchNode(object):
                 continue
             add.remove(child.task)
 
-            # Update the status.
+            # Update the state.
             if child.state & self.PREDICTED != 0:
-                child.state = status
+                child.state = state
 
         # Remove all children that are no longer specified.
         for child in remove:
@@ -247,7 +258,7 @@ class BranchNode(object):
         for task in add:
             if task.cancelled:
                 continue
-            self.add_child(task, status)
+            self.add_child(task, state)
 
 
     def is_descendant_of(self, parent):
@@ -277,6 +288,22 @@ class BranchNode(object):
         if self.parent.task == parent_task:
             return self
         return self.parent.find_child_of(parent_task)
+
+
+    def find_any(self, task):
+        """
+        Returns any descendants that have the given task assigned.
+
+        task -- the wanted task
+        """
+        instances = []
+        if self.task == task:
+            instances.append(self)
+        for node in self:
+            if node.task != task:
+                continue
+            instances.append(node)
+        return instances
 
 
     def find_ancestor(self, task):

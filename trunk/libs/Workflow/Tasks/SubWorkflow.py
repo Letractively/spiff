@@ -93,6 +93,6 @@ class SubWorkflow(Task):
         branch_node.update_children(self.outputs, BranchNode.PREDICTED)
         for child in subjob.branch_tree.children:
             branch_node.children.append(child)
-            child.set_status(BranchNode.WAITING)
+            child.set_state(BranchNode.WAITING)
             child.parent = branch_node
         return True

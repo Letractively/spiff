@@ -56,7 +56,7 @@ class Trigger(Task):
         for node in branch_node.job.branch_tree:
             if node.thread_id != branch_node.thread_id:
                 continue
-            if node.task == self and node.state & BranchNode.COMPLETED != 0:
+            if node.task == self and node.has_state(BranchNode.COMPLETED):
                 node.state = BranchNode.WAITING
 
 
