@@ -1,0 +1,37 @@
+<div xmlns:py="http://genshi.edgewall.org/">
+  <h2>Register a new account</h2>
+  <form action='${request_uri(register = None)}' method='post'>
+  <table id='register' cellspacing='10' cellpadding='0'>
+    <tr py:if="error">
+      <td colspan='2'><font class='error'>$error</font></td>
+    </tr>
+    <tr>
+      <td py:content="txt('Login:')" />
+      <td><input type='text' name='handle' value='$handle' /></td>
+    </tr>
+    <tr>
+      <td py:content="txt('Firstname:')" />
+      <td><input type='text' name='firstname' value='$firstname' /></td>
+    </tr>
+    <tr>
+      <td py:content="txt('Lastname:')" />
+      <td><input type='text' name='lastname' value='$lastname' /></td>
+    </tr>
+    <tr>
+      <td py:content="txt('Email:')" />
+      <td><input type='text' name='email' value='$email' /></td>
+    </tr>
+    <tr>
+      <td py:content="txt('Password:')" />
+      <td><input type='password' name='password1' value='$password1' /></td>
+    </tr>
+    <tr>
+      <td py:content="txt('Password (repeat):')" />
+      <td><input type='password' name='password2' value='$password2' /></td>
+    </tr>
+    <tr>
+      <td colspan='2' align='right'><input type='submit' name='register' /></td>
+    </tr>
+  </table>
+  </form>
+</div>

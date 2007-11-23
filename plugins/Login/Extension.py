@@ -27,15 +27,18 @@ class Extension:
 
 
     def on_spiff_page_open(self, args):
+        user     = self.__api.get_post_data('username')
+        password = self.__api.get_post_data('password')
+
         # A user is trying to log in.
-        if self.__api.get_post_data('login') is not None:
-            user     = self.__api.get_post_data('username')
-            password = self.__api.get_post_data('password')
-            headers  = self.__login.do(user, password)
-            if headers is not None:
-                self.__api.append_http_headers(**headers)
-                self.__status = self.login_success
-                self.__api.emit('login_done')
+        if self.__api.get_post_data('login') is not None and user is not None:
+            headers = self.__login.do(user, password)
+            if headers is None:
+                self.__status = self.login_failure
+                return
+            self.__api.append_http_headers(**headers)
+            self.__status = self.login_success
+            self.__api.emit('login_done')
             return
         elif self.__api.get_get_data('logout') is not None:
             headers = self.__login.logout()
