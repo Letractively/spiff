@@ -236,7 +236,9 @@ extension_api.set_requested_page(page)
 
 # Make sure that the caller has permission to retrieve this page.
 page_open_sent = False
-if page.get_attribute('private') or get_data.has_key('login'):
+if page.get_attribute('private') \
+  or get_data.has_key('login') \
+  or post_data.has_key('login'):
     (did_login, page_open_sent) = log_in(guard_db, integrator, page)
     if not did_login:
         page = get_login_page(guard_db)

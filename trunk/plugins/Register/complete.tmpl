@@ -1,0 +1,5 @@
+<div xmlns:py="http://genshi.edgewall.org/">
+  <h2 py:content="txt('Your registration is complete!')" />
+  Welcome, ${user.get_name()}! Your registration was successful and
+  you may now <a href="${uri('', login = [1])}">log in</a>.
+</div>

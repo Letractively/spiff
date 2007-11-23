@@ -65,6 +65,8 @@ class Login:
             return None
         if user.get_attribute('password') != self.hash_password(password):
             return None
+        if user.get_attribute('inactive') is not None:
+            return None
         self.__sid = self.__generate_session_id()
         #print "Logging in with sid %s..." % self.__sid
         user.set_attribute('sid', self.__sid)

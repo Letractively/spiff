@@ -430,17 +430,18 @@ class Extension:
         # Check permissions.
         current_user = self.api.get_login().get_current_user()
         section      = 'user_permissions'
+        guard_db     = self.guard_db
 
         # Make sure that current_user has "edit" permissions on it.
-        delete = guard_db.get_action_from_handle('delete', section)
-        assert delete is not None
-        permit = guard_db.has_permission(current_user, delete, resource)
+        edit = guard_db.get_action_from_handle('edit', section)
+        assert edit is not None
+        permit = guard_db.has_permission(current_user, edit, resource)
         if not permit and resource.is_group():
             return [i18n("You do not have permission to delete this group.")]
         elif not permit:
             return [i18n("You do not have permission to delete this user.")]
 
-        assert self.guard_db.delete_resource_from_id(resource.get_id())
+        assert guard_db.delete_resource_from_id(resource.get_id())
         return None
 
 

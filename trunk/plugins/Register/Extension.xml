@@ -1,0 +1,29 @@
+<?xml version="1.0" ?>
+<xml>
+  <extension handle="spiff_core_register">
+    <name>Register</name>
+    <release>0.1</release>
+    <description xml:lang="" lang="">
+    This core extension implements a page on which users may request
+    a new account.
+    </description>
+    <authors>
+      <person>
+        <name>Samuel Abels</name>
+        <email>http://debain.org</email>
+      </person>
+    </authors>
+
+    <behavior>
+      <signal uri="mail_sent" />
+      <signal uri="register_done" />
+      <signal uri="render_start" />
+      <signal uri="render_end" />
+    </behavior>
+
+    <depends>
+      <runtime>spiff</runtime>
+      <installtime>spiff</installtime>
+    </depends>
+  </extension>
+</xml>

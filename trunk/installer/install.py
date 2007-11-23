@@ -66,6 +66,7 @@ constructor.append(SetUserPassword('admin'))
 tasks = [
     InstallExtension('../plugins/Spiff'),
     InstallExtension('../plugins/Login'),
+    InstallExtension('../plugins/Register'),
     InstallExtension('../plugins/AdminCenter'),
     InstallExtension('../plugins/UserManager'),
     InstallExtension('../plugins/PageEditor'),

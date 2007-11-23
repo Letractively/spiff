@@ -285,6 +285,12 @@ class CreateDefaultSetup(CheckList):
         if content_admin is None:
             return Task.failure
 
+        content_admin_register = self.__create_content(content_admin,
+                                                       'User Registration',
+                                                       'admin/register')
+        if content_admin_register is None:
+            return Task.failure
+
         content_admin_login = self.__create_content(content_admin,
                                                     'System Login',
                                                     'admin/login')
@@ -319,6 +325,16 @@ class CreateDefaultSetup(CheckList):
         caption = 'Assign default page to a wiki'
         content_default.set_attribute('extension', 'spiff_core_wiki_page')
         if not self.guard.save_resource(content_default, section_content):
+            self._add_result(caption, Task.failure)
+            self._print_result(environment, False)
+            return Task.failure
+        self._add_result(caption, Task.success)
+
+        # Assign an extension to the admin/register page.
+        caption = 'Assign user registration extension to a system page'
+        content_admin_register.set_attribute('extension', 'spiff_core_register')
+        if not self.guard.save_resource(content_admin_register,
+                                        section_content):
             self._add_result(caption, Task.failure)
             self._print_result(environment, False)
             return Task.failure

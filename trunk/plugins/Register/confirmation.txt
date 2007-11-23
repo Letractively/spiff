@@ -1,0 +1,14 @@
+Subject: Your Spiff registration
+
+Hi,
+
+Somebody requested that an account be created for your email address.
+By clicking the following link you can activate your account.
+
+   $url
+
+If you did not request an account please disregard this message.
+We hope that you enjoy our service.
+
+Have fun!
+The Spiff Developers
