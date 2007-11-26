@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <xml>
-  <extension handle="spiff_core_admin_center">
+  <package handle="spiff_core_admin_center">
     <name>Admin Center</name>
     <release>0.1</release>
     <description xml:lang="" lang="">
@@ -23,5 +23,5 @@
       <installtime>spiff</installtime>
       <installtime>spiff_core_login</installtime>
     </depends>
-  </extension>
+  </package>
 </xml>

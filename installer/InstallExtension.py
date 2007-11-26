@@ -47,12 +47,12 @@ class InstallExtension(Task):
                                      get_data       = get_data,
                                      post_data      = post_data)
         self.integrator = Integrator.Manager(self.guard, extension_api)
-        self.integrator.set_extension_dir('../data/repo')
+        self.integrator.set_package_dir('../data/repo')
 
 
     def install(self, environment):
         self.__setup()
-        extension_id = self.integrator.add_extension(self.__filename)
+        extension_id = self.integrator.add_package(self.__filename)
         if extension_id <= 0:
             return Task.failure
         return Task.success

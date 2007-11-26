@@ -12,8 +12,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-from Task       import Task
-from sqlalchemy import *
+from Task          import Task
+from sqlalchemy    import *
+from User          import User
+from Group         import Group
+from Content       import Content
+from UserAction    import UserAction
+from ContentAction import ContentAction
 import Guard
 
 class InstallGuard(Task):
@@ -28,7 +33,13 @@ class InstallGuard(Task):
         guard  = Guard.DB(engine)
         try:
             guard.install()
-        except:
+            guard.register_type([User,
+                                 Group,
+                                 Content,
+                                 UserAction,
+                                 ContentAction])
+        except Exception, e:
+            print "FAIL:", e
             return Task.failure
         environment.set_attribute('guard_db', guard)
         return Task.success

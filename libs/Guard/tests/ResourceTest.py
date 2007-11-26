@@ -15,7 +15,6 @@ class ResourceTest(unittest.TestCase):
         self.assert_(resource.get_id()         == -1)
         self.assert_(resource.get_handle()     == make_handle_from_string(name))
         self.assert_(resource.get_n_children() == 0)
-        self.assert_(resource.is_actor()       == False)
         self.assert_(resource.is_group()       == False)
 
         attr_name  = 'Testattribute'

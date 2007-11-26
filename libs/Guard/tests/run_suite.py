@@ -1,18 +1,13 @@
 #!/usr/bin/python
 import os, sys, unittest
 modules = ['AclTest',
-           'ActionSectionTest',
            'ActionTest',
-           'ActorGroupTest',
-           'ActorTest',
            'DBObjectTest',
            'DBReaderTest',
            'DBTest',
            'FunctionTest',
-           'ObjectSectionTest',
            'ResourceGroupTest',
            'ResourcePathTest',
-           'ResourceSectionTest',
            'ResourceTest']
 
 # Parse CLI options.

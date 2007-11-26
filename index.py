@@ -25,6 +25,11 @@ from Layout          import Layout
 from genshi.template import TemplateLoader
 from genshi.template import TextTemplate
 from genshi.template import MarkupTemplate
+from User            import User
+from Group           import Group
+from Content         import Content
+from UserAction      import UserAction
+from ContentAction   import ContentAction
 import Guard
 
 
@@ -91,7 +96,7 @@ def find_requested_page(get_data):
 
 
 def get_login_page(guard_db):
-    login = guard_db.get_resource_from_handle('admin/login', 'content')
+    login = guard_db.get_resource(handle = 'admin/login', type = Content)
     assert login is not None
     return login
 
@@ -103,7 +108,7 @@ def log_in(guard_db, integrator, page):
     user = extension_api.get_login().get_current_user()
     if user:
         # Bail out if the user is already logged in and has permission.
-        view = guard_db.get_action_from_handle('view', 'content_permissions')
+        view = guard_db.get_action(handle = 'view', type = ContentAction)
         assert view is not None
         if guard_db.has_permission(user, view, page):
             return (True, False)
@@ -113,7 +118,7 @@ def log_in(guard_db, integrator, page):
     login = get_login_page(guard_db)
     descriptor = login.get_attribute('extension')
     assert descriptor is not None
-    extension = integrator.load_extension_from_descriptor(descriptor)
+    extension = integrator.load_package_from_descriptor(descriptor)
 
     # The extension can fetch this signal and perform the login.
     extension_api.emit_sync('spiff:page_open')
@@ -124,7 +129,7 @@ def log_in(guard_db, integrator, page):
         return (False, True)
 
     # Check permissions again.
-    view = guard_db.get_action_from_handle('view', 'content_permissions')
+    view = guard_db.get_action(handle = 'view', type = ContentAction)
     assert view is not None
     if guard_db.has_permission(user, view, page):
         return (True, True)
@@ -159,12 +164,13 @@ dbn = cfg.get('database', 'dbn')
 # Connect to MySQL and set up Spiff Guard.
 db       = create_engine(dbn)
 guard_db = Guard.DB(db)
+guard_db.register_type([User, Group, Content, UserAction, ContentAction])
 
 # Lookup the current page from the given cgi variables.
 get_data    = cgi.parse_qs(os.environ["QUERY_STRING"])
 post_data   = cgi.FieldStorage()
 page_handle = find_requested_page(get_data)
-page        = guard_db.get_resource_from_handle(page_handle, 'content')
+page        = guard_db.get_resource(handle = page_handle, type = Content)
 extension   = None
 
 # Set up the plugin manager (Integrator).
@@ -174,7 +180,7 @@ extension_api = ExtensionApi(requested_page = page,
                              get_data       = get_data,
                              post_data      = post_data)
 integrator = Integrator.Manager(guard_db, extension_api)
-integrator.set_extension_dir('data/repo')
+integrator.set_package_dir('data/repo')
 
 # Can not open some pages by addressing them directly.
 open_sys_page = False
@@ -198,14 +204,14 @@ if page is None:
     while page_handle != '':
         stack       = split(page_handle, '/')
         page_handle = '/'.join(stack[:-1])
-        page = guard_db.get_resource_from_handle(page_handle, 'content')
+        page = guard_db.get_resource(handle = page_handle, type = Content)
         if page is not None:
             break
 
     # Check whether it manages the subtree.
     if page is not None:
         descriptor = page.get_attribute('extension')
-        info       = integrator.get_extension_info_from_descriptor(descriptor)
+        info       = integrator.get_package_from_descriptor(descriptor)
         assert info is not None
         if not info.get_attribute('recursive'):
             page = None
@@ -214,11 +220,11 @@ if page is None:
 # If it has an extension that manages the entire tree instead of just a
 # single page, use it.
 if page is None:
-    page = guard_db.get_resource_from_handle('default', 'content')
+    page = guard_db.get_resource(handle = 'default', type = Content)
     assert page is not None
     extension_api.set_requested_page(page)
     descriptor = page.get_attribute('extension')
-    info       = integrator.get_extension_info_from_descriptor(descriptor)
+    info       = integrator.get_package_from_descriptor(descriptor)
     assert info is not None
     if not info.get_attribute('recursive'):
         page = None
@@ -249,7 +255,7 @@ if not page_open_sent:
 
 # If requested, load the content editor.
 if get_data.has_key('new_page') or get_data.has_key('edit_page'):
-    page = guard_db.get_resource_from_handle('admin/page', 'content')
+    page = guard_db.get_resource(handle = 'admin/page', type = Content)
 
 # Send headers.
 extension_api.emit_sync('spiff:header_before')

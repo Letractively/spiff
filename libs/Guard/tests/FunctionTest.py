@@ -6,6 +6,7 @@ def suite():
              'testMakeHandleFromString',
              'testHexPath2BinPath',
              'testBinPath2HexPath',
+             'testList2BinPath',
              'testBinPath2List']
     return unittest.TestSuite(map(FunctionTest, tests))
 
@@ -26,15 +27,24 @@ class FunctionTest(unittest.TestCase):
 
 
     def testHexPath2BinPath(self):
-        pass #FIXME
+        path = '012345f0'
+        res  = bin_path2hex_path(hex_path2bin_path(path))
+        self.assert_(res == path, res)
 
 
     def testBinPath2HexPath(self):
-        pass #FIXME
+        self.testHexPath2BinPath()
+
+
+    def testList2BinPath(self):
+        path = [1, 2, 3, 4]
+        res  = bin_path2list(list2bin_path(path))
+        self.assert_(res == path, res)
 
 
     def testBinPath2List(self):
-        pass #FIXME
+        self.testList2BinPath()
+
 
 if __name__ == '__main__':
     unittest.TextTestRunner(verbosity = 2).run(suite())

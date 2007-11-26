@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <xml>
-  <extension handle="spiff_core_user_manager">
+  <package handle="spiff_core_user_manager">
     <name>User Manager</name>
     <release>0.1</release>
     <description xml:lang="" lang="">
@@ -24,5 +24,5 @@
       <installtime>spiff</installtime>
       <installtime>spiff_core_login</installtime>
     </depends>
-  </extension>
+  </package>
 </xml>

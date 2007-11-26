@@ -5,7 +5,7 @@ modules = ['ApiTest',
            'DBTest',
            'EventBusTest',
            'EventTest',
-           'ExtensionInfoTest',
+           'PackageTest',
            'FunctionTest',
            'ManagerTest',
            'ParserTest']

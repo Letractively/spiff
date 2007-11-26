@@ -1,2 +1,5 @@
-* Allow passing a limit/offset to methods that return a list.
+* Possibly rename actions and related methods to something that
+  indicates that any behavioral link may be created.
+* Replace remaining argument check assertions by Exceptions with a useful
+  error message.
 * Cache Resource objects.

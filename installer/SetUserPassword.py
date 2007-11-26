@@ -20,9 +20,8 @@ from ConfigParser import RawConfigParser
 from Task         import Task
 from Form         import Form
 from StockButton  import StockButton
-from Guard        import ResourceSection
 from ExtensionApi import ExtensionApi
-from Login        import Login
+from User         import User
 import Guard
 
 class SetUserPassword(Task):
@@ -42,6 +41,7 @@ class SetUserPassword(Task):
         # Connect to MySQL and set up.
         db            = create_engine(dbn)
         self.guard    = Guard.DB(db)
+        self.guard.register_type(User)
         get_data      = cgi.parse_qs(os.environ["QUERY_STRING"])
         post_data     = cgi.FieldStorage()
         extension_api = ExtensionApi(requested_page = None,
@@ -50,13 +50,7 @@ class SetUserPassword(Task):
                                      get_data       = get_data,
                                      post_data      = post_data)
         self.integrator = Integrator.Manager(self.guard, extension_api)
-        self.integrator.set_extension_dir('../data/repo')
-
-
-    #FIXME: This should be elsewhere.
-    def __hash_password(self, password):
-        import sha, time
-        return sha.new(password).hexdigest()
+        self.integrator.set_package_dir('../data/repo')
 
 
     def __show_form(self, environment, username, error = ''):
@@ -74,7 +68,8 @@ class SetUserPassword(Task):
 
     def install(self, environment):
         self.__setup()
-        user = self.guard.get_resource_from_handle(self.__handle, 'users')
+        user = self.guard.get_resource(handle = self.__handle,
+                                       type   = User)
         assert user is not None
 
         result = environment.get_interaction_result()
@@ -93,9 +88,8 @@ class SetUserPassword(Task):
             return Task.interact
 
         password = result.get('password1')
-        user.set_attribute('password', self.__hash_password(password))
-        section = ResourceSection('users')
-        self.guard.save_resource(user, section)
+        user.set_password(password)
+        self.guard.save_resource(user)
         return Task.success
 
 

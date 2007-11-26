@@ -13,8 +13,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import os
-from Guard  import ResourceSection
 from Cookie import SimpleCookie
+from User   import User
 
 class Login:
     def __init__(self, guard_db):
@@ -33,22 +33,17 @@ class Login:
         return sha.new(str(time.time())).hexdigest()
 
 
-    def hash_password(self, password):
-        import sha
-        return sha.new(password).hexdigest()
-
-
     def get_current_user(self):
         if self.__current_user is not None:
             return self.__current_user
         guard = self.__guard_db
         if self.__sid is None:
             return None
-        users = guard.get_resource_list_from_attribute('sid', self.__sid)
-        if users is None:
+        user = guard.get_resource(attribute = {'sid': self.__sid},
+                                  type      = User)
+        if user is None:
             return None
-        assert len(users) == 1
-        self.__current_user = users[0]
+        self.__current_user = user
         return self.__current_user
 
 
@@ -60,18 +55,18 @@ class Login:
         #print "Login requested for user '%s'." % username
         if username is None or password is None:
             return None
-        user = self.__guard_db.get_resource_from_handle(username, 'users')
+        user = self.__guard_db.get_resource(handle = username,
+                                            type   = User)
         if user is None:
             return None
-        if user.get_attribute('password') != self.hash_password(password):
+        if not user.has_password(password):
             return None
-        if user.get_attribute('inactive') is not None:
+        if user.is_inactive():
             return None
         self.__sid = self.__generate_session_id()
         #print "Logging in with sid %s..." % self.__sid
         user.set_attribute('sid', self.__sid)
-        section = ResourceSection('users')
-        self.__guard_db.save_resource(user, section)
+        self.__guard_db.save_resource(user)
         self.__current_user = user
         headers = {'Set-Cookie': 'sid=%s; path=/' % self.__sid}
         return headers

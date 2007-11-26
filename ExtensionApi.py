@@ -17,6 +17,7 @@ from functions       import *
 from Integrator      import Api
 from Cookie          import SimpleCookie
 from Login           import Login
+from ContentAction   import ContentAction
 from genshi.template import TemplateLoader
 from genshi.template import MarkupTemplate
 
@@ -100,6 +101,7 @@ class ExtensionApi(Api):
         return self.__guard_db
 
 
+    #FIXME: It is not necessary to export the module.
     def get_guard(self):
         #FIXME: Check permission of the caller!
         return self.__guard_mod
@@ -140,8 +142,8 @@ class ExtensionApi(Api):
         user = self.__login.get_current_user()
         if user is None:
             return False
-        section = 'content_permissions'
-        action  = self.__guard_db.get_action_from_handle(permission, section)
+        action = self.__guard_db.get_action(handle = permission,
+                                            type   = ContentAction)
         assert action is not None
         return self.__guard_db.has_permission(user,
                                               action,
@@ -175,14 +177,12 @@ class ExtensionApi(Api):
 
     def add_page(self, parent, page):
         #FIXME: Check the permission of the caller.
-        section = self.__guard_mod.ResourceSection('content')
-        return self.__guard_db.add_resource(parent.get_id(), page, section)
+        return self.__guard_db.add_resource(parent, page)
 
 
     def save_page(self, page):
         #FIXME: Check the permission of the caller.
-        section = self.__guard_mod.ResourceSection('content')
-        return self.__guard_db.save_resource(page, section)
+        return self.__guard_db.save_resource(page)
 
 
     def delete_page(self, page):

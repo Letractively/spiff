@@ -18,22 +18,13 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from Guard     import Resource
 from functions import descriptor_parse
 
-class ExtensionInfo(Resource):
+class Package(Resource):
     def __init__(self, name, handle = None, version = '0'):
         assert name    is not None
         assert version is not None
         Resource.__init__(self, name, handle)
         self.set_version(version)
         self.__dependencies = {}
-
-
-    def set_version(self, version):
-        assert version is not None and version != ''
-        self.set_attribute('version', version)
-
-
-    def get_version(self):
-        return self.get_attribute('version')
 
 
     def set_author(self, author):
@@ -52,6 +43,15 @@ class ExtensionInfo(Resource):
 
     def get_description(self):
         return self.get_attribute('description')
+
+
+    def set_version(self, version):
+        assert version is not None and version != ''
+        self.set_attribute('version', version)
+
+
+    def get_version(self):
+        return self.get_attribute('version')
 
 
     def set_filename(self, filename):

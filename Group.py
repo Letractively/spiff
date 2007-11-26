@@ -12,18 +12,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-from Actor import *
+from Guard import ResourceGroup
 
-class ActorGroup(Actor):
-    def __init__(self, name, handle = None):
-        Actor.__init__(self, name, handle)
-        self.remove_attribute('auth_hash')
-
-    def is_group(self):
-        return True
-
-    def set_auth_string(self, auth_string):
-        pass
-
-    def has_auth_string(self, auth_string):
-        return False
+class Group(ResourceGroup):
+    pass

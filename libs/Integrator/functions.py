@@ -27,8 +27,16 @@ def is_valid_uri(uri):
 
 
 def descriptor_parse(descriptor):
-    regexp = re.compile(descriptor_re)
-    return regexp.match(descriptor)
+    regexp  = re.compile(descriptor_re)
+    match   = regexp.match(descriptor)
+    assert match is not None
+    handle  = match.group(1)
+    op      = match.group(2)
+    version = match.group(3)
+    if op is None:
+        op       = '>='
+        version  = 0
+    return handle, op, version
 
 
 def version_is_greater(version_a, version_b):

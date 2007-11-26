@@ -14,13 +14,12 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 from string       import split
 from LayoutParser import LayoutParser
+from Content      import Content
 
 class Extension:
     def __init__(self, api):
         self.api        = api
         self.i18n       = api.get_i18n()
-        self.guard      = api.get_guard()
-        self.guard_db   = api.get_guard_db()
         self.integrator = api.get_integrator()
         
         self.__errors = []
@@ -32,7 +31,7 @@ class Extension:
 
 
     def _layout_data_handler(self, data):
-        extension = self.integrator.get_extension_info_from_name(data)
+        extension = self.integrator.get_package_from_name(data)
         if extension is None:
             self.__errors.append(self.i18n('Invalid extension in layout.'))
             return ''
@@ -62,7 +61,7 @@ class Extension:
 
         # Fetch the page from the database, or instanciate a new one.
         if new:
-            page   = self.guard.ResourceGroup(name)
+            page   = Content(name)
             parent = page_str and self.api.get_requested_page() or None
         else:
             page = self.api.get_requested_page()
@@ -70,8 +69,8 @@ class Extension:
 
         # Check whether the caller has permission to edit this page.
         if not self.api.has_permission('edit_page'):
-            self.__errors.append(i18n('Insufficient rights to change this' +
-                                      ' page.'))
+            err = i18n('Insufficient rights to change this page.')
+            self.__errors.append(err)
             return False
 
         # Parse the layout to replace the extension names by handles.
@@ -142,7 +141,7 @@ class Extension:
             layout = page.get_attribute('layout') or ''
         
         # Retrieve a list of available extensions from the DB.
-        extension_list = self.integrator.get_extension_info_list(0, 0)
+        extension_list = self.integrator.get_package_list(0, 0)
         extensions     = []
         for extension in extension_list:
             if extension.get_handle() not in self.__hidden:

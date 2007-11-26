@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <xml>
-  <extension handle="spiff">
+  <package handle="spiff">
     <name>Spiff</name>
     <release>1.0</release>
     <description xml:lang="" lang="">
@@ -12,5 +12,5 @@
         <email>spam2, debain, org</email>
       </person>
     </authors>
-  </extension>
+  </package>
 </xml>

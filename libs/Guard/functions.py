@@ -16,6 +16,15 @@ import re
 import string
 import struct
 
+def int2bin(number):
+    return struct.pack('l', number)
+
+
+def hex2bin(hex):
+    assert len(hex) <= 8
+    return int2bin(string.atol(hex, 16))
+
+
 def hex_path2bin_path(path):
     assert path is not None
     bin_path = ''
@@ -28,18 +37,6 @@ def hex_path2bin_path(path):
     return bin_path
 
 
-def bin_path2list(path):
-    assert path is not None
-    #print "Path length:", len(path)
-    numbers = []
-    while path != '':
-        cur_chunk = path[-4:]
-        numbers.append(struct.unpack('l', cur_chunk)[0])
-        path = path[0:len(path) - 4]
-    hex_path = ''
-    return numbers
-
-
 def bin_path2hex_path(path):
     assert path is not None
     #print "Path length:", len(path)
@@ -49,6 +46,35 @@ def bin_path2hex_path(path):
         hex_path += int2hex(number, 8)
     #print "PATH: '" + hex_path + "', Len:", len(hex_path)
     return hex_path
+
+
+def list2hex_path(path):
+    assert path is not None
+    #print "Path length:", len(path)
+    hex_path = ''
+    for number in path:
+        hex_path += int2hex(number, 8)
+    return hex_path
+
+
+def list2bin_path(path):
+    assert path is not None
+    #print "Path length:", len(path)
+    bin_path = ''
+    for number in path:
+        bin_path += struct.pack('l', int(number))
+    return bin_path
+
+
+def bin_path2list(path):
+    assert path is not None
+    #print "Path length:", len(path)
+    numbers = []
+    while path != '':
+        cur_chunk = path[:4]
+        numbers.append(struct.unpack('l', cur_chunk)[0])
+        path = path[4:]
+    return numbers
 
 
 def int2hex(n, len):

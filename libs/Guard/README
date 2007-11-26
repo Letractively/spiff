@@ -24,44 +24,45 @@ If you need more help, please drop by our mailing list. You might
 actually make someone write the missing pieces of documentation.
 
 ##############################
-from Guard import *
+from sqlalchemy import create_engine
+from Guard      import *
 
-db = AclDB(...)
-a_section = ActionSection("User Permissions")
-r_section = ResourceSection("Users and Content")
-view = Action("View")
-write = Action("Write")
-website = Resource("My Website")
-group = ActorGroup("Users")
-user = Actor("Some Guy")
+# Connect to the database.
+db    = create_engine('mysql://user:pass@localhost/guard_name')
+guard = Guard(db)
+guard.install()
+guard.register_type([Action, Resource, ResourceGroup])
  
 # Create actions "View" and "Write".
-db.add_action_section(a_section)
-db.add_action(view, a_section)
-db.add_action(write, a_section)
+view  = Action("View")
+write = Action("Write")
+guard.add_action(view)
+guard.add_action(write)
  
 # Create an access control object for the website.
-db.add_resource_section(r_section)
-db.add_resource(website, r_section)
+website = ResourceGroup("My Website")
+guard.add_resource(website)
  
 # Create an access control object for users and groups.
-db.add_resource(None, group, r_section)
-db.add_resource(group, user, r_section)
+group = ResourceGroup("Users")
+user  = Resource("Some Guy")
+guard.add_resource(None, group)
+guard.add_resource(group, user)
  
 # Assign permissions.
-db.grant(group, view, website)
-db.grant(user, write, website)
+guard.grant(group, view, website)
+guard.grant(user, write, website)
  
 # Done! Checking permissions is now as easy as this:
-if db.has_permission(user, view, website):
+if guard.has_permission(user, view, website):
      print 'Yep, that is permitted!'
 else:
      print 'Sorry, dude, permission denied!'
      
-# Alternate way without requiring the objects:
-if db.has_permission_from_id(user.get_id(),
-                              view.get_id(),
-                              website.get_id()):
+# Alternate way that does not require the object instance:
+if guard.has_permission_from_id(user.get_id(),
+                                view.get_id(),
+                                website.get_id()):
      print 'Yep, that is permitted!'
 else:
      print 'Sorry, dude, permission denied!'

@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <xml>
-  <extension handle="spiff_core_register">
+  <package handle="spiff_core_register">
     <name>Register</name>
     <release>0.1</release>
     <description xml:lang="" lang="">
@@ -25,5 +25,5 @@
       <runtime>spiff</runtime>
       <installtime>spiff</installtime>
     </depends>
-  </extension>
+  </package>
 </xml>
