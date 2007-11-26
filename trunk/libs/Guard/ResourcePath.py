@@ -12,7 +12,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-from string import split
+from string    import split
+from functions import *
 
 class ResourcePath:
     def __init__(self, path = ''):
@@ -49,6 +50,22 @@ class ResourcePath:
         Returns the current path.
         """
         return '/'.join(self.path)
+
+
+    def hex(self):
+        return list2hex_path(self.path)
+
+
+    def bin(self):
+        return list2bin_path(self.path)
+
+
+    def __add__(self, other):
+        return ResourcePath(self.path + other.path)
+
+
+    def __len__(self):
+        return len(self.path)
 
 
     def get_parent_id(self):

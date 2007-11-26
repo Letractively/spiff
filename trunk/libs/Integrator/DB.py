@@ -15,34 +15,27 @@
 import sys
 import os.path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from sqlalchemy import *
-
-from ExtensionInfo   import ExtensionInfo
+from sqlalchemy      import *
+from Package         import Package
 from Callback        import Callback
 from Guard.functions import make_handle_from_string
-from Guard           import *
 from functions       import *
 
 class DB:
-    def __init__(self, acldb, section_handle = 'extensions'):
+    def __init__(self, guard):
         """
         Instantiates a new DB.
         
-        @type  acldb: AclDB
-        @param acldb: A Spiff Guard AclDB instance.
-        @type  section_handle: string
-        @param section_handle: A string specifying the Spiff Guard section
-                               into which extensions are added.
+        @type  guard: AclDB
+        @param guard: A Spiff Guard AclDB instance.
         @rtype:  DB
         @return: The new instance.
         """
-        self.db                  = acldb.db
-        self._acldb              = acldb
+        self.db                  = guard.db
+        self._guard              = guard
         self._table_prefix       = 'integrator_'
         self._table_map          = {}
         self._table_list         = []
-        self._acl_section_handle = section_handle
-        self._acl_section        = None
         self.__update_table_names()
 
 
@@ -62,41 +55,40 @@ class DB:
         """
         Adds all tables to the internal table list.
         """
-        metadata  = self._acldb.db_metadata
+        metadata  = self._guard.db_metadata
         pfx       = self._table_prefix
-        acldb_pfx = self._acldb.get_table_prefix()
+        guard_pfx = self._guard.get_table_prefix()
         self._table_list = []
-        self.__add_table(Table(pfx + 'extension_dependency', metadata,
+        self.__add_table(Table(pfx + 'package_dependency', metadata,
             Column('id',                  Integer,    primary_key = True),
-            Column('extension_id',        Integer,    index = True),
+            Column('package_id',          Integer,    index = True),
             Column('dependency_handle',   String(20), index = True),
             Column('dependency_operator', String(3),  index = True),
             Column('dependency_version',  String(20), index = True),
-            ForeignKeyConstraint(['extension_id'],
-                                 [acldb_pfx + 'resource.id'],
+            ForeignKeyConstraint(['package_id'],
+                                 [guard_pfx + 'resource.id'],
                                  ondelete = 'CASCADE'),
             useexisting = True,
             mysql_engine='INNODB'
         ))
-        self.__add_table(Table(pfx + 'extension_dependency_map', metadata,
-            Column('extension_id',  Integer, index = True),
+        self.__add_table(Table(pfx + 'package_dependency_map', metadata,
+            Column('package_id',    Integer, index = True),
             Column('dependency_id', Integer, index = True),
-            ForeignKeyConstraint(['extension_id'],
-                                 [acldb_pfx + 'resource.id'],
+            ForeignKeyConstraint(['package_id'],
+                                 [guard_pfx + 'resource.id'],
                                  ondelete = 'CASCADE'),
             ForeignKeyConstraint(['dependency_id'],
-                                 [acldb_pfx + 'resource.id'],
+                                 [guard_pfx + 'resource.id'],
                                  ondelete = 'CASCADE'),
             useexisting = True,
             mysql_engine='INNODB'
         ))
-        self.__add_table(Table(pfx + 'extension_callback', metadata,
-            Column('id',           Integer,     primary_key = True),
-            Column('extension_id', Integer,     index = True),
-            #Column('name',         String(200)),
-            Column('event_uri',    String(255), index = True),
-            ForeignKeyConstraint(['extension_id'],
-                                 [acldb_pfx + 'resource.id'],
+        self.__add_table(Table(pfx + 'package_callback', metadata,
+            Column('id',         Integer,     primary_key = True),
+            Column('package_id', Integer,     index = True),
+            Column('event_uri',  String(255), index = True),
+            ForeignKeyConstraint(['package_id'],
+                                 [guard_pfx + 'resource.id'],
                                  ondelete = 'CASCADE'),
             useexisting = True,
             mysql_engine='INNODB'
@@ -110,7 +102,7 @@ class DB:
         @type  debug: Boolean
         @param debug: True to enable debugging.
         """
-        self.db.debug = debug
+        self.db.echo = debug
 
 
     def set_table_prefix(self, prefix):
@@ -144,6 +136,7 @@ class DB:
         """
         for table in self._table_list:
             table.create(checkfirst = True)
+        self._guard.try_register_type(Package)
         return True
 
 
@@ -167,46 +160,41 @@ class DB:
         @rtype:  Boolean
         @return: True on success, False otherwise.
         """
-        handle  = self._acl_section_handle
-        success = self._acldb.delete_resource_section_from_handle(handle)
-        if success:
-            self._acl_section = None
-        return success
+        self._guard.delete_resource_from_match(type = Package)
+        return True
 
 
-    def __has_dependency_link_from_id(self, extension_id, dependency_id):
-        assert extension_id  >= 0
+    def __has_dependency_link_from_id(self, package_id, dependency_id):
+        assert package_id  >= 0
         assert dependency_id >= 0
-        table  = self._table_map['extension_dependency_map']
-        query  = select([table.c.extension_id],
-                        and_(table.c.extension_id  == extension_id,
+        table  = self._table_map['package_dependency_map']
+        query  = select([table.c.package_id],
+                        and_(table.c.package_id  == package_id,
                              table.c.dependency_id == dependency_id),
                         from_obj = [table])
         result = query.execute()
-        assert result is not None
-        row = result.fetchone()
-        if not row: return False
+        row    = result.fetchone()
+        if not row:
+            return False
         return True
 
     
-    def __add_dependency_link_from_id(self, extension_id, dependency_id):
-        assert extension_id  >= 0
+    def __add_dependency_link_from_id(self, package_id, dependency_id):
+        assert package_id  >= 0
         assert dependency_id >= 0
-        table  = self._table_map['extension_dependency_map']
+        table  = self._table_map['package_dependency_map']
         query  = table.insert()
-        result = query.execute(extension_id  = extension_id,
+        result = query.execute(package_id  = package_id,
                                dependency_id = dependency_id)
-        assert result is not None
 
 
-    def __get_dependency_id_list_from_id(self, extension_id):
-        assert extension_id >= 0
-        table  = self._table_map['extension_dependency_map']
+    def __get_dependency_id_list_from_id(self, package_id):
+        assert package_id >= 0
+        table  = self._table_map['package_dependency_map']
         query  = select([table.c.dependency_id],
-                        table.c.extension_id == extension_id,
+                        table.c.package_id == package_id,
                         from_obj = [table])
         result = query.execute()
-        assert result is not None
 
         dependency_id_list = []
         for row in result:
@@ -214,21 +202,20 @@ class DB:
         return dependency_id_list
 
 
-    def __get_dependency_id_list(self, extension):
-        assert extension is not None
-        return self.__get_dependency_id_list_from_id(extension.get_id())
+    def __get_dependency_id_list(self, package):
+        assert package is not None
+        return self.__get_dependency_id_list_from_id(package.get_id())
 
 
-    def __get_dependency_descriptor_list_from_id(self, extension_id):
-        assert extension_id >= 0
-        table  = self._table_map['extension_dependency']
+    def __get_dependency_descriptor_list_from_id(self, package_id):
+        assert package_id >= 0
+        table  = self._table_map['package_dependency']
         query  = select([table.c.dependency_handle,
                          table.c.dependency_operator,
                          table.c.dependency_version],
-                        table.c.extension_id == extension_id,
+                        table.c.package_id == package_id,
                         from_obj = [table])
         result = query.execute()
-        assert result is not None
 
         dependency_list = []
         for row in result:
@@ -239,123 +226,88 @@ class DB:
         return dependency_list
 
 
-    def __get_dependency_descriptor_list(self, extension):
-        assert extension is not None
-        return self.__get_dependency_descriptor_list_from_id(extension.get_id())
+    def __get_dependency_descriptor_list(self, package):
+        assert package is not None
+        return self.__get_dependency_descriptor_list_from_id(package.get_id())
 
 
-    def __load_dependency_descriptor_list(self, extension):
-        assert extension is not None
-        list = self.__get_dependency_descriptor_list(extension)
+    def __load_dependency_descriptor_list(self, package):
+        assert package is not None
+        list = self.__get_dependency_descriptor_list(package)
         for dependency in list:
-            extension.add_dependency(dependency)
+            package.add_dependency(dependency)
         return True
 
     
-    def __lookup_section(self):
-        s_handle = self._acl_section_handle
-        section  = self._acldb.get_resource_section_from_handle(s_handle)
-        if not section:
-            section = ResourceSection(s_handle)
-            self._acldb.add_resource_section(section)
-        self._acl_section = section
-        
-
-
-    def check_dependencies(self, extension):
+    def check_dependencies(self, package):
         """
         Checks whether all required dependencies are registered.
 
         Returns True if all dependencies needed to register the given
-        extension are registered, False otherwise.
+        package are registered, False otherwise.
 
-        @type  extension: ExtensionInfo
-        @param extension: The extension whose dependencies will be checked.
+        @type  package: Package
+        @param package: The package whose dependencies will be checked.
         @rtype:  Boolean
         @return: True if all dependency requirements are met, False otherwise.
         """
-        assert extension is not None
-        dependency_list = extension.get_dependency_list()
+        assert package is not None
+        dependency_list = package.get_dependency_list()
         for descriptor in dependency_list:
-            if not self.get_extension_from_descriptor(descriptor):
+            if not self.get_package_from_descriptor(descriptor):
                 return False
         return True
 
 
-    def register_extension(self, extension):
+    def register_package(self, package):
         """
-        Register an extension.
+        Register a package.
 
-        Inserts the given ExtensionInfo into the database.
-        The method takes no action if the extension is already registered.
+        Inserts the given Package into the database.
+        The method takes no action if the package is already registered.
 
-        @type  extension: ExtensionInfo
-        @param extension: The extension to install.
+        @type  package: Package
+        @param package: The package to install.
         @rtype:  Boolean
         @return: True on success, False otherwise.
         """
-        assert extension is not None
+        assert package is not None
+        self._guard.try_register_type(Package)
         
-        # Check whether the extension is already registered.
-        installed = self.get_extension_from_handle(extension.get_handle(),
-                                                   extension.get_version())
+        # Check whether the package is already registered.
+        installed = self.get_package_from_handle(package.get_handle(),
+                                                 package.get_version())
         if installed is not None:
-            extension.set_id(installed.get_id())
+            package.set_id(installed.get_id())
             return True
-
-        # Make sure that all dependencies are registered.
-        assert self.check_dependencies(extension)
 
         # Start transaction.
         connection  = self.db.connect()
         transaction = connection.begin()
 
-        # Make sure that a resource section already exists.
-        if not self._acl_section:
-            self.__lookup_section()
+        # Make sure that all dependencies are registered.
+        assert self.check_dependencies(package)
 
-        # Create a group that holds all versions of the extension.
-        handle   = extension.get_handle()
-        s_handle = self._acl_section.get_handle()
-        if self._acldb.get_resource_from_handle(handle, s_handle) is None:
-            parent = ResourceGroup(extension.get_name(), handle)
-            self._acldb.add_resource(None, parent, self._acl_section)
-        else:
-            parent = self._acldb.get_resource_from_handle(handle, s_handle)
-
-        # Insert the extension into the ACL resource table.
-        old_name   = extension.get_name()
-        old_handle = extension.get_handle()
-        new_name   = old_name   + extension.get_version()
-        new_handle = old_handle + extension.get_version()
-        handle     = make_handle_from_string(new_handle)
-        extension.set_name(new_name)
-        extension.set_handle(handle)
-        self._acldb.add_resource(parent.get_id(), extension, self._acl_section)
-        extension.set_handle(old_handle)
+        # Insert the package into the ACL resource table.
+        self._guard.add_resource(None, package)
         
         # Walk through all requested dependencies.
-        for descriptor in extension.get_dependency_list():
-            matches = descriptor_parse(descriptor)
-            assert matches is not None
-            dependency_handle   = matches.group(1)
-            dependency_operator = matches.group(2)
-            dependency_version  = matches.group(3)
-            if dependency_operator is None:
-                dependency_operator = '>='
-                dependency_version  = 0
+        for descriptor in package.get_dependency_list():
+            dependency_handle, \
+            dependency_operator, \
+            dependency_version = descriptor_parse(descriptor)
 
             # Add the dependency request into the database.
-            table  = self._table_map['extension_dependency']
+            table  = self._table_map['package_dependency']
             query  = table.insert()
-            result = query.execute(extension_id        = extension.get_id(),
+            result = query.execute(package_id          = package.get_id(),
                                    dependency_handle   = dependency_handle,
                                    dependency_operator = dependency_operator,
                                    dependency_version  = dependency_version)
             assert result is not None
 
-            # And link the extension with the best matching dependency.
-            best = self.get_extension_from_descriptor(descriptor)
+            # And link the package with the best matching dependency.
+            best = self.get_package_from_descriptor(descriptor)
 
             # Retrieve a list of all dependencies of that dependency.
             best_id = best.get_id()
@@ -364,13 +316,13 @@ class DB:
 
             # Add a link to all of the dependencies.
             for id in list:
-                self.__add_dependency_link_from_id(extension.get_id(), id)
+                self.__add_dependency_link_from_id(package.get_id(), id)
 
-        # Walk through all extensions that currently depend on another
-        # version of the recently registered extension.
-        handle  = extension.get_handle()
-        version = extension.get_version()
-        table   = self._table_map['extension_dependency']
+        # Walk through all packages that currently depend on another
+        # version of the recently registered package.
+        handle  = package.get_handle()
+        version = package.get_version()
+        table   = self._table_map['package_dependency']
         query   = select([table],
                          and_(table.c.dependency_handle  == handle,
                               table.c.dependency_version == version),
@@ -381,25 +333,25 @@ class DB:
             dep_handle   = handle
             dep_operator = row[table.c.dependency_operator]
             dep_version  = row[table.c.dependency_version]
-            dependency   = self.get_extension_from_descriptor(dep_handle,
-                                                              dep_operator,
-                                                              dep_version)
+            dependency   = self.get_package_from_descriptor(dep_handle,
+                                                            dep_operator,
+                                                            dep_version)
             
             # No need to do anything if the registered link is already the
             # best one.
             dep_id = dependency.get_id()
-            if self.__has_dependency_link_from_id(extension.get_id(), dep_id):
+            if self.__has_dependency_link_from_id(package.get_id(), dep_id):
                 continue
 
             # Delete the old dependency links.
-            self.__delete_dependency_link_from_id(extension.get_id())
+            self.__delete_dependency_link_from_id(package.get_id())
 
             # Retrieve a list of all dependencies of that dependency.
             dep_list = self.__get_dependency_id_list_from_id(dep_id)
             dep_list.append(dep_id)
 
             for id in dep_list:
-                self.__add_dependency_link_from_id(extension.get_id(), dep_id)
+                self.__add_dependency_link_from_id(package.get_id(), dep_id)
 
         # Transaction finish.
         transaction.commit()
@@ -407,109 +359,104 @@ class DB:
         return True
 
 
-    def unregister_extension_from_id(self, id):
+    def unregister_package_from_id(self, id):
         """
-        Removes the given ExtensionInfo from the database. Warning: Also
-        removes any extension that requires the given ExtensionInfo.
+        Removes the given package from the database. Warning: Also
+        removes any package that requires the given Package.
 
         @type  id: int
-        @param id: The id of the extension to remove.
+        @param id: The id of the package to remove.
         @rtype:  Boolean
-        @return: False if the extension did not exist, True otherwise.
+        @return: False if the package did not exist, True otherwise.
         """
         assert id >= 0
         dependency_list = self.__get_dependency_id_list_from_id(id)
-        self._acldb.delete_resource_from_id(id)
-        # Unregister all extensions that require this extension.
+        self._guard.delete_resource_from_match(id = id)
+        # Unregister all packages that require this package.
         for dependency_id in dependency_list:
-            self._acldb.delete_resource_from_id(id)
+            self._guard.delete_resource_from_match(id = id)
         return True
 
 
-    def unregister_extension_from_handle(self, handle, version):
+    def unregister_package_from_handle(self, handle, version):
         """
-        Removes the given ExtensionInfo from the database.
+        Removes the given Package from the database.
 
         @type  handle: string
-        @param handle: The handle of the extension to remove.
+        @param handle: The handle of the package to remove.
         @rtype:  Boolean
-        @return: False if the extension did not exist, True otherwise.
+        @return: False if the package did not exist, True otherwise.
         """
         assert handle is not None
-        extension = self.get_extension_from_handle(handle, version)
-        return self.unregister_extension_from_id(extension.get_id())
+        package = self.get_package_from_handle(handle, version)
+        return self.unregister_package_from_id(package.get_id())
 
 
-    def unregister_extension(self, extension):
+    def unregister_package(self, package):
         """
-        Removes the given ExtensionInfo from the database.
+        Removes the given Package from the database.
 
-        @type  extension: ExtensionInfo
-        @param extension: The extension to remove.
+        @type  package: Package
+        @param package: The package to remove.
         @rtype:  Boolean
-        @return: False if the extension did not exist, True otherwise.
+        @return: False if the package did not exist, True otherwise.
         """
-        assert extension is not None
-        self.unregister_extension_from_id(extension.get_id())
+        assert package is not None
+        self.unregister_package_from_id(package.get_id())
         return True
 
 
-    def get_extension_from_id(self, id):
+    def get_package_from_id(self, id):
         """
-        Returns the extension with the given id from the database.
+        Returns the package with the given id from the database.
 
         @type  id: int
-        @param id: The id of the wanted extension.
-        @rtype:  ExtensionInfo
-        @return: The extension on success, None if it does not exist.
+        @param id: The id of the wanted package.
+        @rtype:  Package
+        @return: The package on success, None if it does not exist.
         """
         assert id >= 0
-        extension = self._acldb.get_resource_from_id(id, ExtensionInfo)
-        if extension is None:
+        package = self._guard.get_resource(id = id)
+        if package is None:
             return None
-        handle  = extension.get_handle()
-        version = extension.get_version()
-        extension.set_handle(handle[0:len(version) * -1])
-        self.__load_dependency_descriptor_list(extension)
-        return extension
+        self.__load_dependency_descriptor_list(package)
+        return package
 
 
-    def get_extension_from_handle(self, handle, version):
+    def get_package_from_handle(self, handle, version):
         """
-        Returns the extension with the given handle from the database.
+        Returns the package with the given handle from the database.
 
         @type  handle:  string
-        @param handle:  The handle of the wanted extension.
+        @param handle:  The handle of the wanted package.
         @type  version: string
-        @param version: The version number of the wanted extension.
-        @rtype:  ExtensionInfo
-        @return: The ExtensionInfo on success, None if none was found.
+        @param version: The version number of the wanted package.
+        @rtype:  Package
+        @return: The Package on success, None if none was found.
         """
         assert handle  is not None
         assert version is not None
-        version_handle = make_handle_from_string(handle + version)
-        section_handle = self._acl_section_handle
-        extension      = self._acldb.get_resource_from_handle(version_handle,
-                                                              section_handle,
-                                                              ExtensionInfo)
-        if extension is None:
+        attribute = {'version': version}
+        package   = self._guard.get_resource(handle    = handle,
+                                             attribute = attribute,
+                                             type      = Package)
+        if package is None:
             return None
-        extension.set_handle(handle)
-        self.__load_dependency_descriptor_list(extension)
-        return extension
+        self.__load_dependency_descriptor_list(package)
+        return package
 
 
-    def get_extension_from_descriptor(self, descriptor):
+    def get_package_from_descriptor(self, descriptor):
         """
-        Returns the extension that best matches the given descriptor.
+        Returns the package that best matches the given descriptor.
 
-        Looks for all extensions that match the given descriptor and
+        Looks for all packages that match the given descriptor and
         returns the one with the highest version number.
 
         The descriptor is defined as follows:
           [handle][descriptor][version]
         where
-          handle     is the handle of the extension.
+          handle     is the handle of the package.
           descriptor is one of '>=', '='.
           version    is a version number.
         
@@ -519,18 +466,14 @@ class DB:
 
         @type  descriptor: string
         @param descriptor: The descriptor as specified above.
-        @rtype:  ExtensionInfo
-        @return: The ExtensionInfo on success, None if none was found.
+        @rtype:  Package
+        @return: The Package on success, None if none was found.
         """
         assert descriptor is not None
         #print "Descriptor:", descriptor
-        matches = descriptor_parse(descriptor)
-        assert matches is not None
-        handle   = matches.group(1)
-        operator = matches.group(2)
-        version  = matches.group(3)
+        handle, operator, version = descriptor_parse(descriptor)
         if operator == '=':
-            return self.get_extension_from_handle(handle, version)
+            return self.get_package_from_handle(handle, version)
 
         # Ending up here, the operator is '>='.
         # Select the dependency with the version number that
@@ -552,15 +495,15 @@ class DB:
         return best_version
 
 
-    def get_extension_from_name(self, name):
+    def get_package_from_name(self, name):
         """
-        Returns the extension that matches the given name and that has the
+        Returns the package that matches the given name and that has the
         highest version number.
 
         @type  name: string
-        @param name: The name of the extension.
-        @rtype:  ExtensionInfo
-        @return: The ExtensionInfo on success, None if none was found.
+        @param name: The name of the package.
+        @rtype:  Package
+        @return: The Package on success, None if none was found.
         """
         assert name is not None
 
@@ -581,26 +524,21 @@ class DB:
         return best_version
 
 
-    def get_extension_list(self, offset = 0, limit = 0):
+    def get_package_list(self, offset = 0, limit = 0):
         """
-        Returns a list of all installed extensions.
+        Returns a list of all installed packages.
 
         @type  offset: int
-        @param offset: The number of extensions to skip.
+        @param offset: The number of packages to skip.
         @type  limit: int
-        @param limit: The maximum number of extensions returned.
-        @rtype:  list[Extension]
-        @return: The list of extensions.
+        @param limit: The maximum number of packages returned.
+        @rtype:  list[Package]
+        @return: The list of packages.
         """
-        if not self._acl_section:
-            self.__lookup_section()
-        section    = self._acl_section.get_handle()
-        extensions = self._acldb.get_resource_list(section,
-                                                   offset,
-                                                   limit,
-                                                   ExtensionInfo,
-                                                   self._acldb.fetch_groups)
-        return extensions
+        packages = self._guard.get_resources(offset,
+                                             limit,
+                                             type = Package)
+        return packages
 
 
     def get_version_list_from_handle(self, handle):
@@ -609,23 +547,11 @@ class DB:
         handle.
 
         @type  handle: string
-        @param handle: The handle of the wanted extension versions.
-        @rtype:  list[ExtensionInfo]
-        @return: A list containing all versions of the requested extension.
+        @param handle: The handle of the wanted package versions.
+        @rtype:  list[Package]
+        @return: A list containing all versions of the requested package.
         """
-        assert handle is not None
-        # Make sure that a resource section already exists.
-        if not self._acl_section:
-            self.__lookup_section()
-
-        section  = self._acl_section.get_handle()
-        parent   = self._acldb.get_resource_from_handle(handle, section)
-        if parent is None: return []
-        children = self._acldb.get_resource_children(parent, ExtensionInfo)
-        for child in children:
-            child.set_name(parent.get_name())
-            child.set_handle(handle)
-        return children
+        return self._guard.get_resources(handle = handle, type = Package)
 
 
     def get_version_list_from_name(self, name):
@@ -634,75 +560,63 @@ class DB:
         name.
 
         @type  name: string
-        @param name: The handle of the wanted extension versions.
-        @rtype:  list[ExtensionInfo]
-        @return: A list containing all versions of the requested extension.
+        @param name: The handle of the wanted package versions.
+        @rtype:  list[Package]
+        @return: A list containing all versions of the requested package.
         """
-        assert name is not None
-        # Make sure that a resource section already exists.
-        if not self._acl_section:
-            self.__lookup_section()
-
-        section  = self._acl_section.get_handle()
-        parent   = self._acldb.get_resource_from_name(name, section)
-        if parent is None: return []
-        children = self._acldb.get_resource_children(parent, ExtensionInfo)
-        for child in children:
-            child.set_name(parent.get_name())
-            child.set_handle(parent.get_handle())
-        return children
+        return self._guard.get_resources(name = name, type = Package)
 
 
-    def link_extension_id_to_callback(self, extension_id, uri):
+    def link_package_id_to_callback(self, package_id, uri):
         """
-        Associates the given extension with the given callback.
+        Associates the given package with the given callback.
 
-        @type  extension_id: int
-        @param extension_id: The id of the extension to be associated.
+        @type  package_id: int
+        @param package_id: The id of the package to be associated.
         @type  uri: URI of an event.
         @param uri: The event to be associated.
         @rtype:  int
         @return: The id of the callback, or <0 if an error occured.
         """
-        assert extension_id >= 0
+        assert package_id >= 0
         assert uri is not None
         
-        table  = self._table_map['extension_callback']
+        table  = self._table_map['package_callback']
         query  = table.insert()
-        result = query.execute(extension_id  = extension_id, event_uri = uri)
+        result = query.execute(package_id = package_id, event_uri = uri)
         assert result is not None
         return result.last_inserted_ids()[0]
 
 
-    def link_extension_to_callback(self, extension, uri):
+    def link_package_to_callback(self, package, uri):
         """
-        Convenience wrapper around link_extension_id_to_callback().
+        Convenience wrapper around link_package_id_to_callback().
 
-        @type  extension: ExtensionInfo
-        @param extension: The extension to be associated.
+        @type  package: Package
+        @param package: The package to be associated.
         @type  uri: URI of an event.
         @param uri: The event to be associated.
         @rtype:  int
         @return: The id of the callback, or <0 if an error occured.
         """
-        return self.link_extension_id_to_callback(extension.get_id(), uri)
+        return self.link_package_id_to_callback(package.get_id(), uri)
 
 
-    def get_callback_list_from_extension_id(self, extension_id):
+    def get_callback_list_from_package_id(self, package_id):
         """
-        Returns the list of listeners that the extension with the given
+        Returns the list of listeners that the package with the given
         id has registered.
 
-        @type  extension_id: integer
-        @param extension_id: The id of the extension.
+        @type  package_id: integer
+        @param package_id: The id of the package.
         @rtype:  list[string]
         @return: A list of URIs.
         """
-        assert extension_id is not None
+        assert package_id is not None
         
-        table  = self._table_map['extension_callback']
+        table  = self._table_map['package_callback']
         query  = select([table.c.event_uri],
-                        table.c.extension_id == extension_id,
+                        table.c.package_id == package_id,
                         from_obj = [table])
         result = query.execute()
         assert result is not None
@@ -713,26 +627,26 @@ class DB:
         return uri_list
 
 
-    def get_extension_id_list_from_callback(self, uri):
+    def get_package_id_list_from_callback(self, uri):
         """
-        Returns a list of all extensions that are associated with the given
+        Returns a list of all packages that are associated with the given
         uri.
 
         @type  uri: URI of an event. % wildcard allowed.
         @param uri: The event to look for.
         @rtype:  list[int]
-        @return: A list containing all associated extension ids, None on error.
+        @return: A list containing all associated package ids, None on error.
         """
         assert uri is not None
         
-        table  = self._table_map['extension_callback']
-        query  = select([table.c.extension_id],
+        table  = self._table_map['package_callback']
+        query  = select([table.c.package_id],
                         table.c.event_uri.like(uri),
                         from_obj = [table])
         result = query.execute()
         assert result is not None
 
-        extension_id_list = []
+        package_id_list = []
         for row in result:
-            extension_id_list.append(row[table.c.extension_id])
-        return extension_id_list
+            package_id_list.append(row[table.c.package_id])
+        return package_id_list

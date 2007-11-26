@@ -49,10 +49,10 @@ class FunctionTest(unittest.TestCase):
                     'spiff1.0=1' ]
         for descriptor in valid:
             #print 'Testing', descriptor
-            assert descriptor_parse(descriptor)
+            self.assert_(descriptor_parse(descriptor))
         for descriptor in invalid:
             #print 'Testing', descriptor
-            assert not descriptor_parse(descriptor)
+            self.assertRaises(Exception, descriptor_parse, descriptor)
 
     def testVersionIsGreater(self):
         versions = [

@@ -12,26 +12,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-from DBReader  import *
-from functions import *
+from DBReader   import *
+from functions  import *
+from sqlalchemy import *
+from Resource   import Resource
 import string
 
 class DB(DBReader):
-    def __get_resource_path_from_id(self, id):
-        assert id is not None
-        table  = self._table_map['resource_path']
-        query  = select([table.c.path],
-                        table.c.resource_id == id,
-                        from_obj = [table])
-        result = query.execute()
-        assert result is not None
-        row = result.fetchone()
-        if not row: return None
-        length = len(row['path'])
-        path   = bin_path2hex_path(row['path'])
-        return path
-
-
     def install(self):
         """
         Installs (or upgrades) database tables.
@@ -61,345 +48,175 @@ class DB(DBReader):
         Drops the content of any database table used by this library.
         Use with care.
 
-        Wipes out everything, including sections, actions, resources and acls.
+        Wipes out everything, including types, actions, resources and acls.
 
         @rtype:  Boolean
         @return: True on success, False otherwise.
         """
-        delete = self._table_map['action_section'].delete()
+        delete = self._table_map['object_type'].delete()
         result = delete.execute()
-        assert result is not None
-        delete = self._table_map['resource_section'].delete()
-        result = delete.execute()
-        assert result is not None
         return True
 
 
-    def __add_object_section(self, table, section):
-        assert table is 'action_section' or table is 'resource_section'
-        assert section is not None
-        insert = self._table_map[table].insert()
-        result = insert.execute(handle = section.get_handle(),
-                                name   = section.get_name())
-        assert result is not None
-        section.set_id(result.last_inserted_ids()[0])
-        return True
-
-
-    def __save_object_section(self, table_name, section):
-        assert table_name is 'action_section' \
-            or table_name is 'resource_section'
-        assert section is not None
-        table  = self._table_map[table_name]
-        update = table.update(table.c.id == section.get_id())
-        result = update.execute(handle = section.get_handle(),
-                                name   = section.get_name())
-        assert result is not None
-        return True
-
-
-    def __delete_object_section_from_handle(self, table, section_handle):
-        assert table is 'action_section' or table is 'resource_section'
-        assert section_handle is not None
-        delete = self._table_map[table].delete()
-        result = delete.execute(handle = section_handle)
-        assert result is not None
-        return True
-
-
-    def __delete_object_section(self, table, section):
-        assert table is 'action_section' or table is 'resource_section'
-        assert section is not None
-        handle  = section.get_handle()
-        success = self.__delete_object_section_from_handle(table, handle)
-        if not success: return success
-        section.set_id(-1)
-        return True
-
-
-    def __get_db_object_from_row(self, table, row, type):
-        assert table is not None
-        assert type  is not None
-        if not row: return None
-        if type not in ['Resource',
-                        'Actor',
-                        'ResourceGroup',
-                        'ActorGroup',
-                        'ActionSection',
-                        'ResourceSection']:
-            module = __import__(type)
-            obj    = getattr(module, type)
-        else:
-            obj    = globals().get(type)
-        object = obj(row[table.c.name], row[table.c.handle])
-        object.set_id(row[table.c.id])
-        return object
-
-
-    def __get_object_section_from_id(self, table, id, type):
-        assert table is 'action_section' or table is 'resource_section'
-        assert id >= 0
-        assert type is not None
-        table  = self._table_map[table]
-        query  = table.select(table.c.id == id)
-        result = query.execute()
-        assert result is not None
-        row = result.fetchone()
-        return self.__get_db_object_from_row(table, row, type)
-
-
-    def __get_object_section_from_handle(self, table, handle, type):
-        assert table  is 'action_section' or table is 'resource_section'
-        assert handle is not None
-        assert type   is not None
-        table  = self._table_map[table]
-        query  = table.select(table.c.handle == handle)
-        result = query.execute()
-        assert result is not None
-        row = result.fetchone()
-        return self.__get_db_object_from_row(table, row, type)
-
-
-    def add_action_section(self, section):
+    def __add_action1(self, action):
         """
-        Insert the given action section into the database.
-
-        @type  section: ActionSection
-        @param section: The section to be inserted.
-        @rtype:  Boolean
-        @return: True on success, False otherwise.
-        """
-        assert section is not None
-        return self.__add_object_section('action_section', section)
-
-
-    def save_action_section(self, section):
-        """
-        Updates the given action section in the database.
-
-        @type  section: ActionSection
-        @param section: The section to be saved.
-        @rtype:  Boolean
-        @return: True on success, False otherwise.
-        """
-        assert section is not None
-        return self.__save_object_section('action_section', section)
-
-
-    def delete_action_section(self, section):
-        """
-        Deletes the given action section from the database.
-        All associated actions and ACLs will be deleted. Use with care!
-
-        @type  section: ActionSection
-        @param section: The section to be deleted.
-        @rtype:  Boolean
-        @return: True on success, False otherwise.
-        """
-        assert section is not None
-        return self.__delete_object_section('action_section', section)
-
-
-    def get_action_section_from_handle(self, handle):
-        """
-        Returns the action section with the given handle from the database.
-
-        @type  handle: string
-        @param handle: The handle of the section to be returned.
-        @rtype:  ActionSection
-        @return: The action section on success, None otherwise.
-        """
-        assert handle is not None
-        table = 'action_section'
-        type  = 'ActionSection'
-        return self.__get_object_section_from_handle(table, handle, type)
-
-
-    def add_resource_section(self, section):
-        """
-        Insert the given resource section into the database.
-
-        @type  section: ResourceSection
-        @param section: The section to be inserted.
-        @rtype:  Boolean
-        @return: True on success, False otherwise.
-        """
-        assert section is not None
-        return self.__add_object_section('resource_section', section)
-
-
-    def save_resource_section(self, section):
-        """
-        Updates the given resource section in the database.
-
-        @type  section: ResourceSection
-        @param section: The section to be saved.
-        @rtype:  Boolean
-        @return: True on success, False otherwise.
-        """
-        assert section is not None
-        return self.__save_object_section('resource_section', section)
-
-
-    def delete_resource_section_from_handle(self, section_handle):
-        """
-        Deletes the resource section with the given handle from the database.
-        All associated resources and ACLs will be deleted. Use with care!
-
-        @type  section: ResourceSection
-        @param section: The section to be deleted.
-        @rtype:  Boolean
-        @return: True on success, False otherwise.
-        """
-        assert section_handle is not None
-        return self.__delete_object_section_from_handle('resource_section',
-                                                        section_handle)
-
-
-    def delete_resource_section(self, section):
-        """
-        Deletes the given resource section from the database.
-        All associated resources and ACLs will be deleted. Use with care!
-
-        @type  section: ResourceSection
-        @param section: The section to be deleted.
-        @rtype:  Boolean
-        @return: True on success, False otherwise.
-        """
-        assert section is not None
-        return self.__delete_object_section('resource_section', section)
-
-
-    def get_resource_section_from_id(self, id):
-        """
-        Returns the resource section with the given id from the database.
-
-        @type  id: int
-        @param id: The id of the section to be returned.
-        @rtype:  ResourceSection
-        @return: The resource section on success, None otherwise.
-        """
-        assert id >= 0
-        type = 'ResourceSection'
-        return self.__get_object_section_from_id('resource_section', id, type)
-
-
-    def get_resource_section_from_handle(self, handle):
-        """
-        Returns the resource section with the given handle from the database.
-
-        @type  handle: string
-        @param handle: The handle of the section to be returned.
-        @rtype:  ResourceSection
-        @return: The resource section on success, None otherwise.
-        """
-        assert handle is not None
-        table = 'resource_section'
-        type  = 'ResourceSection'
-        return self.__get_object_section_from_handle(table, handle, type)
-
-
-    def add_action(self, action, section):
-        """
-        Inserts the given action into the given section in the database.
+        Inserts the given action into the database.
 
         @type  action: Action
         @param action: The action to be added.
-        @type  section: ActionSection
-        @param section: The section into which the action is inserted.
         @rtype:  Boolean
         @return: True on success, False otherwise.
         """
-        assert action  is not None
-        assert section is not None
+        if action is None:
+            raise AttributeError('action argument must not be None')
+        if action.__class__.__name__ not in self._types:
+            raise AttributeError('action type is not yet registered')
+
         insert = self._table_map['action'].insert()
-        result = insert.execute(section_handle = section.get_handle(),
-                                handle         = action.get_handle(),
-                                name           = action.get_name())
-        assert result is not None
+        result = insert.execute(action_type = action.__class__.__name__,
+                                handle      = action.get_handle(),
+                                name        = action.get_name())
         action.set_id(result.last_inserted_ids()[0])
         return True
 
 
-    def save_action(self, action, section):
+    def add_action(self, actions):
         """
-        Updates the given action in the database.
+        Inserts the given action into the database.
 
-        @type  action: Action
-        @param action: The action to be saved.
-        @type  section: ActionSection
-        @param section: The section into which the action is inserted.
+        @type  actions: Action|list[Action]
+        @param actions: The actions to be added.
         @rtype:  Boolean
         @return: True on success, False otherwise.
         """
-        assert action  is not None
-        assert section is not None
-        table  = self._table_map['action']
-        update = table.update(table.c.id == action.get_id())
-        result = update.execute(section_handle = section.get_handle(),
-                                handle         = action.get_handle(),
-                                name           = action.get_name())
-        assert result is not None
+        if actions is None:
+            raise AttributeError('action argument must not be None')
+        if type(actions) != type([]):
+            actions = [actions]
+        for action in actions:
+            self.__add_action1(action)
         return True
 
 
-    def delete_action_from_id(self, action_id):
+    def __save_action1(self, action):
         """
-        Deletes the action with the given id from the database.
-        All ACLs associated with the action are removed.
-
-        @type  action_id: int
-        @param action_id: The id of the action to be removed.
-        @rtype:  Boolean
-        @return: True if the action existed, False otherwise.
-        """
-        assert action_id is not None
-        delete = self._table_map['action'].delete()
-        result = delete.execute(id = action_id)
-        assert result is not None
-        if result.rowcount is 0:
-            return False
-        return True
-
-
-    def delete_action_from_handle(self, handle, section_handle):
-        """
-        Deletes the action with the given handle in the section with the
-        given section handle from the database.
-        All ACLs associated with the action are removed.
-
-        @type  handle: string
-        @param handle: The handle of the action to be removed.
-        @type  section_handle: string
-        @param section_handle: The handle of the associated section.
-        @rtype:  Boolean
-        @return: True if the action existed, False otherwise.
-        """
-        assert handle         is not None
-        assert section_handle is not None
-        delete = self._table_map['action'].delete()
-        result = delete.execute(section_handle = section_handle,
-                                handle         = handle)
-        assert result is not None
-        if int(result.rowcount) is 0:
-            return False
-        return True
-
-
-    def delete_action(self, action):
-        """
-        Convenience wrapper around delete_action_from_handle().
+        Updates the given action in the database. Does nothing if the
+        action is not yet in the database.
 
         @type  action: Action
-        @param action: The action to be removed.
+        @param action: The action to be saved.
         @rtype:  Boolean
-        @return: True if the action existed, False otherwise.
+        @return: True on success, False otherwise.
         """
-        assert action is not None
-        assert action.get_id() >= 0
-        res = self.delete_action_from_id(action.get_id())
-        action.set_id(-1)
+        if action is None:
+            raise AttributeError('action argument must not be None')
+        if action.__class__.__name__ not in self._types:
+            raise AttributeError('action type is not yet registered')
+
+        table  = self._table_map['action']
+        update = table.update(table.c.id == action.get_id())
+        result = update.execute(action_type = action.__class__.__name__,
+                                handle      = action.get_handle(),
+                                name        = action.get_name())
+        assert result is not None
+        return True
+
+
+    def save_action(self, actions):
+        """
+        Updates the given actions in the database. Does nothing if
+        the action doesn't exist.
+
+        @type  actions: Action|list[Action]
+        @param actions: The action to be saved.
+        @rtype:  Boolean
+        @return: True on success, False otherwise.
+        """
+        if actions is None:
+            raise AttributeError('action argument must not be None')
+        if type(actions) != type([]):
+            actions = [actions]
+        for action in actions:
+            self.__save_action1(action)
+        return True
+
+
+    def delete_action(self, actions):
+        """
+        Convenience wrapper around delete_action_from_match().
+
+        @type  actions: Action|list[Action]
+        @param actions: The actions to be removed.
+        @rtype:  int
+        @return: The number of deleted actions.
+        """
+        if actions is None:
+            raise AttributeError('action argument must not be None')
+        if type(actions) != type([]):
+            actions = [actions]
+        ids = [action.get_id() for action in actions]
+        res = self.delete_action_from_match(id = ids)
+        for action in actions:
+            action.set_id(None)
         return res
+
+
+    def delete_action_from_match(self, **kwargs):
+        """
+        Deletes all actions that match the given criteria from the
+        database.
+        All ACLs associated with the action are removed.
+
+        @type  kwargs: dict
+        @param kwargs: The following keys may be used:
+                         id - the id of the resource
+                         handle - the handle of the resource
+                         type - the class type of the resource
+                       All values may also be lists (logical OR).
+        @rtype:  int
+        @return: The number of deleted actions.
+        """
+        tbl_a = self._table_map['action']
+        table = tbl_a
+        where = None
+
+        # ID.
+        if kwargs.has_key('id'):
+            ids = kwargs.get('id')
+            if type(ids) == type(0):
+                ids = [ids]
+            id_where = None
+            for id in ids:
+                id_where = or_(id_where, table.c.id == id)
+            where = and_(where, id_where)
+
+        # Handle.
+        if kwargs.has_key('handle'):
+            handles = kwargs.get('handle')
+            if type(handles) != type([]):
+                handles = [handles]
+            handle_where = None
+            for handle in handles:
+                handle_where = or_(handle_where, table.c.handle == handle)
+            where = and_(where, handle_where)
+
+        # Object type.
+        if kwargs.has_key('type'):
+            types = kwargs.get('type')
+            if type(types) != type([]):
+                types = [types]
+            type_where = None
+            tbl_t      = self._table_map['object_type']
+            for objtype in types:
+                path       = self._get_type_path(objtype)
+                subselect  = select([tbl_t.c.name],
+                                    tbl_t.c.path.like(path + '%'))
+                type_where = or_(type_where, tbl_a.c.action_type.in_(subselect))
+            where = and_(where, type_where)
+
+        delete = table.delete(where)
+        result = delete.execute()
+        return int(result.rowcount)
 
 
     def __resource_has_attribute(self, resource_id, name):
@@ -409,9 +226,9 @@ class DB(DBReader):
         select = table.select(and_(table.c.resource_id == resource_id,
                                    table.c.name        == name))
         result = select.execute()
-        assert result is not None
-        row = result.fetchone()
-        if row is not None: return True
+        row    = result.fetchone()
+        if row is not None:
+            return True
         return False
 
 
@@ -441,8 +258,7 @@ class DB(DBReader):
                                     type        = self.attrib_type_string,
                                     attr_string = value)
         else:
-            assert False # Unknown attribute type.
-        assert result is not None
+            raise Exception('Unknown attribute type %s' % type(value))
         return result.last_inserted_ids()[0]
 
 
@@ -467,8 +283,7 @@ class DB(DBReader):
                                     name        = name,
                                     attr_string = value)
         else:
-            assert False # Unknown attribute type.
-        assert result is not None
+            raise Exception('Unknown attribute type %s' % type(value))
         return True
 
 
@@ -481,14 +296,13 @@ class DB(DBReader):
         given id. n_children allows negative values.
         Warning: When using this, make sure to lock a transaction.
         """
-        assert resource_id is not None
-        assert resource_id >= 0
+        assert type(resource_id) == type([]) or resource_id >= 0
         assert n_children is not None
 
         transaction = connection.begin()
 
         # Get a list of parent nodes.
-        parent_list = self.get_resource_parents_from_id(resource_id)
+        parent_list = self.get_resource_parents(resource_id)
         assert parent_list is not None
         
         # Decrease the child counter of parent nodes.
@@ -499,56 +313,59 @@ class DB(DBReader):
         values = {table.c.n_children: table.c.n_children + n_children}
         update = table.update(where, values)
         result = update.execute()
-        assert result is not None
 
         transaction.commit()
         return True
 
 
     def __resource_add_n_children(self, resource_id, n_children):
-        assert resource_id >= 0
-        assert n_children  >= 0
+        assert type(resource_id) == type([]) or resource_id >= 0
+        assert n_children >= 0
         table  = self._table_map['resource']
-        update = table.update(table.c.id == resource_id,
-                              values = {
-                                  table.c.n_children:
-                                    table.c.n_children + n_children})
+        values = {table.c.n_children: table.c.n_children + n_children}
+        update = table.update(table.c.id == resource_id, values = values)
         result = update.execute()
-        assert result is not None
 
 
-    def add_resource(self, parent_id, resource, section):
+    def __add_resource1(self, connection, parent_id, resource):
         """
-        Inserts the given rescource into the given section of the database,
-        under the parent with the given id.
+        Inserts the given resource into the database, under the parent
+        with the given id.
 
-        @type  parent_id: int
+        @type  parent_id: int|Resource
         @param parent_id: The id of the resource under which the new resource
-                          is added.
+                          is added, or an instance of a Resource.
         @type  resource: Resource
         @param resource: The resource that is added.
-        @type  section: ResourceSection
-        @param section: The associated resource section.
         @rtype:  Boolean
         @return: True on success, False otherwise.
         """
         assert parent_id is None or parent_id >= 0
         assert resource is not None
-        assert section  is not None
+        parent = None
+        if parent_id is not None and type(parent_id) != type(0):
+            parent    = parent_id
+            parent_id = parent.get_id()
 
-        connection  = self.db.connect()
         transaction = connection.begin()
 
         # Retrieve information about the parent, if any. Also, increase the
         # child counter of the parent.
         if parent_id is None:
-            parent_path = ''
+            parent_path = ResourcePath()
         else:
-            parent_path = self.__get_resource_path_from_id(parent_id)
-            assert parent_path is not None
-            assert len(parent_path) / 2 <= 252
-            parent = self.get_resource_from_id(parent_id)
-            assert parent.is_group()
+            parent_path = self.get_resource_path_from_id(parent_id)
+            if parent_path is None:
+                err = 'The given parent does not exist'
+                raise AttributeError(err)
+            if len(parent_path) * 8 > 252:
+                err = 'Too many levels of nesting.'
+                raise AttributeError(err)
+            if parent is None:
+                parent = self.get_resource(id = parent_id)
+            if not parent.is_group():
+                err = 'parent.is_group() must return True when adding a child'
+                raise AttributeError(err)
             self.__resource_add_n_children(parent_id, 1)
 
         # If the resource already has an ID, it *should* exist in the database
@@ -557,20 +374,18 @@ class DB(DBReader):
         resource_id = resource.get_id()
         existing    = None
         if resource_id > 0:
-            existing = self.get_resource_from_id(resource_id)
+            existing = self.get_resource(id = resource_id)
         
         # Create or update the resource.
         if existing is not None:
-            assert self.save_resource(resource, section)
+            self.save_resource(resource)
         else:
             table  = self._table_map['resource']
             insert = table.insert()
-            result = insert.execute(section_handle = section.get_handle(),
-                                    handle         = resource.get_handle(),
-                                    name           = resource.get_name(),
-                                    is_actor       = resource.is_actor(),
-                                    is_group       = resource.is_group())
-            assert result is not None
+            result = insert.execute(resource_type = resource.__class__.__name__,
+                                    handle        = resource.get_handle(),
+                                    name          = resource.get_name(),
+                                    is_group      = resource.is_group())
             resource_id = result.last_inserted_ids()[0]
 
             # Save the attributes.
@@ -582,63 +397,88 @@ class DB(DBReader):
         # Add a new node into the tree.
         table    = self._table_map['resource_path']
         insert   = table.insert()
-        bin_path = hex_path2bin_path(parent_path + '00000000')
+        bin_path = parent_path.bin() + hex2bin('00000000')
         result   = insert.execute(path        = bin_path,
                                   resource_id = resource_id)
-        assert result is not None
-        path_id = result.last_inserted_ids()[0]
+        path_id  = result.last_inserted_ids()[0]
 
         # Assign the correct path to the new node.
-        path     = parent_path + int2hex(path_id, 8)
-        bin_path = hex_path2bin_path(path)
-        depth    = len(path) / 8
+        bin_path = parent_path.bin() + int2bin(path_id)
+        depth    = len(parent_path) + 1
         update   = table.update(table.c.resource_id == resource_id)
         result   = update.execute(path = bin_path, depth = depth)
-        assert result is not None
         
         # Add a link to every ancestor of the new node into a map.
-        while parent_path is not '':
-            parent_id = string.atol(parent_path[-8:], 16)
-            #print "Path:", parent_path[-8:], "ID:", parent_id
+        while len(parent_path) != 0:
+            parent_id = parent_path.get_current_id()
+            #print "Path:", parent_path.get(), "ID:", parent_id
             #print 'Mapping', path_id, 'to', parent_id
             insert    = self._table_map['path_ancestor_map'].insert()
             result    = insert.execute(resource_path_id = path_id,
                                        ancestor_path_id = parent_id)
-            assert result is not None
-            parent_path = parent_path[0:len(parent_path) - 8]
+            parent_path = parent_path.crop()
 
         transaction.commit()
+        return resource_id
+
+
+    def add_resource(self, parent_id, resources):
+        """
+        Inserts the given resources into the database, under the parent
+        with the given id.
+
+        @type  parent_id: int|Resource
+        @param parent_id: The id of the resource under which the new resource
+                          is added, or an instance of a Resource.
+        @type  resources: Resource|list[Resource]
+        @param resources: The resource that is added.
+        @rtype:  Boolean
+        @return: True on success, False otherwise.
+        """
+        if parent_id is not None \
+          and not isinstance(parent_id, Resource) \
+          and type(parent_id) != type(0):
+            raise AttributeError('parent_id must be None, Resource or int')
+        if resources is None:
+            raise AttributeError('resources argument must not be None')
+        if type(resources) != type(list):
+            resources = [resources]
+
+        connection  = self.db.connect()
+        transaction = connection.begin()
+        ids         = []
+        for resource in resources:
+            id = self.__add_resource1(connection, parent_id, resource)
+            ids.append(id)
+        transaction.commit()
         connection.close()
-        resource.set_id(resource_id)
+        for n, resource in enumerate(resources):
+            resource.set_id(ids[n])
+
         return True
 
 
-    def save_resource(self, resource, section):
+    def __save_resource1(self, connection, resource):
         """
-        Updates the given rescource in the given section of the database.
+        Updates the given resource in the database.
 
         @type  resource: Resource
         @param resource: The resource that is saved.
-        @type  section: ResourceSection
-        @param section: The associated resource section.
         @rtype:  Boolean
         @return: True on success, False otherwise.
         """
         assert resource          is not None
         assert resource.get_id() is not None
-        assert section           is not None
+        self.try_register_type(resource.__class__)
 
-        connection  = self.db.connect()
         transaction = connection.begin()
 
         table  = self._table_map['resource']
         update = table.update(table.c.id == resource.get_id())
-        result = update.execute(section_handle = section.get_handle(),
-                                handle         = resource.get_handle(),
-                                name           = resource.get_name(),
-                                is_actor       = resource.is_actor(),
-                                is_group       = resource.is_group())
-        assert result is not None
+        result = update.execute(resource_type = resource.__class__.__name__,
+                                handle        = resource.get_handle(),
+                                name          = resource.get_name(),
+                                is_group      = resource.is_group())
 
         # Save the attributes.
         attrib_list = resource.get_attribute_list()
@@ -649,78 +489,140 @@ class DB(DBReader):
                                           value)
             
         transaction.commit()
-        connection.close()
         return True
 
 
-    def delete_resource_from_id(self, resource_id):
+    def save_resource(self, resources):
         """
-        Deletes the rescource with the given id from the database.
+        Updates the given resources in the database. Does nothing
+        to any resource that does not yet exist.
 
-        @type  resource_id: int
-        @param resource_id: The id of the resource that is deleted.
+        @type  resources: Resource
+        @param resources: The resource that is saved.
         @rtype:  Boolean
-        @return: True if the resource existed, False otherwise.
+        @return: True on success, False otherwise.
         """
-        assert resource_id >= 0
+        if resources is None:
+            raise AttributeError('resources argument must not be None')
+        if type(resources) != type(list):
+            resources = [resources]
+
+        connection  = self.db.connect()
+        transaction = connection.begin()
+        for resource in resources:
+            id = self.__save_resource1(connection, resource)
+        transaction.commit()
+        connection.close()
+
+        return True
+
+
+    def delete_resource(self, resources):
+        """
+        Convenience wrapper around delete_resource_from_match().
+
+        @type  resource: Resource
+        @param resource: The resource that is deleted.
+        @rtype:  int
+        @return: The number of deleted resources.
+        """
+        if resources is None:
+            raise AttributeError('resource argument must not be None')
+        if type(resources) != type([]):
+            resources = [resources]
+        ids = [resource.get_id() for resource in resources]
+        res = self.delete_resource_from_match(id = ids)
+        for resource in resources:
+            resource.set_id(None)
+        return res
+
+
+    def __delete_resource_from_id(self, resource_ids):
+        """
+        Deletes the resource with the given id (including all children)
+        from the database.
+
+        @type  resource_ids: int|list[int]
+        @param resource_ids: The ids of the resources that are deleted.
+        @rtype:  int
+        @return: The number of deleted resources.
+        """
+        assert resource_ids >= 0
+        if type(resource_ids) == type(0):
+            resource_ids = [resource_ids]
+        if len(resource_ids) == 0:
+            return
 
         connection  = self.db.connect()
         transaction = connection.begin()
 
-        assert self.__resource_parent_add_n_children(connection,
-                                                     resource_id,
-                                                     -1)
+        self.__resource_parent_add_n_children(connection, resource_ids, -1)
 
-        # Delete the resource.
+        # Get a list of all children.
+        tbl_p1   = self._table_map['resource_path'].alias('p1')
+        tbl_m    = self._table_map['path_ancestor_map']
+        tbl_p2   = self._table_map['resource_path'].alias('p2')
+        table    = tbl_p1.outerjoin(tbl_m,
+                                    tbl_p1.c.id == tbl_m.c.ancestor_path_id)
+        table    = table.outerjoin(tbl_p2,
+                                   tbl_p2.c.id == tbl_m.c.resource_path_id)
+        where    = None
+        for id in resource_ids:
+            where = or_(where, tbl_p1.c.resource_id == id)
+        children = select([tbl_p2.c.resource_id],
+                          where,
+                          from_obj = [table])
+
+        # Delete the children. FIXME: This is a workaround for the bug
+        # in MySQL mentioned below. In later versions we will be able
+        # to do this with one query.
         table  = self._table_map['resource']
-        delete = table.delete(table.c.id == resource_id)
+        where  = table.c.id.in_(children)
+        delete = table.delete(where)
         result = delete.execute()
-        assert result is not None
+        affect = result.rowcount
+
+        #FIXME: There is a bug in MySQL 4.1 that prevents the combination
+        # of DELETE and IN to work with more than one match, so here's the
+        # extra query.
+        # Delete the resource.
+        where = None
+        for id in resource_ids:
+            where = or_(where, table.c.id == id)
+        delete = table.delete(where)
+        result = delete.execute()
+        affect += result.rowcount
 
         transaction.commit()
         connection.close()
 
-        if result.rowcount is 0:
-            return False
-        return True
+        return affect
 
-        
-    def delete_resource_from_handle(self, handle, section_handle):
-        """
-        Deletes the rescource with the given handle out of the
-        given section of the database.
 
-        @type  handle: string
-        @param handle: The handle of the resource that is deleted.
-        @type  section: string
-        @param section: The handle of the associated resource section.
-        @rtype:  Boolean
-        @return: True if the resource existed, False otherwise.
+    def delete_resource_from_match(self, **kwargs):
         """
-        assert handle         is not None
-        assert section_handle is not None
+        Deletes all resources that match the given criteria, including
+        their children.
+
+        @type  kwargs: dict
+        @param kwargs: For a list of allowed keys see get_resources().
+        @rtype:  int
+        @return: The number of deleted resources.
+        """
+        # If the ID is the only criteria, there is no need to do a match
+        # first and we can just delete in one run.
+        if len(kwargs.keys()) == 1 and kwargs.has_key('id'):
+            ids = kwargs.get('id')
+            if type(ids) == type(0):
+                ids = [ids]
+            return self.__delete_resource_from_id(ids)
+
         # We can not just delete the resource, we also have to update the
         # child counter of its parents. We need the resource id to look them
         # up.
-        resource = self.get_resource_from_handle(handle, section_handle)
-        assert resource is not None
-        return self.delete_resource_from_id(resource.get_id())
-
-
-    def delete_resource(self, resource):
-        """
-        Convenience wrapper around delete_resource_from_id().
-
-        @type  resource: Resource
-        @param resource: The resource that is deleted.
-        @rtype:  Boolean
-        @return: True if the resource existed, False otherwise.
-        """
-        assert resource is not None
-        assert resource.get_id() >= 0
-        res = self.delete_resource_from_id(resource.get_id())
-        resource.set_id(-1)
-        return res
+        resources = self.get_resources(**kwargs)
+        ids       = [resource.get_id() for resource in resources]
+        return self.__delete_resource_from_id(ids)
 
 
     def __add_acl_from_id(self, actor_id, action_id, resource_id, permit):
@@ -733,7 +635,6 @@ class DB(DBReader):
                                 action_id   = action_id,
                                 resource_id = resource_id,
                                 permit      = permit)
-        assert result is not None
         return result.last_inserted_ids()[0]
 
 
@@ -747,7 +648,6 @@ class DB(DBReader):
                                    table.c.action_id   == action_id,
                                    table.c.resource_id == resource_id))
         result = update.execute(permit = permit)
-        assert result is not None
         return True
 
 
@@ -772,10 +672,33 @@ class DB(DBReader):
                                    table.c.action_id   == action_id,
                                    table.c.resource_id == resource_id))
         result = delete.execute()
-        assert result is not None
         if result.rowcount is 0:
             return False
         return True
+
+
+    def delete_permission(self, actor, action, resource):
+        """
+        Convenience wrapper around delete_permission_from_id().
+
+        @type  actor: int
+        @param actor: The actor whose ACL is to be deleted.
+        @type  action: int
+        @param action: The action whose ACL is to be deleted.
+        @type  resource: int
+        @param resource: The resource whose ACL is to be deleted.
+        @rtype:  Boolean
+        @return: True if the ACL existed, False otherwise.
+        """
+        if actor is None:
+            raise AttributeError('actor argument must not be None')
+        if action is None:
+            raise AttributeError('action argument must not be None')
+        if resource is None:
+            raise AttributeError('resource argument must not be None')
+        return self.delete_permission_from_id(actor.get_id(),
+                                              action.get_id(),
+                                              resource.get_id())
 
 
     def __has_acl_from_id(self, actor_id, action_id, resource_id):
@@ -787,9 +710,9 @@ class DB(DBReader):
                                    table.c.action_id   == action_id,
                                    table.c.resource_id == resource_id))
         result = select.execute()
-        assert result is not None
-        row = result.fetchone()
-        if row is None: return False
+        row    = result.fetchone()
+        if row is None:
+            return False
         return True
 
 

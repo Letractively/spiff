@@ -157,7 +157,7 @@ class DB:
         """
         if not row: return None
         table = self._table_map['guestbook']
-        guestbook  = Guestbook(row[table.c.title], row[table.c.descr])
+        guestbook = Guestbook(row[table.c.title], row[table.c.descr])
         guestbook.set_id(row[table.c.id])
         guestbook.set_datetime(row[table.c.added])
         return guestbook
@@ -209,8 +209,8 @@ class DB:
         @return: A new Posting instance with the attributes from the row.
         """
         if not row: return None
-        table = self._table_map['posting']
-        posting  = Posting(row[table.c.title], row[table.c.descr])
+        table   = self._table_map['posting']
+        posting = Posting(row[table.c.title], row[table.c.descr])
         posting.set_id(row[table.c.id])
         posting.set_datetime(row[table.c.added])
         return posting

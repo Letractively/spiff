@@ -1,10 +1,10 @@
 <?xml version="1.0" ?>
 <xml>
-  <extension handle="hello_world">
+  <package handle="hello_world">
     <name>Hello World</name>
     <release>0.1</release>
     <description xml:lang="" lang="">
-    A simple extension for the tests.
+    A simple package for the tests.
     It is also intended that the description
     is a multi line string to have that tested.
     </description>
@@ -36,5 +36,5 @@
       <attribute name="another_attribute" type="integer">1234</attribute>
       <attribute name="something_else"    type="string">My string</attribute>
     </attributes>
-  </extension>
+  </package>
 </xml>

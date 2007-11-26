@@ -12,11 +12,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-from Task        import Task
-from Task        import CheckList
-from Form        import Form
-from StockButton import StockButton
-from Guard       import *
+from Task          import Task
+from Task          import CheckList
+from Form          import Form
+from StockButton   import StockButton
+from User          import User
+from Group         import Group
+from Content       import Content
+from UserAction    import UserAction
+from ContentAction import ContentAction
 
 class CreateDefaultSetup(CheckList):
     def _print_result(self, environment, done, allow_retry = True):
@@ -31,51 +35,15 @@ class CreateDefaultSetup(CheckList):
         environment.render_markup(form)
 
 
-    def __create_resource_section(self, name, handle):
-        assert name    is not None
-        assert handle  is not None
-        caption = "Creating resource section '%s'" % name
-        try:
-            section = self.guard.get_resource_section_from_handle(handle)
-            if section is None:
-                section = ResourceSection(name, handle)
-                self.guard.add_resource_section(section)
-        except:
-            self._add_result(caption, Task.failure)
-            self._print_result(self.environment, False)
-            return None
-        self._add_result(caption, Task.success)
-        return section
-
-
-    def __create_action_section(self, name, handle):
-        assert name    is not None
-        assert handle  is not None
-        caption = "Creating action section '%s'" % name
-        try:
-            section = self.guard.get_action_section_from_handle(handle)
-            if section is None:
-                section = ActionSection(name, handle)
-                self.guard.add_action_section(section)
-        except:
-            self._add_result(caption, Task.failure)
-            self._print_result(self.environment, False)
-            return None
-        self._add_result(caption, Task.success)
-        return section
-
-
-    def __create_action(self, name, handle, section):
-        assert name    is not None
-        assert handle  is not None
-        assert section is not None
+    def __create_action(self, name, handle, type):
+        assert name   is not None
+        assert handle is not None
         caption  = "Creating action '%s'" % name
-        s_handle = section.get_handle()
-        action   = self.guard.get_action_from_handle(handle, s_handle)
+        action   = self.guard.get_action(handle = handle, type = type)
         if not action:
-            action = Action(name, handle)
+            action = type(name, handle)
             try:
-                self.guard.add_action(action, section)
+                self.guard.add_action(action)
             except:
                 self._add_result(caption, Task.failure)
                 self._print_result(self.environment, False)
@@ -85,33 +53,25 @@ class CreateDefaultSetup(CheckList):
 
 
     def __create_user_action(self, name, handle):
-        section = ActionSection('user_permissions')
-        return self.__create_action(name, handle, section)
+        return self.__create_action(name, handle, UserAction)
 
 
     def __create_content_action(self, name, handle):
-        section = ActionSection('content_permissions')
-        return self.__create_action(name, handle, section)
+        return self.__create_action(name, handle, ContentAction)
 
 
     def __create_resource(self,
-                          group,
                           parent,
                           name,
                           handle,
-                          section,
+                          type,
                           private = False):
-        assert name    is not None
-        assert handle  is not None
-        assert section is not None
+        assert name   is not None
+        assert handle is not None
         caption  = "Creating resource '%s'" % name
-        s_handle = section.get_handle()
-        resource = self.guard.get_resource_from_handle(handle, s_handle)
+        resource = self.guard.get_resource(handle = handle, type = type)
         if not resource:
-            if group:
-                resource = ResourceGroup(name, handle)
-            else:
-                resource = Resource(name, handle)
+            resource = type(name, handle)
             if private:
                 resource.set_attribute('private', True)
             try:
@@ -119,7 +79,7 @@ class CreateDefaultSetup(CheckList):
                     parent_id = None
                 else:
                     parent_id = parent.get_id()
-                self.guard.add_resource(parent_id, resource, section)
+                self.guard.add_resource(parent_id, resource)
             except Exception, e:
                 print e
                 self._add_result(caption, Task.failure)
@@ -130,23 +90,15 @@ class CreateDefaultSetup(CheckList):
 
 
     def __create_group(self, parent, name, handle):
-        section = ResourceSection('users')
-        return self.__create_resource(True, parent, name, handle, section)
+        return self.__create_resource(parent, name, handle, Group)
 
 
     def __create_user(self, parent, name, handle):
-        section = ResourceSection('users')
-        return self.__create_resource(False, parent, name, handle, section)
+        return self.__create_resource(parent, name, handle, User)
 
 
     def __create_content(self, parent, name, handle, private = False):
-        section = ResourceSection('content')
-        return self.__create_resource(True,
-                                      parent,
-                                      name,
-                                      handle,
-                                      section,
-                                      private)
+        return self.__create_resource(parent, name, handle, Content, private)
 
 
     def install(self, environment):
@@ -173,9 +125,6 @@ class CreateDefaultSetup(CheckList):
         # Create users and groups.
         #########
         self._result_markup += '{subtitle "Creating users and groups"}'
-        section_users = self.__create_resource_section('Users', 'users')
-        if section_users is None:
-            return Task.failure
 
         group_everybody = self.__create_group(None, 'Everybody', 'everybody')
         if group_everybody is None:
@@ -205,10 +154,6 @@ class CreateDefaultSetup(CheckList):
         # Create user permissions.
         #########
         self._result_markup += '{subtitle "Creating user permissions"}'
-        user_perms = self.__create_action_section('User Permissions',
-                                                  'user_permissions')
-        if user_perms is None:
-            return Task.failure
 
         user_action_admin = self.__create_user_action('Administer User',
                                                       'administer')
@@ -270,9 +215,6 @@ class CreateDefaultSetup(CheckList):
         # Create content pages.
         #########
         self._result_markup += '{subtitle "Creating content"}'
-        section_content = self.__create_resource_section('Content', 'content')
-        if section_content is None:
-            return Task.failure
 
         content_default = self.__create_content(None, 'Wiki', 'default')
         if content_default is None:
@@ -324,7 +266,7 @@ class CreateDefaultSetup(CheckList):
         # Assign the wiki page extension to the homepage.
         caption = 'Assign default page to a wiki'
         content_default.set_attribute('extension', 'spiff_core_wiki_page')
-        if not self.guard.save_resource(content_default, section_content):
+        if not self.guard.save_resource(content_default):
             self._add_result(caption, Task.failure)
             self._print_result(environment, False)
             return Task.failure
@@ -333,8 +275,7 @@ class CreateDefaultSetup(CheckList):
         # Assign an extension to the admin/register page.
         caption = 'Assign user registration extension to a system page'
         content_admin_register.set_attribute('extension', 'spiff_core_register')
-        if not self.guard.save_resource(content_admin_register,
-                                        section_content):
+        if not self.guard.save_resource(content_admin_register):
             self._add_result(caption, Task.failure)
             self._print_result(environment, False)
             return Task.failure
@@ -343,7 +284,7 @@ class CreateDefaultSetup(CheckList):
         # Assign an extension to the admin/login page.
         caption = 'Assign login extension to a system page'
         content_admin_login.set_attribute('extension', 'spiff_core_login')
-        if not self.guard.save_resource(content_admin_login, section_content):
+        if not self.guard.save_resource(content_admin_login):
             self._add_result(caption, Task.failure)
             self._print_result(environment, False)
             return Task.failure
@@ -352,7 +293,7 @@ class CreateDefaultSetup(CheckList):
         # Assign an extension to the admin page.
         caption = 'Assign admin center extension to a system page'
         content_admin.set_attribute('extension', 'spiff_core_admin_center')
-        if not self.guard.save_resource(content_admin, section_content):
+        if not self.guard.save_resource(content_admin):
             self._add_result(caption, Task.failure)
             self._print_result(environment, False)
             return Task.failure
@@ -362,7 +303,7 @@ class CreateDefaultSetup(CheckList):
         caption = 'Assign user manager extension to a system page'
         handle  = 'spiff_core_user_manager'
         content_admin_users.set_attribute('extension', handle)
-        if not self.guard.save_resource(content_admin_users, section_content):
+        if not self.guard.save_resource(content_admin_users):
             self._add_result(caption, Task.failure)
             self._print_result(environment, False)
             return Task.failure
@@ -372,7 +313,7 @@ class CreateDefaultSetup(CheckList):
         caption = 'Assign page editor extension to a system page'
         handle  = 'spiff_core_page_editor'
         content_admin_page.set_attribute('extension', handle)
-        if not self.guard.save_resource(content_admin_page, section_content):
+        if not self.guard.save_resource(content_admin_page):
             self._add_result(caption, Task.failure)
             self._print_result(environment, False)
             return Task.failure
@@ -382,8 +323,7 @@ class CreateDefaultSetup(CheckList):
         caption = 'Assign extension manager to a system page'
         handle  = 'spiff_core_extension_manager'
         content_admin_extensions.set_attribute('extension', handle)
-        if not self.guard.save_resource(content_admin_extensions,
-                                        section_content):
+        if not self.guard.save_resource(content_admin_extensions):
             self._add_result(caption, Task.failure)
             self._print_result(environment, False)
             return Task.failure
@@ -393,10 +333,6 @@ class CreateDefaultSetup(CheckList):
         # Create content permissions.
         #########
         self._result_markup += '{subtitle "Creating content permissions"}'
-        content_perms = self.__create_action_section('Content Permissions',
-                                                     'content_permissions')
-        if content_perms is None:
-            return Task.failure
 
         content_action_view = self.__create_content_action('View Content',
                                                            'view')

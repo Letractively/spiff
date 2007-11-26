@@ -14,6 +14,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import sys, cgi, os.path
+sys.path.append('../')
 sys.path.append('../libs/')
 from genshi.template       import TextTemplate
 from genshi.template       import TemplateLoader

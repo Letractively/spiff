@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <xml>
-  <extension handle="spiff_core_wiki_page">
+  <package handle="spiff_core_wiki_page">
     <name>Wiki Page</name>
     <release>0.1</release>
     <description xml:lang="" lang="">
@@ -27,5 +27,5 @@
     <attributes>
       <attribute name="recursive" type="boolean">True</attribute>
     </attributes>
-  </extension>
+  </package>
 </xml>

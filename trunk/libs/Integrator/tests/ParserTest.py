@@ -13,7 +13,7 @@ class ParserTest(unittest.TestCase):
         filename = '../samples/SpiffExtension/Extension.xml'
         parser   = Parser()
         parser.parse_file(filename)
-        self.assert_(parser.info.get_name() == 'My Spiff Extension')
+        self.assert_(parser.package.get_name() == 'My Spiff Extension')
 
 if __name__ == '__main__':
     unittest.TextTestRunner(verbosity = 2).run(suite())

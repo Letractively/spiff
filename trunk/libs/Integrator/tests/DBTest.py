@@ -17,7 +17,7 @@ from sqlalchemy     import create_engine
 from sqlalchemy.orm import clear_mappers
 from ConfigParser   import RawConfigParser
 from DB             import DB
-from ExtensionInfo  import ExtensionInfo
+from Package        import Package
 
 def dummy_callback(args):
     pass
@@ -64,77 +64,77 @@ class DBTest(unittest.TestCase):
 
     def testCheckDependencies(self):
         self.assert_(self.extdb.clear_database())
-        extension = ExtensionInfo('Spiff')
-        extension.set_version('0.2')
-        self.extdb.register_extension(extension)
+        package = Package('Spiff')
+        package.set_version('0.2')
+        self.extdb.register_package(package)
         
-        extension = ExtensionInfo('Depends on Spiff')
-        self.assert_(self.extdb.check_dependencies(extension))
-        extension.add_dependency('spiff>=0.1')
-        self.assert_(self.extdb.check_dependencies(extension))
-        extension.add_dependency('spiff=0.2')
-        self.assert_(self.extdb.check_dependencies(extension))
-        extension.add_dependency('spuff>=0.1')
-        self.assert_(not self.extdb.check_dependencies(extension))
-        extension.add_dependency('spiff>=0.3')
-        self.assert_(not self.extdb.check_dependencies(extension))
+        package = Package('Depends on Spiff')
+        self.assert_(self.extdb.check_dependencies(package))
+        package.add_dependency('spiff>=0.1')
+        self.assert_(self.extdb.check_dependencies(package))
+        package.add_dependency('spiff=0.2')
+        self.assert_(self.extdb.check_dependencies(package))
+        package.add_dependency('spuff>=0.1')
+        self.assert_(not self.extdb.check_dependencies(package))
+        package.add_dependency('spiff>=0.3')
+        self.assert_(not self.extdb.check_dependencies(package))
 
 
     def testRegisterExtension(self):
         self.assert_(self.extdb.clear_database())
-        extension = ExtensionInfo('Spiff')
-        extension.set_version('0.2')
-        self.extdb.register_extension(extension)
+        package = Package('Spiff')
+        package.set_version('0.2')
+        self.extdb.register_package(package)
 
 
     def testUnregisterExtension(self):
         self.assert_(self.extdb.clear_database())
-        extension = ExtensionInfo('Spiff')
-        extension.set_version('0.1.2')
-        self.extdb.register_extension(extension)
-        self.assert_(self.extdb.unregister_extension_from_id(extension.get_id()))
+        package = Package('Spiff')
+        package.set_version('0.1.2')
+        self.extdb.register_package(package)
+        self.assert_(self.extdb.unregister_package_from_id(package.get_id()))
 
-        extension = ExtensionInfo('Spiff')
-        extension.set_version('0.1.2')
-        self.extdb.register_extension(extension)
-        self.assert_(self.extdb.unregister_extension_from_handle(extension.get_handle(),
-                                                   extension.get_version()))
+        package = Package('Spiff')
+        package.set_version('0.1.2')
+        self.extdb.register_package(package)
+        self.assert_(self.extdb.unregister_package_from_handle(package.get_handle(),
+                                                   package.get_version()))
         
-        extension = ExtensionInfo('Spiff')
-        extension.set_version('0.1.2')
-        self.extdb.register_extension(extension)
-        self.assert_(self.extdb.unregister_extension(extension))
+        package = Package('Spiff')
+        package.set_version('0.1.2')
+        self.extdb.register_package(package)
+        self.assert_(self.extdb.unregister_package(package))
         
         
     def testGetExtension(self):
         self.assert_(self.extdb.clear_database())
-        extension = ExtensionInfo('Spiff')
-        extension.set_version('0.1')
-        self.extdb.register_extension(extension)
+        package = Package('Spiff')
+        package.set_version('0.1')
+        self.extdb.register_package(package)
 
-        extension = ExtensionInfo('Spiff')
-        extension.set_version('0.2')
-        extension.add_dependency('spiff=0.1')
-        self.extdb.register_extension(extension)
+        package = Package('Spiff')
+        package.set_version('0.2')
+        package.add_dependency('spiff=0.1')
+        self.extdb.register_package(package)
 
-        result = self.extdb.get_extension_from_id(extension.get_id())
-        self.assert_(result.get_handle()  == extension.get_handle())
-        self.assert_(result.get_version() == extension.get_version())
+        result = self.extdb.get_package_from_id(package.get_id())
+        self.assert_(result.get_handle()  == package.get_handle())
+        self.assert_(result.get_version() == package.get_version())
         self.assert_(len(result.get_dependency_list()) == 1)
         self.assert_(result.get_dependency_list()[0]   == 'spiff=0.1')
         
-        result = self.extdb.get_extension_from_handle('spiff', '0.2')
-        self.assert_(result.get_id() == extension.get_id())
+        result = self.extdb.get_package_from_handle('spiff', '0.2')
+        self.assert_(result.get_id() == package.get_id())
 
-        result = self.extdb.get_extension_from_descriptor('spiff>=0.1')
-        self.assert_(result.get_id()      == extension.get_id())
-        self.assert_(result.get_handle()  == extension.get_handle())
-        self.assert_(result.get_version() == extension.get_version())
+        result = self.extdb.get_package_from_descriptor('spiff>=0.1')
+        self.assert_(result.get_id()      == package.get_id())
+        self.assert_(result.get_handle()  == package.get_handle())
+        self.assert_(result.get_version() == package.get_version())
 
-        result = self.extdb.get_extension_from_descriptor('spiff=0.2')
-        self.assert_(result.get_id()      == extension.get_id())
-        self.assert_(result.get_handle()  == extension.get_handle())
-        self.assert_(result.get_version() == extension.get_version())
+        result = self.extdb.get_package_from_descriptor('spiff=0.2')
+        self.assert_(result.get_id()      == package.get_id())
+        self.assert_(result.get_handle()  == package.get_handle())
+        self.assert_(result.get_version() == package.get_version())
 
         list = self.extdb.get_version_list_from_handle('spiff')
         self.assert_(len(list) == 2)
@@ -144,15 +144,15 @@ class DBTest(unittest.TestCase):
 
     def testCallback(self):
         self.assert_(self.extdb.clear_database())
-        extension = ExtensionInfo('Spiff')
-        extension.set_version('0.1.2')
-        self.extdb.register_extension(extension)
+        package = Package('Spiff')
+        package.set_version('0.1.2')
+        self.extdb.register_package(package)
 
         #callback = Callback(self.dummy_callback, 'always')
-        self.assert_(self.extdb.link_extension_id_to_callback(extension.get_id(),
+        self.assert_(self.extdb.link_package_id_to_callback(package.get_id(),
                                                 'always'))
 
-        list = self.extdb.get_extension_id_list_from_callback('always')
+        list = self.extdb.get_package_id_list_from_callback('always')
         self.assert_(len(list) == 1)
 
 if __name__ == '__main__':

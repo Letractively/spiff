@@ -41,7 +41,7 @@ class Layout:
 
 
     def _layout_data_handler(self, data):
-        extension = self.__integrator.load_extension_from_descriptor(data)
+        extension = self.__integrator.load_package_from_descriptor(data)
         assert extension is not None
         extension.on_render_request()
         output = self.__extension_api.get_output()
@@ -85,7 +85,7 @@ if __name__ == '__main__':
             page = Resource('my resource')
             page.set_attribute('layout',    layout)
             page.set_attribute('extension', 'my_extension>=1.0')
-            layout = Layout(object, page)
+            layout = Layout(object, object, page)
             assert layout is not None
 
     testcase = LayoutTest()

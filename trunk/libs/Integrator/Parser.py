@@ -14,13 +14,13 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import os, sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from genshi.input  import XML
-from ExtensionInfo import ExtensionInfo
+from genshi.input import XML
+from Package      import Package
 
 
 class Parser:
     def __init__(self):
-        self.info      = None
+        self.package      = None
         self.signals   = []
         self.listeners = []
 
@@ -36,40 +36,40 @@ class Parser:
         assert xml is not None
         xml = XML(xml)
 
-        # Fetch general info instantiate a new ExtensionInfo.
-        handle  = str(xml.select('extension/attribute::handle')).strip()
-        name    = str(xml.select('extension/name/').select('text()')).strip()
-        release = str(xml.select('extension/release/text()')).strip()
-        descr   = str(xml.select('extension/description[@lang=""]/text()'))
-        info    = ExtensionInfo(name, handle, release)
-        info.set_description(descr.strip())
+        # Fetch general info and instantiate a new Package.
+        handle  = str(xml.select('package/attribute::handle')).strip()
+        name    = str(xml.select('package/name/').select('text()')).strip()
+        release = str(xml.select('package/release/text()')).strip()
+        descr   = str(xml.select('package/description[@lang=""]/text()'))
+        package    = Package(name, handle, release)
+        package.set_description(descr.strip())
 
         # Author information.
-        author = str(xml.select('extension/authors/person/name/text()'))
-        email  = str(xml.select('extension/authors/person/email/text()'))
-        info.set_attribute('author',       author.strip())
-        info.set_attribute('author-email', email.strip())
+        author = str(xml.select('package/authors/person/name/text()'))
+        email  = str(xml.select('package/authors/person/email/text()'))
+        package.set_attribute('author',       author.strip())
+        package.set_attribute('author-email', email.strip())
 
-        # Signals sent by this extension.
-        list = xml.select('extension/behavior/signal/attribute::uri')
+        # Signals sent by this package.
+        list = xml.select('package/behavior/signal/attribute::uri')
         self.signals = [item.strip() for item in list]
 
-        # Signals retrieved by this extension.
-        list      = xml.select('extension/behavior/listen/attribute::uri')
+        # Signals retrieved by this package.
+        list      = xml.select('package/behavior/listen/attribute::uri')
         self.listeners = [item.strip() for item in list]
 
         # Runtime dependencies.
-        list = xml.select('extension/depends/runtime/text()')
+        list = xml.select('package/depends/runtime/text()')
         for kind, data, pos in list:
-            info.add_dependency(data.strip(), 'runtime')
+            package.add_dependency(data.strip(), 'runtime')
 
         # Installtime dependencies.
-        list = xml.select('extension/depends/installtime/text()')
+        list = xml.select('package/depends/installtime/text()')
         for kind, data, pos in list:
-            info.add_dependency(data.strip(), 'installtime')
+            package.add_dependency(data.strip(), 'installtime')
 
         # Attributes.
-        prefix = 'extension/attributes/attribute'
+        prefix = 'package/attributes/attribute'
         list   = xml.select(prefix + '/attribute::name')
         for name in list:
             type  = xml.select(prefix + '[@name="%s"]/attribute::type' % name)
@@ -84,6 +84,6 @@ class Parser:
                 pass
             else:
                 assert False # Unknown attribute type.
-            info.set_attribute(name, value)
+            package.set_attribute(name, value)
 
-        self.info = info
+        self.package = package

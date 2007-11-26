@@ -14,37 +14,40 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 from functions import make_handle_from_string
 
-class DBObject:
+class DBObject(object):
     def __init__(self, name, handle = None):
-        self.__id     = -1
-        self.__name   = name
+        self._id   = -1
+        self._name = name
         if handle == None:
-            self.__handle = make_handle_from_string(name)
+            self._handle = make_handle_from_string(name)
         else:
-            self.__handle = handle
+            self._handle = handle
 
     def set_id(self, id):
-        self.__id = int(id)
+        if id is None:
+            self._id = None
+        else:
+            self._id = int(id)
 
     def get_id(self):
-        return self.__id
+        return self._id
 
     def set_name(self, name):
         assert name != None
         assert len(name) > 0
-        self.__name = name
-        if len(self.__handle) == 0:
-            self.__handle = make_handle_from_string(name)
+        self._name = name
+        if len(self._handle) == 0:
+            self._handle = make_handle_from_string(name)
 
     def get_name(self):
-        return self.__name
+        return self._name
 
     def set_handle(self, handle):
-        self.__handle = handle
+        self._handle = handle
 
     def get_handle(self):
-        return self.__handle
+        return self._handle
 
-    __id     = property(set_id)
-    __name   = property(set_name)
-    __handle = property(set_handle)
+    id     = property(set_id)
+    name   = property(set_name)
+    handle = property(set_handle)

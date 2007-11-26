@@ -1,10 +1,10 @@
 <?xml version="1.0" ?>
 <xml>
-  <extension handle="spiff">
+  <package handle="spiff">
     <name>My Spiff Extension</name>
     <release>1.0</release>
     <description xml:lang="" lang="">
-    This is a sample extension.
+    This is a sample package.
     </description>
     <description xml:lang="de_DE" lang="de_DE">
     Diese Erweiterung tut nichts.
@@ -30,5 +30,5 @@
     <attributes>
       <attribute name="test_flag" type="boolean">True</attribute>
     </attributes>
-  </extension>
+  </package>
 </xml>

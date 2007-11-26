@@ -13,14 +13,14 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import os, re, sha, smtplib, functions, random
+from User import User
 
 class Extension:
     def __init__(self, api):
         self.__api      = api
         self.i18n       = api.get_i18n()
         self.__login    = api.get_login()
-        self.__guard    = api.get_guard()
-        self.__guard_db = api.get_guard_db()
+        self.__guard    = api.get_guard_db()
         self.server     = 'mail.speedpartner.de'
         self.mail_from  = 'no-reply@debain.org'
 
@@ -50,7 +50,8 @@ class Extension:
             error = i18n("Passwords do not match!")
         else:
             # Check whether the username is already taken.
-            res = self.__guard_db.get_resource_from_handle(handle, 'users')
+            res = self.__guard.get_resource(handle = handle,
+                                            type   = User)
             if res is not None and res.is_group():
                 error = i18n("A group with the given name already exists.")
             elif res is not None:
@@ -73,14 +74,12 @@ class Extension:
         string   = handle + password1 + firstname + lastname + str(rand)
         key      = sha.new(string).hexdigest()
         name     = firstname + ' ' + lastname
-        section  = self.__guard_db.get_resource_section_from_handle('users')
-        users    = self.__guard_db.get_resource_from_handle('users', 'users')
-        resource = self.__guard.Resource(name, handle)
-        pwd_hash = self.__login.hash_password(password1)
-        resource.set_attribute('password',       pwd_hash)
-        resource.set_attribute('inactive',       True)
-        resource.set_attribute('activation_key', key)
-        self.__guard_db.add_resource(users.get_id(), resource, section)
+        users    = self.__guard.get_resource(handle = 'users', type = Group)
+        user = User(name, handle)
+        user.set_password(password1)
+        user.set_inactive()
+        user.set_activation_key(key)
+        self.__guard.add_resource(users, user)
 
         # Format activation email.
         #FIXME: Make configurable.
@@ -106,18 +105,16 @@ class Extension:
     def confirm(self):
         # Find the user from the key.
         key     = self.__api.get_get_data('key')
-        kname   = 'activation_key'
-        section = self.__guard_db.get_resource_section_from_handle('users')
-        users   = self.__guard_db.get_resource_list_from_attribute(kname, key)
-        if users is None or len(users) != 1:
+        attribs = {'activation_key': key}
+        user    = self.__guard.get_resource(attribute = attribs)
+        if user is None:
             self.__api.render('register.tmpl', error = 'Invalid key')
             return
 
         # Activate the account.
-        user = users[0]
-        user.remove_attribute('inactive')
-        user.remove_attribute('activation_key')
-        self.__guard_db.save_resource(user, section)
+        user.set_inactive(False)
+        user.set_activation_key(None)
+        self.__guard.save_resource(user)
 
         self.__api.render('complete.tmpl', user = user)
 

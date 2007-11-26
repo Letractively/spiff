@@ -17,33 +17,30 @@ from DBObject import *
 class Resource(DBObject):
     def __init__(self, name, handle = None):
         DBObject.__init__(self, name, handle)
-        self.__n_children     = 0
-        self.__attribute_list = {}
-
-    def is_actor(self):
-        return False
+        self._n_children     = 0
+        self._attribute_list = {}
 
     def is_group(self):
         return False
 
     def set_n_children(self, n_children):
-        self.__n_children = int(n_children)
+        self._n_children = int(n_children)
 
     def get_n_children(self):
-        return self.__n_children
+        return self._n_children
 
     def set_attribute(self, name, value):
-        self.__attribute_list[name] = value
+        self._attribute_list[name] = value
 
     def get_attribute(self, name):
-        return self.__attribute_list.get(name, None)
+        return self._attribute_list.get(name, None)
 
     def remove_attribute(self, name):
-        if self.__attribute_list.has_key(name):
-            del self.__attribute_list[name]
+        if self._attribute_list.has_key(name):
+            del self._attribute_list[name]
 
     def set_attribute_list(self, list):
-        self.__attribute_list = list
+        self._attribute_list = list
 
     def get_attribute_list(self):
-        return self.__attribute_list
+        return self._attribute_list

@@ -31,8 +31,8 @@ class Extension:
         assert page is not None
 
         self.api.render('home.tmpl',
-                        name       = page.get_name(),
-                        errors     = errors)
+                        name   = page.get_name(),
+                        errors = errors)
 
 
     def on_render_request(self):
