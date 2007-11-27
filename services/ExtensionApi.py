@@ -13,10 +13,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import os.path, sys
-from functions       import *
+from gettext         import gettext
+from urlutil         import *
 from Integrator      import Api
 from Cookie          import SimpleCookie
-from Login           import Login
+from Session         import Session
 from ContentAction   import ContentAction
 from genshi.template import TemplateLoader
 from genshi.template import MarkupTemplate
@@ -30,7 +31,7 @@ class ExtensionApi(Api):
         assert kwargs.has_key('get_data')
         assert kwargs.has_key('post_data')
         Api.__init__(self)
-        self.__login          = Login(kwargs['guard_db'])
+        self.__session        = Session(kwargs['guard_db'])
         self.__requested_page = kwargs['requested_page']
         self.__guard_mod      = kwargs['guard_mod']
         self.__guard_db       = kwargs['guard_db']
@@ -50,7 +51,7 @@ class ExtensionApi(Api):
 
 
     def get_data_dir(self):
-        return os.path.join(os.path.dirname(__file__), 'data')
+        return os.path.join(os.path.dirname(__file__), '..', 'data')
 
 
     def get_get_data(self, name, unpack = True):
@@ -113,9 +114,9 @@ class ExtensionApi(Api):
         return self._manager
 
 
-    def get_login(self):
+    def get_session(self):
         #FIXME: Check permission of the caller!
-        return self.__login
+        return self.__session
 
 
     def set_requested_page(self, page):
@@ -139,7 +140,7 @@ class ExtensionApi(Api):
         private = self.__requested_page.get_attribute('private') or False
         if permission == 'view' and not private:
             return True
-        user = self.__login.get_current_user()
+        user = self.__session.get_user()
         if user is None:
             return False
         action = self.__guard_db.get_action(handle = permission,

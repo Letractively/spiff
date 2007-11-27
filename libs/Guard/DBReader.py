@@ -105,7 +105,6 @@ class DBReader:
             Column('path',           Binary(255), index = True),
             Column('depth',          Integer,     index = True),
             Column('resource_id',    Integer,     index = True),
-            Column('refcount',       Integer,     index = True, default = 0),
             ForeignKeyConstraint(['resource_id'],
                                  [pfx + 'resource.id'],
                                  ondelete = 'CASCADE'),
@@ -149,7 +148,10 @@ class DBReader:
         @type  debug: Boolean
         @param debug: True to enable debugging.
         """
-        self.db.debug = debug
+        if debug:
+            self.db.echo = 1
+        else:
+            self.db.echo = 0
 
 
     def set_table_prefix(self, prefix):
@@ -445,7 +447,7 @@ class DBReader:
             name_where = None
             for name in names:
                 name_where = or_(name_where, tbl_r.c.name == name)
-            name = and_(where, name_where)
+            where = and_(where, name_where)
 
         # Object type.
         if kwargs.has_key('type'):

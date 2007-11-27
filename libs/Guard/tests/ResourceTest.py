@@ -12,7 +12,7 @@ class ResourceTest(unittest.TestCase):
     def testResource(self):
         name   = 'Test Resource'
         resource = Resource(name)
-        self.assert_(resource.get_id()         == -1)
+        self.assert_(resource.get_id() is None)
         self.assert_(resource.get_handle()     == make_handle_from_string(name))
         self.assert_(resource.get_n_children() == 0)
         self.assert_(resource.is_group()       == False)

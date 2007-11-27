@@ -11,8 +11,8 @@ class ActionTest(unittest.TestCase):
     def testAction(self):
         name   = "Test Action"
         action = Action(name)
-        assert action.get_id()     == -1
-        assert action.get_name()   == name
+        assert action.get_id() is None
+        assert action.get_name() == name
 
 if __name__ == '__main__':
     unittest.TextTestRunner(verbosity = 2).run(suite())

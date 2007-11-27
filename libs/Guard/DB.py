@@ -346,6 +346,8 @@ class DB(DBReader):
         if parent_id is not None and type(parent_id) != type(0):
             parent    = parent_id
             parent_id = parent.get_id()
+            if parent_id is None:
+                raise AttributeError('The given parent does not exist')
 
         transaction = connection.begin()
 
@@ -437,8 +439,10 @@ class DB(DBReader):
         """
         if parent_id is not None \
           and not isinstance(parent_id, Resource) \
-          and type(parent_id) != type(0):
-            raise AttributeError('parent_id must be None, Resource or int')
+          and type(parent_id) != type(1):
+            ptype = type(parent_id).__name__
+            err   = 'parent_id must be None, Resource or int, is %s' % ptype
+            raise AttributeError(err)
         if resources is None:
             raise AttributeError('resources argument must not be None')
         if type(resources) != type(list):

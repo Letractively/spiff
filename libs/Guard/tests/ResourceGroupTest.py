@@ -11,7 +11,7 @@ class ResourceGroupTest(unittest.TestCase):
     def testResourceGroup(self):
         name  = "Test ResourceGroup"
         group = ResourceGroup(name)
-        self.assert_(group.get_id()   == -1)
+        self.assert_(group.get_id() is None)
         self.assert_(group.get_name() == name)
         self.assert_(group.is_group() == True)
 

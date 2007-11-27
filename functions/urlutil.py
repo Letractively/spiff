@@ -15,7 +15,6 @@
 import os, cgi
 use_mod_rewrite = False
 
-
 def get_uri(page, *args, **kwargs):
     """
     Returns a URL with the given attributes.
@@ -94,19 +93,11 @@ def get_request_uri(*args, **kwargs):
     return url
 
 
-def get_mod_rewrite_prevented_uri(plugin_dir):
+def get_mod_rewrite_prevented_uri(path):
     """
     Returns a URL that points to the same directory as the given one,
     but where, when mod_rewrite is enabled, rewriting is prevented.
     """
     if not use_mod_rewrite:
-        return plugin_dir
-    return "mod-rewrite-will-strip-this/" + plugin_dir
-
-
-def gettext(text):
-    """
-    Internationalizes the given string.
-    """
-    #FIXME
-    return text
+        return path
+    return "mod-rewrite-will-strip-this/" + path

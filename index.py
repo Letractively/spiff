@@ -14,11 +14,17 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import sys, cgi, os, os.path
-from string import split
-sys.path.append('libs')
+sys.path.insert(0, 'libs')
+sys.path.insert(0, 'objects')
+sys.path.insert(0, 'services')
+sys.path.insert(0, 'functions')
 import MySQLdb, Integrator
 from sqlalchemy      import *
-from functions       import *
+from urlutil         import get_uri, \
+                            get_request_uri, \
+                            get_mod_rewrite_prevented_uri
+from gettext         import gettext
+from string          import split
 from ConfigParser    import RawConfigParser
 from ExtensionApi    import ExtensionApi
 from Layout          import Layout
@@ -105,7 +111,7 @@ def log_in(guard_db, integrator, page):
     """
     Returns a tuple of boolean: (did_login, page_open_sent)
     """
-    user = extension_api.get_login().get_current_user()
+    user = extension_api.get_session().get_user()
     if user:
         # Bail out if the user is already logged in and has permission.
         view = guard_db.get_action(handle = 'view', type = ContentAction)
@@ -124,7 +130,7 @@ def log_in(guard_db, integrator, page):
     extension_api.emit_sync('spiff:page_open')
 
     # The login form might have performed a successful login.
-    user = extension_api.get_login().get_current_user()
+    user = extension_api.get_session().get_user()
     if user is None:
         return (False, True)
 
@@ -260,7 +266,7 @@ if get_data.has_key('new_page') or get_data.has_key('edit_page'):
 # Send headers.
 extension_api.emit_sync('spiff:header_before')
 send_headers(integrator,
-             extension_api.get_login().get_current_user(),
+             extension_api.get_session().get_user(),
              page,
              extension_api.get_http_headers())
 extension_api.emit_sync('spiff:header_after')
