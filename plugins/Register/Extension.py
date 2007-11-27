@@ -12,14 +12,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-import os, re, sha, smtplib, functions, random
-from User import User
+import os, re, sha, smtplib, random
+from urlutil import get_request_uri
+from User    import User
 
 class Extension:
     def __init__(self, api):
         self.__api      = api
         self.i18n       = api.get_i18n()
-        self.__login    = api.get_login()
+        self.__session    = api.get_session()
         self.__guard    = api.get_guard_db()
         self.server     = 'mail.speedpartner.de'
         self.mail_from  = 'no-reply@debain.org'
@@ -84,7 +85,7 @@ class Extension:
         # Format activation email.
         #FIXME: Make configurable.
         domain    = 'http://' + os.environ['HTTP_HOST']
-        vars      = functions.get_request_uri(confirm = [1], key = [key])
+        vars      = get_request_uri(confirm = [1], key = [key])
         url       = domain + vars
         filename  = os.path.join(os.path.dirname(__file__), 'confirmation.txt')
         file      = open(filename)
@@ -123,7 +124,7 @@ class Extension:
         self.__api.emit('render_start')
 
         # If the user is already logged in do nothing.
-        user = self.__login.get_current_user()
+        user = self.__session.get_user()
         if user is not None:
             self.__api.render('complete.tmpl', user = user)
             self.__api.emit('render_end')

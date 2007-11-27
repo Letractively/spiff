@@ -213,7 +213,7 @@ class Extension:
             return (None, [i18n('No text was entered...')])
 
         # Find the name or IP of the current user.
-        current_user = self.api.get_login().get_current_user()
+        current_user = self.api.get_session().get_user()
         if current_user is not None:
             user_name = current_user.get_handle()
         else:
