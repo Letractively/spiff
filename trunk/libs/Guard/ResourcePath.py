@@ -40,16 +40,16 @@ class ResourcePath:
         if len(path) == 0:
             return
         if type('') == type(path):
-            path = split(path, '/')
+            path = [int(id) for id in split(path, '/')]
         for item in path:
-            self.path.append(str(int(item)))
+            self.path.append(int(item))
 
 
     def get(self):
         """
         Returns the current path.
         """
-        return '/'.join(self.path)
+        return '/'.join([str(id) for id in self.path])
 
 
     def hex(self):
@@ -104,5 +104,5 @@ class ResourcePath:
         assert id is not None
         assert int(id) >= 0
         path = self.path[:]
-        path.append(str(int(id)))
+        path.append(int(id))
         return ResourcePath(path)

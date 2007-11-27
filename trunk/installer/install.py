@@ -14,8 +14,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import sys, cgi, os.path
-sys.path.append('../')
-sys.path.append('../libs/')
+sys.path.insert(0, '../libs/')
+sys.path.insert(0, '../objects')
+sys.path.insert(0, '../services')
+sys.path.insert(0, '../functions')
 from genshi.template       import TextTemplate
 from genshi.template       import TemplateLoader
 from Constructor           import *

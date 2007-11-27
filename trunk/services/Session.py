@@ -16,7 +16,7 @@ import os
 from Cookie import SimpleCookie
 from User   import User
 
-class Login:
+class Session(object):
     def __init__(self, guard_db):
         assert guard_db is not None
         self.__guard_db     = guard_db
@@ -33,7 +33,7 @@ class Login:
         return sha.new(str(time.time())).hexdigest()
 
 
-    def get_current_user(self):
+    def get_user(self):
         if self.__current_user is not None:
             return self.__current_user
         guard = self.__guard_db
@@ -47,7 +47,7 @@ class Login:
         return self.__current_user
 
 
-    def do(self, username, password):
+    def login(self, username, password):
         """
         Returns a dictionary that contains the headers that need to be added
         to the HTTP header on success. Returns None on otherwise.

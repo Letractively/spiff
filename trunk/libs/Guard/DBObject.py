@@ -16,7 +16,7 @@ from functions import make_handle_from_string
 
 class DBObject(object):
     def __init__(self, name, handle = None):
-        self._id   = -1
+        self._id   = None
         self._name = name
         if handle == None:
             self._handle = make_handle_from_string(name)

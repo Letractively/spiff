@@ -12,13 +12,13 @@ class DBObjectTest(unittest.TestCase):
     def testDBObject(self):
         name   = "Test DBObject"
         dbobject = DBObject(name)
-        assert dbobject.get_id()     == -1
+        assert dbobject.get_id() is None
         assert dbobject.get_name()   == name
         assert dbobject.get_handle() == make_handle_from_string(name)
         
         handle = "myhandle"
         dbobject = DBObject(name, handle)
-        assert dbobject.get_id()     == -1
+        assert dbobject.get_id() is None
         assert dbobject.get_name()   == name
         assert dbobject.get_handle() == handle
 
