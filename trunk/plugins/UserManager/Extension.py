@@ -61,8 +61,8 @@ class Extension:
         i18n     = self.i18n
 
         # Make sure that current_user has "view" permissions on it.
-        current_user = self.api.get_login().get_current_user()
-        if user.get_id() > 0:
+        current_user = self.api.get_session().get_user()
+        if user.get_id() is not None:
             view = guard_db.get_action(handle = 'view', type = UserAction)
             assert view is not None
             if not guard_db.has_permission(current_user, view, user):
@@ -76,6 +76,7 @@ class Extension:
             parent    = guard_db.get_resource(id = parent_id)
             parent.set_attribute('path_str', path.crop().get())
             parents   = [parent]
+            acls      = []
         else:
             acls    = self.__get_permissions_from_db(user)
             parents = guard_db.get_resource_parents(user)
@@ -102,8 +103,8 @@ class Extension:
         i18n     = self.i18n
 
         # Make sure that current_user has "view" permissions on it.
-        current_user = self.api.get_login().get_current_user()
-        if group.get_id() > 0:
+        current_user = self.api.get_session().get_user()
+        if group.get_id() is not None:
             view = guard_db.get_action(handle = 'view', type = UserAction)
             assert view is not None
             if not guard_db.has_permission(current_user, view, group):
@@ -114,7 +115,7 @@ class Extension:
         # Collect information for the browser.
         users    = []
         groups   = []
-        if group.get_id() > 0:
+        if group.get_id() is not None:
             acls     = self.__get_permissions_from_db(group)
             parents  = guard_db.get_resource_parents(group)
             children = guard_db.get_resource_children(group)
@@ -183,7 +184,7 @@ class Extension:
             errors.append(msg)
 
         # Users and groups must have a parent, except existing ones.
-        elif resource.get_id() <= 0 and parent_id == 0:
+        elif resource.get_id() is None and parent_id == 0:
             msg = i18n("Can not create a user or group without a parent.")
             errors.append(msg)
 
@@ -195,12 +196,12 @@ class Extension:
                 errors.append(msg)
 
         # Check permissions.
-        current_user    = self.api.get_login().get_current_user()
+        current_user    = self.api.get_session().get_user()
         current_user_id = current_user.get_id()
 
         # If the given user/group is new, make sure that current_user has
         # "administer" permissions on the parent.
-        if resource.get_id() <= 0:
+        if resource.get_id() is None:
             admin = guard_db.get_action(handle = 'administer',
                                         type   = UserAction)
             assert admin is not None
@@ -218,8 +219,8 @@ class Extension:
         # If the given user already exists, make sure that current_user
         # has "edit" permissions on it.
         else:
-            edit = guard_db.get_action_from_handle(handle = 'edit',
-                                                   type   = UserAction)
+            edit = guard_db.get_action(handle = 'edit',
+                                       type   = UserAction)
             assert edit is not None
             if not guard_db.has_permission(current_user, edit, resource):
                 return [i18n("You do not have permission to edit this user.")]
@@ -230,13 +231,13 @@ class Extension:
             errors.append(msg)
 
         # Make sure that the user/group name does not yet exist.
-        elif resource.get_id() <= 0:
+        elif resource.get_id() is None:
             res = self.guard_db.get_resource(name = name, type = User)
             if res is not None and res.is_group():
                 msg = i18n("A group with the given name already exists.")
                 errors.append(msg)
             elif res is not None:
-                msg = i18n("A user with the given name already exists.")
+                msg = i18n("A user with the given name already exists: %s" % res.get_name())
                 errors.append(msg)
 
         # Groups require the use_group_permission field.
@@ -247,7 +248,7 @@ class Extension:
 
         # New users require the default_owner_id field set to either 0 or
         # to the parent_id.
-        elif parent is not None and resource.get_id() <= 0:
+        elif parent is not None and resource.get_id() is None:
             if default_owner_id != 0 and default_owner_id != parent_id:
                 msg = i18n("Specified parent does not exist.")
                 errors.append(msg)
@@ -303,7 +304,7 @@ class Extension:
                                    use_group_permission)
         else:
             resource.set_attribute('default_owner_id', default_owner_id)
-        if resource.get_id() <= 0:
+        if resource.get_id() is None:
             self.guard_db.add_resource(parent_id, resource)
         else:
             self.guard_db.save_resource(resource)
@@ -427,7 +428,7 @@ class Extension:
         assert resource is not None
 
         # Check permissions.
-        current_user = self.api.get_login().get_current_user()
+        current_user = self.api.get_session().get_user()
         guard_db     = self.guard_db
 
         # Make sure that current_user has "edit" permissions on it.
@@ -458,7 +459,7 @@ class Extension:
 
         # Fetch the requested user or group info.
         errors = []
-        id     = int(path.get_current_id())
+        id     = path.get_current_id()
         if self.api.get_post_data('group_add') is not None:
             resource = Group('')
             path     = path.append(0)
@@ -495,14 +496,14 @@ class Extension:
             else:
                 errors   = self.__delete_resource(resource)
                 path     = path.crop()
-                id       = int(path.get_current_id())
+                id       = path.get_current_id()
                 resource = self.guard_db.get_resource(id = id)
         elif (self.api.get_post_data('user_delete') is not None and
               self.api.get_post_data('user_delete_really') == 'yes'):
             resource = self.guard_db.get_resource(id = id)
             errors   = self.__delete_resource(resource)
             path     = path.crop()
-            id       = int(path.get_current_id())
+            id       = path.get_current_id()
             resource = self.guard_db.get_resource(id = id)
         elif path_str is not None:
             resource = self.guard_db.get_resource(id = id)

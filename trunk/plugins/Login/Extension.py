@@ -21,9 +21,9 @@ class Extension:
     login_open = range(4)
 
     def __init__(self, api):
-        self.__api    = api
-        self.__login  = api.get_login()
-        self.__status = self.login_open
+        self.__api     = api
+        self.__session = api.get_session()
+        self.__status  = self.login_open
 
 
     def on_spiff_page_open(self, args):
@@ -32,7 +32,7 @@ class Extension:
 
         # A user is trying to log in.
         if self.__api.get_post_data('login') is not None and user is not None:
-            headers = self.__login.do(user, password)
+            headers = self.__session.login(user, password)
             if headers is None:
                 self.__status = self.login_failure
                 return
@@ -41,7 +41,7 @@ class Extension:
             self.__api.emit('login_done')
             return
         elif self.__api.get_get_data('logout') is not None:
-            headers = self.__login.logout()
+            headers = self.__session.logout()
             assert headers is not None
             self.__api.append_http_headers(**headers)
             self.__status = self.login_open
@@ -49,7 +49,7 @@ class Extension:
             return
 
         # No user is currently logged in.
-        current = self.__login.get_current_user()
+        current = self.__session.get_user()
         if current is None:
             self.__status = self.login_open
 
@@ -62,7 +62,7 @@ class Extension:
         self.__api.emit('render_start')
 
         if self.__status == self.login_done:
-            user = self.__login.get_current_user()
+            user = self.__session.get_user()
             assert user is not None
             return self.__api.render('login_done.tmpl', user = user)
 
