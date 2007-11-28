@@ -17,22 +17,20 @@ from gettext         import gettext
 from urlutil         import *
 from Integrator      import Api
 from Cookie          import SimpleCookie
-from PageAction   import PageAction
+from PageAction      import PageAction
 from genshi.template import TemplateLoader
 from genshi.template import MarkupTemplate
 
 
 class ExtensionApi(Api):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, **kwargs):
         assert kwargs.has_key('session')
-        assert kwargs.has_key('requested_page')
         assert kwargs.has_key('guard')
         assert kwargs.has_key('page_db')
         assert kwargs.has_key('get_data')
         assert kwargs.has_key('post_data')
         Api.__init__(self)
         self.__session        = kwargs['session']
-        self.__requested_page = kwargs['requested_page']
         self.__guard          = kwargs['guard']
         self.__page_db        = kwargs['page_db']
         self.__get_data       = kwargs['get_data']
@@ -78,6 +76,10 @@ class ExtensionApi(Api):
         return values
 
 
+    def get_requested_uri(self, *args, **kwargs):
+        return get_request_uri(**kwargs)
+
+
     def append_http_headers(self, *args, **kwargs):
         for key in kwargs:
             self.__http_headers.append((key, kwargs[key]))
@@ -115,38 +117,6 @@ class ExtensionApi(Api):
     def get_session(self):
         #FIXME: Check permission of the caller!
         return self.__session
-
-
-    def set_requested_page(self, page):
-        self.__requested_page = page
-
-
-    def get_requested_page(self):
-        return self.__requested_page
-
-
-    def get_requested_uri(self, *args, **kwargs):
-        return get_request_uri(**kwargs)
-
-
-    def has_permission(self, permission):
-        """
-        Returns true if the current user has the given permission
-        on the current page.
-        """
-        assert permission is not None
-        private = self.__requested_page.get_attribute('private') or False
-        if permission == 'view' and not private:
-            return True
-        user = self.__session.get_user()
-        if user is None:
-            return False
-        action = self.__guard.get_action(handle = permission,
-                                         type   = PageAction)
-        assert action is not None
-        return self.__guard.has_permission(user,
-                                           action,
-                                           self.__requested_page)
 
 
     def render(self, filename, *args, **kwargs):

@@ -23,7 +23,7 @@ class Extension:
         self.api          = api
         self.i18n         = api.get_i18n()
         self.db           = api.get_db()
-        self.page         = api.get_requested_page()
+        self.page         = api.get_session().get_requested_page()
         self.guestbook_db = DB(self.db)
 
 
@@ -75,7 +75,7 @@ class Extension:
         save     = self.api.get_post_data('save')
         remove   = self.api.get_post_data('remove')
         item_id  = self.api.get_get_data('item_id')
-        may_edit = self.api.has_permission('edit')
+        may_edit = self.api.get_session().may('edit')
 
         # Create an empty guestbook, if none exists yet.
         if list_id is None:
