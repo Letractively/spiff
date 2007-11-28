@@ -15,7 +15,7 @@
 import os
 from Cookie        import SimpleCookie
 from User          import User
-from ContentAction import ContentAction
+from PageAction import PageAction
 
 class Session(object):
     def __init__(self, guard):
@@ -36,7 +36,7 @@ class Session(object):
 
     def __get_action(self):
         return self.__guard.get_action(handle = 'view',
-                                       type   = ContentAction)
+                                       type   = PageAction)
 
 
     def get_user(self):
@@ -54,7 +54,7 @@ class Session(object):
 
     def may_view(self, page):
         user = self.get_user()
-        view = self.__guard.get_action(type = ContentAction, handle = 'view')
+        view = self.__guard.get_action(type = PageAction, handle = 'view')
         if user is not None and self.__guard.has_permission(user, view, page):
             return True
         return False 

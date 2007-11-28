@@ -14,14 +14,14 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 from string       import split
 from LayoutParser import LayoutParser
-from Content      import Content
+from Page         import Page
 
 class Extension:
     def __init__(self, api):
         self.api        = api
         self.i18n       = api.get_i18n()
         self.integrator = api.get_integrator()
-        self.content    = api.get_content_db()
+        self.page_db    = api.get_page_db()
         
         self.__errors = []
         self.__hidden = ['spiff',
@@ -62,7 +62,7 @@ class Extension:
 
         # Fetch the page from the database, or instanciate a new one.
         if new:
-            page   = Content(name)
+            page   = Page(name)
             parent = page_str and self.api.get_requested_page() or None
         else:
             page = self.api.get_requested_page()
@@ -84,9 +84,9 @@ class Extension:
         # Save the page.
         page.set_name(name)
         page.set_attribute('layout', parser.layout)
-        if new and not self.content.add(parent, page):
+        if new and not self.page_db.add(parent, page):
             self.__errors.append(i18n('Error while creating the page.'))
-        elif not self.content.save(page):
+        elif not self.page_db.save(page):
             self.__errors.append(i18n('Error while saving the page.'))
             return False
 
@@ -111,7 +111,7 @@ class Extension:
                                       ' page.'))
             return False
 
-        if not self.content.delete(page):
+        if not self.page_db.delete(page):
             self.__errors.append(i18n('Error while deleting the page.'))
             return False
 
@@ -152,7 +152,7 @@ class Extension:
                         name            = name,
                         extensions      = extensions,
                         is_new_page     = is_new_page,
-                        may_edit_page   = self.api.has_permission('edit_page'),
+                        may_edit_page   = self.api.has_permission('edit'),
                         layout          = layout,
                         errors          = self.__errors)
 

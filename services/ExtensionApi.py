@@ -17,21 +17,24 @@ from gettext         import gettext
 from urlutil         import *
 from Integrator      import Api
 from Cookie          import SimpleCookie
-from ContentAction   import ContentAction
+from PageAction   import PageAction
 from genshi.template import TemplateLoader
 from genshi.template import MarkupTemplate
 
 
 class ExtensionApi(Api):
     def __init__(self, *args, **kwargs):
+        assert kwargs.has_key('session')
         assert kwargs.has_key('requested_page')
         assert kwargs.has_key('guard')
+        assert kwargs.has_key('page_db')
         assert kwargs.has_key('get_data')
         assert kwargs.has_key('post_data')
         Api.__init__(self)
         self.__session        = kwargs['session']
         self.__requested_page = kwargs['requested_page']
         self.__guard          = kwargs['guard']
+        self.__page_db        = kwargs['page_db']
         self.__get_data       = kwargs['get_data']
         self.__post_data      = kwargs['post_data']
         self.__http_headers   = []
@@ -99,8 +102,8 @@ class ExtensionApi(Api):
         return self.__guard
 
 
-    def get_content_db(self):
-        return self.__content_db
+    def get_page_db(self):
+        return self.__page_db
 
 
     def get_integrator(self):
@@ -139,7 +142,7 @@ class ExtensionApi(Api):
         if user is None:
             return False
         action = self.__guard.get_action(handle = permission,
-                                         type   = ContentAction)
+                                         type   = PageAction)
         assert action is not None
         return self.__guard.has_permission(user,
                                            action,

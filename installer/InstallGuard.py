@@ -12,13 +12,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-from Task          import Task
-from sqlalchemy    import *
-from User          import User
-from Group         import Group
-from Content       import Content
-from UserAction    import UserAction
-from ContentAction import ContentAction
+from Task       import Task
+from sqlalchemy import *
+from User       import User
+from Group      import Group
+from Page       import Page
+from UserAction import UserAction
+from PageAction import PageAction
 import Guard
 
 class InstallGuard(Task):
@@ -35,9 +35,9 @@ class InstallGuard(Task):
             guard.install()
             guard.register_type([User,
                                  Group,
-                                 Content,
+                                 Page,
                                  UserAction,
-                                 ContentAction])
+                                 PageAction])
         except Exception, e:
             print "FAIL:", e
             return Task.failure
