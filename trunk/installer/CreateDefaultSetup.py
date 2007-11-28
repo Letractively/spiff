@@ -266,6 +266,7 @@ class CreateDefaultSetup(CheckList):
         # Assign the wiki page extension to the homepage.
         caption = 'Assign default page to a wiki'
         content_default.set_attribute('extension', 'spiff_core_wiki_page')
+        content_default.set_attribute('recursive', True)
         if not self.guard.save_resource(content_default):
             self._add_result(caption, Task.failure)
             self._print_result(environment, False)
@@ -293,6 +294,7 @@ class CreateDefaultSetup(CheckList):
         # Assign an extension to the admin page.
         caption = 'Assign admin center extension to a system page'
         content_admin.set_attribute('extension', 'spiff_core_admin_center')
+        content_admin.set_attribute('recursive', True)
         if not self.guard.save_resource(content_admin):
             self._add_result(caption, Task.failure)
             self._print_result(environment, False)
@@ -303,6 +305,7 @@ class CreateDefaultSetup(CheckList):
         caption = 'Assign user manager extension to a system page'
         handle  = 'spiff_core_user_manager'
         content_admin_users.set_attribute('extension', handle)
+        content_admin_users.set_attribute('recursive', True)
         if not self.guard.save_resource(content_admin_users):
             self._add_result(caption, Task.failure)
             self._print_result(environment, False)

@@ -21,6 +21,7 @@ class Extension:
         self.api        = api
         self.i18n       = api.get_i18n()
         self.integrator = api.get_integrator()
+        self.content    = api.get_content_db()
         
         self.__errors = []
         self.__hidden = ['spiff',
@@ -83,9 +84,9 @@ class Extension:
         # Save the page.
         page.set_name(name)
         page.set_attribute('layout', parser.layout)
-        if new and not self.api.add_page(parent, page):
+        if new and not self.content.add(parent, page):
             self.__errors.append(i18n('Error while creating the page.'))
-        elif not self.api.save_page(page):
+        elif not self.content.save(page):
             self.__errors.append(i18n('Error while saving the page.'))
             return False
 
@@ -110,7 +111,7 @@ class Extension:
                                       ' page.'))
             return False
 
-        if not self.api.delete_page(page):
+        if not self.content.delete(page):
             self.__errors.append(i18n('Error while deleting the page.'))
             return False
 

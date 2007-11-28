@@ -13,13 +13,14 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import os
-from Cookie import SimpleCookie
-from User   import User
+from Cookie        import SimpleCookie
+from User          import User
+from ContentAction import ContentAction
 
 class Session(object):
-    def __init__(self, guard_db):
-        assert guard_db is not None
-        self.__guard_db     = guard_db
+    def __init__(self, guard):
+        assert guard is not None
+        self.__guard        = guard
         self.__current_user = None
         try:
             sid = SimpleCookie(os.environ['HTTP_COOKIE'])['sid'].value
@@ -33,18 +34,30 @@ class Session(object):
         return sha.new(str(time.time())).hexdigest()
 
 
+    def __get_action(self):
+        return self.__guard.get_action(handle = 'view',
+                                       type   = ContentAction)
+
+
     def get_user(self):
         if self.__current_user is not None:
             return self.__current_user
-        guard = self.__guard_db
         if self.__sid is None:
             return None
-        user = guard.get_resource(attribute = {'sid': self.__sid},
-                                  type      = User)
+        user = self.__guard.get_resource(attribute = {'sid': self.__sid},
+                                         type      = User)
         if user is None:
             return None
         self.__current_user = user
         return self.__current_user
+
+
+    def may_view(self, page):
+        user = self.get_user()
+        view = self.__guard.get_action(type = ContentAction, handle = 'view')
+        if user is not None and self.__guard.has_permission(user, view, page):
+            return True
+        return False 
 
 
     def login(self, username, password):
@@ -55,8 +68,8 @@ class Session(object):
         #print "Login requested for user '%s'." % username
         if username is None or password is None:
             return None
-        user = self.__guard_db.get_resource(handle = username,
-                                            type   = User)
+        user = self.__guard.get_resource(handle = username,
+                                         type   = User)
         if user is None:
             return None
         if not user.has_password(password):
@@ -66,7 +79,7 @@ class Session(object):
         self.__sid = self.__generate_session_id()
         #print "Logging in with sid %s..." % self.__sid
         user.set_attribute('sid', self.__sid)
-        self.__guard_db.save_resource(user)
+        self.__guard.save_resource(user)
         self.__current_user = user
         headers = {'Set-Cookie': 'sid=%s; path=/' % self.__sid}
         return headers

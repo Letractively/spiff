@@ -17,7 +17,6 @@ from gettext         import gettext
 from urlutil         import *
 from Integrator      import Api
 from Cookie          import SimpleCookie
-from Session         import Session
 from ContentAction   import ContentAction
 from genshi.template import TemplateLoader
 from genshi.template import MarkupTemplate
@@ -26,15 +25,13 @@ from genshi.template import MarkupTemplate
 class ExtensionApi(Api):
     def __init__(self, *args, **kwargs):
         assert kwargs.has_key('requested_page')
-        assert kwargs.has_key('guard_mod')
-        assert kwargs.has_key('guard_db')
+        assert kwargs.has_key('guard')
         assert kwargs.has_key('get_data')
         assert kwargs.has_key('post_data')
         Api.__init__(self)
-        self.__session        = Session(kwargs['guard_db'])
+        self.__session        = kwargs['session']
         self.__requested_page = kwargs['requested_page']
-        self.__guard_mod      = kwargs['guard_mod']
-        self.__guard_db       = kwargs['guard_db']
+        self.__guard          = kwargs['guard']
         self.__get_data       = kwargs['get_data']
         self.__post_data      = kwargs['post_data']
         self.__http_headers   = []
@@ -94,18 +91,16 @@ class ExtensionApi(Api):
 
     def get_db(self):
         #FIXME: Check permission of the caller!
-        return self.__guard_db.db
+        return self.__guard.db
 
 
-    def get_guard_db(self):
-        #FIXME: Check permission of the caller!
-        return self.__guard_db
-
-
-    #FIXME: It is not necessary to export the module.
     def get_guard(self):
         #FIXME: Check permission of the caller!
-        return self.__guard_mod
+        return self.__guard
+
+
+    def get_content_db(self):
+        return self.__content_db
 
 
     def get_integrator(self):
@@ -143,12 +138,12 @@ class ExtensionApi(Api):
         user = self.__session.get_user()
         if user is None:
             return False
-        action = self.__guard_db.get_action(handle = permission,
-                                            type   = ContentAction)
+        action = self.__guard.get_action(handle = permission,
+                                         type   = ContentAction)
         assert action is not None
-        return self.__guard_db.has_permission(user,
-                                              action,
-                                              self.__requested_page)
+        return self.__guard.has_permission(user,
+                                           action,
+                                           self.__requested_page)
 
 
     def render(self, filename, *args, **kwargs):
@@ -174,21 +169,6 @@ class ExtensionApi(Api):
                                       request_uri = get_request_uri,
                                       txt         = gettext,
                                       **kwargs).render('xhtml')
-
-
-    def add_page(self, parent, page):
-        #FIXME: Check the permission of the caller.
-        return self.__guard_db.add_resource(parent, page)
-
-
-    def save_page(self, page):
-        #FIXME: Check the permission of the caller.
-        return self.__guard_db.save_resource(page)
-
-
-    def delete_page(self, page):
-        #FIXME: Check the permission of the caller.
-        return self.__guard_db.delete_resource(page)
 
 
     def get_output(self):

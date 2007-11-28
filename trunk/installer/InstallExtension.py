@@ -19,6 +19,7 @@ from sqlalchemy   import *
 from ConfigParser import RawConfigParser
 from Task         import Task
 from ExtensionApi import ExtensionApi
+from Session      import Session
 import Guard
 
 class InstallExtension(Task):
@@ -39,11 +40,12 @@ class InstallExtension(Task):
         # Connect to MySQL and set up.
         db            = create_engine(dbn)
         self.guard    = Guard.DB(db)
+        session       = Session(self.guard)
         get_data      = cgi.parse_qs(os.environ["QUERY_STRING"])
         post_data     = cgi.FieldStorage()
         extension_api = ExtensionApi(requested_page = None,
-                                     guard_mod      = Guard,
-                                     guard_db       = self.guard,
+                                     session        = session,
+                                     guard          = self.guard,
                                      get_data       = get_data,
                                      post_data      = post_data)
         self.integrator = Integrator.Manager(self.guard, extension_api)
