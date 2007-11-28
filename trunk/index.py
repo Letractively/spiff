@@ -41,51 +41,44 @@ from Session         import Session
 import Guard
 
 
-def show_admin_links(loader, user, integrator):
-    # Check for admin permissisions
-    may_edit_page = extension_api.has_permission('edit')
-    if not may_edit_page:
-        return
-
+def show_admin_links(loader, user):
     tmpl    = loader.load('admin_header.tmpl', None, MarkupTemplate)
     web_dir = get_mod_rewrite_prevented_uri('web')
     print tmpl.generate(web_dir       = web_dir,
                         uri           = get_uri,
                         request_uri   = get_request_uri,
                         current_user  = user,
-                        may_edit_page = may_edit_page,
+                        may_edit_page = True,
                         txt           = gettext).render('xhtml')
 
 
-def send_headers(integrator,
-                 user,
-                 page,
-                 headers      = [],
-                 content_type = 'text/html; charset=utf-8'):
+def send_headers(api, content_type = 'text/html; charset=utf-8'):
     # Print the HTTP header.
+    headers = api.get_http_headers()
     print 'Content-Type: %s' % content_type
     for k, v in headers:
         print '%s: %s' % (k, v)
     print
 
     # Load and display the HTML header.
+    session = api.get_session()
     loader  = TemplateLoader(['web'])
     tmpl    = loader.load('header.tmpl',  None, TextTemplate)
     web_dir = get_mod_rewrite_prevented_uri('web')
     print tmpl.generate(web_dir      = web_dir,
-                        current_user = user,
+                        current_user = session.get_user(),
                         txt          = gettext).render('text')
 
     # If the user has special rights, show links to the admin pages.
-    if user is not None:
-        show_admin_links(loader, user, integrator)
+    if session.may('edit'):
+        show_admin_links(loader, session.get_user())
 
     # Display the top banner.
     tmpl = loader.load('header2.tmpl', None, MarkupTemplate)
     print tmpl.generate(web_dir      = web_dir,
                         uri          = get_uri,
                         request_uri  = get_request_uri,
-                        current_user = user,
+                        current_user = session.get_user(),
                         txt          = gettext).render('xhtml')
 
 
@@ -100,8 +93,6 @@ def send_footer():
 ###
 # Start the magic.
 ###
-#send_headers(None, None, None)
-
 if not os.path.exists('data/spiff.cfg'):
     print 'Content-Type: text/html; charset=utf-8'
     print
@@ -125,8 +116,7 @@ dbn = cfg.get('database', 'dbn')
 # Connect to MySQL and set up Spiff Guard.
 db      = create_engine(dbn)
 guard   = Guard.DB(db)
-session = Session(guard)
-page_db     = PageDB(guard)
+page_db = PageDB(guard)
 guard.register_type([User, Group, Page, UserAction, PageAction])
 
 # Lookup the current page from the given cgi variables.
@@ -136,13 +126,13 @@ page_handle = get_data.get('page', ['homepage'])[0]
 page        = page_db.get(page_handle)
 
 # Set up the plugin manager (Integrator).
-extension_api = ExtensionApi(requested_page = page,
-                             guard          = guard,
-                             page_db        = page_db,
-                             session        = session,
-                             get_data       = get_data,
-                             post_data      = post_data)
-integrator = Integrator.Manager(guard, extension_api)
+session = Session(guard, requested_page = page)
+api     = ExtensionApi(guard     = guard,
+                       page_db   = page_db,
+                       session   = session,
+                       get_data  = get_data,
+                       post_data = post_data)
+integrator = Integrator.Manager(guard, api)
 integrator.set_package_dir('data/repo')
 
 # Can not open some pages by addressing them directly.
@@ -172,41 +162,37 @@ if page is None:
 
 # Now that we may have redirected the user to another page, let the
 # extension API know that.
-extension_api.set_requested_page(page)
+session.set_requested_page(page)
 
 # Make sure that the caller has permission to retrieve this page.
 # If the caller currently has no permission, load the login
 # extension to give it the opportunity to perform the login.
-if page.get_attribute('private') \
-  and not session.may_view(page):
+if page.get_attribute('private') and not session.may('view'):
     login      = page_db.get('admin/login')
     descriptor = login.get_attribute('extension')
     integrator.load_package_from_descriptor(descriptor)
 
 # The login extension may catch the following signal and perform the login.
-extension_api.emit_sync('spiff:page_open')
+api.emit_sync('spiff:page_open')
 
 # At this point the login was performed. Check the permission.
-if (page.get_attribute('private') and not session.may_view(page)) \
+if (page.get_attribute('private') and not session.may('view')) \
   or get_data.has_key('login'):
     page = page_db.get('admin/login')
 
 # Send headers.
-extension_api.emit_sync('spiff:header_before')
-send_headers(integrator,
-             extension_api.get_session().get_user(),
-             page,
-             extension_api.get_http_headers())
-extension_api.emit_sync('spiff:header_after')
+api.emit_sync('spiff:header_before')
+send_headers(api)
+api.emit_sync('spiff:header_after')
 
 # Render the layout.
-extension_api.emit_sync('spiff:render_before')
-layout = Layout(integrator, extension_api, page)
+api.emit_sync('spiff:render_before')
+layout = Layout(integrator, api, page)
 layout.render()
-extension_api.emit_sync('spiff:render_after')
+api.emit_sync('spiff:render_after')
 
 # Send the footer.
-extension_api.emit_sync('spiff:footer_before')
+api.emit_sync('spiff:footer_before')
 send_footer()
-extension_api.emit_sync('spiff:footer_after')
-extension_api.emit_sync('spiff:page_done')
+api.emit_sync('spiff:footer_after')
+api.emit_sync('spiff:page_done')

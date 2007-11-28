@@ -13,15 +13,17 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import os
-from Cookie        import SimpleCookie
-from User          import User
+from Cookie     import SimpleCookie
+from User       import User
 from PageAction import PageAction
 
 class Session(object):
-    def __init__(self, guard):
+    def __init__(self, guard, **kwargs):
+        assert kwargs.has_key('requested_page')
         assert guard is not None
-        self.__guard        = guard
-        self.__current_user = None
+        self.__guard          = guard
+        self.__current_user   = None
+        self.__requested_page = kwargs['requested_page']
         try:
             sid = SimpleCookie(os.environ['HTTP_COOKIE'])['sid'].value
         except:
@@ -39,6 +41,14 @@ class Session(object):
                                        type   = PageAction)
 
 
+    def set_requested_page(self, page):
+        self.__requested_page = page
+
+
+    def get_requested_page(self):
+        return self.__requested_page
+
+
     def get_user(self):
         if self.__current_user is not None:
             return self.__current_user
@@ -52,10 +62,24 @@ class Session(object):
         return self.__current_user
 
 
-    def may_view(self, page):
+    def may(self, action_handle, page = None):
+        if page is None:
+            page = self.__requested_page
+
+        # If the page is publicly available there's no need to ask the DB.
+        private = page.get_attribute('private') or False
+        if action_handle == 'view' and not private:
+            return True
+
+        # Get the currently logged in user.
         user = self.get_user()
-        view = self.__guard.get_action(type = PageAction, handle = 'view')
-        if user is not None and self.__guard.has_permission(user, view, page):
+        if user is None:
+            return False
+
+        # Ask the DB whether permission shall be granted.
+        action = self.__guard.get_action(type   = PageAction,
+                                         handle = action_handle)
+        if self.__guard.has_permission(user, action, page):
             return True
         return False 
 

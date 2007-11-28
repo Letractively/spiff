@@ -16,10 +16,11 @@ from ApiGenie import ApiDB
 
 class Extension:
     def __init__(self, api):
-        self.api    = api
-        self.db     = api.get_db()
-        self.i18n   = api.get_i18n()
-        self.api_db = ApiDB(self.db)
+        self.api     = api
+        self.session = api.get_session()
+        self.db      = api.get_db()
+        self.i18n    = api.get_i18n()
+        self.api_db  = ApiDB(self.db)
 
 
     def install(self):
@@ -27,7 +28,7 @@ class Extension:
 
 
     def __show(self, errors = []):
-        page = self.api.get_requested_page()
+        page = self.session.get_requested_page()
         assert page is not None
 
         self.api.render('home.tmpl',

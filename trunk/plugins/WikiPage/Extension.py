@@ -32,7 +32,7 @@ class Extension:
         self.api          = api
         self.i18n         = api.get_i18n()
         self.db           = api.get_db()
-        self.page         = api.get_requested_page()
+        self.page         = api.get_session().get_requested_page()
         self.wiki2html    = Wiki2Html()
         self.warehouse    = DB(self.db)
         data_directory    = os.path.join(api.get_data_dir(), 'warehouse')
@@ -348,7 +348,7 @@ class Extension:
         revision = self.api.get_get_data('revision')
         handle   = self.page is not None and self.page.get_handle()
         alias    = self.api.get_get_data('page') or handle
-        may_edit = self.api.has_permission('edit')
+        may_edit = self.api.get_session().may('edit_content')
         item     = None
         if revision is not None:
             item = self.warehouse.get_file_from_alias(alias, int(revision))
