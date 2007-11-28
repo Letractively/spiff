@@ -33,17 +33,17 @@ from genshi.template import TextTemplate
 from genshi.template import MarkupTemplate
 from User            import User
 from Group           import Group
-from Content         import Content
+from Page            import Page
 from UserAction      import UserAction
-from ContentAction   import ContentAction
-from ContentDB       import ContentDB
+from PageAction      import PageAction
+from PageDB          import PageDB
 from Session         import Session
 import Guard
 
 
 def show_admin_links(loader, user, integrator):
     # Check for admin permissisions
-    may_edit_page = extension_api.has_permission('edit_page')
+    may_edit_page = extension_api.has_permission('edit')
     if not may_edit_page:
         return
 
@@ -126,18 +126,19 @@ dbn = cfg.get('database', 'dbn')
 db      = create_engine(dbn)
 guard   = Guard.DB(db)
 session = Session(guard)
-cdb     = ContentDB(guard)
-guard.register_type([User, Group, Content, UserAction, ContentAction])
+page_db     = PageDB(guard)
+guard.register_type([User, Group, Page, UserAction, PageAction])
 
 # Lookup the current page from the given cgi variables.
 get_data    = cgi.parse_qs(os.environ["QUERY_STRING"])
 post_data   = cgi.FieldStorage()
 page_handle = get_data.get('page', ['homepage'])[0]
-page        = cdb.get(page_handle)
+page        = page_db.get(page_handle)
 
 # Set up the plugin manager (Integrator).
 extension_api = ExtensionApi(requested_page = page,
                              guard          = guard,
+                             page_db        = page_db,
                              session        = session,
                              get_data       = get_data,
                              post_data      = post_data)
@@ -146,7 +147,7 @@ integrator.set_package_dir('data/repo')
 
 # Can not open some pages by addressing them directly.
 if get_data.has_key('page') \
-  and cdb.is_system_page_handle(get_data.get('page')[0]):
+  and page_db.is_system_page_handle(get_data.get('page')[0]):
     print 'Content-Type: text/html; charset=utf-8'
     print
     print 'error 403 (Forbidden)<br/>'
@@ -155,12 +156,12 @@ if get_data.has_key('page') \
 
 # If requested, load the content editor.
 if get_data.has_key('new_page') or get_data.has_key('edit_page'):
-    page = cdb.get('admin/page')
+    page = page_db.get('admin/page')
 
 # If the specific site was not found, attempt to find a parent that
 # handles content recursively.
 elif page is None:
-    page = cdb.get_responsible_page(page_handle)
+    page = page_db.get_responsible_page(page_handle)
 
 # If we still have no page, give 404.
 if page is None:
@@ -178,7 +179,7 @@ extension_api.set_requested_page(page)
 # extension to give it the opportunity to perform the login.
 if page.get_attribute('private') \
   and not session.may_view(page):
-    login      = cdb.get('admin/login')
+    login      = page_db.get('admin/login')
     descriptor = login.get_attribute('extension')
     integrator.load_package_from_descriptor(descriptor)
 
@@ -188,7 +189,7 @@ extension_api.emit_sync('spiff:page_open')
 # At this point the login was performed. Check the permission.
 if (page.get_attribute('private') and not session.may_view(page)) \
   or get_data.has_key('login'):
-    page = cdb.get('admin/login')
+    page = page_db.get('admin/login')
 
 # Send headers.
 extension_api.emit_sync('spiff:header_before')

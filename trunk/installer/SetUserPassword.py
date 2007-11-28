@@ -23,6 +23,7 @@ from StockButton  import StockButton
 from ExtensionApi import ExtensionApi
 from User         import User
 from Session      import Session
+from PageDB       import PageDB
 import Guard
 
 class SetUserPassword(Task):
@@ -42,6 +43,7 @@ class SetUserPassword(Task):
         # Connect to MySQL and set up.
         db            = create_engine(dbn)
         self.guard    = Guard.DB(db)
+        page_db       = PageDB(self.guard)
         session       = Session(self.guard)
         self.guard.register_type(User)
         get_data      = cgi.parse_qs(os.environ["QUERY_STRING"])
@@ -49,6 +51,7 @@ class SetUserPassword(Task):
         extension_api = ExtensionApi(requested_page = None,
                                      session        = session,
                                      guard          = self.guard,
+                                     page_db        = page_db,
                                      get_data       = get_data,
                                      post_data      = post_data)
         self.integrator = Integrator.Manager(self.guard, extension_api)

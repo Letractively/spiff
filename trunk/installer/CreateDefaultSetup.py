@@ -12,15 +12,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-from Task          import Task
-from Task          import CheckList
-from Form          import Form
-from StockButton   import StockButton
-from User          import User
-from Group         import Group
-from Content       import Content
-from UserAction    import UserAction
-from ContentAction import ContentAction
+from Task        import Task
+from Task        import CheckList
+from Form        import Form
+from StockButton import StockButton
+from User        import User
+from Group       import Group
+from Page        import Page
+from UserAction  import UserAction
+from PageAction  import PageAction
 
 class CreateDefaultSetup(CheckList):
     def _print_result(self, environment, done, allow_retry = True):
@@ -56,8 +56,8 @@ class CreateDefaultSetup(CheckList):
         return self.__create_action(name, handle, UserAction)
 
 
-    def __create_content_action(self, name, handle):
-        return self.__create_action(name, handle, ContentAction)
+    def __create_page_action(self, name, handle):
+        return self.__create_action(name, handle, PageAction)
 
 
     def __create_resource(self,
@@ -97,8 +97,8 @@ class CreateDefaultSetup(CheckList):
         return self.__create_resource(parent, name, handle, User)
 
 
-    def __create_content(self, parent, name, handle, private = False):
-        return self.__create_resource(parent, name, handle, Content, private)
+    def __create_page(self, parent, name, handle, private = False):
+        return self.__create_resource(parent, name, handle, Page, private)
 
 
     def install(self, environment):
@@ -212,62 +212,62 @@ class CreateDefaultSetup(CheckList):
         self._add_result(caption, Task.success)
 
         #########
-        # Create content pages.
+        # Create pages.
         #########
-        self._result_markup += '{subtitle "Creating content"}'
+        self._result_markup += '{subtitle "Creating page"}'
 
-        content_default = self.__create_content(None, 'Wiki', 'default')
-        if content_default is None:
+        page_default = self.__create_page(None, 'Wiki', 'default')
+        if page_default is None:
             return Task.failure
 
-        content_admin = self.__create_content(None,
-                                              'Admin Center',
-                                              'admin',
+        page_admin = self.__create_page(None,
+                                        'Admin Center',
+                                        'admin',
+                                        True)
+        if page_admin is None:
+            return Task.failure
+
+        page_admin_register = self.__create_page(page_admin,
+                                                 'User Registration',
+                                                 'admin/register')
+        if page_admin_register is None:
+            return Task.failure
+
+        page_admin_login = self.__create_page(page_admin,
+                                              'System Login',
+                                              'admin/login')
+        if page_admin_login is None:
+            return Task.failure
+
+        page_admin_users = self.__create_page(page_admin,
+                                              'User Manager',
+                                              'admin/users',
                                               True)
-        if content_admin is None:
+        if page_admin_users is None:
             return Task.failure
 
-        content_admin_register = self.__create_content(content_admin,
-                                                       'User Registration',
-                                                       'admin/register')
-        if content_admin_register is None:
+        page_admin_page = self.__create_page(page_admin,
+                                             'Page Editor',
+                                             'admin/page',
+                                             True)
+        if page_admin_page is None:
             return Task.failure
 
-        content_admin_login = self.__create_content(content_admin,
-                                                    'System Login',
-                                                    'admin/login')
-        if content_admin_login is None:
-            return Task.failure
-
-        content_admin_users = self.__create_content(content_admin,
-                                                    'User Manager',
-                                                    'admin/users',
-                                                    True)
-        if content_admin_users is None:
-            return Task.failure
-
-        content_admin_page = self.__create_content(content_admin,
-                                                   'Page Editor',
-                                                   'admin/page',
+        page_admin_extensions = self.__create_page(page_admin,
+                                                   'Extension Manager',
+                                                   'admin/extensions',
                                                    True)
-        if content_admin_page is None:
-            return Task.failure
-
-        content_admin_extensions = self.__create_content(content_admin,
-                                                         'Extension Manager',
-                                                         'admin/extensions',
-                                                         True)
-        if content_admin_extensions is None:
+        if page_admin_extensions is None:
             return Task.failure
 
         #########
-        # Assign extensions to the content pages.
+        # Assign extensions to the pages.
         #########
         # Assign the wiki page extension to the homepage.
         caption = 'Assign default page to a wiki'
-        content_default.set_attribute('extension', 'spiff_core_wiki_page')
-        content_default.set_attribute('recursive', True)
-        if not self.guard.save_resource(content_default):
+        page_default.set_attribute('extension', 'spiff_core_wiki_page')
+        page_default.set_attribute('recursive', True)
+        if not self.guard.save_resource(page_default):
             self._add_result(caption, Task.failure)
             self._print_result(environment, False)
             return Task.failure
@@ -275,8 +275,8 @@ class CreateDefaultSetup(CheckList):
 
         # Assign an extension to the admin/register page.
         caption = 'Assign user registration extension to a system page'
-        content_admin_register.set_attribute('extension', 'spiff_core_register')
-        if not self.guard.save_resource(content_admin_register):
+        page_admin_register.set_attribute('extension', 'spiff_core_register')
+        if not self.guard.save_resource(page_admin_register):
             self._add_result(caption, Task.failure)
             self._print_result(environment, False)
             return Task.failure
@@ -284,8 +284,8 @@ class CreateDefaultSetup(CheckList):
 
         # Assign an extension to the admin/login page.
         caption = 'Assign login extension to a system page'
-        content_admin_login.set_attribute('extension', 'spiff_core_login')
-        if not self.guard.save_resource(content_admin_login):
+        page_admin_login.set_attribute('extension', 'spiff_core_login')
+        if not self.guard.save_resource(page_admin_login):
             self._add_result(caption, Task.failure)
             self._print_result(environment, False)
             return Task.failure
@@ -293,9 +293,9 @@ class CreateDefaultSetup(CheckList):
 
         # Assign an extension to the admin page.
         caption = 'Assign admin center extension to a system page'
-        content_admin.set_attribute('extension', 'spiff_core_admin_center')
-        content_admin.set_attribute('recursive', True)
-        if not self.guard.save_resource(content_admin):
+        page_admin.set_attribute('extension', 'spiff_core_admin_center')
+        page_admin.set_attribute('recursive', True)
+        if not self.guard.save_resource(page_admin):
             self._add_result(caption, Task.failure)
             self._print_result(environment, False)
             return Task.failure
@@ -304,9 +304,9 @@ class CreateDefaultSetup(CheckList):
         # Assign an extension to the admin/users page.
         caption = 'Assign user manager extension to a system page'
         handle  = 'spiff_core_user_manager'
-        content_admin_users.set_attribute('extension', handle)
-        content_admin_users.set_attribute('recursive', True)
-        if not self.guard.save_resource(content_admin_users):
+        page_admin_users.set_attribute('extension', handle)
+        page_admin_users.set_attribute('recursive', True)
+        if not self.guard.save_resource(page_admin_users):
             self._add_result(caption, Task.failure)
             self._print_result(environment, False)
             return Task.failure
@@ -315,8 +315,8 @@ class CreateDefaultSetup(CheckList):
         # Assign an extension to the admin/page page.
         caption = 'Assign page editor extension to a system page'
         handle  = 'spiff_core_page_editor'
-        content_admin_page.set_attribute('extension', handle)
-        if not self.guard.save_resource(content_admin_page):
+        page_admin_page.set_attribute('extension', handle)
+        if not self.guard.save_resource(page_admin_page):
             self._add_result(caption, Task.failure)
             self._print_result(environment, False)
             return Task.failure
@@ -325,56 +325,56 @@ class CreateDefaultSetup(CheckList):
         # Assign an extension to the admin/extensions page.
         caption = 'Assign extension manager to a system page'
         handle  = 'spiff_core_extension_manager'
-        content_admin_extensions.set_attribute('extension', handle)
-        if not self.guard.save_resource(content_admin_extensions):
+        page_admin_extensions.set_attribute('extension', handle)
+        if not self.guard.save_resource(page_admin_extensions):
             self._add_result(caption, Task.failure)
             self._print_result(environment, False)
             return Task.failure
         self._add_result(caption, Task.success)
 
         #########
-        # Create content permissions.
+        # Create page permissions.
         #########
-        self._result_markup += '{subtitle "Creating content permissions"}'
+        self._result_markup += '{subtitle "Creating page permissions"}'
 
-        content_action_view = self.__create_content_action('View Content',
-                                                           'view')
-        if content_action_view is None:
+        page_action_view = self.__create_page_action('View Page',
+                                                     'view')
+        if page_action_view is None:
             return Task.failure
 
-        content_action_create = self.__create_content_action('Create Content',
-                                                             'create')
-        if content_action_create is None:
+        page_action_create = self.__create_page_action('Create Page',
+                                                       'create')
+        if page_action_create is None:
             return Task.failure
 
-        content_action_edit = self.__create_content_action('Edit Content',
-                                                           'edit')
-        if content_action_edit is None:
+        page_action_edit = self.__create_page_action('Edit Page',
+                                                     'edit')
+        if page_action_edit is None:
             return Task.failure
 
-        content_action_edit_page = self.__create_content_action('Edit Page',
-                                                                'edit_page')
-        if content_action_edit_page is None:
+        page_action_edit_content = self.__create_page_action('Edit Page Content',
+                                                             'edit_content')
+        if page_action_edit_content is None:
             return Task.failure
 
-        content_action_delete = self.__create_content_action('Delete Content',
-                                                             'delete')
-        if content_action_delete is None:
+        page_action_delete = self.__create_page_action('Delete Page',
+                                                       'delete')
+        if page_action_delete is None:
             return Task.failure
 
         #########
-        # Assign content permissions.
+        # Assign page permissions.
         #########
-        self._result_markup += '{subtitle "Assigning content permissions"}'
+        self._result_markup += '{subtitle "Assigning page permissions"}'
         caption = 'Granting all permissions to administrators'
-        actions = [content_action_create,
-                   content_action_view,
-                   content_action_edit,
-                   content_action_edit_page,
-                   content_action_delete]
-        content = [content_default, content_admin]
+        actions = [page_action_create,
+                   page_action_view,
+                   page_action_edit,
+                   page_action_edit_content,
+                   page_action_delete]
+        page = [page_default, page_admin]
         try:
-            self.guard.grant(group_admin, actions, content)
+            self.guard.grant(group_admin, actions, page)
         except:
             self._add_result(caption, Task.failure)
             self._print_result(environment, False)
@@ -382,9 +382,9 @@ class CreateDefaultSetup(CheckList):
         self._add_result(caption, Task.success)
 
         caption = 'Granting view permissions to users'
-        content = [content_default]
+        page = [page_default]
         try:
-            self.guard.grant(group_users, content_action_view, content)
+            self.guard.grant(group_users, page_action_view, page)
         except:
             self._add_result(caption, Task.failure)
             self._print_result(environment, False)

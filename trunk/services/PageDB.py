@@ -1,26 +1,26 @@
-from Content    import Content
-from ContentBox import ContentBox
+from Page    import Page
+from PageBox import PageBox
 
-class ContentDB(object):
+class PageDB(object):
     def __init__(self, guard):
         self.__guard        = guard
         self.__system_pages = ['homepage', 'default']
         
 
-    def is_system_page_handle(self, content_handle):
+    def is_system_page_handle(self, page_handle):
         for handle in self.__system_pages:
-            if (content_handle + '/').startswith(handle + '/'):
+            if (page_handle + '/').startswith(handle + '/'):
                 return True
         return False
 
 
     def get(self, handle):
-        return self.__guard.get_resource(handle = handle, type = Content)
+        return self.__guard.get_resource(handle = handle, type = Page)
 
 
     def get_responsible_page(self, handle):
         """
-        Returns the Content that is responsible for drawing the given
+        Returns the Page that is responsible for drawing the given
         page.
         """
         # Attempt to get the page using the path.
@@ -38,25 +38,25 @@ class ContentDB(object):
         return None
 
 
-    def add(self, parent, content, extension):
-        content.set_attribute('recursive', True) #FIXME
-        return self.__guard.add_resource(parent, content)
+    def add(self, parent, page, extension):
+        page.set_attribute('recursive', True) #FIXME
+        return self.__guard.add_resource(parent, page)
 
 
-    def save(self, content):
-        return self.__guard.save_resource(content)
+    def save(self, page):
+        return self.__guard.save_resource(page)
 
 
-    def delete(self, content):
+    def delete(self, page):
         #FIXME: Check the permission of the caller.
-        return self.__guard.delete_resource(content)
+        return self.__guard.delete_resource(page)
 
 
     def create_box(self):
-        box = ContentBox(self, 'content_box')
+        box = PageBox(self, 'page_box')
         self.add(None, box)
         return box
 
 
     def get_box(self, id):
-        return self.__guard.get_resource(id = id, type = ContentBox)
+        return self.__guard.get_resource(id = id, type = PageBox)
