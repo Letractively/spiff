@@ -2,9 +2,9 @@
      xmlns:py="http://genshi.edgewall.org/"
      xmlns:xi="http://www.w3.org/2001/XInclude"
      py:with="img_dir = plugin_dir + '/img'">
-<script src="$web_dir/scriptaculous/prototype.js"
+<script src="$web_dir/lib/scriptaculous/prototype.js"
         type="text/javascript"></script>
-<script src="$web_dir/scriptaculous/scriptaculous.js?load=effects,dragdrop"
+<script src="$web_dir/lib/scriptaculous/scriptaculous.js?load=effects,dragdrop"
         type="text/javascript"></script>
 <h1 py:if="name"><a href="${request_uri(noargs = 1)}"
                     py:content="name" /></h1>
