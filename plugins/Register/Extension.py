@@ -20,8 +20,8 @@ class Extension:
     def __init__(self, api):
         self.__api      = api
         self.i18n       = api.get_i18n()
-        self.__session    = api.get_session()
-        self.__guard    = api.get_guard_db()
+        self.__session  = api.get_session()
+        self.__guard    = api.get_guard()
         self.server     = 'mail.speedpartner.de'
         self.mail_from  = 'no-reply@debain.org'
 

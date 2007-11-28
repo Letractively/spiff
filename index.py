@@ -36,6 +36,8 @@ from Group           import Group
 from Content         import Content
 from UserAction      import UserAction
 from ContentAction   import ContentAction
+from ContentDB       import ContentDB
+from Session         import Session
 import Guard
 
 
@@ -95,53 +97,6 @@ def send_footer():
                         txt     = gettext).render('text')
 
 
-def find_requested_page(get_data):
-    if not get_data.has_key('page'):
-        return 'homepage'
-    return get_data['page'][0]
-
-
-def get_login_page(guard_db):
-    login = guard_db.get_resource(handle = 'admin/login', type = Content)
-    assert login is not None
-    return login
-
-
-def log_in(guard_db, integrator, page):
-    """
-    Returns a tuple of boolean: (did_login, page_open_sent)
-    """
-    user = extension_api.get_session().get_user()
-    if user:
-        # Bail out if the user is already logged in and has permission.
-        view = guard_db.get_action(handle = 'view', type = ContentAction)
-        assert view is not None
-        if guard_db.has_permission(user, view, page):
-            return (True, False)
-
-    # Ending up here, the user is not logged in or has insufficient rights.
-    # Load the login form extension.
-    login = get_login_page(guard_db)
-    descriptor = login.get_attribute('extension')
-    assert descriptor is not None
-    extension = integrator.load_package_from_descriptor(descriptor)
-
-    # The extension can fetch this signal and perform the login.
-    extension_api.emit_sync('spiff:page_open')
-
-    # The login form might have performed a successful login.
-    user = extension_api.get_session().get_user()
-    if user is None:
-        return (False, True)
-
-    # Check permissions again.
-    view = guard_db.get_action(handle = 'view', type = ContentAction)
-    assert view is not None
-    if guard_db.has_permission(user, view, page):
-        return (True, True)
-    return (False, True)
-
-
 ###
 # Start the magic.
 ###
@@ -168,72 +123,44 @@ cfg.read('data/spiff.cfg')
 dbn = cfg.get('database', 'dbn')
 
 # Connect to MySQL and set up Spiff Guard.
-db       = create_engine(dbn)
-guard_db = Guard.DB(db)
-guard_db.register_type([User, Group, Content, UserAction, ContentAction])
+db      = create_engine(dbn)
+guard   = Guard.DB(db)
+session = Session(guard)
+cdb     = ContentDB(guard)
+guard.register_type([User, Group, Content, UserAction, ContentAction])
 
 # Lookup the current page from the given cgi variables.
 get_data    = cgi.parse_qs(os.environ["QUERY_STRING"])
 post_data   = cgi.FieldStorage()
-page_handle = find_requested_page(get_data)
-page        = guard_db.get_resource(handle = page_handle, type = Content)
-extension   = None
+page_handle = get_data.get('page', ['homepage'])[0]
+page        = cdb.get(page_handle)
 
 # Set up the plugin manager (Integrator).
 extension_api = ExtensionApi(requested_page = page,
-                             guard_mod      = Guard,
-                             guard_db       = guard_db,
+                             guard          = guard,
+                             session        = session,
                              get_data       = get_data,
                              post_data      = post_data)
-integrator = Integrator.Manager(guard_db, extension_api)
+integrator = Integrator.Manager(guard, extension_api)
 integrator.set_package_dir('data/repo')
 
 # Can not open some pages by addressing them directly.
-open_sys_page = False
-if (page_handle == 'homepage'
-    or page_handle == 'default'
-    or page_handle.startswith('homepage/')
-    or page_handle.startswith('default/')):
-    open_sys_page = True
-if open_sys_page and get_data.has_key('page'):
+if get_data.has_key('page') \
+  and cdb.is_system_page_handle(get_data.get('page')[0]):
     print 'Content-Type: text/html; charset=utf-8'
     print
-    print 'error 403 (Forbidden)'
-    print 'Can not open the homepage by addressing it directly.'
+    print 'error 403 (Forbidden)<br/>'
+    print 'Can not open %s by addressing it directly.' % repr(page_handle)
     sys.exit()
 
-# If the specific site was not found, cut the path until a page is found.
-# Then look if the matching page has an extension that manages the entire
-# tree instead of just a single page.
-if page is None:
-    # Retrieve the parent with the longest handle.
-    while page_handle != '':
-        stack       = split(page_handle, '/')
-        page_handle = '/'.join(stack[:-1])
-        page = guard_db.get_resource(handle = page_handle, type = Content)
-        if page is not None:
-            break
+# If requested, load the content editor.
+if get_data.has_key('new_page') or get_data.has_key('edit_page'):
+    page = cdb.get('admin/page')
 
-    # Check whether it manages the subtree.
-    if page is not None:
-        descriptor = page.get_attribute('extension')
-        info       = integrator.get_package_from_descriptor(descriptor)
-        assert info is not None
-        if not info.get_attribute('recursive'):
-            page = None
-
-# If we still have not found a page, try our default page.
-# If it has an extension that manages the entire tree instead of just a
-# single page, use it.
-if page is None:
-    page = guard_db.get_resource(handle = 'default', type = Content)
-    assert page is not None
-    extension_api.set_requested_page(page)
-    descriptor = page.get_attribute('extension')
-    info       = integrator.get_package_from_descriptor(descriptor)
-    assert info is not None
-    if not info.get_attribute('recursive'):
-        page = None
+# If the specific site was not found, attempt to find a parent that
+# handles content recursively.
+elif page is None:
+    page = cdb.get_responsible_page(page_handle)
 
 # If we still have no page, give 404.
 if page is None:
@@ -247,21 +174,21 @@ if page is None:
 extension_api.set_requested_page(page)
 
 # Make sure that the caller has permission to retrieve this page.
-page_open_sent = False
+# If the caller currently has no permission, load the login
+# extension to give it the opportunity to perform the login.
 if page.get_attribute('private') \
-  or get_data.has_key('login') \
-  or post_data.has_key('login'):
-    (did_login, page_open_sent) = log_in(guard_db, integrator, page)
-    if not did_login:
-        page = get_login_page(guard_db)
-        extension = None
+  and not session.may_view(page):
+    login      = cdb.get('admin/login')
+    descriptor = login.get_attribute('extension')
+    integrator.load_package_from_descriptor(descriptor)
 
-if not page_open_sent:
-    extension_api.emit_sync('spiff:page_open')
+# The login extension may catch the following signal and perform the login.
+extension_api.emit_sync('spiff:page_open')
 
-# If requested, load the content editor.
-if get_data.has_key('new_page') or get_data.has_key('edit_page'):
-    page = guard_db.get_resource(handle = 'admin/page', type = Content)
+# At this point the login was performed. Check the permission.
+if (page.get_attribute('private') and not session.may_view(page)) \
+  or get_data.has_key('login'):
+    page = cdb.get('admin/login')
 
 # Send headers.
 extension_api.emit_sync('spiff:header_before')
