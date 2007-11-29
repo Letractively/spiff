@@ -53,7 +53,9 @@ class DB(DBReader):
         @rtype:  Boolean
         @return: True on success, False otherwise.
         """
-        delete = self._table_map['object_type'].delete()
+        delete = self._table_map['resource'].delete()
+        result = delete.execute()
+        delete = self._table_map['action'].delete()
         result = delete.execute()
         return True
 
@@ -77,6 +79,7 @@ class DB(DBReader):
                                 handle      = action.get_handle(),
                                 name        = action.get_name())
         action.set_id(result.last_inserted_ids()[0])
+        self._action_cache_add(action)
         return True
 
 
@@ -118,7 +121,8 @@ class DB(DBReader):
         result = update.execute(action_type = action.__class__.__name__,
                                 handle      = action.get_handle(),
                                 name        = action.get_name())
-        assert result is not None
+        self._action_cache_flush()
+        self._action_cache_add(action)
         return True
 
 
@@ -203,20 +207,15 @@ class DB(DBReader):
         # Object type.
         if kwargs.has_key('type'):
             types = kwargs.get('type')
-            if type(types) != type([]):
-                types = [types]
-            type_where = None
-            tbl_t      = self._table_map['object_type']
-            for objtype in types:
-                path       = self._get_type_path(objtype)
-                subselect  = select([tbl_t.c.name],
-                                    tbl_t.c.path.like(path + '%'))
-                type_where = or_(type_where, tbl_a.c.action_type.in_(subselect))
-            where = and_(where, type_where)
+            cond  = self._get_subtype_sql(tbl_a.c.action_type, types)
+            where = and_(where, cond)
 
         delete = table.delete(where)
         result = delete.execute()
-        return int(result.rowcount)
+
+        if result.rowcount > 0:
+            self._action_cache_flush()
+        return result.rowcount
 
 
     def __resource_has_attribute(self, resource_id, name):
@@ -349,6 +348,7 @@ class DB(DBReader):
             if parent_id is None:
                 raise AttributeError('The given parent does not exist')
 
+        self._sql_cache_flush()
         transaction = connection.begin()
 
         # Retrieve information about the parent, if any. Also, increase the
@@ -473,7 +473,7 @@ class DB(DBReader):
         """
         assert resource          is not None
         assert resource.get_id() is not None
-        self.try_register_type(resource.__class__)
+        self._sql_cache_flush()
 
         transaction = connection.begin()
 
@@ -556,6 +556,7 @@ class DB(DBReader):
             resource_ids = [resource_ids]
         if len(resource_ids) == 0:
             return
+        self._sql_cache_flush()
 
         connection  = self.db.connect()
         transaction = connection.begin()
@@ -613,6 +614,8 @@ class DB(DBReader):
         @rtype:  int
         @return: The number of deleted resources.
         """
+        self._sql_cache_flush()
+
         # If the ID is the only criteria, there is no need to do a match
         # first and we can just delete in one run.
         if len(kwargs.keys()) == 1 and kwargs.has_key('id'):

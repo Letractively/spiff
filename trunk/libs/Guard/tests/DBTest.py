@@ -10,6 +10,7 @@ def suite():
 
 from DBReaderTest  import DBReaderTest
 from DB            import DB
+from DBObject      import DBObject
 from Action        import Action
 from Resource      import Resource
 from ResourceGroup import ResourceGroup
@@ -42,7 +43,7 @@ class DBTest(DBReaderTest):
         self.assert_(self.db.install())
         self.assert_(self.db.clear_database())
         self.db.register_type(Content)
-        self.db.register_type([object, User, Group])
+        self.db.register_type([DBObject, User, Group])
 
 
     def tearDown(self):
@@ -88,7 +89,7 @@ class DBTest(DBReaderTest):
         # Test del_from_handle (a base type)
         self.assert_(action.get_id() is not None)
         self.assert_(self.db.delete_action_from_match(handle = handle,
-                                                      type   = object) == 1)
+                                                      type   = DBObject) == 1)
         self.assert_(self.db.get_action(id = action.get_id()) is None)
 
         # Test del_from_handle (exact type)

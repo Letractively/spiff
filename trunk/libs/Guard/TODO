@@ -2,4 +2,3 @@
   indicates that any behavioral link may be created.
 * Replace remaining argument check assertions by Exceptions with a useful
   error message.
-* Cache Resource objects.

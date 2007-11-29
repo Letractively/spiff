@@ -57,6 +57,7 @@ class Session(object):
         user = self.__guard.get_resource(attribute = {'sid': self.__sid},
                                          type      = User)
         if user is None:
+            self.__sid = None
             return None
         self.__current_user = user
         return self.__current_user
