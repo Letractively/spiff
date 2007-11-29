@@ -19,6 +19,7 @@ from sqlalchemy   import *
 from functions    import bin_path2list, list2bin_path, bin_path2hex_path
 from Acl          import Acl
 from Action       import Action
+from Resource     import Resource
 from ResourcePath import ResourcePath
 
 class DBReader:
@@ -38,7 +39,9 @@ class DBReader:
         self._table_prefix = 'guard_'
         self._table_map    = {}
         self._table_list   = []
-        self._types        = {}
+        self._types        = {}   # Maps typename to type
+        self._action_cache = {}   # Maps "handle/typename" to Action
+        self._sql_cache    = {}   # Maps SQL to result
         self.__update_table_names()
 
 
@@ -60,20 +63,11 @@ class DBReader:
         """
         pfx = self._table_prefix
         self._table_list = []
-        self.__add_table(Table(pfx + 'object_type', self.db_metadata,
-            Column('id',   Integer,     primary_key = True),
-            Column('path', Binary(255), index       = True),
-            Column('name', String(50),  unique      = True),
-            mysql_engine='INNODB'
-        ))
         self.__add_table(Table(pfx + 'action', self.db_metadata,
             Column('id',             Integer,     primary_key = True),
             Column('action_type',    String(50),  index = True),
             Column('handle',         String(230)),
             Column('name',           String(230), unique = True),
-            ForeignKeyConstraint(['action_type'],
-                                 [pfx + 'object_type.name'],
-                                 ondelete = 'CASCADE'),
             mysql_engine='INNODB'
         ))
         self.__add_table(Table(pfx + 'resource', self.db_metadata,
@@ -83,9 +77,6 @@ class DBReader:
             Column('name',          String(230)),
             Column('n_children',    Integer,     index = True, default = 0),
             Column('is_group',      Boolean,     index = True),
-            ForeignKeyConstraint(['resource_type'],
-                                 [pfx + 'object_type.name'],
-                                 ondelete = 'CASCADE'),
             mysql_engine='INNODB'
         ))
         self.__add_table(Table(pfx + 'resource_attribute', self.db_metadata,
@@ -175,87 +166,80 @@ class DBReader:
         return self._table_prefix
 
 
-    def __get_type_id(self, type):
-        table  = self._table_map['object_type']
-        select = table.select(table.c.name == type.__name__)
-        result = select.execute()
-        row    = result.fetchone()
-        if row is None:
-            return None
-        assert row is not None
-        return row[table.c.id]
-
-
-    def _get_type_path(self, type):
-        if type.__name__ not in self._types:
-            err = 'type %s is not yet registered' % type.__name__
-            raise AttributeError(err)
-        table  = self._table_map['object_type']
-        select = table.select(table.c.name == type.__name__)
-        result = select.execute()
-        if result is None:
-            return None
-        row = result.fetchone()
-        if row is None:
-            return None
-        return row[table.c.path]
-
-
-    def __add_type(self, path, type):
-        assert path >= 0
-        assert type >= 0
-        connection  = self.db.connect()
-        transaction = connection.begin()
-
-        # Insert the type into the table.
-        tbl_t  = self._table_map['object_type']
-        insert = tbl_t.insert()
-        result = insert.execute(path = list2bin_path(path),
-                                name = type.__name__)
-
-        # Update the path of the type.
-        id     = result.last_inserted_ids()[0]
-        path   = list2bin_path(path + [id])
-        where  = tbl_t.c.id == id
-        update = self._table_map['object_type'].update(where)
-        result = update.execute(path = path)
-
-        transaction.commit()
-        return id
+    def _get_subtype_sql(self, column, objtypes):
+        if type(objtypes) != type([]):
+            objtypes = [objtypes]
+        conds = []
+        for objtype in objtypes:
+            name = objtype.__name__
+            if not self.is_registered(objtype):
+                err = '%s must be passed to register_type() first' % name
+                raise AttributeError(err)
+            conds.append(column == name)
+            conds += [column == t.__name__ for t in objtype.__subclasses__()]
+        return or_(*conds)
 
 
     def __register_type(self, objtype):
         self._types[objtype.__name__] = objtype
-        bases = list(objtype.__mro__)
-        path  = []
-        bases.reverse()
-        for base in bases:
-            id = self.__get_type_id(base)
-            if id is None:
-                id = self.__add_type(path, base)
-            assert id is not None
-            path.append(id)
 
 
     def register_type(self, objtypes):
         if type(objtypes) != type([]):
-            return self.__register_type(objtypes)
+            objtypes = [objtypes]
         for objtype in objtypes:
             self.__register_type(objtype)
 
 
-    def try_register_type(self, objtype):
-        if self._types.has_key(objtype.__name__):
-            return
-        self.register_type(objtype)
+    def is_registered(self, objtype):
+        return self._types.has_key(objtype.__name__)
+
+
+    def _action_cache_add(self, action):
+        key = action.get_handle() + '/' + action.__class__.__name__
+        self._action_cache[key] = action
+
+
+    def __action_cache_get(self, handle, typename):
+        key = handle + '/' + typename
+        return self._action_cache.get(key, None)
+
+
+    def _action_cache_flush(self, handle = None, typename = None):
+        if handle is None or typename is None:
+            self._action_cache.clear()
+        else:
+            key = handle + '/' + typename
+            del self._action_cache[key]
+
+
+    def _sql_cache_add(self, request, result):
+        params = request.compile().get_params()
+        params = ['%s=%s' % (k, v) for k, v in params.iteritems()]
+        sql    = '%s/%s' % (request, '/'.join(params))
+        self._sql_cache[sql] = result
+
+
+    def __sql_cache_get(self, request):
+        params = request.compile().get_params()
+        params = ['%s=%s' % (k, v) for k, v in params.iteritems()]
+        sql    = '%s/%s' % (request, '/'.join(params))
+        result = self._sql_cache.get(sql, None)
+        return result
+
+
+    def _sql_cache_flush(self):
+        self._sql_cache.clear()
 
 
     def __get_action_from_row(self, row):
         assert row is not None
         tbl_a  = self._table_map['action']
         type   = self._types[row[tbl_a.c.action_type]]
+        key    = '%s/%s' % (tbl_a.c.handle, tbl_a.c.action_type)
         action = type(row[tbl_a.c.name], row[tbl_a.c.handle])
         action.set_id(row[tbl_a.c.id])
+        self._action_cache_add(action)
         return action
 
 
@@ -288,6 +272,16 @@ class DBReader:
         @rtype:  Action
         @return: The action or None.
         """
+        # If the only argument is the handle, we try to fetch the action out
+        # of the cache.
+        if len(kwargs) == 2 \
+          and kwargs.has_key('handle') \
+          and kwargs.has_key('type'):
+            action = self.__action_cache_get(kwargs.get('handle'),
+                                             kwargs.get('type').__name__)
+            if action is not None:
+                return action
+
         result = self.get_actions(0, 2, **kwargs)
         if len(result) == 0:
             return None
@@ -340,16 +334,8 @@ class DBReader:
         # Object type.
         if kwargs.has_key('type'):
             types = kwargs.get('type')
-            if type(types) != type([]):
-                types = [types]
-            type_where = None
-            tbl_t      = self._table_map['object_type']
-            table      = table.outerjoin(tbl_t,
-                                         tbl_a.c.action_type == tbl_t.c.name)
-            for objtype in types:
-                path       = self._get_type_path(objtype)
-                type_where = or_(type_where, tbl_t.c.path.like(path + '%'))
-            where = and_(where, type_where)
+            cond  = self._get_subtype_sql(tbl_a.c.action_type, types)
+            where = and_(where, cond)
 
         select = table.select(where,
                               use_labels = True,
@@ -374,9 +360,16 @@ class DBReader:
         Returns a list of resources.
         """
         assert query is not None
+
+        # Attempt to get the cached result first.
+        result = self.__sql_cache_get(query)
+        if result is not None:
+            return result
+
         result = query.execute()
         row    = result.fetchone()
         if not row:
+            self._sql_cache_add(query, [])
             return []
 
         tbl_r         = self._table_map['resource']
@@ -410,6 +403,7 @@ class DBReader:
                 if last_id != row[tbl_r.c.id]:
                     break
 
+        self._sql_cache_add(query, resource_list)
         return resource_list
 
 
@@ -451,18 +445,9 @@ class DBReader:
 
         # Object type.
         if kwargs.has_key('type'):
-            tbl_t      = self._table_map['object_type']
-            table      = table.outerjoin(tbl_t,
-                                         tbl_r.c.resource_type == tbl_t.c.name)
             types = kwargs.get('type')
-            if type(types) != type([]):
-                types = [types]
-            type_where = None
-            for objtype in types:
-                self.try_register_type(objtype)
-                path       = self._get_type_path(objtype)
-                type_where = or_(type_where, tbl_t.c.path.like(path + '%'))
-            where = and_(where, type_where)
+            cond  = self._get_subtype_sql(tbl_r.c.resource_type, types)
+            where = and_(where, cond)
 
         # Attributes.
         if kwargs.has_key('attribute'):
@@ -572,6 +557,11 @@ class DBReader:
                               use_labels = True,
                               limit      = limit,
                               offset     = offset)
+
+        # Attempt to get the cached result first.
+        children = self.__sql_cache_get(select)
+        if children is not None:
+            return children
         result = select.execute()
 
         # Collect all children.
@@ -596,6 +586,7 @@ class DBReader:
                 resource.set_attribute(row[tbl_a.c.name],
                                        row[tbl_a.c.attr_string])
 
+        self._sql_cache_add(select, children)
         return children
 
 
@@ -647,6 +638,11 @@ class DBReader:
                               use_labels = True,
                               limit      = limit,
                               offset     = offset)
+
+        # Attempt to get the cached result first.
+        parents = self.__sql_cache_get(select)
+        if parents is not None:
+            return parents
         result = select.execute()
 
         # Collect all parents.
@@ -671,6 +667,7 @@ class DBReader:
                 resource.set_attribute(row[tbl_a.c.name],
                                        row[tbl_a.c.attr_string])
 
+        self._sql_cache_add(select, parents)
         return parents
 
 

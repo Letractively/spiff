@@ -13,12 +13,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-import sys, cgi, os, os.path
+import sys, cgi, os, os.path, time
 sys.path.insert(0, 'libs')
 sys.path.insert(0, 'objects')
 sys.path.insert(0, 'services')
 sys.path.insert(0, 'functions')
-import MySQLdb, Integrator
+import MySQLdb, Guard, Integrator
 from sqlalchemy      import *
 from urlutil         import get_uri, \
                             get_request_uri, \
@@ -38,8 +38,8 @@ from UserAction      import UserAction
 from PageAction      import PageAction
 from PageDB          import PageDB
 from Session         import Session
-import Guard
 
+start_time = time.clock()
 
 def show_admin_links(loader, user):
     tmpl    = loader.load('admin_header.tmpl', None, MarkupTemplate)
@@ -83,11 +83,13 @@ def send_headers(api, content_type = 'text/html; charset=utf-8'):
 
 
 def send_footer():
-    loader  = TemplateLoader(['web'])
-    tmpl    = loader.load('footer.tmpl', None, TextTemplate)
-    web_dir = get_mod_rewrite_prevented_uri('web')
-    print tmpl.generate(web_dir = web_dir,
-                        txt     = gettext).render('text')
+    loader      = TemplateLoader(['web'])
+    tmpl        = loader.load('footer.tmpl', None, TextTemplate)
+    web_dir     = get_mod_rewrite_prevented_uri('web')
+    render_time = time.clock() - start_time
+    print tmpl.generate(web_dir     = web_dir,
+                        render_time = render_time,
+                        txt         = gettext).render('text')
 
 
 ###
@@ -112,6 +114,16 @@ if os.path.exists('install'):
 cfg = RawConfigParser()
 cfg.read('data/spiff.cfg')
 dbn = cfg.get('database', 'dbn')
+
+try:
+    file = open(os.path.join(os.path.dirname(__file__), '.htaccess'))
+    for line in file:
+        if line.startswith('RewriteEngine on'):
+            #FIXME: Take effect on this!
+            break
+    file.close()
+except:
+    pass
 
 # Connect to MySQL and set up Spiff Guard.
 db      = create_engine(dbn)
@@ -193,6 +205,7 @@ api.emit_sync('spiff:render_after')
 
 # Send the footer.
 api.emit_sync('spiff:footer_before')
+
 send_footer()
 api.emit_sync('spiff:footer_after')
 api.emit_sync('spiff:page_done')

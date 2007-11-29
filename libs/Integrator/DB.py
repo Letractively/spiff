@@ -37,6 +37,7 @@ class DB:
         self._table_map          = {}
         self._table_list         = []
         self.__update_table_names()
+        self._guard.register_type(Package)
 
 
     def __add_table(self, table):
@@ -136,7 +137,6 @@ class DB:
         """
         for table in self._table_list:
             table.create(checkfirst = True)
-        self._guard.try_register_type(Package)
         return True
 
 
@@ -272,7 +272,6 @@ class DB:
         @return: True on success, False otherwise.
         """
         assert package is not None
-        self._guard.try_register_type(Package)
         
         # Check whether the package is already registered.
         installed = self.get_package_from_handle(package.get_handle(),
