@@ -56,7 +56,3 @@ Spiff supports mod_rewrite. To enable it, follow these instructions:
    opening "http://www.your-domain-name.com" does not point to your
    Spiff directory), you will have to edit the RewriteRule statements.
    It is expected that you know how to do that if you use mod_rewrite.
-
-3. Edit the functions.py file in the root directory of Spiff and change
-   "use_mod_rewrite = False" (near the top of the file) to
-   "use_mod_rewrite = True".
