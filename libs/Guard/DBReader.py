@@ -781,18 +781,16 @@ class DBReader:
             where = and_(where, tbl_ac.c.permit == kwargs['permit'])
 
         if kwargs.has_key('action_type'):
-            path   = self._get_type_path(kwargs.get('action_type'))
-            tbl_t1 = self._table_map['object_type'].alias('t1')
-            tbl    = tbl.outerjoin(tbl_t1, tbl_a1.c.action_type == tbl_t1.c.name)
-            where  = and_(where, tbl_t1.c.path.like(path + '%'))
+            types = kwargs.get('action_type')
+            cond  = self._get_subtype_sql(tbl_a1.c.action_type, types)
+            where = and_(where, cond)
 
         if kwargs.has_key('resource_type'):
-            path   = self._get_type_path(kwargs.get('resource_type'))
             tbl_r1 = self._table_map['resource'].alias('r1')
-            tbl_t2 = self._table_map['object_type'].alias('t2')
             tbl    = tbl.outerjoin(tbl_r1, tbl_r1.c.id == tbl_ac.c.resource_id)
-            tbl    = tbl.outerjoin(tbl_t2, tbl_r1.c.resource_type == tbl_t2.c.name)
-            where  = and_(where, tbl_t2.c.path.like(path + '%'))
+            types  = kwargs.get('resource_type')
+            cond   = self._get_subtype_sql(tbl_r1.c.resource_type, types)
+            where  = and_(where, cond)
 
         sel = select([tbl_ac.c.id,
                       tbl_ac.c.actor_id,
@@ -902,28 +900,25 @@ class DBReader:
             action_id = kwargs['action_id']
             where     = and_(where, tbl_a1.c.id == action_id)
         if kwargs.has_key('action_type'):
-            path   = self._get_type_path(kwargs.get('action_type'))
-            tbl_t1 = self._table_map['object_type'].alias('t1')
-            tbl    = tbl.outerjoin(tbl_t1, tbl_a1.c.action_type == tbl_t1.c.name)
-            where  = and_(where, tbl_t1.c.path.like(path + '%'))
+            types = kwargs.get('action_type')
+            cond  = self._get_subtype_sql(tbl_a1.c.action_type, types)
+            where = and_(where, cond)
 
         # Informative only.
         if kwargs.has_key('resource_type'):
-            path   = self._get_type_path(kwargs.get('resource_type'))
             tbl_r1 = self._table_map['resource'].alias('r1')
-            tbl_t2 = self._table_map['object_type'].alias('t2')
             tbl    = tbl.outerjoin(tbl_r1, tbl_r1.c.id == tbl_p4.c.resource_id)
-            tbl    = tbl.outerjoin(tbl_t2, tbl_r1.c.resource_type == tbl_t2.c.name)
-            where  = and_(where, tbl_t2.c.path.like(path + '%'))
+            types  = kwargs.get('resource_type')
+            cond   = self._get_subtype_sql(tbl_r1.c.resource_type, types)
+            where  = and_(where, cond)
 
         # Informative only.
         if kwargs.has_key('actor_type'):
-            path   = self._get_type_path(kwargs.get('actor_type'))
             tbl_r2 = self._table_map['resource'].alias('r2')
-            tbl_t3 = self._table_map['object_type'].alias('t3')
             tbl    = tbl.outerjoin(tbl_r2, tbl_r2.c.id == tbl_p2.c.resource_id)
-            tbl    = tbl.outerjoin(tbl_t3, tbl_r2.c.resource_type == tbl_t3.c.name)
-            where  = and_(where, tbl_t3.c.path.like(path + '%'))
+            types  = kwargs.get('resource_type')
+            cond   = self._get_subtype_sql(tbl_r2.c.resource_type, types)
+            where  = and_(where, cond)
 
         # Get all ACLs that control the same resource/action as the ACL above.
         tbl_ac2 = self._table_map['acl'].alias('ac2')

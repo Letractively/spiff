@@ -12,9 +12,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-def gettext(text):
-    """
-    Internationalizes the given string.
-    """
-    #FIXME
-    return text
+import os
+
+def mod_rewrite_enabled():
+    try:
+        file = open(os.path.join(os.environ['DOCUMENT_ROOT'], '.htaccess'))
+        for line in file:
+            if line.startswith('RewriteEngine on'):
+                return True
+        file.close()
+    except:
+        pass
+    return False

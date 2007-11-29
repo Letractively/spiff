@@ -28,6 +28,18 @@ class Acl(object):
         self.__permit      = bool(permit)
         self.__inherited   = bool(inherited)
 
+    def __str__(self):
+        permit      = self.__permit    and 'Permit' or 'Deny'
+        inherit     = self.__inherited and 'inherited' or ''
+        actor_id    = self.__actor_id
+        action_name = self.__action.get_handle()
+        resource_id = self.__resource_id
+        return "%s: %s %s %s (%s)" % (permit,
+                                      actor_id,
+                                      action_name,
+                                      resource_id,
+                                      inherit)
+
     def set_id(self, id):
         self.__id = int(id)
 

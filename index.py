@@ -115,16 +115,6 @@ cfg = RawConfigParser()
 cfg.read('data/spiff.cfg')
 dbn = cfg.get('database', 'dbn')
 
-try:
-    file = open(os.path.join(os.path.dirname(__file__), '.htaccess'))
-    for line in file:
-        if line.startswith('RewriteEngine on'):
-            #FIXME: Take effect on this!
-            break
-    file.close()
-except:
-    pass
-
 # Connect to MySQL and set up Spiff Guard.
 db      = create_engine(dbn)
 guard   = Guard.DB(db)
@@ -172,10 +162,6 @@ if page is None:
     print 'error 404 (File not found)'
     sys.exit()
 
-# Now that we may have redirected the user to another page, let the
-# extension API know that.
-session.set_requested_page(page)
-
 # Make sure that the caller has permission to retrieve this page.
 # If the caller currently has no permission, load the login
 # extension to give it the opportunity to perform the login.
@@ -184,6 +170,10 @@ if page.get_attribute('private') and not session.may('view'):
     descriptor = login.get_attribute('extension')
     integrator.load_package_from_descriptor(descriptor)
 
+# Now that we may have redirected the user to another page, let the
+# extension API know that.
+session.set_requested_page(page)
+
 # The login extension may catch the following signal and perform the login.
 api.emit_sync('spiff:page_open')
 
@@ -191,6 +181,7 @@ api.emit_sync('spiff:page_open')
 if (page.get_attribute('private') and not session.may('view')) \
   or get_data.has_key('login'):
     page = page_db.get('admin/login')
+    session.set_requested_page(page)
 
 # Send headers.
 api.emit_sync('spiff:header_before')
@@ -199,7 +190,7 @@ api.emit_sync('spiff:header_after')
 
 # Render the layout.
 api.emit_sync('spiff:render_before')
-layout = Layout(integrator, api, page)
+layout = Layout(api)
 layout.render()
 api.emit_sync('spiff:render_after')
 
