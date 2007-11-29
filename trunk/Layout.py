@@ -15,34 +15,30 @@
 from LayoutParser import LayoutParser
 
 class Layout:
-    def __init__(self, integrator, extension_api, page):
+    def __init__(self, extension_api):
         """
         If the given page has no layout defined, a default layout is used.
         """
-        assert integrator    is not None
         assert extension_api is not None
-        assert page          is not None
-        self.__integrator    = integrator
         self.__extension_api = extension_api
-        self.__descriptor    = page.get_attribute('extension')
-        self.__layout        = page.get_attribute('layout')
 
         # If a layout was not defined, use a default layout.
-        if self.__layout is None or self.__layout == '':
-            assert self.__descriptor is not None
-            self.__layout  = '<t cl="layout"><r><c>'
-            self.__layout += '<t><r><c>'
-            self.__layout += self.__descriptor
-            self.__layout += '</c></r></t>'
-            self.__layout += '</c></r></t>'
+        page       = extension_api.get_session().get_requested_page()
+        descriptor = page.get_attribute('extension')
+        layout     = page.get_attribute('layout')
+        if layout is None or layout == '':
+            assert descriptor is not None
+            layout  = '<t cl="layout"><r><c>'
+            layout += '<t><r><c>%s</c></r></t>' % descriptor
+            layout += '</c></r></t>'
 
-        self.__layout_parser = LayoutParser(self.__layout)
+        self.__layout_parser = LayoutParser(layout)
         self.__layout_parser.set_data_handler(self._layout_data_handler)
 
 
     def _layout_data_handler(self, data):
-        extension = self.__integrator.load_package_from_descriptor(data)
-        assert extension is not None
+        integrator = self.__extension_api.get_integrator()
+        extension  = integrator.load_package_from_descriptor(data)
         extension.on_render_request()
         output = self.__extension_api.get_output()
         self.__extension_api.clear_output()
@@ -85,7 +81,7 @@ if __name__ == '__main__':
             page = Resource('my resource')
             page.set_attribute('layout',    layout)
             page.set_attribute('extension', 'my_extension>=1.0')
-            layout = Layout(object, object, page)
+            layout = Layout(object)
             assert layout is not None
 
     testcase = LayoutTest()

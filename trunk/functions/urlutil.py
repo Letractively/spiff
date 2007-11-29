@@ -13,7 +13,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import os, cgi
-use_mod_rewrite = False
+from mod_rewrite import mod_rewrite_enabled
+use_mod_rewrite = mod_rewrite_enabled()
 
 def get_uri(page, *args, **kwargs):
     """

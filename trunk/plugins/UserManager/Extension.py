@@ -17,48 +17,21 @@ from string     import split
 from User       import User
 from Group      import Group
 from UserAction import UserAction
+from UserDB     import UserDB
 
 class Extension:
     def __init__(self, api):
-        self.api   = api
-        self.i18n  = api.get_i18n()
-        self.guard = api.get_guard()
-
-
-    def __get_permissions_from_db(self, resource):
-        self.guard = self.guard
-
-        # Retrieve a list of all ACLs. The result is ordered by actor_path,
-        # resource_path.
-        search = {'actor': resource, 'resource_section_handle': 'users'}
-        acls   = self.guard.get_permission_list_with_inheritance(**search)
-
-        # Retrieve additional info about the resource.
-        res_id_list = [acl.get_resource_id() for acl in acls]
-        res_list    = self.guard.get_resources(id = res_id_list)
-        res_dict    = dict([(r.get_id(), r) for r in res_list])
-
-        # Group them by resource into a list that contains (resource,
-        # [acl1, acl2, ...]) tuples.
-        resource_acls = []
-        last_resource = None
-        for acl in acls:
-            resource = res_dict[acl.get_resource_id()]
-            if last_resource == resource:
-                resource_acls[-1][1].append(acl)
-            else:
-                resource_acls.append((resource, [acl]))
-                last_resource = resource
-
-        return resource_acls
+        self.api    = api
+        self.i18n   = api.get_i18n()
+        self.guard  = api.get_guard()
+        self.userdb = UserDB(self.guard)
 
 
     def __show_user(self, user, path, errors = []):
         assert user is not None
         assert not user.is_group()
         assert path is not None
-        self.guard = self.guard
-        i18n     = self.i18n
+        i18n = self.i18n
 
         # Make sure that current_user has "view" permissions on it.
         current_user = self.api.get_session().get_user()
@@ -78,7 +51,7 @@ class Extension:
             parents   = [parent]
             acls      = []
         else:
-            acls    = self.__get_permissions_from_db(user)
+            acls    = self.userdb.get_permission_list(user)
             parents = self.guard.get_resource_parents(user)
             # Abuse attributes to pass the path to the HTML template.
             for parent in parents:
@@ -99,8 +72,7 @@ class Extension:
         assert group is not None
         assert group.is_group()
         assert path is not None
-        self.guard = self.guard
-        i18n     = self.i18n
+        i18n = self.i18n
 
         # Make sure that current_user has "view" permissions on it.
         current_user = self.api.get_session().get_user()
@@ -116,7 +88,7 @@ class Extension:
         users    = []
         groups   = []
         if group.get_id() is not None:
-            acls     = self.__get_permissions_from_db(group)
+            acls     = self.userdb.get_permission_list(group)
             parents  = self.guard.get_resource_parents(group)
             children = self.guard.get_resource_children(group)
             for child in children:

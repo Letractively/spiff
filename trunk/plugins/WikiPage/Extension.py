@@ -15,10 +15,10 @@
 import os
 import re
 import sys
+import Warehouse
 from cgi        import escape
 from string     import split
-from Warehouse  import *
-from WikiMarkup import *
+from WikiMarkup import Wiki2Html
 from genshi     import Markup
 from difflib    import Differ
 from difflib    import SequenceMatcher
@@ -34,7 +34,7 @@ class Extension:
         self.db           = api.get_db()
         self.page         = api.get_session().get_requested_page()
         self.wiki2html    = Wiki2Html()
-        self.warehouse    = DB(self.db)
+        self.warehouse    = Warehouse.DB(self.db)
         data_directory    = os.path.join(api.get_data_dir(), 'warehouse')
         self.warehouse.set_directory(data_directory)
         self.wiki2html.set_wiki_word_handler(self.__wiki_word_handler)

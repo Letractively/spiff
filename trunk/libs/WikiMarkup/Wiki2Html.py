@@ -16,7 +16,7 @@ import HTMLParser, re, sys
 from WikiParser import WikiParser
 from cgi        import escape
 
-class Wiki2Html:
+class Wiki2Html(object):
     def __init__(self):
         self.html              = ''
         self.buffer            = ''
