@@ -23,6 +23,7 @@ from genshi.template       import TemplateLoader
 from Constructor           import *
 from Constructor.Task      import *
 from InstallGuard          import InstallGuard
+from InstallCacheDB        import InstallCacheDB
 from InstallIntegrator     import InstallIntegrator
 from InstallWarehouse      import InstallWarehouse
 from InstallExtension      import InstallExtension
@@ -58,9 +59,11 @@ tasks = [
     CreateDir('../data/repo'),
     CreateDir('../data/uploads'),
     CreateDir('../data/warehouse'),
+    CreateDir('../data/cache'),
     InstallGuard(),
     InstallIntegrator(),
-    InstallWarehouse()
+    InstallWarehouse(),
+    InstallCacheDB()
 ]
 constructor.append(CreateDefaultSetup('Creating default setup', tasks))
 constructor.append(SetUserPassword('admin'))

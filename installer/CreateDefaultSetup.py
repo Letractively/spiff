@@ -12,15 +12,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-from Task        import Task
-from Task        import CheckList
-from Form        import Form
-from StockButton import StockButton
-from User        import User
-from Group       import Group
-from Page        import Page
-from UserAction  import UserAction
-from PageAction  import PageAction
+import os, cgi
+from Task         import Task
+from Task         import CheckList
+from Form         import Form
+from StockButton  import StockButton
+from User         import User
+from Group        import Group
+from Page         import Page
+from UserAction   import UserAction
+from PageAction   import PageAction
 
 class CreateDefaultSetup(CheckList):
     def _print_result(self, environment, done, allow_retry = True):
@@ -99,6 +100,16 @@ class CreateDefaultSetup(CheckList):
 
     def __create_page(self, parent, name, handle, private = False):
         return self.__create_resource(parent, name, handle, Page, private)
+
+
+    def __assign_extension(self, environment, page, extension, caption):
+        page.assign_extension(extension)
+        if not self.guard.save_resource(page):
+            self._add_result(caption, Task.failure)
+            self._print_result(environment, False)
+            return False
+        self._add_result(caption, Task.success)
+        return True
 
 
     def install(self, environment):
@@ -265,72 +276,62 @@ class CreateDefaultSetup(CheckList):
         #########
         # Assign the wiki page extension to the homepage.
         caption = 'Assign default page to a wiki'
-        page_default.set_attribute('extension', 'spiff_core_wiki_page')
         page_default.set_attribute('recursive', True)
-        if not self.guard.save_resource(page_default):
-            self._add_result(caption, Task.failure)
-            self._print_result(environment, False)
+        if not self.__assign_extension(environment,
+                                       page_default,
+                                       'spiff_core_wiki_page',
+                                       caption):
             return Task.failure
-        self._add_result(caption, Task.success)
 
         # Assign an extension to the admin/register page.
         caption = 'Assign user registration extension to a system page'
-        page_admin_register.set_attribute('extension', 'spiff_core_register')
-        if not self.guard.save_resource(page_admin_register):
-            self._add_result(caption, Task.failure)
-            self._print_result(environment, False)
+        if not self.__assign_extension(environment,
+                                       page_admin_register,
+                                       'spiff_core_register',
+                                       caption):
             return Task.failure
-        self._add_result(caption, Task.success)
 
         # Assign an extension to the admin/login page.
         caption = 'Assign login extension to a system page'
-        page_admin_login.set_attribute('extension', 'spiff_core_login')
-        if not self.guard.save_resource(page_admin_login):
-            self._add_result(caption, Task.failure)
-            self._print_result(environment, False)
+        if not self.__assign_extension(environment,
+                                       page_admin_login,
+                                       'spiff_core_login',
+                                       caption):
             return Task.failure
-        self._add_result(caption, Task.success)
 
         # Assign an extension to the admin page.
         caption = 'Assign admin center extension to a system page'
-        page_admin.set_attribute('extension', 'spiff_core_admin_center')
         page_admin.set_attribute('recursive', True)
-        if not self.guard.save_resource(page_admin):
-            self._add_result(caption, Task.failure)
-            self._print_result(environment, False)
+        if not self.__assign_extension(environment,
+                                       page_admin,
+                                       'spiff_core_admin_center',
+                                       caption):
             return Task.failure
-        self._add_result(caption, Task.success)
 
         # Assign an extension to the admin/users page.
         caption = 'Assign user manager extension to a system page'
-        handle  = 'spiff_core_user_manager'
-        page_admin_users.set_attribute('extension', handle)
         page_admin_users.set_attribute('recursive', True)
-        if not self.guard.save_resource(page_admin_users):
-            self._add_result(caption, Task.failure)
-            self._print_result(environment, False)
+        if not self.__assign_extension(environment,
+                                       page_admin_users,
+                                       'spiff_core_user_manager',
+                                       caption):
             return Task.failure
-        self._add_result(caption, Task.success)
 
         # Assign an extension to the admin/page page.
         caption = 'Assign page editor extension to a system page'
-        handle  = 'spiff_core_page_editor'
-        page_admin_page.set_attribute('extension', handle)
-        if not self.guard.save_resource(page_admin_page):
-            self._add_result(caption, Task.failure)
-            self._print_result(environment, False)
+        if not self.__assign_extension(environment,
+                                       page_admin_page,
+                                       'spiff_core_page_editor',
+                                       caption):
             return Task.failure
-        self._add_result(caption, Task.success)
 
         # Assign an extension to the admin/extensions page.
         caption = 'Assign extension manager to a system page'
-        handle  = 'spiff_core_extension_manager'
-        page_admin_extensions.set_attribute('extension', handle)
-        if not self.guard.save_resource(page_admin_extensions):
-            self._add_result(caption, Task.failure)
-            self._print_result(environment, False)
+        if not self.__assign_extension(environment,
+                                       page_admin_extensions,
+                                       'spiff_core_extension_manager',
+                                       caption):
             return Task.failure
-        self._add_result(caption, Task.success)
 
         #########
         # Create page permissions.

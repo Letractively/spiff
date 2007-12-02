@@ -16,21 +16,22 @@ import os, sys
 sys.path.append(os.path.join(os.path.dirname(__file__), 'libs'))
 from genshi.input import XML
 
-
-class LayoutParser:
+class LayoutParser(object):
     def __init__(self, xml):
-        self.__xml          = XML(xml)
-        self.__data_handler = None
-        self.layout         = xml
-        self.html           = ''
+        self.__xml               = XML(xml)
+        self.__data_handler      = None
+        self.__data_handler_args = None
+        self.layout              = xml
+        self.html                = ''
 
 
-    def set_data_handler(self, handler):
+    def set_data_handler(self, handler, *args):
         """
         The function given in handler is called whenever data is found in the
         XML. The handler is passed the data (string) as an argument.
         """
-        self.__data_handler = handler
+        self.__data_handler      = handler
+        self.__data_handler_args = args
 
 
     def parse(self):
@@ -54,7 +55,7 @@ class LayoutParser:
         if data == '':
             return
         if self.__data_handler is not None:
-            data = self.__data_handler(data)
+            data = self.__data_handler(data, *self.__data_handler_args)
         self.layout += data
         self.html   += data
 

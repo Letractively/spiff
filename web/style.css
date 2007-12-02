@@ -116,6 +116,11 @@ td.footer {
   border-top: 1px solid grey;
 }
 
+td.render_time {
+  text-align: center;
+  font-size: .7em;
+}
+
 table.menu {
   font-size: 1.08em;
   white-space: nowrap;

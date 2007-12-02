@@ -14,6 +14,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import sys
 import os.path
+import datetime
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from sqlalchemy   import *
 from functions    import bin_path2list, list2bin_path, bin_path2hex_path
@@ -66,14 +67,14 @@ class DBReader:
         self.__add_table(Table(pfx + 'action', self.db_metadata,
             Column('id',             Integer,     primary_key = True),
             Column('action_type',    String(50),  index = True),
-            Column('handle',         String(230)),
+            Column('handle',         String(230), index = True),
             Column('name',           String(230), unique = True),
             mysql_engine='INNODB'
         ))
         self.__add_table(Table(pfx + 'resource', self.db_metadata,
             Column('id',            Integer,     primary_key = True),
             Column('resource_type', String(50),  index = True),
-            Column('handle',        String(230)),
+            Column('handle',        String(230), index = True),
             Column('name',          String(230)),
             Column('n_children',    Integer,     index = True, default = 0),
             Column('is_group',      Boolean,     index = True),
@@ -82,7 +83,7 @@ class DBReader:
         self.__add_table(Table(pfx + 'resource_attribute', self.db_metadata,
             Column('id',             Integer,     primary_key = True),
             Column('resource_id',    Integer,     index = True),
-            Column('name',           String(50)),
+            Column('name',           String(50),  index = True),
             Column('type',           Integer),
             Column('attr_string',    TEXT),
             Column('attr_int',       Integer),
@@ -118,7 +119,7 @@ class DBReader:
             Column('action_id',      Integer, index = True),
             Column('resource_id',    Integer, index = True),
             Column('permit',         Boolean, index = True),
-            Column('refcount',       Integer),
+            Column('last_change',    DateTime, default = func.now()),
             ForeignKeyConstraint(['actor_id'],
                                  [pfx + 'resource.id'],
                                  ondelete = 'CASCADE'),
@@ -490,6 +491,30 @@ class DBReader:
         return result[0]
 
 
+    def has_resource(self, **kwargs):
+        """
+        Like get_resource(), but returns True if at least one result was
+        found, False otherwise.
+        Is significantly faster than get_resource.
+
+        @type  kwargs: dict
+        @param kwargs: For a list of allowed keys see get_resources().
+        @rtype:  Resource
+        @return: The resource, or None if none was found.
+        """
+        table, where = self.__get_resource_sql(**kwargs)
+        tbl_r        = self._table_map['resource']
+        sel          = select([tbl_r.c.id],
+                              where,
+                              from_obj   = [table],
+                              use_labels = True,
+                              limit      = 1)
+        result = sel.execute()
+        if result.fetchone() is not None:
+            return True
+        return False
+
+
     def get_resources(self, offset = 0, limit = 0, **kwargs):
         """
         Returns a list of resources that match the given criteria.
@@ -822,32 +847,12 @@ class DBReader:
         return acl_list
 
 
-    def get_permission_list_from_id_with_inheritance(self,
-                                                     offset = 0,
-                                                     limit  = 0,
-                                                     **kwargs):
+    def _get_permission_list_with_inheritance_tables(self, **kwargs):
         """
-        Returns a list of ACLs that match the given criteria. The function
-        honors inheritance, so that ACLs are returned even if they were
-        defined for a parent of the requested resource.
-
-        This function is expensive and should be used with care.
-        You might want to consider using get_permission_list_from_id()
-        instead.
-        
-        Allowed argument keywords include: actor_id, action_id, resource_id,
-        permit, actor_type, action_type and resource_type.
-        All arguments are optional; if no arguments are given all ACLs are
-        returned.
-
-        @type  offset: int
-        @param offset: The offset of the first item to be returned.
-        @type  limit: int
-        @param limit: The maximum number of items that is returned.
-        @type  kwargs: dict
-        @param kwargs: The search criteria.
-        @rtype:  list[Acl]
-        @return: The list of ACLs.
+        Returns a tuple, where the first element is the join of tables
+        for get_permission_list_from_id_with_inheritance and
+        get_last_permission_change, and the second element is the WHERE
+        clause. All other elements are single tables from the join.
         """
         # Looking to find a bug in this function? Congratulations, you are
         # about to enter hell. If you manage to find (and fix) that damn
@@ -941,7 +946,47 @@ class DBReader:
             actor_id = kwargs['actor_id']
             where = and_(where, tbl_p6.c.resource_id == actor_id)
 
-        group_by = [tbl_ac1.c.actor_id, tbl_ac1.c.action_id, tbl_ac1.c.resource_id]
+        return tbl, where, tbl_ac1, tbl_a1, tbl_p1, tbl_p2, tbl_p4, tbl_p5
+
+
+    def get_permission_list_from_id_with_inheritance(self,
+                                                     offset = 0,
+                                                     limit  = 0,
+                                                     **kwargs):
+        """
+        Returns a list of ACLs that match the given criteria. The function
+        honors inheritance, so that ACLs are returned even if they were
+        defined for a parent of the requested resource.
+
+        This function is expensive and should be used with care.
+        You might want to consider using get_permission_list_from_id()
+        instead.
+        
+        Allowed argument keywords include: actor_id, action_id, resource_id,
+        permit, actor_type, action_type and resource_type.
+        All arguments are optional; if no arguments are given all ACLs are
+        returned.
+
+        @type  offset: int
+        @param offset: The offset of the first item to be returned.
+        @type  limit: int
+        @param limit: The maximum number of items that is returned.
+        @type  kwargs: dict
+        @param kwargs: The search criteria.
+        @rtype:  list[Acl]
+        @return: The list of ACLs.
+        """
+        tbl,     \
+        where,   \
+        tbl_ac1, \
+        tbl_a1,  \
+        tbl_p1,  \
+        tbl_p2,  \
+        tbl_p4,  \
+        tbl_p5   = self._get_permission_list_with_inheritance_tables(**kwargs)
+        group_by = [tbl_ac1.c.actor_id,
+                    tbl_ac1.c.action_id,
+                    tbl_ac1.c.resource_id]
         sel = select([tbl_ac1.c.id,
                       tbl_ac1.c.actor_id,
                       tbl_ac1.c.resource_id,
@@ -977,6 +1022,50 @@ class DBReader:
         
         #print "LENGTH:", len(acl_list)
         return acl_list
+
+
+    def get_last_permission_change(self, **kwargs):
+        """
+        Returns the time of the last permission change that affected any
+        resource that matches the given argument.
+        
+        Allowed argument keywords include: actor_id, action_id, resource_id,
+        permit, actor_type, action_type and resource_type.
+        All arguments are optional; if no arguments are given all ACLs are
+        returned.
+
+        @type  kwargs: dict
+        @param kwargs: The search criteria.
+        @rtype:  datetime.datetime
+        @return: The latest ACL change.
+        """
+        tbl,     \
+        where,   \
+        tbl_ac1, \
+        tbl_a1,  \
+        tbl_p1,  \
+        tbl_p2,  \
+        tbl_p4,  \
+        tbl_p5   = self._get_permission_list_with_inheritance_tables(**kwargs)
+        group_by = [tbl_ac1.c.actor_id,
+                    tbl_ac1.c.action_id,
+                    tbl_ac1.c.resource_id]
+        sel = select([tbl_ac1.c.last_change.label('last_change'),
+                      tbl_p2.c.depth.label('p2_depth'),
+                      func.max(tbl_p5.c.depth).label('p5_max_depth')],
+                     where,
+                     from_obj   = [tbl],
+                     use_labels = True,
+                     group_by   = group_by,
+                     having     = 'p2_depth = p5_max_depth',
+                     order_by   = [tbl_p2.c.path, tbl_p4.c.path])
+        sel = sel.alias('permission_changes')
+        sel = select([func.max(sel.c.last_change).label('last_change')])
+        sel = select([tbl_ac1.c.last_change])
+
+        result = sel.execute()
+        row    = result.fetchone()
+        return row.last_change
 
 
     def get_permission_list_with_inheritance(self,

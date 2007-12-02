@@ -8,6 +8,7 @@ def suite():
              'testAcl']
     return unittest.TestSuite(map(DBTest, tests))
 
+import datetime
 from DBReaderTest  import DBReaderTest
 from DB            import DB
 from DBObject      import DBObject
@@ -243,7 +244,14 @@ class DBTest(DBReaderTest):
         self.db.grant(users,  view,                 homepage)
         self.db.grant(user,   edit,                 sub_page_1)
         self.db.grant(guys,   delete,               homepage)
+        self.db.grant(anon,   view,                 sub_page_1)
         self.db.deny(anon,    view,                 sub_page_1)
+
+        # Get the time of the last change.
+        last_change = self.db.get_last_permission_change(actor_id = user.get_id())
+        self.assert_(last_change is not None and last_change > 0)
+        #FIXME: Assert with MySQLdb > 1.2.2: and last_change < datetime.datetime.now())
+        #print "Last change:", last_change
 
         # Test Acl.
         self.assert_(self.db.has_permission(admin, view, homepage))
