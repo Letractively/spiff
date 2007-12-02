@@ -220,12 +220,15 @@ class Extension:
             user_name = os.environ["REMOTE_ADDR"]
 
         # Copy the data into a warehouse item.
-        item = Item(alias)
+        item = Warehouse.Item(alias)
         item.set_content(wiki_markup)
         item.set_attribute(user_name = user_name)
         if not self.warehouse.add_file(item):
             msg = i18n('File could not be saved - please contact the author!')
             return (None, [msg])
+
+        # FIXME: We need more fine-grained control over what is and what isn't outdated.
+        self.api.flush_cache()
         return (item, [])
 
 
@@ -334,6 +337,12 @@ class Extension:
 
         # Show the editor.
         self.api.render('edit.tmpl', **tmpl_args)
+
+
+    def on_spiff_page_open(self, args):
+        save = self.api.get_post_data('save')
+        if save is not None:
+            self.api.flush_cache()
 
 
     def on_render_request(self):

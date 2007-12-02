@@ -16,7 +16,7 @@ from DBReader   import *
 from functions  import *
 from sqlalchemy import *
 from Resource   import Resource
-import string
+import string, datetime
 
 class DB(DBReader):
     def install(self):
@@ -654,7 +654,7 @@ class DB(DBReader):
         update = table.update(and_(table.c.actor_id    == actor_id,
                                    table.c.action_id   == action_id,
                                    table.c.resource_id == resource_id))
-        result = update.execute(permit = permit)
+        result = update.execute(permit = permit, last_change = datetime.datetime.now())
         return True
 
 

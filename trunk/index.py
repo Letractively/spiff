@@ -27,7 +27,6 @@ from gettext         import gettext
 from string          import split
 from ConfigParser    import RawConfigParser
 from ExtensionApi    import ExtensionApi
-from Layout          import Layout
 from genshi.template import TemplateLoader
 from genshi.template import TextTemplate
 from genshi.template import MarkupTemplate
@@ -37,59 +36,70 @@ from Page            import Page
 from UserAction      import UserAction
 from PageAction      import PageAction
 from PageDB          import PageDB
+from CacheDB         import CacheDB
 from Session         import Session
 
 start_time = time.clock()
 
-def show_admin_links(loader, user):
+def get_admin_links(loader, user):
     tmpl    = loader.load('admin_header.tmpl', None, MarkupTemplate)
     web_dir = get_mod_rewrite_prevented_uri('web')
-    print tmpl.generate(web_dir       = web_dir,
-                        uri           = get_uri,
-                        request_uri   = get_request_uri,
-                        current_user  = user,
-                        may_edit_page = True,
-                        txt           = gettext).render('xhtml')
+    return tmpl.generate(web_dir       = web_dir,
+                         uri           = get_uri,
+                         request_uri   = get_request_uri,
+                         current_user  = user,
+                         may_edit_page = True,
+                         txt           = gettext).render('xhtml')
 
 
-def send_headers(api, content_type = 'text/html; charset=utf-8'):
+def get_headers(api, content_type = 'text/html; charset=utf-8'):
     # Print the HTTP header.
     headers = api.get_http_headers()
-    print 'Content-Type: %s' % content_type
+    output  = 'Content-Type: %s\n' % content_type
     for k, v in headers:
-        print '%s: %s' % (k, v)
-    print
+        output += '%s: %s\n' % (k, v)
+    output += '\n'
 
     # Load and display the HTML header.
     session = api.get_session()
     loader  = TemplateLoader(['web'])
     tmpl    = loader.load('header.tmpl',  None, TextTemplate)
     web_dir = get_mod_rewrite_prevented_uri('web')
-    print tmpl.generate(web_dir      = web_dir,
-                        current_user = session.get_user(),
-                        txt          = gettext).render('text')
+    output += tmpl.generate(web_dir      = web_dir,
+                            current_user = session.get_user(),
+                            txt          = gettext).render('text')
 
     # If the user has special rights, show links to the admin pages.
     if session.may('edit'):
-        show_admin_links(loader, session.get_user())
+        output += get_admin_links(loader, session.get_user())
 
     # Display the top banner.
-    tmpl = loader.load('header2.tmpl', None, MarkupTemplate)
-    print tmpl.generate(web_dir      = web_dir,
-                        uri          = get_uri,
-                        request_uri  = get_request_uri,
-                        current_user = session.get_user(),
-                        txt          = gettext).render('xhtml')
+    tmpl    = loader.load('header2.tmpl', None, MarkupTemplate)
+    output += tmpl.generate(web_dir      = web_dir,
+                            uri          = get_uri,
+                            request_uri  = get_request_uri,
+                            current_user = session.get_user(),
+                            txt          = gettext).render('xhtml')
+    return output
 
 
-def send_footer():
+def get_footer():
     loader      = TemplateLoader(['web'])
     tmpl        = loader.load('footer.tmpl', None, TextTemplate)
     web_dir     = get_mod_rewrite_prevented_uri('web')
+    return tmpl.generate(web_dir = web_dir,
+                         txt     = gettext).render('text')
+
+
+def print_render_time():
     render_time = time.clock() - start_time
-    print tmpl.generate(web_dir     = web_dir,
-                        render_time = render_time,
-                        txt         = gettext).render('text')
+    print '<table width="100%">'
+    print '  <tr>'
+    print '    <td class="render_time" align="center">'
+    print '    Rendered in %s seconds.' % render_time
+    print '    </td>'
+    print '  </tr>'
+    print '</table>'
 
 
 ###
@@ -117,6 +127,9 @@ dbn = cfg.get('database', 'dbn')
 
 # Connect to MySQL and set up Spiff Guard.
 db      = create_engine(dbn)
+#print 'Content-Type: text/html; charset=utf-8'
+#print
+#db.echo = 1
 guard   = Guard.DB(db)
 page_db = PageDB(guard)
 guard.register_type([User, Group, Page, UserAction, PageAction])
@@ -124,13 +137,15 @@ guard.register_type([User, Group, Page, UserAction, PageAction])
 # Lookup the current page from the given cgi variables.
 get_data    = cgi.parse_qs(os.environ["QUERY_STRING"])
 post_data   = cgi.FieldStorage()
-page_handle = get_data.get('page', ['homepage'])[0]
+page_handle = get_data.get('page', ['default'])[0]
 page        = page_db.get(page_handle)
 
 # Set up the plugin manager (Integrator).
 session = Session(guard, requested_page = page)
+cache   = CacheDB(guard, session)
 api     = ExtensionApi(guard     = guard,
                        page_db   = page_db,
+                       cache     = cache,
                        session   = session,
                        get_data  = get_data,
                        post_data = post_data)
@@ -162,13 +177,26 @@ if page is None:
     print 'error 404 (File not found)'
     sys.exit()
 
+# We now parse the layout that is associated with that page to collect
+# a list of extensions that are used in it. If the output of ALL
+# extensions is cached, there is no need to redraw the page, including
+# headers and footer.
+session.set_requested_page(page)
+if os.environ['REQUEST_METHOD'] == 'GET':
+    if page.all_extensions_cached(api):
+        output = cache.get_page()
+        if output is not None:
+            print output
+            print_render_time()
+            sys.exit(0)
+
 # Make sure that the caller has permission to retrieve this page.
 # If the caller currently has no permission, load the login
 # extension to give it the opportunity to perform the login.
 if page.get_attribute('private') and not session.may('view'):
-    login      = page_db.get('admin/login')
-    descriptor = login.get_attribute('extension')
-    integrator.load_package_from_descriptor(descriptor)
+    login = page_db.get('admin/login')
+    for descriptor in login.get_extension_handle_list():
+        integrator.load_package_from_descriptor(descriptor)
 
 # Now that we may have redirected the user to another page, let the
 # extension API know that.
@@ -183,20 +211,25 @@ if (page.get_attribute('private') and not session.may('view')) \
     page = page_db.get('admin/login')
     session.set_requested_page(page)
 
+
 # Send headers.
 api.emit_sync('spiff:header_before')
-send_headers(api)
+output = get_headers(api)
 api.emit_sync('spiff:header_after')
 
 # Render the layout.
 api.emit_sync('spiff:render_before')
-layout = Layout(api)
-layout.render()
+#db.echo = 1
+output += page.get_output(api)
 api.emit_sync('spiff:render_after')
 
 # Send the footer.
 api.emit_sync('spiff:footer_before')
-
-send_footer()
+output += get_footer()
 api.emit_sync('spiff:footer_after')
 api.emit_sync('spiff:page_done')
+
+if page.is_cacheable:
+    cache.add_page(output)
+print output
+print_render_time()

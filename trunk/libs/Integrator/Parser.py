@@ -41,7 +41,7 @@ class Parser:
         name    = str(xml.select('package/name/').select('text()')).strip()
         release = str(xml.select('package/release/text()')).strip()
         descr   = str(xml.select('package/description[@lang=""]/text()'))
-        package    = Package(name, handle, release)
+        package = Package(name, handle, release)
         package.set_description(descr.strip())
 
         # Author information.
@@ -50,12 +50,18 @@ class Parser:
         package.set_attribute('author',       author.strip())
         package.set_attribute('author-email', email.strip())
 
+        # Behavioral flags.
+        if str(xml.select('package/behavior/cacheable')) != '':
+            package.set_attribute('cacheable', True)
+        if str(xml.select('package/behavior/recursive')) != '':
+            package.set_attribute('recursive', True)
+
         # Signals sent by this package.
         list = xml.select('package/behavior/signal/attribute::uri')
         self.signals = [item.strip() for item in list]
 
         # Signals retrieved by this package.
-        list      = xml.select('package/behavior/listen/attribute::uri')
+        list = xml.select('package/behavior/listen/attribute::uri')
         self.listeners = [item.strip() for item in list]
 
         # Runtime dependencies.

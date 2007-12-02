@@ -3,6 +3,9 @@ Changes since 1.2.0
   * All-over: Redesigned the entire API, making the library type-aware. This
   also made sections obsolete, and they were removed.
   * DBReader.py, DB.py: Implemented caching for Resource and Action objects.
+  * DBReader.py: Added a last_change field to ACLs and added 
+  get_last_permission_change() to the API.
+  Added new API has_resource().
   * DBReader.py: Added support for boolean attribute types. string attributes
   are now stored in a TEXT field, no longer a VARCHAR, so longer strings are
   supported. More API documentation was added. Using a table name prefix now

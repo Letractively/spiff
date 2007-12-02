@@ -17,6 +17,8 @@
     </authors>
 
     <behavior>
+      <cacheable/>
+      <recursive/>
       <signal uri="render_start">
         <arg name="my_self" type="object">A reference to itself.</arg>
       </signal>

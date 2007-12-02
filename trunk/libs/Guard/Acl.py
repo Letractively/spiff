@@ -29,14 +29,19 @@ class Acl(object):
         self.__inherited   = bool(inherited)
 
     def __str__(self):
+        # WARNING: The resulting string MUST ALWAYS uniquely identify ALL
+        # permissions that this ACL specifies; removing any field from the
+        # string will result in security bugs.
+        # For example, do not replace the IDs by strings such as the name,
+        # because the name is not unique.
         permit      = self.__permit    and 'Permit' or 'Deny'
         inherit     = self.__inherited and 'inherited' or ''
         actor_id    = self.__actor_id
-        action_name = self.__action.get_handle()
+        action_id   = self.__action.get_id()
         resource_id = self.__resource_id
         return "%s: %s %s %s (%s)" % (permit,
                                       actor_id,
-                                      action_name,
+                                      action_id,
                                       resource_id,
                                       inherit)
 

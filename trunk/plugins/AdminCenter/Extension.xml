@@ -14,6 +14,7 @@
     </authors>
 
     <behavior>
+      <cacheable/>
       <signal uri="render_start" />
       <signal uri="render_end" />
     </behavior>

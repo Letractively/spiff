@@ -290,6 +290,10 @@ class Manager:
         return res
 
 
+    def load_package(self, package):
+        return self.load_package_from_id(package.get_id())
+
+
     def load_package_from_id(self, id):
         assert id > 0
         
@@ -323,7 +327,7 @@ class Manager:
         assert descriptor is not None
 
         # Look the package package up in the db.
-        db   = self.__package_db
+        db      = self.__package_db
         package = db.get_package_from_descriptor(descriptor)
         if package is None:
             return None
@@ -347,3 +351,12 @@ class Manager:
         list = self.__package_db.get_package_id_list_from_callback(uri)
         for id in list:
             self.load_package_from_id(id)
+
+
+    def get_package_from_instance(self, instance):
+        for k in self.__package_cache:
+            v = self.__package_cache[k]
+            if v == instance:
+                package = self.__package_db.get_package_from_id(int(k))
+                return package
+        return None

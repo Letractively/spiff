@@ -32,6 +32,7 @@ class ExtensionApi(Api):
         Api.__init__(self)
         self.__session        = kwargs['session']
         self.__guard          = kwargs['guard']
+        self.__cache          = kwargs.get('cache')
         self.__page_db        = kwargs['page_db']
         self.__get_data       = kwargs['get_data']
         self.__post_data      = kwargs['post_data']
@@ -106,6 +107,18 @@ class ExtensionApi(Api):
 
     def get_page_db(self):
         return self.__page_db
+
+
+    def get_cache(self):
+        return self.__cache
+
+
+    def flush_cache(self, **kwargs):
+        extension = self.__get_caller()
+        assert extension is not None
+        package = self._manager.get_package_from_instance(extension)
+        assert package is not None
+        self.__cache.flush(package.get_handle(), **kwargs)
 
 
     def get_integrator(self):

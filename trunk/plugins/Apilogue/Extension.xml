@@ -15,6 +15,7 @@
     </authors>
 
     <behavior>
+      <recursive/>
       <signal uri="render_start" />
       <signal uri="render_end" />
     </behavior>
@@ -23,9 +24,5 @@
       <runtime>spiff</runtime>
       <installtime>spiff</installtime>
     </depends>
-
-    <attributes>
-      <attribute name="recursive" type="boolean">True</attribute>
-    </attributes>
   </package>
 </xml>
