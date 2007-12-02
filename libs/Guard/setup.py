@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 setup(name             = 'Spiff Guard',
-      version          = '1.3.0',
+      version          = '1.9.0',
       description      = 'A Generic Access List Library',
       long_description = \
 """
@@ -10,14 +10,20 @@ scalability. Working with an ACL is as simple as this:
 
 ::
 
+    guard   = Guard(db_connection)
+    group   = ResourceGroup("My Group")
+    user    = Resource("My User")
+    website = ResourceGroup("My Website")
+    view    = Action("View")
+    write   = Action("Edit")
     guard.grant(group, view, website)
-    guard.grant(user, write, website)
+    guard.grant(user,  edit, website)
     if guard.has_permission(user, view, website):
         print 'Permission granted.'
 
-Spiff Guard's features include recursion, groups, sections, inverse lookup,
-and a lot more. For a more complete example, have a look into the
-`README file`_ included with the package.
+Spiff Guard's features include recursion, groups, Python type awareness,
+inverse lookup, and a lot more. For a more complete example, have a look
+into the `README file`_ included with the package.
 
 .. _README file: http://spiff.googlecode.com/svn/trunk/libs/Guard/README
 """,
