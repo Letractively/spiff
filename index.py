@@ -41,7 +41,7 @@ start_time = time.clock()
 
 def get_admin_links(loader, user):
     tmpl = loader.load('admin_header.tmpl', None, MarkupTemplate)
-    return tmpl.generate(web_dir       = 'web',
+    return tmpl.generate(web_dir       = '/web',
                          uri           = get_uri,
                          request_uri   = get_request_uri,
                          current_user  = user,
@@ -61,7 +61,7 @@ def get_headers(api, content_type = 'text/html; charset=utf-8'):
     session = api.get_session()
     loader  = TemplateLoader(['web'])
     tmpl    = loader.load('header.tmpl',  None, TextTemplate)
-    output += tmpl.generate(web_dir      = 'web',
+    output += tmpl.generate(web_dir      = '/web',
                             current_user = session.get_user(),
                             txt          = gettext).render('text')
 
@@ -71,7 +71,7 @@ def get_headers(api, content_type = 'text/html; charset=utf-8'):
 
     # Display the top banner.
     tmpl    = loader.load('header2.tmpl', None, MarkupTemplate)
-    output += tmpl.generate(web_dir      = 'web',
+    output += tmpl.generate(web_dir      = '/web',
                             uri          = get_uri,
                             request_uri  = get_request_uri,
                             current_user = session.get_user(),
@@ -82,7 +82,7 @@ def get_headers(api, content_type = 'text/html; charset=utf-8'):
 def get_footer():
     loader = TemplateLoader(['web'])
     tmpl   = loader.load('footer.tmpl', None, TextTemplate)
-    return tmpl.generate(web_dir = 'web',
+    return tmpl.generate(web_dir = '/web',
                          txt     = gettext).render('text')
 
 

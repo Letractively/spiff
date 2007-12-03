@@ -167,7 +167,7 @@ class ExtensionApi(Api):
             tmpl = pickle.load(fp)
             fp.close()
         self.__output = tmpl.generate(plugin_dir  = dirname,
-                                      web_dir     = 'web',
+                                      web_dir     = '/web',
                                       uri         = get_uri,
                                       request_uri = get_request_uri,
                                       txt         = gettext,
