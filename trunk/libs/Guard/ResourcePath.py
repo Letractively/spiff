@@ -20,9 +20,9 @@ class ResourcePath(object):
         """
         Create a new instance.
 
-        @type  path string or array
-        @param path Contains the path in the following format: 0/1/2/...,
-                    or as an array.
+        @type  path: string|list[int]
+        @param path: Contains the path in the following format: 0/1/2/...,
+                     or as an array.
         """
         self.path = None
         self.set(path)
@@ -32,9 +32,9 @@ class ResourcePath(object):
         """
         Point the object to the given path.
 
-        @type  path string or array
-        @param path Contains the path in the following format: 0/1/2/...,
-                    or as an array.
+        @type  path: string|list[int]
+        @param path: Contains the path in the following format: 0/1/2/...,
+                     or as an array.
         """
         self.path = []
         if len(path) == 0:
@@ -47,30 +47,63 @@ class ResourcePath(object):
 
     def get(self):
         """
-        Returns the current path.
+        Returns the current path as a string in the following format:
+          0/1/2/3/...
+
+        @rtype:  string
+        @return: A string representation of the current path.
         """
         return '/'.join([str(id) for id in self.path])
 
 
     def hex(self):
+        """
+        Returns the current path as a string in the following format:
+          0123456789ABCDEF...
+        where each component is represented by 4 characters.
+
+        @rtype:  string
+        @return: A hexadecimal string representing the current path.
+        """
         return list2hex_path(self.path)
 
 
     def bin(self):
+        """
+        Returns the current path as a binary data.
+
+        @rtype:  string
+        @return: A binary representation of the current path.
+        """
         return list2bin_path(self.path)
 
 
     def __add__(self, other):
+        """
+        Concatenate two path objects.
+
+        @rtype:  ResourcePath
+        @return: The combined resource path.
+        """
         return ResourcePath(self.path + other.path)
 
 
     def __len__(self):
+        """
+        Returns the number of elements in the path.
+
+        @rtype:  int
+        @return: The length of the path.
+        """
         return len(self.path)
 
 
     def get_parent_id(self):
         """
         Returns the second-last element of the path.
+
+        @rtype:  int
+        @return: The id of the second-last element.
         """
         if len(self.path) <= 1:
             return None
@@ -80,6 +113,9 @@ class ResourcePath(object):
     def get_current_id(self):
         """
         Returns the last element of the path.
+
+        @rtype:  int
+        @return: The id of the last element.
         """
         if len(self.path) == 0:
             return None
@@ -90,6 +126,9 @@ class ResourcePath(object):
         """
         Crops the path by n components and returns a ResourcePath that
         points to the new path.
+
+        @rtype:  ResourcePath
+        @return: The shortened ResourcePath.
         """
         if len(self.path) - n <= 0:
             return ResourcePath()
@@ -100,6 +139,9 @@ class ResourcePath(object):
         """
         Appends the given id to the path and returns a ResourcePath that
         points to the new path.
+
+        @rtype:  ResourcePath
+        @return: The new ResourcePath.
         """
         assert id is not None
         assert int(id) >= 0
