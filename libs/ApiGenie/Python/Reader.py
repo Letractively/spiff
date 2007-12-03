@@ -20,7 +20,7 @@ from my_string     import *
 import PyDocString
 import StringIO
 
-class Reader:
+class Reader(object):
     def __init__(self):
         self.debug     = 0
         self.stack     = []

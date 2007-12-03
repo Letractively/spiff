@@ -14,7 +14,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 from functions import is_valid_uri
 
-class Api:
+class Api(object):
     def __init__(self):
         self._manager = None
 

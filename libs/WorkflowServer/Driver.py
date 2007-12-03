@@ -24,9 +24,9 @@ from TaskInfo         import TaskInfo
 from Workflow.Storage import XmlReader
 from Workflow         import Job
 
-class Driver:
+class Driver(object):
     """
-    A store provides an API for storing and loading workflows, receiving
+    A driver provides an API for storing and loading workflows, receiving
     information regarding running Jobs, and for driving the workflow
     execution.
     """

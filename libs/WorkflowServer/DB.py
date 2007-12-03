@@ -24,7 +24,7 @@ from WorkflowInfo     import WorkflowInfo
 from JobInfo          import JobInfo
 from TaskInfo         import TaskInfo
 
-class DB:
+class DB(object):
     attrib_type_int, attrib_type_bool, attrib_type_string = range(3)
 
     def __init__(self, db):

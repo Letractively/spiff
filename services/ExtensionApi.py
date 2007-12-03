@@ -12,14 +12,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-import os.path, sys
-from gettext         import gettext
-from urlutil         import *
-from Integrator      import Api
-from Cookie          import SimpleCookie
-from PageAction      import PageAction
-from genshi.template import TemplateLoader
-from genshi.template import MarkupTemplate
+import os.path, sys, pickle
+from stat       import ST_MTIME
+from gettext    import gettext
+from urlutil    import *
+from Integrator import Api
+from Cookie     import SimpleCookie
+from PageAction import PageAction
 
 
 class ExtensionApi(Api):
@@ -143,14 +142,32 @@ class ExtensionApi(Api):
         classname  = '%s' % extension.__class__
         subdirname = '/'.join(classname.split('.')[:-2])
         dirname    = os.path.join('data/repo/', subdirname)
-        plugin_uri = get_mod_rewrite_prevented_uri(dirname)
-        web_dir    = get_mod_rewrite_prevented_uri('web')
+        tmpl_path  = os.path.join(dirname, filename)
+        cache_dir  = os.path.join(self.get_data_dir(), 'cache')
+        cache_file = dirname.replace('/', '_') + filename
+        cache_path = os.path.join(cache_dir, cache_file)
+        tmpl       = None
 
         # Load and display the template.
-        loader = TemplateLoader([dirname])
-        tmpl   = loader.load(filename, None, MarkupTemplate)
-        self.__output = tmpl.generate(plugin_dir  = plugin_uri,
-                                      web_dir     = web_dir,
+        tmpl_mtime = os.stat(tmpl_path)[ST_MTIME]
+        try:
+            cache_mtime = os.stat(cache_path)[ST_MTIME]
+        except:
+            cache_mtime = 0
+        if cache_mtime < tmpl_mtime:
+            from genshi.template import TemplateLoader
+            from genshi.template import MarkupTemplate
+            loader = TemplateLoader([dirname])
+            tmpl   = loader.load(filename, None, MarkupTemplate)
+            #fp     = open(cache_path, 'w')
+            #pickle.dump(tmpl, fp)
+            #fp.close()
+        else:
+            fp   = open(cache_path, 'r')
+            tmpl = pickle.load(fp)
+            fp.close()
+        self.__output = tmpl.generate(plugin_dir  = dirname,
+                                      web_dir     = 'web',
                                       uri         = get_uri,
                                       request_uri = get_request_uri,
                                       txt         = gettext,

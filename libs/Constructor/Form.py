@@ -13,7 +13,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-class Form:
+class Form(object):
     def __init__(self, markup, buttons):
         assert markup  is not None
         assert buttons is not None

@@ -92,13 +92,3 @@ def get_request_uri(*args, **kwargs):
             url += '&'
         url += key + '=' + str(vars[key][0])
     return url
-
-
-def get_mod_rewrite_prevented_uri(path):
-    """
-    Returns a URL that points to the same directory as the given one,
-    but where, when mod_rewrite is enabled, rewriting is prevented.
-    """
-    if not use_mod_rewrite:
-        return path
-    return "mod-rewrite-will-strip-this/" + path

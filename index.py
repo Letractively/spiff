@@ -20,9 +20,7 @@ sys.path.insert(0, 'services')
 sys.path.insert(0, 'functions')
 import MySQLdb, Guard, Integrator
 from sqlalchemy      import *
-from urlutil         import get_uri, \
-                            get_request_uri, \
-                            get_mod_rewrite_prevented_uri
+from urlutil         import get_uri, get_request_uri
 from gettext         import gettext
 from string          import split
 from ConfigParser    import RawConfigParser
@@ -42,9 +40,8 @@ from Session         import Session
 start_time = time.clock()
 
 def get_admin_links(loader, user):
-    tmpl    = loader.load('admin_header.tmpl', None, MarkupTemplate)
-    web_dir = get_mod_rewrite_prevented_uri('web')
-    return tmpl.generate(web_dir       = web_dir,
+    tmpl = loader.load('admin_header.tmpl', None, MarkupTemplate)
+    return tmpl.generate(web_dir       = 'web',
                          uri           = get_uri,
                          request_uri   = get_request_uri,
                          current_user  = user,
@@ -64,8 +61,7 @@ def get_headers(api, content_type = 'text/html; charset=utf-8'):
     session = api.get_session()
     loader  = TemplateLoader(['web'])
     tmpl    = loader.load('header.tmpl',  None, TextTemplate)
-    web_dir = get_mod_rewrite_prevented_uri('web')
-    output += tmpl.generate(web_dir      = web_dir,
+    output += tmpl.generate(web_dir      = 'web',
                             current_user = session.get_user(),
                             txt          = gettext).render('text')
 
@@ -75,7 +71,7 @@ def get_headers(api, content_type = 'text/html; charset=utf-8'):
 
     # Display the top banner.
     tmpl    = loader.load('header2.tmpl', None, MarkupTemplate)
-    output += tmpl.generate(web_dir      = web_dir,
+    output += tmpl.generate(web_dir      = 'web',
                             uri          = get_uri,
                             request_uri  = get_request_uri,
                             current_user = session.get_user(),
@@ -84,10 +80,9 @@ def get_headers(api, content_type = 'text/html; charset=utf-8'):
 
 
 def get_footer():
-    loader      = TemplateLoader(['web'])
-    tmpl        = loader.load('footer.tmpl', None, TextTemplate)
-    web_dir     = get_mod_rewrite_prevented_uri('web')
-    return tmpl.generate(web_dir = web_dir,
+    loader = TemplateLoader(['web'])
+    tmpl   = loader.load('footer.tmpl', None, TextTemplate)
+    return tmpl.generate(web_dir = 'web',
                          txt     = gettext).render('text')
 
 

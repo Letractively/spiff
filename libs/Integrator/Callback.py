@@ -14,7 +14,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import re
 
-class Callback:
+class Callback(object):
     def  __init__(self, func, event_uri = None):
         """
         @type  func: function

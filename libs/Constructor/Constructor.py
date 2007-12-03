@@ -16,7 +16,7 @@ from Task         import Task
 from Task         import Group
 from TaskIterator import TaskIterator
 
-class Constructor:
+class Constructor(object):
     def __init__(self, environment):
         assert environment is not None
         initial_path         = environment.get_task_path()

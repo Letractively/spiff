@@ -20,7 +20,7 @@ from sqlalchemy import *
 from DocumentModel import *
 from functions     import *
 
-class ApiDB:
+class ApiDB(object):
     def __init__(self, db):
         """
         Instantiates a new ApiDB.

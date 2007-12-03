@@ -22,7 +22,7 @@ from Item      import Item
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from sqlalchemy import *
 
-class DB:
+class DB(object):
     attrib_type_int, attrib_type_bool, attrib_type_string = range(3)
 
     def __init__(self, db):
