@@ -50,10 +50,11 @@ class CacheDB(object):
         self.__add_table(Table(pfx + 'cache_item', metadata,
             Column('id',          Integer,     primary_key = True),
             Column('page_id',     Integer,     index = True),
-            Column('permissions', String(20),  index = True),
+            Column('permissions', String(42),  index = True),
             Column('uri',         String(250), index = True),
-            Column('section',     String(20),  index = True),
+            Column('section',     String(30),  index = True),
             Column('content',     TEXT),
+            Column('created',     DateTime,    default = func.now()),
             ForeignKeyConstraint(['page_id'],
                                  [guard_pfx + 'resource.id'],
                                  ondelete = 'CASCADE'),
@@ -74,7 +75,8 @@ class CacheDB(object):
 
     def set_table_prefix(self, prefix):
         """
-        Define a table prefix. Default is 'warehouse_'.
+        Define a string that is prefixed to all table names in the database.
+        By default, no prefix is used.
 
         @type  prefix: string
         @param prefix: The new prefix.
@@ -148,7 +150,7 @@ class CacheDB(object):
                                                            resource = page)
         for acl in acls:
             string += str(acl)
-        self.__perm_hash = sha.new(string).hexdigest()[:10]
+        self.__perm_hash = sha.new(string).hexdigest()
         return self.__perm_hash
 
 
@@ -176,6 +178,7 @@ class CacheDB(object):
         page        = self.__session.get_requested_page()
         uri         = os.environ["QUERY_STRING"]
         table       = self._table_map['cache_item']
+        #print "GET:", permissions, page.get_id(), uri
         sel         = select([table.c.content],
                              and_(table.c.page_id     == page.get_id(),
                                   table.c.permissions == permissions,

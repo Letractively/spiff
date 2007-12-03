@@ -19,7 +19,7 @@ from difflib  import SequenceMatcher
 
 sequence_matcher = SequenceMatcher()
 
-class Item:
+class Item(object):
     """
     An Item represents a single version of a file in the database.
     """

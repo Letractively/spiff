@@ -21,7 +21,7 @@ from Callback        import Callback
 from Guard.functions import make_handle_from_string
 from functions       import *
 
-class DB:
+class DB(object):
     def __init__(self, guard):
         """
         Instantiates a new DB.

@@ -17,7 +17,7 @@ sys.path.append('..')
 import re
 from   my_string import *
 
-class Generator:
+class Generator(object):
     def __init__(self):
         self.type = 'Python DocString'
 

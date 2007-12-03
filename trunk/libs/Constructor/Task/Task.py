@@ -17,7 +17,7 @@ import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from TaskIterator import TaskIterator
 
-class Task:
+class Task(object):
     success, failure, interact = range(3)
     _result_msg = {
       success:  'Success',

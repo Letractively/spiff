@@ -13,7 +13,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-class Environment:
+class Environment(object):
     def __init__(self):
         self._app_name    = 'Spiff Application'
         self._app_version = '0.1'

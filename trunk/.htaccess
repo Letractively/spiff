@@ -1,21 +1,22 @@
 DirectoryIndex index.py
 #AddHandler cgi-script-debug .py
 
-#RewriteEngine on
+RewriteEngine on
 
 # In .htaccess, mod_rewrite loops over the file when it hits an
 # "L" flag. This rule prevents it.
 RewriteCond %{ENV:REDIRECT_STATUS} =200
 RewriteRule ^ - [L]
 
-# By default, refer anything so that the path is passed through the
-# page argument. Exceptions: The installer/ directory, and anything
-# that is explicitely marked to prevent the access.
-RewriteCond %{REQUEST_URI} !.*installer/.*$
-RewriteCond %{REQUEST_URI} !.*mod-rewrite-will-strip-this/.*$
-RewriteRule ^(.*)/$ index.py?page=$1 [QSA,L]
+# Spiff's web/ folder is directly accessible.
+RewriteCond %{REQUEST_URI} ^/web/.*$
+RewriteRule ^ - [L]
 
-# This handles URLs that were marked for being an exception. It
-# removes the marker, and everything before that.
-RewriteCond %{REQUEST_URI} /?mod-rewrite-will-strip-this/.*$
-RewriteRule /?mod-rewrite-will-strip-this/(.*) $1 [L]
+# Spiff's data/repo/ folder is also directly accessible.
+RewriteCond %{REQUEST_URI} ^/data/repo/.*$
+RewriteRule ^ - [L]
+
+# By default, refer anything so that the path is passed through the
+# page argument. Exception: The installer/ directory.
+RewriteCond %{REQUEST_URI} !.*installer/.*$
+RewriteRule ^(.*)/$ index.py?page=$1 [QSA,L]

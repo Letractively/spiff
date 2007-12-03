@@ -13,7 +13,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-class TaskIterator:
+class TaskIterator(object):
     def __init__(self, root_task, path = [0]):
         assert root_task is not None
         self.__initial_path = path

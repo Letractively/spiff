@@ -23,7 +23,7 @@ import os.path
 import shutil
 import zipfile
 
-class Manager:
+class Manager(object):
     def  __init__(self, guard_db, package_api):
         assert guard_db      is not None
         assert package_api is not None

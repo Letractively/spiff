@@ -18,7 +18,7 @@ from genshi.input import XML
 from Package      import Package
 
 
-class Parser:
+class Parser(object):
     def __init__(self):
         self.package      = None
         self.signals   = []
