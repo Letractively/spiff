@@ -22,7 +22,7 @@ class ResourcePath(object):
 
         @type  path: string|list[int]
         @param path: Contains the path in the following format: 0/1/2/...,
-                     or as an array.
+                     or as a list of integers.
         """
         self.path = None
         self.set(path)
@@ -34,7 +34,7 @@ class ResourcePath(object):
 
         @type  path: string|list[int]
         @param path: Contains the path in the following format: 0/1/2/...,
-                     or as an array.
+                     or as a list of integers.
         """
         self.path = []
         if len(path) == 0:
@@ -47,7 +47,8 @@ class ResourcePath(object):
 
     def get(self):
         """
-        Returns the current path as a string in the following format:
+        Returns the current path as a string in the following format::
+
           0/1/2/3/...
 
         @rtype:  string
@@ -58,8 +59,10 @@ class ResourcePath(object):
 
     def hex(self):
         """
-        Returns the current path as a string in the following format:
+        Returns the current path as a string in the following format::
+        
           0123456789ABCDEF...
+
         where each component is represented by 4 characters.
 
         @rtype:  string
