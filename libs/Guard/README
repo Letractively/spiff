@@ -17,11 +17,12 @@ Dependencies
 
 Usage
 ------
-See some example code below. API documentation is embedded into the
-Spiff Guard source code and currently not yet available elsewhere.
+See some example code below. Complete API documentation can be found here:
 
-If you need more help, please drop by our mailing list. You might
-actually make someone write the missing pieces of documentation.
+  http://spiff.debain.org/static/docs/spiff_guard/index.html
+
+If you need more help, please drop by our mailing list and let us know what
+you are looking for.
 
 ##############################
 from sqlalchemy import create_engine
