@@ -23,7 +23,7 @@ from Action       import Action
 from Resource     import Resource
 from ResourcePath import ResourcePath
 
-class DBReader:
+class DBReader(object):
     attrib_type_int, attrib_type_bool, attrib_type_string = range(3)
 
     def __init__(self, db):
@@ -148,7 +148,8 @@ class DBReader:
 
     def set_table_prefix(self, prefix):
         """
-        Define a table prefix. Default is 'warehouse_'.
+        Define a string that is prefixed to all table names in the database.
+        Default is 'guard_'.
 
         @type  prefix: string
         @param prefix: The new prefix.
@@ -186,6 +187,15 @@ class DBReader:
 
 
     def register_type(self, objtypes):
+        """
+        Before using any other methods you need to let Spiff Guard know what
+        types (classes) you are using. For example, before being able to
+        retrieve a resource from the database using get_resource(), you need
+        to register the class using this function.
+
+        @type  objtypes: class|list[class]
+        @param objtypes: The class that you want to use with Spiff Guard.
+        """
         if type(objtypes) != type([]):
             objtypes = [objtypes]
         for objtype in objtypes:
@@ -193,6 +203,12 @@ class DBReader:
 
 
     def is_registered(self, objtype):
+        """
+        Checks whether the given class is already registered.
+
+        @rtype:  boolean
+        @return: True if the given class is registered, False otherwise.
+        """
         return self._types.has_key(objtype.__name__)
 
 
@@ -301,9 +317,9 @@ class DBReader:
         @param limit: The maximum number of items that is returned.
         @type  kwargs: dict
         @param kwargs: The following keys may be used:
-                         id - the id of the resource
-                         handle - the handle of the resource
-                         type - the class type of the resource
+                         - id - the id of the resource
+                         - handle - the handle of the resource
+                         - type - the class type of the resource
                        All values may also be lists (logical OR).
         @rtype:  list[Action]
         @return: The list of resources.
@@ -499,8 +515,8 @@ class DBReader:
 
         @type  kwargs: dict
         @param kwargs: For a list of allowed keys see get_resources().
-        @rtype:  Resource
-        @return: The resource, or None if none was found.
+        @rtype:  boolean
+        @return: True if the resource was found, False otherwise.
         """
         table, where = self.__get_resource_sql(**kwargs)
         tbl_r        = self._table_map['resource']
@@ -697,6 +713,14 @@ class DBReader:
 
 
     def get_resource_path_from_id(self, id):
+        """
+        Returns an object representing the "path" of an object; that is, a
+        list of ancestors, where the first item is the root of the path and
+        the last item is the one with the given id.
+
+        @rtype:  ResourcePath
+        @return: The path to the item with the given id.
+        """
         assert id is not None
         table  = self._table_map['resource_path']
         query  = select([table.c.path],
@@ -712,6 +736,21 @@ class DBReader:
 
 
     def has_permission_from_id(self, actor_id, action_id, resource_id):
+        """
+        Check whether the actor with the given id has the permission to
+        perform the action with the given id on the resource with the given
+        id.
+
+        @type  actor_id: int
+        @param actor_id: The id of the resource that performs the action.
+        @type  action_id: int
+        @param action_id: The id of the action that is performed.
+        @type  resource_id: int
+        @param resource_id: The id of the resource on which the action is
+                            performed.
+        @rtype:  boolean
+        @return: True if the permission is granted, False otherwise.
+        """
         assert actor_id    is not None
         assert action_id   is not None
         assert resource_id is not None
@@ -747,6 +786,18 @@ class DBReader:
 
 
     def has_permission(self, actor, action, resource):
+        """
+        Convenience wrapper around has_permission_from_id().
+
+        @type  actor: Actor
+        @param actor: The resource that performs the action.
+        @type  action: int
+        @param action: The action that is performed.
+        @type  resource: int
+        @param resource: The resource on which the action is performed.
+        @rtype:  boolean
+        @return: True if the permission is granted, False otherwise.
+        """
         assert actor    is not None
         assert action   is not None
         assert resource is not None
@@ -765,7 +816,7 @@ class DBReader:
         Returns a list of ACLs that match the given criteria. The function
         ignores inheritance, so that ACLs are only returned if they were
         defined specificly for the requested resource.
-        
+
         Allowed argument keywords include: action_id, resource_id,
         permit, action_type and resource_type.
         All keywords are optional; if no keywords are given all ACLs for

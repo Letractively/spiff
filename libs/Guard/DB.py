@@ -173,9 +173,9 @@ class DB(DBReader):
 
         @type  kwargs: dict
         @param kwargs: The following keys may be used:
-                         id - the id of the resource
-                         handle - the handle of the resource
-                         type - the class type of the resource
+                         - id - the id of the resource
+                         - handle - the handle of the resource
+                         - type - the class type of the resource
                        All values may also be lists (logical OR).
         @rtype:  int
         @return: The number of deleted actions.
@@ -501,7 +501,7 @@ class DB(DBReader):
         Updates the given resources in the database. Does nothing
         to any resource that does not yet exist.
 
-        @type  resources: Resource
+        @type  resources: Resource|list[Resource]
         @param resources: The resource that is saved.
         @rtype:  Boolean
         @return: True on success, False otherwise.
@@ -525,8 +525,8 @@ class DB(DBReader):
         """
         Convenience wrapper around delete_resource_from_match().
 
-        @type  resource: Resource
-        @param resource: The resource that is deleted.
+        @type  resources: Resource|list[Resource]
+        @param resources: The resource that is deleted.
         @rtype:  int
         @return: The number of deleted resources.
         """
