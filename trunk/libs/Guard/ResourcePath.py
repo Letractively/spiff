@@ -15,7 +15,7 @@
 from string    import split
 from functions import *
 
-class ResourcePath:
+class ResourcePath(object):
     def __init__(self, path = ''):
         """
         Create a new instance.

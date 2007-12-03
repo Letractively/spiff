@@ -10,12 +10,15 @@ scalability. Working with an ACL is as simple as this:
 
 ::
 
-    guard   = Guard(db_connection)
+    from Guard import *
+    guard   = DB(db_connection)
     group   = ResourceGroup("My Group")
     user    = Resource("My User")
     website = ResourceGroup("My Website")
     view    = Action("View")
     write   = Action("Edit")
+    guard.add_action([view, write])
+    guard.add_resource([user, group, website])
     guard.grant(group, view, website)
     guard.grant(user,  edit, website)
     if guard.has_permission(user, view, website):
