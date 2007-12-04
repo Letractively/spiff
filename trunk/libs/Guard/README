@@ -30,7 +30,7 @@ from Guard      import *
 
 # Connect to the database.
 db    = create_engine('mysql://user:pass@localhost/guard_name')
-guard = Guard(db)
+guard = DB(db)
 guard.install()
 guard.register_type([Action, Resource, ResourceGroup])
  

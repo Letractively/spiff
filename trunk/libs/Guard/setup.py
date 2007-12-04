@@ -17,6 +17,7 @@ scalability. Working with an ACL is as simple as this:
     website = ResourceGroup("My Website")
     view    = Action("View")
     write   = Action("Edit")
+    guard.register_type([Resource, ResourceGroup, Website])
     guard.add_action([view, write])
     guard.add_resource([user, group, website])
     guard.grant(group, view, website)
