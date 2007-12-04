@@ -12,8 +12,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-from DBReader   import *
-from functions  import *
+from DBReader   import DBReader
+from functions  import int2bin
 from sqlalchemy import *
 from Resource   import Resource
 import string, datetime
@@ -399,7 +399,7 @@ class DB(DBReader):
         # Add a new node into the tree.
         table    = self._table_map['resource_path']
         insert   = table.insert()
-        bin_path = parent_path.bin() + hex2bin('00000000')
+        bin_path = parent_path.bin() + int2bin(0)
         result   = insert.execute(path        = bin_path,
                                   resource_id = resource_id)
         path_id  = result.last_inserted_ids()[0]

@@ -28,6 +28,38 @@ class ResourcePath(object):
         self.set(path)
 
 
+    def __str__(self):
+        """
+        Returns the current path as a string in the following format::
+
+          0/1/2/3/...
+
+        @rtype:  string
+        @return: A string representation of the current path.
+        """
+        return '/'.join([str(id) for id in self.path])
+
+
+    def __add__(self, other):
+        """
+        Concatenate two path objects.
+
+        @rtype:  ResourcePath
+        @return: The combined resource path.
+        """
+        return ResourcePath(self.path + other.path)
+
+
+    def __len__(self):
+        """
+        Returns the number of elements in the path.
+
+        @rtype:  int
+        @return: The length of the path.
+        """
+        return len(self.path)
+
+
     def set(self, path = ''):
         """
         Point the object to the given path.
@@ -54,7 +86,7 @@ class ResourcePath(object):
         @rtype:  string
         @return: A string representation of the current path.
         """
-        return '/'.join([str(id) for id in self.path])
+        return self.__str__()
 
 
     def hex(self):
@@ -63,7 +95,7 @@ class ResourcePath(object):
         
           0123456789ABCDEF...
 
-        where each component is represented by 4 characters.
+        where each component is represented by 8 hexadecimal characters.
 
         @rtype:  string
         @return: A hexadecimal string representing the current path.
@@ -73,32 +105,12 @@ class ResourcePath(object):
 
     def bin(self):
         """
-        Returns the current path as a binary data.
+        Returns the current path as binary data.
 
         @rtype:  string
         @return: A binary representation of the current path.
         """
         return list2bin_path(self.path)
-
-
-    def __add__(self, other):
-        """
-        Concatenate two path objects.
-
-        @rtype:  ResourcePath
-        @return: The combined resource path.
-        """
-        return ResourcePath(self.path + other.path)
-
-
-    def __len__(self):
-        """
-        Returns the number of elements in the path.
-
-        @rtype:  int
-        @return: The length of the path.
-        """
-        return len(self.path)
 
 
     def get_parent_id(self):
