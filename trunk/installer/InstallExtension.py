@@ -12,16 +12,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-import MySQLdb, Integrator
 import sys, cgi, os.path
+import MySQLdb
 sys.path.append('..')
+import Guard
 from sqlalchemy   import *
 from ConfigParser import RawConfigParser
 from Task         import Task
 from ExtensionApi import ExtensionApi
 from Session      import Session
 from PageDB       import PageDB
-import Guard
+from Integrator   import PackageManager
 
 class InstallExtension(Task):
     def __init__(self, filename):
@@ -45,12 +46,12 @@ class InstallExtension(Task):
         session       = Session(self.guard, requested_page = None)
         get_data      = cgi.parse_qs(os.environ["QUERY_STRING"])
         post_data     = cgi.FieldStorage()
-        extension_api = ExtensionApi(session        = session,
-                                     guard          = self.guard,
-                                     page_db        = page_db,
-                                     get_data       = get_data,
-                                     post_data      = post_data)
-        self.integrator = Integrator.Manager(self.guard, extension_api)
+        extension_api = ExtensionApi(session   = session,
+                                     guard     = self.guard,
+                                     page_db   = page_db,
+                                     get_data  = get_data,
+                                     post_data = post_data)
+        self.integrator = PackageManager(self.guard, extension_api)
         self.integrator.set_package_dir('../data/repo')
 
 

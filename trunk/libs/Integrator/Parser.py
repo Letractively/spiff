@@ -20,16 +20,14 @@ from Package      import Package
 
 class Parser(object):
     def __init__(self):
-        self.package      = None
-        self.signals   = []
-        self.listeners = []
+        pass
 
 
     def parse_file(self, filename):
         infile = open(filename, 'r')
         xml    = infile.read()
         infile.close()
-        self.parse_string(xml)
+        return self.parse_string(xml)
 
 
     def parse_string(self, xml):
@@ -58,11 +56,13 @@ class Parser(object):
 
         # Signals sent by this package.
         list = xml.select('package/behavior/signal/attribute::uri')
-        self.signals = [item.strip() for item in list]
+        for item in list:
+            package.add_signal(item.strip())
 
         # Signals retrieved by this package.
         list = xml.select('package/behavior/listen/attribute::uri')
-        self.listeners = [item.strip() for item in list]
+        for item in list:
+            package.add_listener(item.strip())
 
         # Runtime dependencies.
         list = xml.select('package/depends/runtime/text()')
@@ -92,4 +92,4 @@ class Parser(object):
                 assert False # Unknown attribute type.
             package.set_attribute(name, value)
 
-        self.package = package
+        return package

@@ -36,7 +36,9 @@ class Api(object):
     def __emit(self, uri, args, synchronous):
         assert is_valid_uri(uri)
         #FIXME: Check signal permissions!
-        self._manager.load_package_from_event(uri)
+        subscribers = self._manager.get_listeners(uri)
+        for package in subscribers:
+            package.load()
         if synchronous:
             self._event_bus.emit_sync(uri, args)
         else:

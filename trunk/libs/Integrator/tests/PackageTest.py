@@ -30,11 +30,9 @@ class PackageTest(unittest.TestCase):
         package.set_version(version)
         package.set_author(author)
         package.set_description(descr)
-        package.set_filename(filename)
         assert package.get_version()     == version
         assert package.get_author()      == author
         assert package.get_description() == descr
-        assert package.get_filename()    == filename
 
         # Test empty context list.
         context_list = package.get_dependency_context_list()

@@ -75,17 +75,11 @@ class CreateDefaultSetup(CheckList):
             resource = type(name, handle)
             if private:
                 resource.set_attribute('private', True)
-            try:
-                if parent is None:
-                    parent_id = None
-                else:
-                    parent_id = parent.get_id()
-                self.guard.add_resource(parent_id, resource)
-            except Exception, e:
-                print e
-                self._add_result(caption, Task.failure)
-                self._print_result(self.environment, False)
-                return None
+            if parent is None:
+                parent_id = None
+            else:
+                parent_id = parent.get_id()
+            self.guard.add_resource(parent_id, resource)
         self._add_result(caption, Task.success)
         return resource
 

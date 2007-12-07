@@ -6,15 +6,15 @@ def suite():
     tests = ['testManager']
     return unittest.TestSuite(map(ManagerTest, tests))
 
-from DBTest  import DBTest
-from Api     import Api
-from Manager import Manager
+from DBTest         import DBTest
+from Api            import Api
+from PackageManager import PackageManager
 
 class ManagerTest(DBTest):
     def setUp(self):
         DBTest.setUp(self)
         api          = Api()
-        self.manager = Manager(self.guard, api)
+        self.manager = PackageManager(self.guard, api)
         self.manager.set_package_dir('tmp')
         
     def testManager(self):
@@ -23,17 +23,17 @@ class ManagerTest(DBTest):
 
         # Install first package.
         filename = '../samples/SpiffExtension'
-        id1      = self.manager.add_package(filename)
-        self.assert_(id1 > 0, "Id is %s" % id1)
+        pkg1     = self.manager.add_package(filename)
+        self.assert_(pkg1.get_id() is not None)
 
         # Install second package.
         filename = '../samples/HelloWorldExtension'
-        id2      = self.manager.add_package(filename)
-        self.assert_(id2 > 0, "Id is %s" % id2)
+        pkg2     = self.manager.add_package(filename)
+        self.assert_(pkg2.get_id() is not None)
 
         # Remove the package.
-        self.assert_(self.manager.remove_package_from_id(id2))
-        self.assert_(self.manager.remove_package_from_id(id1))
+        self.manager.remove_package(pkg2)
+        self.manager.remove_package_from_id(pkg1.get_id())
 
 if __name__ == '__main__':
     unittest.TextTestRunner(verbosity = 2).run(suite())

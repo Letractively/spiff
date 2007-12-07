@@ -131,6 +131,10 @@ class ExtensionApi(Api):
         return self.__session
 
 
+    def get_package(self, descriptor):
+        pass #FIXME
+
+
     def render(self, filename, *args, **kwargs):
         #FIXME: Do we need to check the permission of the caller?
         assert filename is not None

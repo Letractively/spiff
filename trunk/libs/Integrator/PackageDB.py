@@ -21,7 +21,7 @@ from Callback        import Callback
 from Guard.functions import make_handle_from_string
 from functions       import *
 
-class DB(object):
+class PackageDB(object):
     def __init__(self, guard):
         """
         Instantiates a new DB.
@@ -84,10 +84,20 @@ class DB(object):
             useexisting = True,
             mysql_engine='INNODB'
         ))
-        self.__add_table(Table(pfx + 'package_callback', metadata,
+        self.__add_table(Table(pfx + 'package_signal', metadata,
             Column('id',         Integer,     primary_key = True),
             Column('package_id', Integer,     index = True),
-            Column('event_uri',  String(255), index = True),
+            Column('uri',        String(255), index = True),
+            ForeignKeyConstraint(['package_id'],
+                                 [guard_pfx + 'resource.id'],
+                                 ondelete = 'CASCADE'),
+            useexisting = True,
+            mysql_engine='INNODB'
+        ))
+        self.__add_table(Table(pfx + 'package_listener', metadata,
+            Column('id',         Integer,     primary_key = True),
+            Column('package_id', Integer,     index = True),
+            Column('uri',        String(255), index = True),
             ForeignKeyConstraint(['package_id'],
                                  [guard_pfx + 'resource.id'],
                                  ondelete = 'CASCADE'),
@@ -239,6 +249,48 @@ class DB(object):
         return True
 
     
+    def __link_package_id_to_signal(self, package_id, uri):
+        """
+        Associates the given package with the given signal.
+
+        @type  package_id: int
+        @param package_id: The id of the package to be associated.
+        @type  uri: URI of a signal.
+        @param uri: The signal to be associated.
+        @rtype:  int
+        @return: The id of the signal, or <0 if an error occured.
+        """
+        assert package_id >= 0
+        assert uri is not None
+        
+        table  = self._table_map['package_signal']
+        query  = table.insert()
+        result = query.execute(package_id = package_id, uri = uri)
+        assert result is not None
+        return result.last_inserted_ids()[0]
+
+
+    def __link_package_id_to_listener(self, package_id, uri):
+        """
+        Associates the given package with the given listener.
+
+        @type  package_id: int
+        @param package_id: The id of the package to be associated.
+        @type  uri: URI of a listener.
+        @param uri: The listener to be associated.
+        @rtype:  int
+        @return: The id of the listener, or <0 if an error occured.
+        """
+        assert package_id >= 0
+        assert uri is not None
+        
+        table  = self._table_map['package_listener']
+        query  = table.insert()
+        result = query.execute(package_id = package_id, uri = uri)
+        assert result is not None
+        return result.last_inserted_ids()[0]
+
+
     def check_dependencies(self, package):
         """
         Checks whether all required dependencies are registered.
@@ -259,10 +311,8 @@ class DB(object):
         return True
 
 
-    def register_package(self, package):
+    def add_package(self, package):
         """
-        Register a package.
-
         Inserts the given Package into the database.
         The method takes no action if the package is already registered.
 
@@ -290,7 +340,16 @@ class DB(object):
         # Insert the package into the ACL resource table.
         self._guard.add_resource(None, package)
         
-        # Walk through all requested dependencies.
+        # Insert the list of signals that this extension may send.
+        for uri in package.get_signal_list():
+            self.__link_package_id_to_signal(package.get_id(), uri)
+
+        # Insert the list of events to which this extension may respond.
+        for uri in package.get_listener_list():
+            self.__link_package_id_to_listener(package.get_id(), uri)
+
+        # Create a link to all dependencies (direct dependencies and
+        # indirect dependencies as well).
         for descriptor in package.get_dependency_list():
             dependency_handle, \
             dependency_operator, \
@@ -313,7 +372,7 @@ class DB(object):
             list    = self.__get_dependency_id_list_from_id(best_id)
             list.append(best_id)
 
-            # Add a link to all of the dependencies.
+            # Add a link to all of the dependencies as well.
             for id in list:
                 self.__add_dependency_link_from_id(package.get_id(), id)
 
@@ -358,7 +417,7 @@ class DB(object):
         return True
 
 
-    def unregister_package_from_id(self, id):
+    def remove_package_from_id(self, id):
         """
         Removes the given package from the database. Warning: Also
         removes any package that requires the given Package.
@@ -377,7 +436,7 @@ class DB(object):
         return True
 
 
-    def unregister_package_from_handle(self, handle, version):
+    def remove_package_from_handle(self, handle, version):
         """
         Removes the given Package from the database.
 
@@ -388,10 +447,10 @@ class DB(object):
         """
         assert handle is not None
         package = self.get_package_from_handle(handle, version)
-        return self.unregister_package_from_id(package.get_id())
+        return self.remove_package_from_id(package.get_id())
 
 
-    def unregister_package(self, package):
+    def remove_package(self, package):
         """
         Removes the given Package from the database.
 
@@ -401,7 +460,7 @@ class DB(object):
         @return: False if the package did not exist, True otherwise.
         """
         assert package is not None
-        self.unregister_package_from_id(package.get_id())
+        self.remove_package_from_id(package.get_id())
         return True
 
 
@@ -523,20 +582,25 @@ class DB(object):
         return best_version
 
 
-    def get_package_list(self, offset = 0, limit = 0):
+    def get_package_list(self, offset = 0, limit = 0, **kwargs):
         """
-        Returns a list of all installed packages.
+        Returns a list of all installed packages that match the given
+        criteria.
 
         @type  offset: int
         @param offset: The number of packages to skip.
         @type  limit: int
         @param limit: The maximum number of packages returned.
+        @type  kwargs: hash
+        @param kwargs: The following keywords are accepted:
+                        - id: The id of the package.
         @rtype:  list[Package]
         @return: The list of packages.
         """
         packages = self._guard.get_resources(offset,
                                              limit,
-                                             type = Package)
+                                             type = Package,
+                                             **kwargs)
         return packages
 
 
@@ -566,42 +630,7 @@ class DB(object):
         return self._guard.get_resources(name = name, type = Package)
 
 
-    def link_package_id_to_callback(self, package_id, uri):
-        """
-        Associates the given package with the given callback.
-
-        @type  package_id: int
-        @param package_id: The id of the package to be associated.
-        @type  uri: URI of an event.
-        @param uri: The event to be associated.
-        @rtype:  int
-        @return: The id of the callback, or <0 if an error occured.
-        """
-        assert package_id >= 0
-        assert uri is not None
-        
-        table  = self._table_map['package_callback']
-        query  = table.insert()
-        result = query.execute(package_id = package_id, event_uri = uri)
-        assert result is not None
-        return result.last_inserted_ids()[0]
-
-
-    def link_package_to_callback(self, package, uri):
-        """
-        Convenience wrapper around link_package_id_to_callback().
-
-        @type  package: Package
-        @param package: The package to be associated.
-        @type  uri: URI of an event.
-        @param uri: The event to be associated.
-        @rtype:  int
-        @return: The id of the callback, or <0 if an error occured.
-        """
-        return self.link_package_id_to_callback(package.get_id(), uri)
-
-
-    def get_callback_list_from_package_id(self, package_id):
+    def get_listener_list_from_package_id(self, package_id):
         """
         Returns the list of listeners that the package with the given
         id has registered.
@@ -613,8 +642,8 @@ class DB(object):
         """
         assert package_id is not None
         
-        table  = self._table_map['package_callback']
-        query  = select([table.c.event_uri],
+        table  = self._table_map['package_listener']
+        query  = select([table.c.uri],
                         table.c.package_id == package_id,
                         from_obj = [table])
         result = query.execute()
@@ -622,14 +651,14 @@ class DB(object):
 
         uri_list = []
         for row in result:
-            uri_list.append(row[table.c.event_uri])
+            uri_list.append(row[table.c.uri])
         return uri_list
 
 
-    def get_package_id_list_from_callback(self, uri):
+    def get_listener_id_list_from_uri(self, uri):
         """
-        Returns a list of all packages that are associated with the given
-        uri.
+        Returns a list of all ids of packages that are subscribed to the
+        signal with the given URI.
 
         @type  uri: URI of an event. % wildcard allowed.
         @param uri: The event to look for.
@@ -638,9 +667,9 @@ class DB(object):
         """
         assert uri is not None
         
-        table  = self._table_map['package_callback']
+        table  = self._table_map['package_listener']
         query  = select([table.c.package_id],
-                        table.c.event_uri.like(uri),
+                        table.c.uri.like(uri),
                         from_obj = [table])
         result = query.execute()
         assert result is not None

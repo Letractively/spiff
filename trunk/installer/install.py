@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # Copyright (C) 2006 Samuel Abels, http://debain.org
 #
 # This program is free software; you can redistribute it and/or modify
@@ -18,17 +17,17 @@ sys.path.insert(0, '../libs/')
 sys.path.insert(0, '../objects')
 sys.path.insert(0, '../services')
 sys.path.insert(0, '../functions')
-from genshi.template       import TextTemplate
-from genshi.template       import TemplateLoader
-from Constructor           import *
-from Constructor.Task      import *
-from InstallGuard          import InstallGuard
-from InstallCacheDB        import InstallCacheDB
-from InstallIntegrator     import InstallIntegrator
-from InstallWarehouse      import InstallWarehouse
-from InstallExtension      import InstallExtension
-from CreateDefaultSetup    import CreateDefaultSetup
-from SetUserPassword       import SetUserPassword
+from genshi.template    import TextTemplate
+from genshi.template    import TemplateLoader
+from Constructor        import *
+from Constructor.Task   import *
+from InstallGuard       import InstallGuard
+from InstallCacheDB     import InstallCacheDB
+from InstallIntegrator  import InstallIntegrator
+from InstallWarehouse   import InstallWarehouse
+from InstallExtension   import InstallExtension
+from CreateDefaultSetup import CreateDefaultSetup
+from SetUserPassword    import SetUserPassword
 
 print 'Content-Type: text/html'
 print
@@ -78,7 +77,6 @@ tasks = [
     InstallExtension('../plugins/PageEditor'),
     InstallExtension('../plugins/ExtensionManager'),
     InstallExtension('../plugins/WikiPage'),
-    InstallExtension('../plugins/Apilogue')
 ]
 constructor.append(CheckList('Installing core extensions', tasks))
 constructor.append(InstallationCompleted())
