@@ -1,6 +1,6 @@
 #!/usr/bin/python
 try:
-    import go
+    import install
 except SystemExit:
     pass
 except Exception, e:

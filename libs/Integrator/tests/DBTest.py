@@ -16,7 +16,7 @@ import Guard
 from sqlalchemy     import create_engine
 from sqlalchemy.orm import clear_mappers
 from ConfigParser   import RawConfigParser
-from DB             import DB
+from PackageDB      import PackageDB
 from Package        import Package
 
 def dummy_callback(args):
@@ -38,7 +38,7 @@ class DBTest(unittest.TestCase):
         self.engine = create_engine(dbn)
         clear_mappers()
         self.guard  = Guard.DB(self.engine)
-        self.extdb  = DB(self.guard)
+        self.extdb  = PackageDB(self.guard)
 
         # Install.
         self.assert_(self.extdb.uninstall())
@@ -66,7 +66,7 @@ class DBTest(unittest.TestCase):
         self.assert_(self.extdb.clear_database())
         package = Package('Spiff')
         package.set_version('0.2')
-        self.extdb.register_package(package)
+        self.extdb.add_package(package)
         
         package = Package('Depends on Spiff')
         self.assert_(self.extdb.check_dependencies(package))
@@ -84,38 +84,38 @@ class DBTest(unittest.TestCase):
         self.assert_(self.extdb.clear_database())
         package = Package('Spiff')
         package.set_version('0.2')
-        self.extdb.register_package(package)
+        self.extdb.add_package(package)
 
 
     def testUnregisterExtension(self):
         self.assert_(self.extdb.clear_database())
         package = Package('Spiff')
         package.set_version('0.1.2')
-        self.extdb.register_package(package)
-        self.assert_(self.extdb.unregister_package_from_id(package.get_id()))
+        self.extdb.add_package(package)
+        self.assert_(self.extdb.remove_package_from_id(package.get_id()))
 
         package = Package('Spiff')
         package.set_version('0.1.2')
-        self.extdb.register_package(package)
-        self.assert_(self.extdb.unregister_package_from_handle(package.get_handle(),
+        self.extdb.add_package(package)
+        self.assert_(self.extdb.remove_package_from_handle(package.get_handle(),
                                                    package.get_version()))
         
         package = Package('Spiff')
         package.set_version('0.1.2')
-        self.extdb.register_package(package)
-        self.assert_(self.extdb.unregister_package(package))
+        self.extdb.add_package(package)
+        self.assert_(self.extdb.remove_package(package))
         
         
     def testGetExtension(self):
         self.assert_(self.extdb.clear_database())
         package = Package('Spiff')
         package.set_version('0.1')
-        self.extdb.register_package(package)
+        self.extdb.add_package(package)
 
         package = Package('Spiff')
         package.set_version('0.2')
         package.add_dependency('spiff=0.1')
-        self.extdb.register_package(package)
+        self.extdb.add_package(package)
 
         result = self.extdb.get_package_from_id(package.get_id())
         self.assert_(result.get_handle()  == package.get_handle())
@@ -146,13 +146,10 @@ class DBTest(unittest.TestCase):
         self.assert_(self.extdb.clear_database())
         package = Package('Spiff')
         package.set_version('0.1.2')
-        self.extdb.register_package(package)
+        package.add_listener('always')
+        self.extdb.add_package(package)
 
-        #callback = Callback(self.dummy_callback, 'always')
-        self.assert_(self.extdb.link_package_id_to_callback(package.get_id(),
-                                                'always'))
-
-        list = self.extdb.get_package_id_list_from_callback('always')
+        list = self.extdb.get_listener_id_list_from_uri('always')
         self.assert_(len(list) == 1)
 
 if __name__ == '__main__':

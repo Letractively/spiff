@@ -43,7 +43,7 @@ class Page(ResourceGroup):
 
         integrator = api.get_integrator()
         package    = integrator.get_package_from_descriptor(descriptor)
-        extension  = integrator.load_package(package)
+        extension  = package.load()
         extension.on_render_request()
         output = api.get_output()
         api.clear_output()

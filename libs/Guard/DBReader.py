@@ -317,12 +317,12 @@ class DBReader(object):
         @param limit: The maximum number of items that is returned.
         @type  kwargs: dict
         @param kwargs: The following keys may be used:
-                         - id - the id of the resource
-                         - handle - the handle of the resource
-                         - type - the class type of the resource
+                         - id - the id of the action
+                         - handle - the handle of the action
+                         - type - the class type of the action
                        All values may also be lists (logical OR).
         @rtype:  list[Action]
-        @return: The list of resources.
+        @return: The list of actions.
         """
         tbl_a = self._table_map['action']
         table = tbl_a

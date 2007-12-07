@@ -29,7 +29,7 @@ Installation Instructions
 
    chmod 777 data/
  
-4. Open spiff/installer/install.py in your web browser and follow the
+4. Open spiff/installer/ in your web browser and follow the
    instructions. Make sure that no error message appears.
    !!! WARNING: This step will erase the content of the database that
        is specified in the configuration dialog !!!
