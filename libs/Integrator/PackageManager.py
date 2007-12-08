@@ -242,8 +242,8 @@ class PackageManager(object):
         Returns the Package object that matches the given descriptor.
         If multiple versions match, the most recent version is returned.
 
-        @type  name: string
-        @param name: A descriptor (e.g. "my_package>=1.0").
+        @type  descriptor: string
+        @param descriptor: A descriptor (e.g. "my_package>=1.0").
         @rtype:  Package
         @return: The Package, or None if none was found.
         """
@@ -277,8 +277,8 @@ class PackageManager(object):
         """
         Uninstalls the given package.
 
-        @type  id: int
-        @param id: The id of the package to remove.
+        @type  package: Package
+        @param package: The package to remove.
         """
         res     = self.package_db.remove_package_from_id(package.get_id())
         pkg_dir = os.path.join(self.package_dir, package.get_module_dir())
