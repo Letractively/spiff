@@ -25,19 +25,11 @@ class Package(Resource):
         assert version is not None
         Resource.__init__(self, name, handle)
         self.__dependencies = {}
-        self.__signals      = None
-        self.__listeners    = None
+        self.__signals      = []
+        self.__listeners    = []
         self.__parent       = kwargs.get('parent')
         self.__module       = None
         self.set_version(version)
-
-
-    def set_id(self, id):
-        Resource.set_id(self, id)
-        if self.__signals is None:
-            self.__signals = []
-        if self.__listeners is None:
-            self.__listeners = []
 
 
     def _set_parent(self, parent):
@@ -106,6 +98,10 @@ class Package(Resource):
         self.__signals.append(uri)
 
 
+    def _defer_signal_list(self):
+        self.__signals = None
+
+
     def get_signal_list(self):
         """
         Returns the list of signals that this package may send.
@@ -127,6 +123,10 @@ class Package(Resource):
             self.__listeners = [uri]
             return
         self.__listeners.append(uri)
+
+
+    def _defer_listener_list(self):
+        self.__listeners = None
 
 
     def get_listener_list(self):

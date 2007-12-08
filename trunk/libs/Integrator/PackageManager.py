@@ -208,6 +208,8 @@ class PackageManager(object):
         list = self.package_db.get_package_list(offset, limit)
         for package in list:
             package._set_parent(self)
+            package._defer_signal_list()
+            package._defer_listener_list()
         return list
 
 
@@ -230,6 +232,8 @@ class PackageManager(object):
         list = self.package_db.get_package_list(id = id_list)
         for package in list:
             package._set_parent(self)
+            package._defer_signal_list()
+            package._defer_listener_list()
         return list
 
 
@@ -246,6 +250,8 @@ class PackageManager(object):
         assert descriptor is not None
         package = self.package_db.get_package_from_descriptor(descriptor)
         package._set_parent(self)
+        package._defer_signal_list()
+        package._defer_listener_list()
         return package
 
 
@@ -262,6 +268,8 @@ class PackageManager(object):
         assert name is not None
         package = self.package_db.get_package_from_name(name)
         package._set_parent(self)
+        package._defer_signal_list()
+        package._defer_listener_list()
         return package
 
 
