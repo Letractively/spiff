@@ -19,7 +19,9 @@ remove_re = re.compile(r'^from (' + '|'.join(classes) + r') * import .*')
 fp_out    = open(doc_file, 'w')
 for file in files:
     fp_in = open(file, 'r')
-    fp_out.write(fp_in.read())
+    for line in fp_in:
+        if not remove_re.match(line):
+            fp_out.write(line)
     fp_in.close()
 fp_out.close()
 

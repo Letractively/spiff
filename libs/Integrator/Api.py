@@ -15,11 +15,15 @@
 from functions import is_valid_uri
 
 class Api(object):
+    """
+    Contains command functions that are made available to all packages.
+    """
+
     def __init__(self):
         self._manager = None
 
 
-    def activate(self, manager):
+    def _activate(self, manager):
         assert manager is not None
         self._manager   = manager
         self._event_bus = manager.event_bus
@@ -46,8 +50,24 @@ class Api(object):
 
 
     def emit(self, uri, args = None):
+        """
+        Send an asynchronous signal on the event bus.
+
+        @type  uri: string
+        @param uri: A unique identifier (name) for the signal.
+        @type  args: object
+        @param args: Passed on to subscribers of the signal.
+        """
         return self.__emit(uri, args, False)
 
 
     def emit_sync(self, uri, args = None):
+        """
+        Send a synchronous signal on the event bus.
+
+        @type  uri: string
+        @param uri: A unique identifier (name) for the signal.
+        @type  args: object
+        @param args: Passed on to subscribers of the signal.
+        """
         return self.__emit(uri, args, True)

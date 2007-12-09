@@ -25,6 +25,19 @@ class Package(Resource):
     """
     
     def __init__(self, name, handle = None, version = '0', **kwargs):
+        """
+        You normally shouldn't create an instance yourself; instead, just ask
+        the PackageManager to do this for you.
+        
+        @type  name: string
+        @param name: The name of the package.
+        @type  handle: string
+        @param handle: The system name of the package.
+        @type  version: string
+        @param version: The package version.
+        @rtype:  Package
+        @return: The new instance.
+        """
         assert name    is not None
         assert version is not None
         Resource.__init__(self, name, handle)
@@ -52,6 +65,12 @@ class Package(Resource):
 
 
     def set_author(self, author):
+        """
+        Define the author of the package.
+
+        @type  author: string
+        @param author: The name of the author.
+        """
         assert author is not None and author != ''
         self.set_attribute('author', author)
 
@@ -61,6 +80,12 @@ class Package(Resource):
 
 
     def set_author_email(self, email):
+        """
+        Define the email address of the author of the package.
+
+        @type  email: string
+        @param email: The email address.
+        """
         assert email is not None and email != ''
         self.set_attribute('author-email', email)
 
@@ -70,6 +95,12 @@ class Package(Resource):
 
 
     def set_description(self, description):
+        """
+        Define a description for the package.
+
+        @type  description: string
+        @param description: A description of the package.
+        """
         assert description is not None
         self.set_attribute('description', description)
 
@@ -79,6 +110,12 @@ class Package(Resource):
 
 
     def set_version(self, version):
+        """
+        Define the version of the package.
+
+        @type  version: string
+        @param version: The version and release number.
+        """
         assert version is not None and version != ''
         self.set_attribute('version', version)
 

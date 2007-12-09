@@ -18,6 +18,7 @@ class Event(object):
     Events are used only internally by the event bus, to queue them up
     when emitted synchronously.
     """
+
     def __init__(self, uri, args):
         """
         @type  uri: string
