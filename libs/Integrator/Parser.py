@@ -12,11 +12,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-import os, sys
+import os, sys, re
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from genshi.input import XML
 from Package      import Package
 
+whitespace = re.compile(r'\s+')
 
 class Parser(object):
     def __init__(self):
@@ -40,13 +41,13 @@ class Parser(object):
         release = str(xml.select('package/release/text()')).strip()
         descr   = str(xml.select('package/description[@lang=""]/text()'))
         package = Package(name, handle, release)
-        package.set_description(descr.strip())
+        package.set_description(whitespace.sub(' ', descr.strip()))
 
         # Author information.
         author = str(xml.select('package/authors/person/name/text()'))
         email  = str(xml.select('package/authors/person/email/text()'))
-        package.set_attribute('author',       author.strip())
-        package.set_attribute('author-email', email.strip())
+        package.set_author(author.strip())
+        package.set_author_email(email.strip())
 
         # Behavioral flags.
         if str(xml.select('package/behavior/cacheable')) != '':

@@ -57,7 +57,7 @@ class InstallExtension(Task):
 
     def install(self, environment):
         self.__setup()
-        extension_id = self.integrator.add_package(self.__filename)
+        extension_id = self.integrator.install_package(self.__filename)
         if extension_id <= 0:
             return Task.failure
         return Task.success

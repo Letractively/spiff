@@ -20,6 +20,10 @@ from Callback  import Callback
 from functions import descriptor_parse
 
 class Package(Resource):
+    """
+    Represents a package in the database.
+    """
+    
     def __init__(self, name, handle = None, version = '0', **kwargs):
         assert name    is not None
         assert version is not None
@@ -30,6 +34,17 @@ class Package(Resource):
         self.__parent       = kwargs.get('parent')
         self.__module       = None
         self.set_version(version)
+
+
+    def __str__(self):
+        name    = self.get_name()
+        version = self.get_version()
+        author  = self.get_author()
+        email   = self.get_author_email()
+        s  = "Package:      %s %s\n"   % (name, version)
+        s += "Author:       %s <%s>\n" % (author, email)
+        s += "Dependencies: %s\n"      % ','.join(self.get_dependency_list())
+        return s + self.get_description()
 
 
     def _set_parent(self, parent):
@@ -43,6 +58,15 @@ class Package(Resource):
 
     def get_author(self):
         return self.get_attribute('author')
+
+
+    def set_author_email(self, email):
+        assert email is not None and email != ''
+        self.set_attribute('author-email', email)
+
+
+    def get_author_email(self):
+        return self.get_attribute('author-email')
 
 
     def set_description(self, description):
@@ -82,10 +106,11 @@ class Package(Resource):
     def get_dependency_list(self, context = None):
         if context is not None:
             return self.__dependencies[context]
-        dependency_list = []
-        for context in self.__dependencies:
-            dependency_list += self.__dependencies[context]
-        return dependency_list
+        dependencies = {}
+        for context, list in self.__dependencies.iteritems():
+            for dependency in list:
+                dependencies[dependency] = 1
+        return dependencies.keys()
 
 
     def add_signal(self, uri):
