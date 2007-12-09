@@ -27,6 +27,10 @@ import shutil
 import zipfile
 
 class PackageManager(object):
+    """
+    The API that you want to use.
+    """
+
     def  __init__(self, guard, package_api):
         """
         Constructor.
@@ -43,7 +47,7 @@ class PackageManager(object):
         self.package_api     = package_api
         self.event_bus       = EventBus()
         self.__package_cache = {}
-        package_api.activate(self)
+        package_api._activate(self)
 
 
     def __install_directory(self, dirname):
@@ -126,9 +130,10 @@ class PackageManager(object):
     def create_package(self, dirname):
         """
         Creates an empty package in the given directory.
+        Raises an exception if the package could not be created.
 
         @type  dirname: string
-        @param dirname: Path to the file containing the package.
+        @param dirname: The directory in which the package is created.
         @rtype:  Package
         @return: The package.
         """
@@ -167,7 +172,7 @@ class PackageManager(object):
 
     def install_package(self, filename):
         """
-        Installs the given package.
+        Installs the package with the given filename.
         Raises an exception if the installation failed.
 
         @type  filename: string
