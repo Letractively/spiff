@@ -19,6 +19,7 @@ from UserAction import UserAction
 class UserDB(object):
     def __init__(self, guard):
         self.__guard = guard
+        guard.register_type([User, Group, UserAction])
         
 
     def get_user(self, handle):

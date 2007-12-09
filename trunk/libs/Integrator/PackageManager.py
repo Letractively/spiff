@@ -18,15 +18,24 @@ from tempfile  import mkdtemp
 from EventBus  import EventBus
 from Callback  import Callback
 from Parser    import Parser
-from Exception import IntegratorException
+from Exception import IntegratorException, UnmetDependency
 import os
 import os.path
 import sys
+import glob
 import shutil
 import zipfile
 
 class PackageManager(object):
     def  __init__(self, guard, package_api):
+        """
+        Constructor.
+
+        @type  guard: Guard
+        @param guard: The Spiff Guard instance.
+        @type  package_api: Api
+        @param package_api: The API that is made available to all packages.
+        """
         assert guard       is not None
         assert package_api is not None
         self.package_db      = PackageDB(guard)
@@ -74,6 +83,19 @@ class PackageManager(object):
         return target
 
 
+    def __read_xml_from_package(self, filename):
+        if os.path.isdir(filename):
+            file    = open(os.path.join(filename, 'package.xml'))
+            content = file.read()
+            file.close()
+        else:
+            zfobj = zipfile.ZipFile(filename)
+            if zfobj is None:
+                return None
+            content = zfobj.read('package.xml')
+        return content
+
+
     def _load_notify(self, package, module):
         self.__package_cache[module] = package
 
@@ -101,18 +123,60 @@ class PackageManager(object):
         sys.path.append(self.package_dir)
 
 
-    def add_package(self, filename):
+    def create_package(self, dirname):
+        """
+        Creates an empty package in the given directory.
+
+        @type  dirname: string
+        @param dirname: Path to the file containing the package.
+        @rtype:  Package
+        @return: The package.
+        """
+        if os.path.exists(dirname):
+            raise IOError('%s: file already exists' % dirname)
+
+        # Install files.
+        os.mkdir(dirname)
+        template = os.path.join(os.path.dirname(__file__), 'template')
+        files    = os.path.join(template, '*.xml')
+        for filename in glob.glob(files):
+            shutil.copy(filename, dirname)
+        return self.read_package(dirname)
+
+
+    def read_package(self, filename):
+        """
+        Reads the package with the given filename without installing it.
+        Raises an exception if the package could not be read.
+
+        @type  filename: string
+        @param filename: Path to the file containing the package.
+        @rtype:  Package
+        @return: The package.
+        """
+        if not os.path.exists(filename):
+            raise IOError('%s: No such file or directory' % filename)
+
+        # Install files.
+        xml     = self.__read_xml_from_package(filename)
+        parser  = Parser()
+        package = parser.parse_string(xml)
+
+        return package
+
+
+    def install_package(self, filename):
         """
         Installs the given package.
         Raises an exception if the installation failed.
 
         @type  filename: string
         @param filename: Path to the file containing the package.
-        @rtype:  int
+        @rtype:  Package
         @return: The package.
         """
         if not os.path.exists(filename):
-            raise IOError('%s: No such file or direcory' % filename)
+            raise IOError('%s: No such file or directory' % filename)
 
         # Install files.
         if os.path.isdir(filename):
@@ -125,7 +189,7 @@ class PackageManager(object):
             raise IntegratorException('Unable to copy or unpack %s' % filename)
 
         # Read the package file.
-        class_file = os.path.join(install_dir, 'Extension.xml')
+        class_file = os.path.join(install_dir, 'package.xml')
         parser     = Parser()
         try:
             package = parser.parse_file(class_file)
@@ -138,7 +202,7 @@ class PackageManager(object):
         for descriptor in package.get_dependency_list():
             if not self.package_db.get_package_from_descriptor(descriptor):
                 shutil.rmtree(install_dir)
-                raise IntegratorException('Unmet dependency: %s' % descriptor)
+                raise UnmetDependency()
 
         # Register the package in the database.
         try:
@@ -192,6 +256,31 @@ class PackageManager(object):
             raise
 
         return package
+
+
+    def remove_package(self, package):
+        """
+        Uninstalls the given package.
+
+        @type  package: Package
+        @param package: The package to remove.
+        """
+        res     = self.package_db.remove_package_from_id(package.get_id())
+        pkg_dir = os.path.join(self.package_dir, package.get_module_dir())
+        if os.path.isdir(pkg_dir):
+            shutil.rmtree(pkg_dir)
+
+
+    def remove_package_from_id(self, id):
+        """
+        Uninstalls the package with the given id.
+
+        @type  id: int
+        @param id: The id of the package to remove.
+        """
+        package = Package('', parent = self)
+        package.set_id(id)
+        return self.remove_package(package)
 
 
     def get_package_list(self, offset = 0, limit = 0):
@@ -249,6 +338,8 @@ class PackageManager(object):
         """
         assert descriptor is not None
         package = self.package_db.get_package_from_descriptor(descriptor)
+        if not package:
+            return None
         package._set_parent(self)
         package._defer_signal_list()
         package._defer_listener_list()
@@ -273,30 +364,14 @@ class PackageManager(object):
         return package
 
 
-    def remove_package(self, package):
-        """
-        Uninstalls the given package.
-
-        @type  package: Package
-        @param package: The package to remove.
-        """
-        res     = self.package_db.remove_package_from_id(package.get_id())
-        pkg_dir = os.path.join(self.package_dir, package.get_module_dir())
-        if os.path.isdir(pkg_dir):
-            shutil.rmtree(pkg_dir)
-
-
-    def remove_package_from_id(self, id):
-        """
-        Uninstalls the package with the given id.
-
-        @type  id: int
-        @param id: The id of the package to remove.
-        """
-        package = Package('', parent = self)
-        package.set_id(id)
-        return self.remove_package(package)
-
-
     def get_package_from_instance(self, instance):
+        """
+        Given an instance of the loaded package, this function returns the
+        corresponding Package object.
+
+        @type  instance: object
+        @param instance: The instance of the package.
+        @rtype:  Package
+        @return: The corresponding Package if it exists, None otherwise.
+        """
         return self.__package_cache.get(instance)

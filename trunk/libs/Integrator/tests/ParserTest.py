@@ -10,7 +10,7 @@ from Parser import Parser
 
 class ParserTest(unittest.TestCase):
     def testParser(self):
-        filename = '../samples/SpiffExtension/Extension.xml'
+        filename = '../samples/SpiffExtension/package.xml'
         parser   = Parser()
         package  = parser.parse_file(filename)
         self.assert_(package.get_name() == 'My Spiff Extension')

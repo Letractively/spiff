@@ -1,5 +1,6 @@
 from Api            import Api
 from PackageManager import PackageManager
+from functions      import version_is_greater
 
 import inspect 
 __all__ = [name for name, obj in locals().items()

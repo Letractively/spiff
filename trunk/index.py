@@ -1,6 +1,7 @@
 #!/usr/bin/python
 try:
-    import go
+    import spiff
+    spiff.run()
 except SystemExit:
     pass
 except Exception, e:

@@ -12,13 +12,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-from Page    import Page
-from PageBox import PageBox
+from Page       import Page
+from PageAction import PageAction
+from PageBox    import PageBox
 
 class PageDB(object):
     def __init__(self, guard):
         self.__guard        = guard
         self.__system_pages = ['homepage', 'default']
+        guard.register_type([Page, PageAction, PageBox])
         
 
     def is_system_page_handle(self, page_handle):

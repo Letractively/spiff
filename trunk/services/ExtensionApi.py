@@ -18,7 +18,6 @@ from gettext    import gettext
 from urlutil    import *
 from Integrator import Api
 from Cookie     import SimpleCookie
-from PageAction import PageAction
 
 
 class ExtensionApi(Api):
