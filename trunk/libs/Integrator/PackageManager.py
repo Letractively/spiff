@@ -299,7 +299,7 @@ class PackageManager(object):
         return self.remove_package(package)
 
 
-    def get_package_list(self, offset = 0, limit = 0):
+    def get_package_list(self, offset = 0, limit = 0, **kwargs):
         """
         Returns a list of all installed packages.
 
@@ -307,25 +307,18 @@ class PackageManager(object):
         @param offset: The number of packages to skip.
         @type  limit: int
         @param limit: The maximum number of packages returned.
+        @type  kwargs: dict
+        @param kwargs: The following keywords are accepted:
+                        - id: The id of the package.
+                        - depends: A package on which the returned
+                          package depends.
         @rtype:  list[Package]
         @return: The list of packages.
         """
-        list = self.package_db.get_package_list(offset, limit)
+        list = self.package_db.get_package_list(offset, limit, **kwargs)
         for package in list:
             self.__init_package(package)
         return list
-
-
-    def get_package_rdepends(self, package):
-        """
-        Returns a list of all packages that depend on the given package.
-
-        @type  package: Package
-        @param package: The package whose reverse dependencies are returned.
-        @rtype:  list[Package]
-        @return: The list of packages that depend on the given package.
-        """
-        return self.package_db.get_package_list(rdepends = package)
 
 
     def get_listeners(self, uri):

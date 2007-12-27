@@ -157,7 +157,7 @@ def remove(pm, descriptor):
     if package is None:
         print "Package %s not found in database" % descriptor
         return False
-    depends = pm.get_package_rdepends(package)
+    depends = pm.get_package_list(depends = package)
     if len(depends) > 0:
         depend = ['%s=%s' % (d.get_handle(), d.get_version()) for d in depends]
         descr  = '%s=%s' % (package.get_handle(), package.get_version())
