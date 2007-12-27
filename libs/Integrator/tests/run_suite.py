@@ -6,8 +6,8 @@ modules = ['ApiTest',
            'EventBusTest',
            'EventTest',
            'PackageTest',
+           'PackageManagerTest',
            'FunctionTest',
-           'ManagerTest',
            'ParserTest']
 
 # Parse CLI options.
