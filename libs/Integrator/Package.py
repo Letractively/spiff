@@ -82,17 +82,6 @@ class Package(Resource):
         self.__parent = parent
 
 
-    def set_filename(self, filename):
-        """
-        Define the filename of the package.
-
-        @type  filename: string
-        @param filename: The name of the file.
-        """
-        assert filename is not None and filename != ''
-        self.__filename = filename
-
-
     def matches(self, descriptor):
         """
         Returns True if the given descriptor matches the handle and version of
@@ -112,6 +101,17 @@ class Package(Resource):
         if op == '>=' and version_is_greater(version, self.get_version()):
             return False
         return True
+
+
+    def _set_filename(self, filename):
+        """
+        Define the filename of the package.
+
+        @type  filename: string
+        @param filename: The name of the file.
+        """
+        assert filename is not None and filename != ''
+        self.__filename = filename
 
 
     def get_filename(self):
