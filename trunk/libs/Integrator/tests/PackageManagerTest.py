@@ -4,13 +4,13 @@ sys.path.insert(0, '../..')
 
 def suite():
     tests = ['testManager']
-    return unittest.TestSuite(map(ManagerTest, tests))
+    return unittest.TestSuite(map(PackageManagerTest, tests))
 
 from DBTest         import DBTest
 from Api            import Api
 from PackageManager import PackageManager
 
-class ManagerTest(DBTest):
+class PackageManagerTest(DBTest):
     def setUp(self):
         DBTest.setUp(self)
         api          = Api()

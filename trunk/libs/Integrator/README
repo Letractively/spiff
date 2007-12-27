@@ -28,4 +28,6 @@ Examples
 For example packages please refer to the files in the samples/ directory.
 API documentation can be found at the following place:
 
+  http://spiff.debain.org/static/docs/spiff_integrator/index.html
+
 The unit tests in the tests/ directory can also be a useful reference.

@@ -27,9 +27,11 @@ scalability. Working with an ACL is as simple as this:
 
 Spiff Guard's features include recursion, groups, Python type awareness,
 inverse lookup, and a lot more. For a more complete example, have a look
-into the `README file`_ included with the package.
+into the `README file`_ included with the package. You may also look at the
+`API documentation`_.
 
 .. _README file: http://spiff.googlecode.com/svn/trunk/libs/Guard/README
+.. _API documentation: http://spiff.debain.org/static/docs/spiff_guard/index.html
 """,
       author           = 'Samuel Abels',
       author_email     = 'cheeseshop.python.org@debain.org',
