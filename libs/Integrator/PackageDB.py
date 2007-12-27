@@ -291,6 +291,25 @@ class PackageDB(object):
         return result.last_inserted_ids()[0]
 
 
+    def __get_package_id_list_rdepends(self, package):
+        """
+        Returns a list of all ids of all packages that depend on the
+        given package.
+
+        @type  package: Package
+        @param package: The package to remove.
+        @rtype:  list[id]
+        @return: A list of package ids.
+        """
+        assert package.get_id() is not None
+        table  = self._table_map['package_dependency_map']
+        query  = select([table.c.package_id],
+                        table.c.dependency_id == package.get_id(),
+                        from_obj = [table])
+        result = query.execute()
+        return [row[table.c.package_id] for row in result]
+
+
     def check_dependencies(self, package):
         """
         Checks whether all required dependencies are registered.
@@ -591,14 +610,16 @@ class PackageDB(object):
         @param offset: The number of packages to skip.
         @type  limit: int
         @param limit: The maximum number of packages returned.
-        @type  kwargs: hash
+        @type  kwargs: dict
         @param kwargs: The following keywords are accepted:
                         - id: The id of the package.
+                        - depends: A package on which the returned
+                          package depends.
         @rtype:  list[Package]
         @return: The list of packages.
         """
-        if kwargs.has_key('rdepends'):
-            id_list = self.__get_package_id_list_rdepends(kwargs['rdepends'])
+        if kwargs.has_key('depends'):
+            id_list = self.__get_package_id_list_rdepends(kwargs['depends'])
             if kwargs.has_key('id'):
                 if kwargs.get('id') not in id_list:
                     return []
@@ -612,25 +633,6 @@ class PackageDB(object):
                                              type = Package,
                                              **kwargs)
         return packages
-
-
-    def __get_package_id_list_rdepends(self, package):
-        """
-        Returns a list of all ids of all packages that depend on the
-        given package.
-
-        @type  package: Package
-        @param package: The package to remove.
-        @rtype:  list[id]
-        @return: A list of package ids.
-        """
-        assert package.get_id() is not None
-        table  = self._table_map['package_dependency_map']
-        query  = select([table.c.package_id],
-                        table.c.dependency_id == package.get_id(),
-                        from_obj = [table])
-        result = query.execute()
-        return [row[table.c.package_id] for row in result]
 
 
     def get_version_list_from_handle(self, handle):
