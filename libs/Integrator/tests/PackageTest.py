@@ -40,7 +40,7 @@ class PackageTest(unittest.TestCase):
 
         # Test non-empty context list.
         descriptor = 'spiff>=1.0'
-        package.add_dependency(descriptor)
+        package._add_dependency(descriptor)
         context_list = package.get_dependency_context_list()
         assert context_list[0] == 'default'
         assert len(context_list) == 1
@@ -54,8 +54,8 @@ class PackageTest(unittest.TestCase):
         context     = 'runtime'
         descriptor1 = 'mydep=0.1.2'
         descriptor2 = 'mydep2>=2'
-        package.add_dependency(descriptor1, context)
-        package.add_dependency(descriptor2, context)
+        package._add_dependency(descriptor1, context)
+        package._add_dependency(descriptor2, context)
         context_list = package.get_dependency_context_list()
         assert context_list[0] == 'default'
         assert context_list[1] == context

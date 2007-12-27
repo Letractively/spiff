@@ -24,9 +24,9 @@ class Package(Resource):
     Represents a package in the database.
     """
     
-    def __init__(self, name, handle = None, version = '0', **kwargs):
+    def __init__(self, name, handle = None, version = None, **kwargs):
         """
-        You normally shouldn't create an instance yourself; instead, just ask
+        You normally shouldn't create an instance yourself; instead, ask
         the PackageManager to do this for you.
         
         @type  name: string
@@ -38,8 +38,7 @@ class Package(Resource):
         @rtype:  Package
         @return: The new instance.
         """
-        assert name    is not None
-        assert version is not None
+        assert name is not None
         Resource.__init__(self, name, handle)
         self.__filename     = None
         self.__dependencies = {}
@@ -47,10 +46,19 @@ class Package(Resource):
         self.__listeners    = []
         self.__parent       = kwargs.get('parent')
         self.__module       = None
-        self.set_version(version)
+        if version is not None:
+            self.set_version(version)
 
 
     def __str__(self):
+        """
+        Returns a string in the following format: "handle=version",
+        where "handle" is replaced by the handle of this package and
+        "version" is replaced by the version number.
+
+        @rtype:  string
+        @return: The handle and version number.
+        """
         return '%s=%s' % (self.get_handle(), self.get_version())
 
 
@@ -198,10 +206,13 @@ class Package(Resource):
         @rtype:  string
         @return: The version number.
         """
-        return self.get_attribute('version')
+        version = self.get_attribute('version')
+        if version is None:
+            return '0'
+        return version
 
 
-    def add_dependency(self, descriptor, context = 'default'):
+    def _add_dependency(self, descriptor, context = 'default'):
         assert descriptor is not None and descriptor is not ''
         assert context    is not None and context    is not ''
         #print "Descriptor:", descriptor
@@ -214,10 +225,32 @@ class Package(Resource):
 
 
     def get_dependency_context_list(self):
+        """
+        This function returns a list of all contexts specified by this
+        package.
+        Packages may specify multiple "types" of dependencies. For
+        example, a package may specify a dependency that is only
+        needed at install time, and another dependency that is only
+        needed at runtime. In such a case, dependencies are sorted
+        into different contexts and may be named "install_time" and
+        "runtime". The context is specified in the XML index file of
+        a package.
+
+        @rtype:  list[string]
+        @return: A list of contexts.
+        """
         return self.__dependencies.keys()
 
 
     def get_dependency_list(self, context = None):
+        """
+        Returns a list of all dependencies specified by this package.
+        If a context is given, only the dependendencies in this
+        context are returned.
+
+        @rtype:  list[string]
+        @return: A list of dependency descriptors.
+        """
         if context is not None:
             return self.__dependencies[context]
         dependencies = {}
@@ -227,7 +260,7 @@ class Package(Resource):
         return dependencies.keys()
 
 
-    def add_signal(self, uri):
+    def _add_signal(self, uri):
         """
         Define that this package sends the given signal.
         """
@@ -244,6 +277,9 @@ class Package(Resource):
     def get_signal_list(self):
         """
         Returns the list of signals that this package may send.
+
+        @rtype:  list[string]
+        @return: A list of signal URIs.
         """
         if self.__signals is not None:
             return self.__signals
@@ -254,7 +290,7 @@ class Package(Resource):
         return self.__signals
 
 
-    def add_listener(self, uri):
+    def _add_listener(self, uri):
         """
         Define that this package listens to the given signal.
         """
@@ -271,6 +307,9 @@ class Package(Resource):
     def get_listener_list(self):
         """
         Returns the list of signals to which this package may respond.
+
+        @rtype:  list[string]
+        @return: A list of signal URIs.
         """
         if self.__listeners is not None:
             return self.__listeners
@@ -282,10 +321,25 @@ class Package(Resource):
 
 
     def get_module_dir(self):
+        """
+        Returns the name of the directory in which this package is
+        installed.
+
+        @rtype:  string
+        @return: The full directory name.
+        """
         return 'package' + str(self.get_id())
 
 
     def load(self):
+        """
+        Imports the package, creates an instance, and returns a reference
+        to it. Always returns a reference to the same instance if called
+        multiple times.
+
+        @rtype:  object
+        @return: The instance of package.
+        """
         assert self.__parent is not None
         if self.__module is not None:
             return self.__module

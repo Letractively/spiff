@@ -70,13 +70,13 @@ class DBTest(unittest.TestCase):
         
         package = Package('Depends on Spiff')
         self.assert_(self.extdb.check_dependencies(package))
-        package.add_dependency('spiff>=0.1')
+        package._add_dependency('spiff>=0.1')
         self.assert_(self.extdb.check_dependencies(package))
-        package.add_dependency('spiff=0.2')
+        package._add_dependency('spiff=0.2')
         self.assert_(self.extdb.check_dependencies(package))
-        package.add_dependency('spuff>=0.1')
+        package._add_dependency('spuff>=0.1')
         self.assert_(not self.extdb.check_dependencies(package))
-        package.add_dependency('spiff>=0.3')
+        package._add_dependency('spiff>=0.3')
         self.assert_(not self.extdb.check_dependencies(package))
 
 
@@ -114,7 +114,7 @@ class DBTest(unittest.TestCase):
 
         package = Package('Spiff')
         package.set_version('0.2')
-        package.add_dependency('spiff=0.1')
+        package._add_dependency('spiff=0.1')
         self.extdb.add_package(package)
 
         result = self.extdb.get_package_from_id(package.get_id())
@@ -146,7 +146,7 @@ class DBTest(unittest.TestCase):
         self.assert_(self.extdb.clear_database())
         package = Package('Spiff')
         package.set_version('0.1.2')
-        package.add_listener('always')
+        package._add_listener('always')
         self.extdb.add_package(package)
 
         list = self.extdb.get_listener_id_list_from_uri('always')

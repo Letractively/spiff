@@ -245,7 +245,7 @@ class PackageDB(object):
         assert package is not None
         list = self.__get_dependency_descriptor_list(package)
         for dependency in list:
-            package.add_dependency(dependency)
+            package._add_dependency(dependency)
         return True
 
     

@@ -43,7 +43,11 @@ class Page(ResourceGroup):
 
         integrator = api.get_integrator()
         package    = integrator.get_package_from_descriptor(descriptor)
-        extension  = package.load()
+        if package is None:
+            output = "Whoops... extension %s not found!" % repr(descriptor)
+            self.__non_cacheable_found = True
+            return output
+        extension = package.load()
         extension.on_render_request()
         output = api.get_output()
         api.clear_output()

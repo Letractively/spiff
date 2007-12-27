@@ -125,6 +125,7 @@ class PackageManager(object):
         """
         Defines the directory into which new packages are installed, and
         from which they are loaded.
+
         @type  dirname: os.path
         @param dirname: The package directory.
         """
@@ -318,6 +319,11 @@ class PackageManager(object):
     def get_package_rdepends(self, package):
         """
         Returns a list of all packages that depend on the given package.
+
+        @type  package: Package
+        @param package: The package whose reverse dependencies are returned.
+        @rtype:  list[Package]
+        @return: The list of packages that depend on the given package.
         """
         return self.package_db.get_package_list(rdepends = package)
 
