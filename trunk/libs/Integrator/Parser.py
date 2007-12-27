@@ -58,22 +58,22 @@ class Parser(object):
         # Signals sent by this package.
         list = xml.select('package/behavior/signal/attribute::uri')
         for item in list:
-            package.add_signal(item.strip())
+            package._add_signal(item.strip())
 
         # Signals retrieved by this package.
         list = xml.select('package/behavior/listen/attribute::uri')
         for item in list:
-            package.add_listener(item.strip())
+            package._add_listener(item.strip())
 
         # Runtime dependencies.
         list = xml.select('package/depends/runtime/text()')
         for kind, data, pos in list:
-            package.add_dependency(data.strip(), 'runtime')
+            package._add_dependency(data.strip(), 'runtime')
 
         # Installtime dependencies.
         list = xml.select('package/depends/installtime/text()')
         for kind, data, pos in list:
-            package.add_dependency(data.strip(), 'installtime')
+            package._add_dependency(data.strip(), 'installtime')
 
         # Attributes.
         prefix = 'package/attributes/attribute'
