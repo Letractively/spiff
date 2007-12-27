@@ -104,7 +104,7 @@ class PackageManager(object):
         """
         Set some default attributes on the given package.
         """
-        package.set_filename(package.get_module_dir())
+        package._set_filename(package.get_module_dir())
         package._set_parent(self)
         package._defer_signal_list()
         package._defer_listener_list()
@@ -177,7 +177,7 @@ class PackageManager(object):
         xml     = self.__read_xml_from_package(filename)
         parser  = Parser()
         package = parser.parse_string(xml)
-        package.set_filename(filename)
+        package._set_filename(filename)
 
         return package
 
@@ -224,7 +224,7 @@ class PackageManager(object):
             raise IntegratorException('Database error: %s' % e)
 
         package._set_parent(self)
-        package.set_filename(package.get_module_dir())
+        package._set_filename(package.get_module_dir())
 
         # Rename the directory so that the id can be used to look the
         # package up.
