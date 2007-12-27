@@ -597,11 +597,40 @@ class PackageDB(object):
         @rtype:  list[Package]
         @return: The list of packages.
         """
+        if kwargs.has_key('rdepends'):
+            id_list = self.__get_package_id_list_rdepends(kwargs['rdepends'])
+            if kwargs.has_key('id'):
+                if kwargs.get('id') not in id_list:
+                    return []
+                kwargs['id'] = [id]
+            else:
+                kwargs['id'] = id_list
+        if kwargs.has_key('id') and len(kwargs.get('id')) == 0:
+            return []
         packages = self._guard.get_resources(offset,
                                              limit,
                                              type = Package,
                                              **kwargs)
         return packages
+
+
+    def __get_package_id_list_rdepends(self, package):
+        """
+        Returns a list of all ids of all packages that depend on the
+        given package.
+
+        @type  package: Package
+        @param package: The package to remove.
+        @rtype:  list[id]
+        @return: A list of package ids.
+        """
+        assert package.get_id() is not None
+        table  = self._table_map['package_dependency_map']
+        query  = select([table.c.package_id],
+                        table.c.dependency_id == package.get_id(),
+                        from_obj = [table])
+        result = query.execute()
+        return [row[table.c.package_id] for row in result]
 
 
     def get_version_list_from_handle(self, handle):
@@ -672,9 +701,4 @@ class PackageDB(object):
                         table.c.uri.like(uri),
                         from_obj = [table])
         result = query.execute()
-        assert result is not None
-
-        package_id_list = []
-        for row in result:
-            package_id_list.append(row[table.c.package_id])
-        return package_id_list
+        return [row[table.c.package_id] for row in result]

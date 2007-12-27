@@ -13,6 +13,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import re
+from Exception import InvalidDescriptor
 
 handle_re     = '\w+'
 operator_re   = '(?:=|>=)'
@@ -29,13 +30,14 @@ def is_valid_uri(uri):
 def descriptor_parse(descriptor):
     regexp  = re.compile(descriptor_re)
     match   = regexp.match(descriptor)
-    assert match is not None
+    if match is None:
+        raise InvalidDescriptor(descriptor)
     handle  = match.group(1)
     op      = match.group(2)
     version = match.group(3)
     if op is None:
         op       = '>='
-        version  = 0
+        version  = '0'
     return handle, op, version
 
 

@@ -32,7 +32,8 @@ from SetUserPassword    import SetUserPassword
 print 'Content-Type: text/html'
 print
 
-db_config_file = os.path.join(os.path.dirname(__file__), '../data/spiff.cfg')
+config_tmpl = os.path.join(os.path.dirname(__file__), 'spiff.cfg.tmpl')
+config_file = os.path.join(os.path.dirname(__file__), '../data/spiff.cfg')
 
 # Set Spiff Constructor up.
 loader      = TemplateLoader(['.'])
@@ -50,7 +51,8 @@ constructor.append(CheckList('Checking installation requirements', checks))
 # Database setup.
 constructor.append(CollectDBInfo(['mysql4']))
 constructor.append(CheckDBConnection())
-constructor.append(SaveDBConfig(db_config_file))
+constructor.append(CopyFile(config_tmpl, config_file))
+constructor.append(SaveDBConfig(config_file))
 constructor.append(CheckDBSupportsConstraints())
 
 # Other installation tasks.

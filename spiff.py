@@ -29,6 +29,7 @@ from genshi.template import TemplateLoader
 from genshi.template import TextTemplate
 from genshi.template import MarkupTemplate
 from PageDB          import PageDB
+from UserDB          import UserDB
 from CacheDB         import CacheDB
 from Session         import Session
 
@@ -36,6 +37,8 @@ __version__ = '0.0.1'
 start_time  = time.clock()
 cfg_file    = 'data/spiff.cfg'
 package_dir = 'data/repo/'
+cfg         = RawConfigParser()
+cfg.read(cfg_file)
 
 def get_admin_links(loader, user):
     tmpl = loader.load('admin_header.tmpl', None, MarkupTemplate)
@@ -85,6 +88,12 @@ def get_footer():
 
 
 def print_render_time():
+    try:
+        show = cfg.getboolean('common', 'show_render_time')
+    except:
+        show = False
+    if not show:
+        return
     render_time = time.clock() - start_time
     print '<table width="100%">'
     print '  <tr>'
@@ -115,8 +124,6 @@ def run():
         sys.exit()
 
     # Read config.
-    cfg = RawConfigParser()
-    cfg.read(cfg_file)
     dbn = cfg.get('database', 'dbn')
 
     # Connect to MySQL and set up Spiff Guard.
@@ -128,6 +135,7 @@ def run():
 
     # Find the current page using the given cgi variables.
     page_db     = PageDB(guard)
+    user_db     = UserDB(guard)
     get_data    = cgi.parse_qs(os.environ["QUERY_STRING"])
     post_data   = cgi.FieldStorage()
     page_handle = get_data.get('page', ['default'])[0]
@@ -205,23 +213,10 @@ def run():
         page = page_db.get('admin/login')
         session.set_requested_page(page)
 
-    # Send headers.
-    api.emit_sync('spiff:header_before')
-    output = get_headers(api)
-    api.emit_sync('spiff:header_after')
-
     # Render the layout.
-    api.emit_sync('spiff:render_before')
-    output += page.get_output(api)
-    api.emit_sync('spiff:render_after')
+    output = get_headers(api) + page.get_output(api) + get_footer()
 
-    # Send the footer.
-    api.emit_sync('spiff:footer_before')
-    output += get_footer()
-    api.emit_sync('spiff:footer_after')
-    api.emit_sync('spiff:page_done')
-
-    if page.is_cacheable and len(api.get_http_headers()) == 0:
+    if page.is_cacheable() and len(api.get_http_headers()) == 0:
         cache.add_page(output)
     print output
     print_render_time()

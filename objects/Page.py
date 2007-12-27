@@ -65,15 +65,6 @@ class Page(ResourceGroup):
         return self.__extensions
 
 
-    def all_extensions_cached(self, extension_api):
-        # Find out whether the output of any extension may have changed.
-        cache = extension_api.get_cache()
-        for handle in self.get_extension_handle_list():
-            if not cache.is_fresh(handle):
-                return False
-        return True
-
-
     def get_output(self, extension_api):
         # If this method was already called there is no need to re-parse.
         if self.__output is not None:

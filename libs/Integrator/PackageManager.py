@@ -100,6 +100,16 @@ class PackageManager(object):
         return content
 
 
+    def __init_package(self, package):
+        """
+        Set some default attributes on the given package.
+        """
+        package.set_filename(package.get_module_dir())
+        package._set_parent(self)
+        package._defer_signal_list()
+        package._defer_listener_list()
+
+
     def _load_notify(self, package, module):
         self.__package_cache[module] = package
 
@@ -166,20 +176,23 @@ class PackageManager(object):
         xml     = self.__read_xml_from_package(filename)
         parser  = Parser()
         package = parser.parse_string(xml)
+        package.set_filename(filename)
 
         return package
 
 
-    def install_package(self, filename):
+    def install_package(self, package):
         """
-        Installs the package with the given filename.
+        Installs the given package.
         Raises an exception if the installation failed.
 
-        @type  filename: string
-        @param filename: Path to the file containing the package.
+        @type  package: Package
+        @param package: The package to install.
         @rtype:  Package
         @return: The package.
         """
+        filename = package.get_filename()
+
         if not os.path.exists(filename):
             raise IOError('%s: No such file or directory' % filename)
 
@@ -192,16 +205,6 @@ class PackageManager(object):
             install_dir = self.__install_archive(filename)
         if not install_dir:
             raise IntegratorException('Unable to copy or unpack %s' % filename)
-
-        # Read the package file.
-        class_file = os.path.join(install_dir, 'package.xml')
-        parser     = Parser()
-        try:
-            package = parser.parse_file(class_file)
-        except:
-            shutil.rmtree(install_dir)
-            raise IntegratorException('Unable to parse %s' % class_file)
-        package._set_parent(self)
 
         # Check dependencies.
         for descriptor in package.get_dependency_list():
@@ -219,6 +222,9 @@ class PackageManager(object):
             shutil.rmtree(install_dir)
             raise IntegratorException('Database error: %s' % e)
 
+        package._set_parent(self)
+        package.set_filename(package.get_module_dir())
+
         # Rename the directory so that the id can be used to look the
         # package up.
         try:
@@ -228,7 +234,11 @@ class PackageManager(object):
                 shutil.rmtree(new_install_dir)
             os.rename(install_dir, new_install_dir)
         except Exception, e:
-            shutil.rmtree(install_dir)
+            try:
+                shutil.rmtree(install_dir)
+                shutil.rmtree(new_install_dir)
+            except:
+                pass
             self.remove_package_from_id(id)
             raise IOError('Unable to copy: %s' % e)
 
@@ -238,7 +248,7 @@ class PackageManager(object):
             instance = package.load()
         except:
             print 'Error: Unable to load package (%s).' % package.get_name()
-            shutil.rmtree(install_dir)
+            shutil.rmtree(new_install_dir)
             self.remove_package_from_id(id)
             raise
 
@@ -301,10 +311,15 @@ class PackageManager(object):
         """
         list = self.package_db.get_package_list(offset, limit)
         for package in list:
-            package._set_parent(self)
-            package._defer_signal_list()
-            package._defer_listener_list()
+            self.__init_package(package)
         return list
+
+
+    def get_package_rdepends(self, package):
+        """
+        Returns a list of all packages that depend on the given package.
+        """
+        return self.package_db.get_package_list(rdepends = package)
 
 
     def get_listeners(self, uri):
@@ -325,9 +340,7 @@ class PackageManager(object):
         # Retrieve the corresponding packages.
         list = self.package_db.get_package_list(id = id_list)
         for package in list:
-            package._set_parent(self)
-            package._defer_signal_list()
-            package._defer_listener_list()
+            self.__init_package(package)
         return list
 
 
@@ -345,9 +358,7 @@ class PackageManager(object):
         package = self.package_db.get_package_from_descriptor(descriptor)
         if not package:
             return None
-        package._set_parent(self)
-        package._defer_signal_list()
-        package._defer_listener_list()
+        self.__init_package(package)
         return package
 
 
@@ -363,9 +374,9 @@ class PackageManager(object):
         """
         assert name is not None
         package = self.package_db.get_package_from_name(name)
-        package._set_parent(self)
-        package._defer_signal_list()
-        package._defer_listener_list()
+        if not package:
+            return None
+        self.__init_package(package)
         return package
 
 

@@ -18,17 +18,19 @@ class ManagerTest(DBTest):
         self.manager.set_package_dir('tmp')
         
     def testManager(self):
-        self.assertRaises(IOError, self.manager.install_package, 'no_such_file')
+        self.assertRaises(IOError, self.manager.read_package, 'no_such_file')
         self.assertRaises(IOError, self.manager.set_package_dir, 'dir')
 
         # Install first package.
         filename = '../samples/SpiffExtension'
-        pkg1     = self.manager.install_package(filename)
+        pkg1     = self.manager.read_package(filename)
+        self.manager.install_package(pkg1)
         self.assert_(pkg1.get_id() is not None)
 
         # Install second package.
         filename = '../samples/HelloWorldExtension'
-        pkg2     = self.manager.install_package(filename)
+        pkg2     = self.manager.read_package(filename)
+        self.manager.install_package(pkg2)
         self.assert_(pkg2.get_id() is not None)
 
         # Remove the package.

@@ -369,6 +369,7 @@ class DBReader(object):
         resource = type(row[tbl_r.c.name], row[tbl_r.c.handle])
         resource.set_id(row[tbl_r.c.id])
         resource.set_n_children(row[tbl_r.c.n_children])
+        resource._set_guard(self)
         return resource
 
 
@@ -402,19 +403,8 @@ class DBReader(object):
 
             # Append all attributes.
             while 1:
-                # Determine attribute type.
-                if row[tbl_a.c.type] == self.attrib_type_int:
-                    value = int(row[tbl_a.c.attr_int])
-                elif row[tbl_a.c.type] == self.attrib_type_bool:
-                    value = bool(row[tbl_a.c.attr_int])
-                elif row[tbl_a.c.type] == self.attrib_type_string:
-                    value = row[tbl_a.c.attr_string]
-
-                # Append attribute.
-                if row[tbl_a.c.type] is not None:
-                    resource.set_attribute(row[tbl_a.c.name], value)
+                self._read_attribute_from_row(row, resource)
                 row = result.fetchone()
-
                 if not row:
                     break
                 if last_id != row[tbl_r.c.id]:
@@ -424,10 +414,40 @@ class DBReader(object):
         return resource_list
 
 
-    def __get_resource_sql(self, **kwargs):
-        tbl_r  = self._table_map['resource']
-        tbl_a  = self._table_map['resource_attribute']
-        table  = outerjoin(tbl_r, tbl_a, tbl_r.c.id == tbl_a.c.resource_id)
+    def _read_attribute_from_row(self, row, resource):
+        if row is None:
+            return
+        tbl_a = self._table_map['resource_attribute']
+        try:
+            type = row[tbl_a.c.type]
+        except KeyError:
+            return # Row has no attribute table joined in it.
+        if type is None:
+            value = None
+        elif type == self.attrib_type_int:
+            value = int(row[tbl_a.c.attr_int])
+        elif type == self.attrib_type_bool:
+            value = bool(row[tbl_a.c.attr_int])
+        elif type == self.attrib_type_string:
+            value = row[tbl_a.c.attr_string]
+        if type is not None:
+            resource.set_attribute(row[tbl_a.c.name], value)
+
+
+    def _load_attribute(self, resource, name):
+        tbl_a = self._table_map['resource_attribute']
+        sel   = tbl_a.select(and_(tbl_a.c.resource_id == resource.get_id(),
+                                  tbl_a.c.name        == name),
+                             limit = 1)
+        res   = sel.execute()
+        row   = res.fetchone()
+        self._read_attribute_from_row(row, resource)
+
+
+    def __get_resource_sql(self, offset = 0, limit = 0, **kwargs):
+        tbl_r = self._table_map['resource']
+        tbl_a = self._table_map['resource_attribute']
+        table = tbl_r
         where = None
 
         # ID.
@@ -468,6 +488,7 @@ class DBReader(object):
 
         # Attributes.
         if kwargs.has_key('attribute'):
+            table = tbl_r.outerjoin(tbl_a, tbl_r.c.id == tbl_a.c.resource_id)
             for attr, value in kwargs.get('attribute').iteritems():
                 if type(value) == type(0):
                     where = and_(where,
@@ -483,6 +504,10 @@ class DBReader(object):
                                  tbl_a.c.attr_string == value)
                 else:
                     raise Exception('Unknown attribute type %s' % type(value))
+        elif offset == 0 and limit == 0:
+            # If we are not filtering the attributes, and we are not limiting
+            # the number of items, we may pull all attributes now.
+            table = tbl_r.outerjoin(tbl_a, tbl_r.c.id == tbl_a.c.resource_id)
 
         return (table, where)
 
@@ -522,9 +547,8 @@ class DBReader(object):
         tbl_r        = self._table_map['resource']
         sel          = select([tbl_r.c.id],
                               where,
-                              from_obj   = [table],
-                              use_labels = True,
-                              limit      = 1)
+                              from_obj = [table],
+                              limit    = 1)
         result = sel.execute()
         if result.fetchone() is not None:
             return True
@@ -548,11 +572,11 @@ class DBReader(object):
         @rtype:  list[Resource]
         @return: The list of resources.
         """
-        table, where = self.__get_resource_sql(**kwargs)
-        select = table.select(where,
-                              use_labels = True,
-                              limit      = limit,
-                              offset     = offset)
+        table, where = self.__get_resource_sql(offset, limit, **kwargs)
+        select       = table.select(where,
+                                    limit      = limit,
+                                    offset     = offset,
+                                    use_labels = True)
         return self.__get_resources_from_query(select)
 
 
@@ -614,18 +638,7 @@ class DBReader(object):
                 resource = self.__get_resource_from_row(row)
                 resource.set_n_children(row[tbl_r.c.n_children])
                 children.append(resource)
-
-            # Append attribute (if any).
-            if row[tbl_a.c.name] is None: continue
-            if row[tbl_a.c.type] == self.attrib_type_int:
-                resource.set_attribute(row[tbl_a.c.name],
-                                       int(row[tbl_a.c.attr_int]))
-            elif row[tbl_a.c.type] == self.attrib_type_bool:
-                resource.set_attribute(row[tbl_a.c.name],
-                                       bool(row[tbl_a.c.attr_int]))
-            elif row[tbl_a.c.type] == self.attrib_type_string:
-                resource.set_attribute(row[tbl_a.c.name],
-                                       row[tbl_a.c.attr_string])
+            self._read_attribute_from_row(row, resource)
 
         self._sql_cache_add(select, children)
         return children
@@ -695,18 +708,7 @@ class DBReader(object):
                 resource = self.__get_resource_from_row(row)
                 resource.set_n_children(row[tbl_r.c.n_children])
                 parents.append(resource)
-
-            # Append attribute (if any).
-            if row[tbl_a.c.name] is None: continue
-            if row[tbl_a.c.type] == self.attrib_type_int:
-                resource.set_attribute(row[tbl_a.c.name],
-                                       int(row[tbl_a.c.attr_int]))
-            elif row[tbl_a.c.type] == self.attrib_type_bool:
-                resource.set_attribute(row[tbl_a.c.name],
-                                       bool(row[tbl_a.c.attr_string]))
-            elif row[tbl_a.c.type] == self.attrib_type_string:
-                resource.set_attribute(row[tbl_a.c.name],
-                                       row[tbl_a.c.attr_string])
+            self._read_attribute_from_row(row, resource)
 
         self._sql_cache_add(select, parents)
         return parents

@@ -5,7 +5,6 @@ import os, re, sys
 doc_file = 'Spiff_Integrator.py'
 doc_dir  = 'doc'
 files = ['Api.py',
-         'EventBus.py',
          'Package.py',
          'PackageManager.py']  # Order matters - can't resolve inheritance otherwise.
 classes = [os.path.splitext(file)[0] for file in files]
