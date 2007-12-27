@@ -13,7 +13,7 @@ It was designed to provide a clean API, high security and high scalability.
 For documentation please refer to the `README file`_ or the tests included
 with the package. You may also look at the `API documentation`_.
 
-.. _README file: http://spiff.googlecode.com/svn/trunk/libs/Guard/README
+.. _README file: http://spiff.googlecode.com/svn/trunk/libs/Integrator/README
 .. _API documentation: http://spiff.debain.org/static/docs/spiff_integrator/index.html
 """,
       author           = 'Samuel Abels',
