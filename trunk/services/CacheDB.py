@@ -12,7 +12,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-import os, sha
+import os
 from sqlalchemy import *
 
 class CacheDB(object):
@@ -20,7 +20,6 @@ class CacheDB(object):
         self.__guard       = guard
         self.__db          = guard.db
         self.__session     = session
-        self.__perm_hash   = None
         self._table_prefix = ''
         self._table_map    = {}
         self._table_list   = []
@@ -138,20 +137,14 @@ class CacheDB(object):
         This function returns a string the identifies all permissions
         of the current user on the current group.
         """
-        if self.__perm_hash is not None:
-            return self.__perm_hash
-        page   = self.__session.get_requested_page()
         user   = self.__session.get_user()
+        page   = self.__session.get_requested_page()
         string = page.get_attribute('private') and 'p' or 'np'
         if user is None:
             return string
-        guard = self.__guard
-        acls  = guard.get_permission_list_with_inheritance(actor    = user,
-                                                           resource = page)
-        for acl in acls:
-            string += str(acl)
-        self.__perm_hash = sha.new(string).hexdigest()
-        return self.__perm_hash
+        hash = user.get_attribute('permission_hash')
+        assert hash is not None
+        return hash
 
 
     def _get_item(self, section):

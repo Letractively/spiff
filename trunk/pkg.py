@@ -3,7 +3,7 @@ sys.path.insert(0, 'libs')
 sys.path.insert(0, 'services')
 import MySQLdb, Guard, spiff
 from sqlalchemy   import *
-from Integrator   import PackageManager, version_is_greater
+from Integrator   import PackageManager, version_is_greater, InvalidDescriptor
 from ConfigParser import RawConfigParser
 from ExtensionApi import ExtensionApi
 from FooLib       import OptionParser
@@ -13,6 +13,7 @@ from Session      import Session
 actions = ('check_dependencies',
            'create',
            'install',
+           'list',
            'remove',
            'show',
            'test',
@@ -22,13 +23,13 @@ def usage():
     print "Spiff %s" % spiff.__version__
     print "Copyright (C) 2007 by Samuel Abels <http://debain.org>."
     print "Syntax: python pkg.py [options] action package [package ...]"
-    print "  action:   Any of the following:"
-    print "              ", "              \n".join(actions)
-    print "  package:  File or directory that contains the package."
-    print "            You may specify multiple files at the same time."
-    print "  options:  The following list of options are supported:"
-    print "        --version  Prints the version number."
-    print "    -h, --help     Prints this help."
+    print "  action:  Any of the following:"
+    print "             ", "\n              ".join(actions)
+    print "  package: File or directory that contains the package. You may"
+    print "           specify multiple files at the same time."
+    print "  options: The following list of options are supported:"
+    print "                  --version  Prints the version number."
+    print "              -h, --help     Prints this help."
 
 # Define default options.
 default_options = [
@@ -57,7 +58,7 @@ if options['version']:
 try:
     action   = args.pop(0)
     packages = args
-    assert len(packages) > 0
+    assert action == 'list' or len(packages) > 0
 except:
     usage()
     sys.exit(1)
@@ -69,7 +70,7 @@ if action not in actions:
     sys.exit(1)
 
 # Check whether the given package files exist.
-if action != 'create':
+if action not in ('create', 'remove', 'list'):
     for package in packages:
         if not os.path.exists(package):
             print "No such file: %s" % package
@@ -102,7 +103,7 @@ pm = PackageManager(guard, api)
 pm.set_package_dir(spiff.package_dir)
 
 
-def check_dependencies(pm, filename, package):
+def check_dependencies(pm, package):
     print "Checking dependencies of %s..." % package.get_name(),
     error = False
     for dependency in package.get_dependency_list():
@@ -115,15 +116,18 @@ def check_dependencies(pm, filename, package):
     return True
 
 
-def create(pm, filename, package):
-    print "Creating an empty package in %s." % filename
-    pm.create_package(filename)
-    open(os.path.join(filename, 'index.phtml'), 'w').close()
+def create(pm, directory):
+    if os.path.exists(directory):
+        print "%s: file already exists" % directory
+        return False
+    print "Creating an empty package in %s." % directory
+    pm.create_package(directory)
+    open(os.path.join(directory, 'index.phtml'), 'w').close()
     return True
 
 
-def install(pm, filename, package):
-    if not check_dependencies(pm, filename, package):
+def install(pm, package):
+    if not check_dependencies(pm, package):
         return False
     installed = pm.get_package_from_descriptor(package.get_handle())
     if installed is not None:
@@ -134,56 +138,83 @@ def install(pm, filename, package):
         if version_is_greater(installed.get_version(), package.get_version()):
             print "Installed version is newer, downgrade aborted."
             return False
-        return update(pm, filename, package)
+        return update(pm, package)
     print "Installing new package %s." % package.get_name()
     try:
-        installed = pm.install_package(filename)
+        installed = pm.install_package(package)
     except Exception, e:
         print "Installation failed:", e
         return False
     return True
 
 
-def remove(pm, filename, package):
-    package = pm.get_package_from_descriptor(filename)
+def remove(pm, descriptor):
+    try:
+        package = pm.get_package_from_descriptor(descriptor)
+    except InvalidDescriptor, e:
+        print e
+        return False
     if package is None:
-        print "Package %s not found in database" % filename
+        print "Package %s not found in database" % descriptor
         return False
     depends = pm.get_package_rdepends(package)
     if len(depends) > 0:
-        print "Can't remove package, because the following packages use it:"
-        print '\n'.join(depends)
+        depend = ['%s=%s' % (d.get_handle(), d.get_version()) for d in depends]
+        descr  = '%s=%s' % (package.get_handle(), package.get_version())
+        print "Can't remove %s, because the following packages use it:" % descr
+        print '\n'.join(depend)
         return False
     handle  = package.get_handle()
     version = package.get_version()
     print "Removing package %s %s as requested." % (handle, version)
-    db.remove_package(package)
+    pm.remove_package(package)
     return True
 
 
-def show(pm, filename, package):
-    print package
+def show(pm, package):
+    package.dump()
     return True
 
 
-def test(pm, filename, package):
+def list(pm, descriptor = None):
+    packages = pm.get_package_list()
+    for package in packages:
+        try:
+            if descriptor is None or package.matches(descriptor):
+                print package
+        except InvalidDescriptor, e:
+            print e
+            return False
+    return True
+
+
+def test(pm, package):
     #FIXME
     print "!! Test functionality is not yet implemented..."
     return True
 
 
-def update(pm, filename, package):
+def update(pm, package):
+    if not check_dependencies(pm, package):
+        return False
+    installed = pm.get_package_from_descriptor(package.get_handle())
+    if installed is None:
+        descr = '%s=%s' % (installed.get_handle(), installed.get_version())
+        print "Package %s not installed, so not updating." % descr
+        return False
     print "Replacing package as requested."
     #FIXME
     print "!! Update functionality is not yet implemented..."
     return True
 
+if action == 'list' and len(packages) == 0:
+    list(pm)
 
 for filename in packages:
-    if action == 'create':
-        package = None
+    if action in ('create', 'remove', 'list'):
+        result = locals()[action](pm, filename)
     else:
         package = pm.read_package(filename)
-    if not locals()[action](pm, filename, package):
+        result  = locals()[action](pm, package)
+    if result is False:
         sys.exit(1)
-    sys.exit()

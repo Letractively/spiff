@@ -27,10 +27,7 @@ class CreateDir(Task):
     def install(self, environment):
         if os.path.exists(self.__dirname):
             return Task.success
-        try:
-            os.makedirs(self.__dirname, self.__mode)
-        except:
-            return Task.failure
+        os.makedirs(self.__dirname, self.__mode)
         return Task.success
 
 
@@ -38,7 +35,7 @@ class CreateDir(Task):
         try:
             os.rmdir(self.__dirname)
         except:
-            return Task.success
+            pass
         return Task.success
 
 

@@ -17,8 +17,12 @@ from DBObject import DBObject
 class Resource(DBObject):
     def __init__(self, name, handle = None):
         DBObject.__init__(self, name, handle)
+        self.__guard         = None
         self._n_children     = 0
         self._attribute_list = {}
+
+    def _set_guard(self, parent):
+        self.__guard = parent
 
     def is_group(self):
         return False
@@ -33,7 +37,12 @@ class Resource(DBObject):
         self._attribute_list[name] = value
 
     def get_attribute(self, name):
-        return self._attribute_list.get(name, None)
+        if self._attribute_list.has_key(name):
+            return self._attribute_list.get(name)
+        if self.__guard is None:
+            return None
+        self.__guard._load_attribute(self, name)
+        return self._attribute_list.get(name)
 
     def remove_attribute(self, name):
         if self._attribute_list.has_key(name):

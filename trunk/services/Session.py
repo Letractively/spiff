@@ -12,7 +12,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-import os
+import os, sha
 from Cookie     import SimpleCookie
 from User       import User
 from PageAction import PageAction
@@ -39,6 +39,23 @@ class Session(object):
     def __get_action(self):
         return self.__guard.get_action(handle = 'view',
                                        type   = PageAction)
+
+
+    def _get_permission_hash(self, user):
+        """
+        This function returns a string the identifies all permissions
+        of the current user on the current group.
+        """
+        page   = self.get_requested_page()
+        string = page.get_attribute('private') and 'p' or 'np'
+        if user is None:
+            return string
+        guard = self.__guard
+        acls  = guard.get_permission_list_with_inheritance(actor    = user,
+                                                           resource = page)
+        for acl in acls:
+            string += str(acl)
+        return sha.new(string).hexdigest()
 
 
     def set_requested_page(self, page):
@@ -103,7 +120,8 @@ class Session(object):
             return None
         self.__sid = self.__generate_session_id()
         #print "Logging in with sid %s..." % self.__sid
-        user.set_attribute('sid', self.__sid)
+        user.set_attribute('sid',             self.__sid)
+        user.set_attribute('permission_hash', self._get_permission_hash(user))
         self.__guard.save_resource(user)
         self.__current_user = user
         headers = {'Set-Cookie': 'sid=%s; path=/' % self.__sid}

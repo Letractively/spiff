@@ -17,7 +17,7 @@ import os.path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from Guard     import Resource
 from Callback  import Callback
-from functions import descriptor_parse
+from functions import descriptor_parse, version_is_greater
 
 class Package(Resource):
     """
@@ -41,6 +41,7 @@ class Package(Resource):
         assert name    is not None
         assert version is not None
         Resource.__init__(self, name, handle)
+        self.__filename     = None
         self.__dependencies = {}
         self.__signals      = []
         self.__listeners    = []
@@ -50,18 +51,70 @@ class Package(Resource):
 
 
     def __str__(self):
+        return '%s=%s' % (self.get_handle(), self.get_version())
+
+
+    def dump(self):
+        """
+        Dumps information regarding the package, such as name, version, author,
+        and description, to stdout.
+        """
         name    = self.get_name()
         version = self.get_version()
         author  = self.get_author()
         email   = self.get_author_email()
-        s  = "Package:      %s %s\n"   % (name, version)
+        s  = "Filename:     %s\n"      % self.__filename
+        s += "Package:      %s %s\n"   % (name, version)
         s += "Author:       %s <%s>\n" % (author, email)
         s += "Dependencies: %s\n"      % ','.join(self.get_dependency_list())
-        return s + self.get_description()
+        print s + self.get_description()
 
 
     def _set_parent(self, parent):
         self.__parent = parent
+
+
+    def set_filename(self, filename):
+        """
+        Define the filename of the package.
+
+        @type  filename: string
+        @param filename: The name of the file.
+        """
+        assert filename is not None and filename != ''
+        self.__filename = filename
+
+
+    def matches(self, descriptor):
+        """
+        Returns True if the given descriptor matches the handle and version of
+        this package, False otherwise.
+
+        @type  descriptor: string
+        @param descriptor: The description (for example, 'spiff>=0.1').
+        @rtype:  boolean
+        @return: True if the descriptor matches, False otherwise.
+        """
+        handle, op, version = descriptor_parse(descriptor)
+        if handle != self.get_handle():
+            return False
+        assert op in ('=', '>=')
+        if op == '=' and version != self.get_version():
+            return False
+        if op == '>=' and version_is_greater(version, self.get_version()):
+            return False
+        return True
+
+
+    def get_filename(self):
+        """
+        Returns the filename of this package.
+
+        @rtype:  string
+        @return: The full filename.
+        """
+        assert self.__filename is not None
+        return self.__filename
 
 
     def set_author(self, author):
@@ -76,6 +129,12 @@ class Package(Resource):
 
 
     def get_author(self):
+        """
+        Returns the name of the author of this package.
+
+        @rtype:  string
+        @return: The name of the author.
+        """
         return self.get_attribute('author')
 
 
@@ -91,6 +150,12 @@ class Package(Resource):
 
 
     def get_author_email(self):
+        """
+        Returns the email address of the author of this package.
+
+        @rtype:  string
+        @return: The email address.
+        """
         return self.get_attribute('author-email')
 
 
@@ -106,6 +171,12 @@ class Package(Resource):
 
 
     def get_description(self):
+        """
+        Returns a human readable description of the content of this package.
+
+        @rtype:  string
+        @return: The description.
+        """
         return self.get_attribute('description')
 
 
@@ -121,6 +192,12 @@ class Package(Resource):
 
 
     def get_version(self):
+        """
+        Returns the version number of this package.
+
+        @rtype:  string
+        @return: The version number.
+        """
         return self.get_attribute('version')
 
 

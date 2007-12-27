@@ -1,4 +1,5 @@
 from Api            import Api
+from Exception      import *
 from PackageManager import PackageManager
 from functions      import version_is_greater
 

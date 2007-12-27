@@ -12,15 +12,24 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-class IntegratorException(Exception):
-    pass
+import os.path, shutil
+from Task import Task
 
-class InvalidDescriptor(IntegratorException):
-    def __init__(self, descriptor):
-        error = 'Invalid descriptor: %s' % repr(descriptor)
-        IntegratorException.__init__(self, error)
+class CopyFile(Task):
+    def __init__(self, source, destination):
+        assert source      is not None
+        assert destination is not None
+        Task.__init__(self, 'Copying file \'%s\'' % source)
+        self.__source      = source
+        self.__destination = destination
 
-class UnmetDependency(IntegratorException):
-    def __init__(self, descriptor):
-        error = 'Unmet dependency: %s' % repr(descriptor)
-        IntegratorException.__init__(self, error)
+
+    def install(self, environment):
+        if os.path.exists(self.__destination):
+            return Task.success
+        shutil.copy(self.__source, self.__destination)
+        return Task.success
+
+
+    def uninstall(self, environment):
+        return Task.success

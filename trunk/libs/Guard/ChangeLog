@@ -1,6 +1,10 @@
 Changes since 1.9.0
 
-  
+  * DBReader.py: Fix: There was a bug that attributes were sometimes not
+  loaded correctly. This is now fixed by deferring attribute loading to the
+  time at which they are accessed. This may also improve performance in some
+  cases.
+  * all-over: Cleanups, redundant attribute-specific code was removed.
 
 Changes since 1.2.0
 
