@@ -116,7 +116,7 @@ td.footer {
   border-top: 1px solid grey;
 }
 
-td.render_time {
+td.benchmark {
   text-align: center;
   font-size: .7em;
 }
