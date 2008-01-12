@@ -15,30 +15,45 @@
 import os
 import re
 import sys
-import Warehouse
-from cgi        import escape
-from string     import split
-from WikiMarkup import Wiki2Html
-from genshi     import Markup
-from difflib    import Differ
-from difflib    import SequenceMatcher
+from cgi     import escape
+from string  import split
+from genshi  import Markup
+from difflib import Differ
+from difflib import SequenceMatcher
 
 differ           = Differ()
 sequence_matcher = SequenceMatcher()
 
 class Extension:
     def __init__(self, api):
-        self.wiki_word_re = re.compile("(?:-&gt;(\w+)|([A-Z]\w+[A-Z]\w+))")
-        self.api          = api
-        self.i18n         = api.get_i18n()
-        self.db           = api.get_db()
-        self.page         = api.get_session().get_requested_page()
-        self.wiki2html    = Wiki2Html()
-        self.warehouse    = Warehouse.DB(self.db)
-        data_directory    = os.path.join(api.get_data_dir(), 'warehouse')
-        self.warehouse.set_directory(data_directory)
+        self.wiki_word_re  = re.compile("(?:-&gt;(\w+)|([A-Z]\w+[A-Z]\w+))")
+        self.api           = api
+        self.i18n          = api.get_i18n()
+        self.db            = api.get_db()
+        self.page          = api.get_session().get_requested_page()
+        self.wiki2html     = None
+        self.warehouse     = None
+        self.warehouse_mod = None
+
+
+    def __init_wiki(self):
+        if self.wiki2html is not None:
+            return
+        module = __import__('WikiMarkup.Wiki2Html',
+                            globals(),
+                            locals(),
+                            'Wiki2Html')
+        self.wiki2html = module.Wiki2Html()
         self.wiki2html.set_wiki_word_handler(self.__wiki_word_handler)
         self.wiki2html.set_url_handler(self.__wiki_url_handler)
+
+        self.warehouse_mod = __import__('Warehouse.DB',
+                                        globals(),
+                                        locals(),
+                                        'DB')
+        data_directory = os.path.join(self.api.get_data_dir(), 'warehouse')
+        self.warehouse = self.warehouse_mod.DB(self.db)
+        self.warehouse.set_directory(data_directory)
 
 
     def __wiki_word_handler(self, url, word):
@@ -220,7 +235,7 @@ class Extension:
             user_name = os.environ["REMOTE_ADDR"]
 
         # Copy the data into a warehouse item.
-        item = Warehouse.Item(alias)
+        item = self.warehouse_mod.Item(alias)
         item.set_content(wiki_markup)
         item.set_attribute(user_name = user_name)
         if not self.warehouse.add_file(item):
@@ -348,6 +363,7 @@ class Extension:
     def on_render_request(self):
         self.api.emit('render_start')
         errors = []
+        self.__init_wiki()
 
         # Collect data.
         edit     = self.api.get_get_data('edit')

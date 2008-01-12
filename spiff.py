@@ -16,6 +16,8 @@ import sys, cgi, os, os.path, time
 sys.path.insert(0, 'libs')
 sys.path.insert(0, 'libs/Guard/src/')
 sys.path.insert(0, 'libs/Integrator/src/')
+sys.path.insert(0, 'libs/Warehouse/src/')
+sys.path.insert(0, 'libs/WikiMarkup/src/')
 sys.path.insert(0, 'objects')
 sys.path.insert(0, 'services')
 sys.path.insert(0, 'functions')

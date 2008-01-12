@@ -1,5 +1,7 @@
 import sys, os, os.path
 sys.path.insert(0, 'libs')
+sys.path.insert(0, 'libs/Guard/src/')
+sys.path.insert(0, 'libs/Integrator/src/')
 sys.path.insert(0, 'services')
 import MySQLdb, Guard, spiff
 from sqlalchemy   import *
