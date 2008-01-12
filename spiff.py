@@ -38,7 +38,7 @@ from CacheDB         import CacheDB
 from Session         import Session
 
 __version__ = '0.0.1'
-start_time  = time.clock()
+bench  = {'start': time.clock()}
 cfg_file    = 'data/spiff.cfg'
 package_dir = 'data/repo/'
 cfg         = RawConfigParser()
@@ -91,20 +91,46 @@ def get_footer():
                          txt     = gettext).render('text')
 
 
-def print_render_time():
-    try:
-        show = cfg.getboolean('common', 'show_render_time')
-    except:
-        show = False
-    if not show:
+def print_benchmark(api):
+    bench['total'] = time.clock() - bench['start']
+    times = [['total',
+              'Total rendering time is %ss.' % bench.get('total', 0),
+              False],
+             ['set_up',
+              'Set-up time was %ss.' % bench.get('set_up', 0),
+              False],
+             ['page_find',
+              'Time for looking up the page was %ss.' % bench.get('page_find', 0),
+              False],
+             ['cache_check',
+              'Spent %ss checking the cache.' % bench.get('cache_check', 0),
+              False],
+             ['package_load',
+              'Spent %ss loading packages.' % bench.get('package_load', 0),
+              False],
+             ['page_open_signal',
+              '"page_open" signal needed %ss.' % bench.get('page_open_signal', 0),
+              False],
+             ['template',
+              'Spent %ss rendering templates.' % api.template_render_time,
+              False]]
+    for item in times:
+        try:
+            if cfg.getboolean('benchmark', 'show_%s_time' % item[0]):
+                item[2] = True
+        except:
+            pass
+    if True not in [s for n, t, s in times]:
         return
-    render_time = time.clock() - start_time
     print '<table width="100%">'
-    print '  <tr>'
-    print '    <td class="render_time" align="center">'
-    print '    Rendered in %s seconds.' % render_time
-    print '    </td>'
-    print '  </tr>'
+    for name, text, show in times:
+        if not show:
+            continue
+        print '  <tr>'
+        print '    <td class="benchmark" id="%s" align="center">' % name
+        print '    %s' % text
+        print '    </td>'
+        print '  </tr>'
     print '</table>'
 
 
@@ -138,12 +164,14 @@ def run():
     #db.echo = 1
 
     # Find the current page using the given cgi variables.
-    page_db     = PageDB(guard)
-    user_db     = UserDB(guard)
-    get_data    = cgi.parse_qs(os.environ["QUERY_STRING"])
-    post_data   = cgi.FieldStorage()
-    page_handle = get_data.get('page', ['default'])[0]
-    page        = page_db.get(page_handle)
+    page_db            = PageDB(guard)
+    user_db            = UserDB(guard)
+    get_data           = cgi.parse_qs(os.environ["QUERY_STRING"])
+    post_data          = cgi.FieldStorage()
+    page_handle        = get_data.get('page', ['default'])[0]
+    start              = time.clock()
+    page               = page_db.get(page_handle)
+    bench['page_find'] = time.clock() - start
 
     # Set up the plugin manager (Integrator).
     session = Session(guard, requested_page = page)
@@ -156,6 +184,8 @@ def run():
                            post_data = post_data)
     pm = PackageManager(guard, api)
     pm.set_package_dir(package_dir)
+    bench['set_up'] = time.clock() - bench['start'] - bench['page_find']
+    start           = time.clock()
 
     # Can not open some pages by addressing them directly.
     if get_data.has_key('page') \
@@ -181,35 +211,43 @@ def run():
         print
         print 'error 404 (File not found)'
         return
+    bench['page_find'] += time.clock() - start
 
     # If the output of ALL extensions is cached (combined), there is no need
     # to redraw the page, including headers and footer.
     # Note that the cache only returns pages corresponding to the permissions
     # of the current user, so this is safe.
     session.set_requested_page(page)
+    start = time.clock()
     if os.environ['REQUEST_METHOD'] == 'GET':
-        output = cache.get_page()
+        output               = cache.get_page()
+        bench['cache_check'] = time.clock() - start
         if output is not None:
             print output
-            print_render_time()
+            print_benchmark(api)
             return
+    bench['cache_check'] = time.clock() - start
 
     # Ending up here the entire page was not cached.
     # Make sure that the caller has permission to retrieve this page.
     # If the caller currently has no permission, load the login
     # extension to give it the opportunity to perform the login.
+    start = time.clock()
     if page.get_attribute('private') and not session.may('view'):
         login = page_db.get('admin/login')
         for descriptor in login.get_extension_handle_list():
             package = pm.get_package_from_descriptor(descriptor)
             package.load()
+    bench['package_load'] = time.clock() - start
 
     # Now that we may have redirected the user to another page, let the
     # extension API know that.
     session.set_requested_page(page)
 
     # The login extension may catch the following signal and perform the login.
+    start = time.clock()
     api.emit_sync('spiff:page_open')
+    bench['page_open_signal'] = time.clock() - start
 
     # At this point the login was performed. Check the permission.
     if (page.get_attribute('private') and not session.may('view')) \
@@ -223,4 +261,4 @@ def run():
     if page.is_cacheable() and len(api.get_http_headers()) == 0:
         cache.add_page(output)
     print output
-    print_render_time()
+    print_benchmark(api)

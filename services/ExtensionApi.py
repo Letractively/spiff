@@ -12,7 +12,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-import os.path, sys, pickle
+import os.path, sys, cPickle, time
 from stat       import ST_MTIME
 from gettext    import gettext
 from urlutil    import *
@@ -36,6 +36,7 @@ class ExtensionApi(Api):
         self.__post_data      = kwargs['post_data']
         self.__http_headers   = []
         self.__output         = ''
+        self.template_render_time = 0
 
 
     def __get_caller(self):
@@ -157,17 +158,18 @@ class ExtensionApi(Api):
             cache_mtime = os.stat(cache_path)[ST_MTIME]
         except:
             cache_mtime = 0
+        start = time.clock()
         if cache_mtime < tmpl_mtime:
             from genshi.template import TemplateLoader
             from genshi.template import MarkupTemplate
             loader = TemplateLoader([dirname])
             tmpl   = loader.load(filename, None, MarkupTemplate)
             #fp     = open(cache_path, 'w')
-            #pickle.dump(tmpl, fp)
+            #cPickle.dump(tmpl, fp)
             #fp.close()
         else:
             fp   = open(cache_path, 'r')
-            tmpl = pickle.load(fp)
+            tmpl = cPickle.load(fp)
             fp.close()
         self.__output = tmpl.generate(plugin_dir  = dirname,
                                       web_dir     = '/web',
@@ -175,6 +177,7 @@ class ExtensionApi(Api):
                                       request_uri = get_request_uri,
                                       txt         = gettext,
                                       **kwargs).render('xhtml')
+        self.template_render_time += time.clock() - start
 
 
     def get_output(self):
