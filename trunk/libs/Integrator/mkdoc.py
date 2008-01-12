@@ -4,9 +4,9 @@ import os, re, sys
 
 doc_file = 'Spiff_Integrator.py'
 doc_dir  = 'doc'
-files = ['Api.py',
-         'Package.py',
-         'PackageManager.py']  # Order matters - can't resolve inheritance otherwise.
+files = ['src/Integrator/Api.py',
+         'src/Integrator/Package.py',
+         'src/Integrator/PackageManager.py']  # Order matters - can't resolve inheritance otherwise.
 classes = [os.path.splitext(file)[0] for file in files]
 
 # Concatenate the content of all files into one file.
