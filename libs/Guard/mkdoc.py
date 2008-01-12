@@ -4,14 +4,14 @@ import os, re, sys
 
 doc_file = 'Spiff_Guard.py'
 doc_dir  = 'doc'
-files = ['DBReader.py',
-         'DB.py',
-         'DBObject.py',
-         'ResourcePath.py',
-         'Acl.py',
-         'Action.py',
-         'Resource.py',
-         'ResourceGroup.py']  # Order matters - can't resolve inheritance otherwise.
+files = ['src/Guard/DBReader.py',
+         'src/Guard/DB.py',
+         'src/Guard/DBObject.py',
+         'src/Guard/ResourcePath.py',
+         'src/Guard/Acl.py',
+         'src/Guard/Action.py',
+         'src/Guard/Resource.py',
+         'src/Guard/ResourceGroup.py']  # Order matters - can't resolve inheritance otherwise.
 classes = [os.path.splitext(file)[0] for file in files]
 
 # Concatenate the content of all files into one file.
