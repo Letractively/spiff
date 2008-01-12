@@ -97,10 +97,10 @@ def print_benchmark(api):
               'Total rendering time is %ss.' % bench.get('total', 0),
               False],
              ['set_up',
-              'Set-up time was %ss.' % bench.get('set_up', 0),
+              'Set-up time is %ss.' % bench.get('set_up', 0),
               False],
              ['page_find',
-              'Time for looking up the page was %ss.' % bench.get('page_find', 0),
+              'Time for looking up the page is %ss.' % bench.get('page_find', 0),
               False],
              ['cache_check',
               'Spent %ss checking the cache.' % bench.get('cache_check', 0),
@@ -110,6 +110,21 @@ def print_benchmark(api):
               False],
              ['page_open_signal',
               '"page_open" signal needed %ss.' % bench.get('page_open_signal', 0),
+              False],
+             ['permission_check',
+              'Time spent checking permissions is %ss.' % bench.get('permission_check', 0),
+              False],
+             ['render_header',
+              'Render time spent on header is %ss.' % bench.get('render_header', 0),
+              False],
+             ['render_plugins',
+              'Render time spent in plugins is %ss.' % bench.get('render_plugins', 0),
+              False],
+             ['render_footer',
+              'Render time spent in footer is %ss.' % bench.get('render_footer', 0),
+              False],
+             ['cache_add',
+              'Time spent adding to cache is %ss.' % bench.get('cache_add', 0),
               False],
              ['template',
               'Spent %ss rendering templates.' % api.template_render_time,
@@ -250,15 +265,28 @@ def run():
     bench['page_open_signal'] = time.clock() - start
 
     # At this point the login was performed. Check the permission.
+    start = time.clock()
     if (page.get_attribute('private') and not session.may('view')) \
       or get_data.has_key('login'):
         page = page_db.get('admin/login')
         session.set_requested_page(page)
+    bench['permission_check'] = time.clock() - start
 
     # Render the layout.
-    output = get_headers(api) + page.get_output(api) + get_footer()
+    start = time.clock()
+    output = get_headers(api)
+    bench['render_header'] = time.clock() - start
+    start = time.clock()
+    output += page.get_output(api)
+    bench['render_plugins'] = time.clock() - start
+    start = time.clock()
+    output += get_footer()
+    bench['render_footer'] = time.clock() - start
 
+    start = time.clock()
     if page.is_cacheable() and len(api.get_http_headers()) == 0:
         cache.add_page(output)
+    bench['cache_add'] = time.clock() - start
+
     print output
     print_benchmark(api)
