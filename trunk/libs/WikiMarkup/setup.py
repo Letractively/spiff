@@ -10,9 +10,10 @@ Wiki markup language.
       author           = 'Samuel Abels',
       author_email     = 'cheeseshop.python.org@debain.org',
       license          = 'GPLv2',
-      packages         = [''],
-      requires         = ['Plex'],
-      provides         = ['WikiMarkup'],
+      package_dir      = {'': 'src'},
+      packages         = ['WikiMarkup'],
+      install_requires = ['Plex'],
+      keywords         = 'spiff wikimarkup wiki markup html convert bidirectional',
       url              = 'http://code.google.com/p/spiff/',
       classifiers      = [
         'Development Status :: 5 - Production/Stable',

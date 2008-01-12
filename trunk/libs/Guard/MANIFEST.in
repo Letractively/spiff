@@ -1,4 +1,2 @@
 include AUTHORS
 include COPYING
-include run_test.sh
-include unit_test.cfg.tmpl

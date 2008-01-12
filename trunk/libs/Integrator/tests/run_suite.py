@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import os, sys, unittest
+sys.path.insert(0, 'Integrator')
 modules = ['ApiTest',
            'CallbackTest',
            'DBTest',
