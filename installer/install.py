@@ -14,6 +14,10 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import sys, cgi, os.path
 sys.path.insert(0, '../libs/')
+sys.path.insert(0, '../libs/Constructor/src/')
+sys.path.insert(0, '../libs/Guard/src/')
+sys.path.insert(0, '../libs/Integrator/src/')
+sys.path.insert(0, '../libs/Warehouse/src/')
 sys.path.insert(0, '../objects')
 sys.path.insert(0, '../services')
 sys.path.insert(0, '../functions')

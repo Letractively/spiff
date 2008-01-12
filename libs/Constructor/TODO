@@ -1,3 +1,4 @@
+* Move unit tests to tests/ directory.
 * Improve error handling. In the tasks, no longer return a status code,
   instead use exceptions for handling errors.
 * Add better support for forms to the Form class, possibly using the

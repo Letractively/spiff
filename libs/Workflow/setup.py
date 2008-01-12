@@ -19,9 +19,10 @@ because of this software!
       author           = 'Samuel Abels',
       author_email     = 'cheeseshop.python.org@debain.org',
       license          = 'lGPLv2',
-      packages         = [''],
+      package_dir      = {'': 'src'},
+      packages         = ['Workflow'],
       requires         = [],
-      provides         = ['Workflow'],
+      keywords         = 'spiff guard acl acls security authentication object storage',
       url              = 'http://code.google.com/p/spiff/',
       classifiers      = [
         'Development Status :: 3 - Alpha',

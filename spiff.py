@@ -14,6 +14,8 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import sys, cgi, os, os.path, time
 sys.path.insert(0, 'libs')
+sys.path.insert(0, 'libs/Guard/src/')
+sys.path.insert(0, 'libs/Integrator/src/')
 sys.path.insert(0, 'objects')
 sys.path.insert(0, 'services')
 sys.path.insert(0, 'functions')
@@ -114,14 +116,14 @@ def run():
         print 'Please configure Spiff before accessing this site.<br/>'
         print 'The INSTALL file shipped with the Spiff installation contains'
         print 'instructions on how this is done.'
-        sys.exit()
+        return
 
     if os.path.exists('install'):
         print 'Content-Type: text/html; charset=utf-8'
         print
         print 'Out of security reasons, please delete the install/ directory'
         print 'before accessing this page.'
-        sys.exit()
+        return
 
     # Read config.
     dbn = cfg.get('database', 'dbn')
@@ -160,7 +162,7 @@ def run():
         print
         print 'error 403 (Forbidden)<br/>'
         print 'Can not open %s by addressing it directly.' % repr(page_handle)
-        sys.exit()
+        return
 
     # If requested, load the content editor.
     if get_data.has_key('new_page') or get_data.has_key('edit_page'):
@@ -176,7 +178,7 @@ def run():
         print 'Content-Type: text/html; charset=utf-8'
         print
         print 'error 404 (File not found)'
-        sys.exit()
+        return
 
     # If the output of ALL extensions is cached (combined), there is no need
     # to redraw the page, including headers and footer.
@@ -188,7 +190,7 @@ def run():
         if output is not None:
             print output
             print_render_time()
-            sys.exit(0)
+            return
 
     # Ending up here the entire page was not cached.
     # Make sure that the caller has permission to retrieve this page.

@@ -3,7 +3,10 @@ sys.path.insert(0, 'libs')
 sys.path.insert(0, 'services')
 import MySQLdb, Guard, spiff
 from sqlalchemy   import *
-from Integrator   import PackageManager, version_is_greater, InvalidDescriptor
+from Integrator   import PackageManager, \
+                         Package, \
+                         version_is_greater, \
+                         InvalidDescriptor
 from ConfigParser import RawConfigParser
 from ExtensionApi import ExtensionApi
 from FooLib       import OptionParser
@@ -120,8 +123,18 @@ def create(pm, directory):
     if os.path.exists(directory):
         print "%s: file already exists" % directory
         return False
+
     print "Creating an empty package in %s." % directory
-    pm.create_package(directory)
+    package = Package(os.path.basename(directory))
+    package.set_author('Unknown Author')
+    package.set_author_email('unknown@unknown.com')
+    package.set_version('0.0.1')
+    package._add_listener('spiff:page_open')
+    package._add_dependency('spiff', 'runtime')
+    package._add_dependency('spiff', 'installtime')
+    pm.create_package(directory, package)
+
+    # Insert additional files.
     open(os.path.join(directory, 'index.phtml'), 'w').close()
     return True
 
@@ -141,7 +154,7 @@ def install(pm, package):
         return update(pm, package)
     print "Installing new package %s." % package.get_name()
     try:
-        installed = pm.install_package(package)
+        pm.install_package(package)
     except Exception, e:
         print "Installation failed:", e
         return False

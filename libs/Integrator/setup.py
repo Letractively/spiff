@@ -19,9 +19,10 @@ with the package. You may also look at the `API documentation`_.
       author           = 'Samuel Abels',
       author_email     = 'cheeseshop.python.org@debain.org',
       license          = 'GPLv2',
-      packages         = [''],
+      package_dir      = {'': 'src'},
+      packages         = ['Integrator'],
       requires         = ['sqlalchemy'],
-      provides         = ['Integrator'],
+      keywords         = 'spiff integrator package manager dpkg install uninstall dependency',
       url              = 'http://code.google.com/p/spiff/',
       classifiers      = [
         'Development Status :: 5 - Production/Stable',

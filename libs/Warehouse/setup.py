@@ -11,8 +11,10 @@ document format is supported).
       author           = 'Samuel Abels',
       author_email     = 'cheeseshop.python.org@debain.org',
       license          = 'GPLv2',
-      packages         = [''],
-      provides         = ['Warehouse'],
+      package_dir      = {'': 'src'},
+      packages         = ['Warehouse'],
+      #provides         = ['Warehouse'],
+      keywords         = 'spiff warehouse object storage revisioning',
       url              = 'http://code.google.com/p/spiff/',
       classifiers      = [
         'Development Status :: 5 - Production/Stable',

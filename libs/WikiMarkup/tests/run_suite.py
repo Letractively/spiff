@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import os, sys, unittest
+sys.path.insert(0, 'WikiMarkup')
 modules = ['CellTest',
            'Html2WikiTest',
            'WikiParserTest',
