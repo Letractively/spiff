@@ -1,0 +1,1299 @@
+\documentclass[a4paper,oneside,10pt]{scrartcl}
+\usepackage[left=1cm,right=1cm,top=1.0cm,bottom=1.5cm,includeheadfoot]{geometry}
+\usepackage{german}          % German language, old orthography.
+\usepackage[utf8]{inputenc}  % Replace "utf8" by "latin1" if your editor sucks.
+\usepackage{fancyhdr}        % Better header and footer support.
+\usepackage{titlesec}        % Alternative section titles.
+\usepackage{amssymb}         % Math support.
+\usepackage{amsmath}         % Math declarations.
+
+% Variables.
+\newcommand{\productname}{Spiff Guard}
+\newcommand{\productversion}{2.0 }
+\newcommand{\product}{{\it \productname} }
+
+% Initialize headers and footers.
+\pagestyle{fancy}            % Use fancyhdr to render page headers/footers.
+\fancyhf{}                   % Clear out old header/footer definition.
+
+% Header
+\fancyhead[L]{Benutzerhandbuch}
+\fancyhead[R]{\productname\ \productversion}
+\renewcommand{\headrulewidth}{0.5pt}
+
+% Footer
+\fancyfoot[C]{Seite \thepage}
+\renewcommand{\footrulewidth}{0.5pt}
+
+% Enumerate using letters.
+\renewcommand{\labelenumi}{\alph{enumi})}
+
+% Set source code options.
+\usepackage{listings}
+\lstset{language=python}
+\lstset{commentstyle=\textit}
+\lstset{showstringspaces=false}
+\lstset{aboveskip=.1in,belowskip=.1in,xleftmargin=2em,basewidth=5pt}
+
+% Do not indent paragraphs.
+\parindent=0em
+
+% Preformatted, indented text.
+\usepackage{verbatim}
+\makeatletter
+\newenvironment{indentverb}
+  {\def\verbatim@processline{%
+  \hspace*{2em}\the\verbatim@line\par}%
+  \verbatim}
+  {\endverbatim}
+\makeatother
+
+% Title
+\title{\productname\ Version \productversion\\
+Benutzerhandbuch\\
+\vspace{5 mm}
+\large Generische Access-Lists für Python}
+\author{Samuel Abels}
+
+% Hint boxes.
+\usepackage{color}
+\definecolor{nb}{gray}{.90}
+\newcommand{\hint}[1]{
+  \begin{center}
+  \colorbox{nb}{
+    \begin{tabular}{ll}
+      \Large ! &
+      \begin{minipage}{.92\linewidth}{
+        \vspace{2mm}
+        \sf #1
+        \vspace{2mm}
+      }\end{minipage}
+    \end{tabular}
+  }
+  \end{center}
+}
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+\newpage
+\section{Einführung}
+\subsection{Wozu \productname?}
+
+\product ist ein Library zur Implementation von User- und Gruppenkonzepten 
+in Python-Applikationen. Es stellt Access-Listen zur Rechtevergabe 
+bereit und verwaltet User und zur Verfügung stehende Resourcen.
+\product wurde mit dem Ziel entwickelt, folgende Anforderungen zu erfüllen:
+
+\begin{itemize}
+\item Es werden {\bf frei definierbare Rechteklassen} unterstützt, d.h. es 
+werden keine festen Rechtetypen (z.B. ``lesen'', ``schreiben'') vorgegeben.
+
+\item Gruppen können {\bf schachtelbar} definiert werden und die 
+{\bf Vererbung von Rechten} wird unterstützt - ähnlich der Vererbung beim 
+typischen Klassendesign.
+
+\item Um eine hohe {\bf Skalierbarkeit} zu erreichen, gewährleisten folgende 
+Lese- und Schreib-Operationen auf das System Antworten in nahezu konstanter 
+Zeit: Anlegen neuer Benutzer und Gruppen, Ändern der Rechtevergabe, Abfragen 
+der Rechte eines Benutzers.
+
+\item Die Verwendung der API ist weitestgehend {\bf intuitiv}.
+
+\item Mit Hilfe der Datenbankabstraktions-Bibliothek ``SQL Alchemy'' wird 
+die {\bf Unabhängigkeit vom verwendeten Datenbanksystem} erreicht.
+\end{itemize}
+
+Im Folgenden werden wir zunächst einen groben Überblick über die Verwendung 
+\product verschaffen.
+
+\subsection{Kontaktinformation \& Feedback}
+
+Sollten sie Verbesserungsvorschläge oder Korrekturen für \product oder 
+die \product-Dokumentation haben, so werden diese dankbar entgegengenommen.
+Folgende Kontaktmöglichkeiten bieten wir an: \\
+
+\begin{tabular}{ll}
+{\bf Google Groups:} & http://groups.google.com/group/spiff-devel/ \\
+{\bf Bug tracker:}   & http://code.google.com/p/spiff/issues/list \\
+{\bf Telefon:}       & +49 176 611 33083 \\
+{\bf Jabber:}        & knipknap@jabber.org
+\end{tabular}
+
+
+\newpage
+\section{Schnellüberblick}
+\subsection{Initialisierung}
+
+Zunächst wird \product wie folgt initialisiert:
+
+\begin{lstlisting}
+from sqlalchemy import create_engine
+from Guard      import *
+db    = create_engine('mysql://user:pass@localhost/guard_name')
+guard = DB(db)
+guard.install()
+\end{lstlisting}
+
+Es wird also zunächst eine Verbindung mit der Datenbank hergestellt und mit 
+dieser dann \product instanziert. Der Aufruf der install()-Methode bewirkt 
+das Erstellen der benötigten Tabellen in der verbundenen Datenbank.
+
+\subsection{\label{intro:resources}Anlegen von Resourcen}
+
+Ein Client (API-Nutzer) wird nun zunächst die Resourcen-Typen definieren, 
+zwischen denen die Rechte geregelt werden sollen. Möchte der Programmierer 
+Beispielsweise die Zutrittsrechte von Passagieren auf die Räume eines 
+Raumschiffs regeln, so wird er zunächst die Typen {\it Passagier} und 
+{\it Raum} definieren und diese dann \product bekannt machen. Dies 
+funktioniert wie folgt:
+
+\begin{lstlisting}
+class Passenger(Resource):
+    pass
+
+class Room(Resource):
+    pass
+
+guard.register_type([Passenger, Room])
+\end{lstlisting}
+
+Nun können wir konkrete Resourcen dieses Typs speichern. In unserem Beispiel 
+wollen wir die Passagiere ``Han Solo'' und ``Luke Skywalker'' anlegen, 
+weiterhin die Räume ``Bridge'' und ``Machine Room''.
+
+\begin{lstlisting}
+han    = Passenger("Han Solo")
+luke   = Passenger("Luke Skywalker")
+bridge = Room("Bridge")
+mr     = Room("Machine Room")
+guard.add_resource([han, luke, bridge, mr])
+\end{lstlisting}
+
+Repräsentationen der Objekte sind damit persistent in der Datenbank 
+gespeichert und können zu einem späteren Zeitpunkt wieder abgerufen werden.
+
+
+\subsection{Zuweisen von Rechten}
+
+Jedoch wollen wir zunächst nicht nur Benutzer und Gruppen anlegen, sondern 
+auch Rechte für diese Benutzer vergeben.
+Als Voraussetzung muss \product bekannt gemacht werden, welche Rechte 
+eine Resource überhaupt erlangen kann. Dies wird durch die Definition 
+verschiedener Aktionen erreicht. Diese werden durch Objekte des Typs 
+{\it Action} repräsentiert, wie in folgendem Beispiel zu sehen:
+
+\begin{lstlisting}
+enter  = Action("Enter")
+repair = Action("Repair")
+guard.add_action(enter)
+guard.add_action(repair)
+\end{lstlisting}
+
+Damit sind alle Voraussetzungen erfüllt um die Rechte in \product 
+vergeben zu können. Wir geben nun Han Solo das Recht, den Maschinenraum 
+zu betreten und dort Dinge zu reparieren, während Luke Skywalker nur 
+Zutrittsrechte bekommt, aber auch auf die Brücke darf:
+
+\begin{lstlisting}
+guard.grant(han, [enter, repair], mr)
+guard.grant(luke, enter, [mr, bridge])
+\end{lstlisting}
+
+Damit sind die Rechte definiert und können wie folgt geprüft werden:
+
+\begin{lstlisting}
+if guard.has_permission(han, enter, mr):
+    print "Permission was granted."
+else:
+    print "Permission was denied."
+\end{lstlisting}
+
+
+\subsection{Verwendung des Rollenkonzeptes}
+
+Wir setzen das obige Beispiel fort. In einem Raumschiff wäre es schön, 
+wenn man die Rechte in Gruppen separieren könnte, so dass z.B. alle 
+Mitglieder der Crew automatisch Zutritt zur Brücke erhalten, ohne dies 
+jedes mal explizit für sie definieren zu müssen. Ähnlich erhalten alle 
+Gäste Zutritt zur Lounge. In \product gibt es dafür Resource-Gruppen 
+als Typ {\it ResourceGroup}. Dieser Typ ist nur eine spezialisierte Form 
+einer Resource und unterscheidet sich nur dadurch, dass er Kinder haben 
+darf. Resource-Gruppen lassen sich beliebig schachteln, so dass sich ein 
+Baum aus Resourcen erstellen lässt. In unserem Beispiel wollen wir nun 
+folgenden Baum definieren:
+
+\begin{indentverb}
+[Passengers]
+  |- [Crew Members]
+  |   |- [Engineers]
+  |   |   |- Han Solo
+  |   |   `- R2D2
+  |   |- [Catering]
+  |   `- Luke Skywalker
+  `- [Guests]
+\end{indentverb}
+
+(Geklammerte Ausdrücke repräsentieren dabei jeweils Resource-Gruppen, andere 
+repräsentieren einfache Resourcen.)
+Wie oben müssen dafür zunächst die Typen definiert und \product mitgeteilt 
+werden:
+
+\begin{lstlisting}
+class PassengerGroup(ResourceGroup):
+    pass
+guard.register_type(PassengerGroup)
+\end{lstlisting}
+
+Dann wird der Baum zusammengesetzt:
+
+\begin{lstlisting}
+# Anlegen der Gruppen.
+passengers = PassengerGroup("Passenger Group")
+crew       = PassengerGroup("Crew Members")
+engineers  = PassengerGroup("Engineers")
+guests     = PassengerGroup("Guests")
+guard.add_resource(None, passengers)
+guard.add_resource(passengers, crew)
+guard.add_resource(crew, engineers)
+guard.add_resource(passengers, guests)
+
+# Definition der Passagiere.
+han  = Passenger("Han Solo")
+r2d2 = Passenger("R2D2")
+luke = Passenger("Luke Skywalker")
+guard.add_resource(engineers, han)
+guard.add_resource(engineers, r2d2)
+guard.add_resource(crew, luke)
+
+# Definition der Raeume.
+lounge = Room("Lounge")
+bridge = Room("Bridge")
+mr     = Room("Machine Room")
+guard.add_resource(engineers, han)
+guard.add_resource(crew, luke)
+\end{lstlisting}
+
+Nun wollen wir einige Rechte definieren.
+
+\begin{lstlisting}
+guard.grant(crew,      enter,  bridge)
+guard.grant(engineers, enter,  mr)
+guard.grant(engineers, repair, mr)
+guard.grant(guests,    enter,  lounge)
+guard.deny (han,       repair, mr)
+\end{lstlisting}
+
+Um nun die Rechte für alle Resourcen, die im Baum unter der Gruppe ``Crew'' 
+zu finden sind zu definieren, reicht es völlig, dieses Recht nur der Gruppe 
+zuzuweisen. Die Rechte vererben sich dabei bis auf beliebige Tiefe abwärts, 
+gelten also auch für Han Solo und R2D2.
+Folgende Darstellung verdeutlicht die Rechtevergabe:
+
+\begin{indentverb}
+[Passengers]
+  |- [Crew Members] -- enter -----------> Bridge
+  |   |- [Engineers] -- enter, repair --> Machine Room
+  |   |   |- Han Solo -- !repair -------> Machine Room
+  |   |   `- R2D2
+  |   `- Luke Skywalker
+  `- [Guests] -- enter -----------------> Lounge
+\end{indentverb}
+
+Durch diese Rechtevergabe ergeben sich aufgrund von Vererbung folgende Rechte:
+
+\begin{itemize}
+\item Han Solo darf die Brücke betreten. Er darf den Maschinenraum betreten, 
+aber nicht reparieren.
+\item R2D2 darf die Brücke und den Maschinenraum betreten, ausserdem darf er 
+den Maschinenraum reparieren.
+\item Luke Skywalker darf die Brücke betreten.
+\end{itemize}
+
+
+\subsection{Gruppieren von Resourcen}
+
+Ähnlich wie die Verwendung von Resource-Gruppen für die Definition von 
+Benutzergruppen (Aktoren) lassen sich Resource-Gruppen aber auch für die 
+Verwaltung der Resourcen verwenden, auf die Zugriff genommen wird. Möchte 
+man nun zum Beispiel die Rechte auf der Brücke genauer auf Steuerinstrumente 
+aufschlüsseln, so ist mit dem bisher vorgestellten Verfahren nur folgender 
+Weg realisierbar:
+
+\begin{lstlisting}
+class Device(Resource):
+    pass
+guard.register_type(Device)
+
+use_device = Action("Use Device")
+guard.add_action(use_device)
+
+thruster = Device("Thruster")
+guard.grant(crew, use_device, thruster)
+
+laser = Device("Laser")
+guard.grant(crew, use_device, thruster)
+
+ac = Device("Air Conditioner")
+guard.grant(crew, use_device, thruster)
+
+...
+\end{lstlisting}
+
+Wird die Anzahl der Instrumente sehr gross, so kann dies sehr viel Aufwand 
+bedeuten. \product bietet deswegen die Möglichkeit, die Rechte auch für 
+diese einmal gesammelt zu definieren, indem diese wieder in Gruppen definiert 
+werden. So ist folgende Rechtedefinition denkbar:
+
+\begin{indentverb}
+[Devices] <-- use ------- Han Solo
+  |- [Weaponry] <-- !use --'
+  |   |- Laser
+  |   `- Rockets
+  |- Thruster
+  `- Air Conditioner
+\end{indentverb}
+ 
+Dies ermöglicht es also Han Solo, alle Geräte ausser den Waffen zu nutzen, 
+ohne dies extra für jedes einzelne Gerät neu spezifizieren zu müssen.
+
+Natürlich lassen sich die beiden vorgestellten Gruppierungskonzepte auch 
+so vereinen, dass sowohl Benutzergruppen als auch Gerätegruppen definiert 
+werden, wie in folgender Abbildung verdeutlicht:
+
+\begin{indentverb}
+[Passengers]
+  |- [Crew Members]
+  |   |- [Engineers]-------,
+  |   |   |- Han Solo -----|--,
+  |   |   `- R2D2          |  |
+  |   `- Luke Skywalker    |  |
+  `- [Guests]              |  |
+                           |  |
+[Devices]  <------- use ---'  |
+  |- [Weaponry] <-- !use -----'
+  |   |- Laser
+  |   `- Rockets
+  |- Thruster
+  `- Air Conditioner
+\end{indentverb}
+
+Durch Vererbung ergeben sich damit folgende Rechte:
+
+\begin{itemize}
+\item R2D2 darf alle Geräte verwenden.
+\item Han Solo darf alle Geräte ausser den Waffen verwenden.
+\item Luke Skywalker darf keine Geräte verwenden.
+\end{itemize}
+
+\product unterstützt weiterhin sogar die Selbstreferenzierung von 
+Resourcen. Beispielsweise kann es komfortabel sein die Möglichkeit zu 
+haben, Luke Skywalker das Recht zu geben, andere Mitglieder der Crew zu 
+kommandieren, die Rechte also entsprechend folgender Darstellung zu setzen:
+
+\begin{indentverb}
+[Passengers]
+  |- [Crew Members] <-- command --,
+  |   |- [Engineers]              |
+  |   |   |- Han Solo             |
+  |   |   `- R2D2                 |
+  |   `- Luke Skywalker ----------'
+  `- [Guests]
+\end{indentverb}
+
+
+\newpage
+\section{Details}
+
+\subsection{Arbeiten mit Resourcen}
+\subsubsection{\label{details:resources:add}Erstellen einer Resource}
+
+Zum Anlegen einer beliebigen Resource reicht es, dafür eine Klasse zu 
+definieren, die vom Typ {\it Resource} erbt. Wir definieren als Bespiel
+eine Resource vom Typ ``Website''.
+
+\begin{lstlisting}
+class Website(Resource):
+    def __init__(self, name):
+        Resource.__init__(self, name)
+        self.content = "<h1>Empty Page</h1>"
+
+guard.register_type(Website)
+\end{lstlisting}
+
+Die Methode {\it register\_type()} teilt \product mit, dass es für die 
+Verwaltung einer Resource zuständig ist. Jede Klasse, die mit \product 
+verwendet wird, muss zunächst auf diese Weise registriert werden.
+
+Um nun die Instanz zu speichern wird diese wie folgt an die 
+{\it add\_resource()}-Methode übergeben:
+
+\begin{lstlisting}
+homepage = Website("Homepage")
+guard.add_resource(None, homepage)
+\end{lstlisting}
+
+Damit ist eine Repräsentation des Objektes in der Datenbank gespeichert 
+und kann später wieder geladen werden. Das erste Argument der Methode 
+({\it None}) gibt hier an, dass die gespeicherte Webseite keine Eltern hat, 
+sondern ein alleinstehendes Objekt ist.
+
+Beim speichern einer Resource wird ihr automatisch eine eindeutige ID 
+zugeordnet, die später zum auffinden wieder verwendet werden kann. Auf diese
+ID vom Typ {\it Integer} kann über die Resource-Methode {\it get\_id()} 
+zugegriffen werden. Ein Beispiel für die Verwendung der ID ist im Abschnitt 
+\ref{details:resources:find} enthalten.
+
+Wir wollen nun aber weitere Webseiten als Kinder der Homepage ablegen. Die
+Klassendefinition der Webseite haben wir aber zuvor so gestaltet, dass diese 
+vom Typ {\it Resource} erbt. Hier ist ein wichtiger Aspekt zu beachten: 
+Objekte des Typs {\it Resource} können keine Kinder haben. Der folgende 
+Aufruf wird deswegen mit einer Exception abbrechen:
+
+\begin{lstlisting}
+page = Website("Another Page")
+guard.add_resource(homepage, page)
+\end{lstlisting}
+
+Deswegen ist zu beachten: Objekte, die Kinder haben dürfen, erben vom Typ 
+{\it ResourceGroup}. Damit ergibt sich folgendes vollständiges Beispiel.
+
+\begin{lstlisting}
+class Website(ResourceGroup):
+    def __init__(self, name):
+        ResourceGroup.__init__(self, name)
+        self.content = "<h1>Empty Page</h1>"
+
+guard.register_type(Website)
+
+homepage = Website("Homepage")
+page     = Website("Another Page")
+guard.add_resource(None, homepage)
+guard.add_resource(homepage, page)
+\end{lstlisting}
+
+Weiterhin lässt sich jeder Resource eine Bezeichnung zuweisen, die sich 
+später zum auffinden wieder nutzen lässt. Es gibt zwei Wege, einen solchen 
+Bezeichner (ein {\it Handle}) zu definieren:
+
+\begin{enumerate}
+\item Als optionales zweites Argument des Resource-Konstruktors:
+
+\begin{lstlisting}
+class Website(ResourceGroup):
+    pass
+homepage = Website("Homepage", "home")
+\end{lstlisting}
+
+\item Mit Hilfe der Resource-Methode {\it set\_handle()}:
+
+\begin{lstlisting}
+homepage = Website("Homepage")
+homepage.set_handle("home")
+\end{lstlisting}
+\end{enumerate}
+
+Wie dieser Bezeichner zum Auffinden der Resource verwendet werden kann 
+zeigen wir in Abschnitt \ref{details:resources:find}.
+
+\subsubsection{\label{details:resources:attributes}Zuweisen von Attributen}
+
+Wir haben gesehen, wie eigene Resourcen definiert und in \product abgelegt 
+werden können. Nun werden wir einer solchen Resource zusätzliche 
+Informationen zuordnen, die zusammen mit dem Objekt in der Datenbank 
+gespeichert werden. Dazu unterstützt \product {\it Attribute}, die wie im 
+folgenden Beispiel gespeichert werden können:
+
+\begin{lstlisting}
+class User(Resource):
+    pass
+guard.register_type(User)
+
+user = Website("Administrator", "admin")
+user.set_attribute("email", "invalid@debain.org")
+guard.add_resource(None, user)
+\end{lstlisting}
+
+Das Attribut steht dann nach dem Laden des Objektes wieder zur Verfügung:
+
+\begin{lstlisting}
+user = guard.get_resource(handle = "admin")
+print "Email address:", user.get_attribute("email")
+\end{lstlisting}
+
+Die Methoden {\it set\_attribute()} und {\it get\_attribute()} werden in der 
+Praxis üblicherweise wie folgt benutzt:
+
+\begin{lstlisting}
+class Website(ResourceGroup):
+    def __init__(self, *args):
+        ResourceGroup.__init__(self, *args)
+        self.set_attribute("content", "<h1>Empty Page</h1>")
+
+    def get_content(self):
+        return self.get_attribute("content")
+\end{lstlisting}
+
+
+\subsubsection{\label{details:resources:find}Finden von Resourcen}
+
+\product stellt zwei Methoden zur Verfügung, um existierende Resourcen 
+abzurufen. Die erste Methode, {\it get\_resources()} ermittelt anhand der 
+übergebenen Suchkriterien eine {\it Liste} an Suchergebnissen.
+Eine zweite Methode, {\it get\_resource()} kann verwendet werden, wenn 
+schon vorher bekannt ist, dass eine Suche maximal ein einzelnes Resultat 
+ergeben wird. Dies ist zum Beispiel dann der Fall, wenn eine ID als 
+Suchkriterium dient. Ergibt die Suche mit {\it get\_resource()} mehr als 
+einen Treffer, so führt dies zu einem Fehler.
+
+Die Liste möglicher Kriterien ist bei beiden Methoden identisch und im 
+folgenden aufgelistet:
+
+\begin{enumerate}
+\item {\bf ID}: Jeder gespeicherten Resource ordnet \product automatisch
+eine ID zu - dieser Integer-Wert ist eindeutig und kann jederzeit verwendet 
+werden, um eine Resource wieder aus der Datenbank auszulesen.
+
+\begin{lstlisting}
+homepage = Website("Homepage")
+guard.add_resource(homepage)
+homepage_id = homepage.get_id()
+
+page = guard.get_resource(id = homepage_id)
+print "Page name:", page.get_name()
+\end{lstlisting}
+
+\item {\bf Handle}: Ähnlich wie die Datenbank-ID bietet das {\it Handle} 
+eine Möglichkeit um eine spezifische, bekannte Resource zu empfangen. Dieses 
+Handle lässt sich jedoch, anders als die ID, frei vergeben (siehe 
+Abschnitt \ref{details:resources:add}). Auch hier folgt ein Beispiel:
+
+\begin{lstlisting}
+homepage = Website("Homepage", "my_handle")
+guard.add_resource(homepage)
+
+page = guard.get_resource(handle = "my_handle")
+print "Page name:", page.get_name()
+\end{lstlisting}
+
+\item {\bf Resource-Name}: Jede Resource hat einen Namen, nämlich den 
+Bezeichner, der dem Resource-Konstruktor als notwendiges erstes Argument 
+übergeben wurde.
+Dieser Name ist, anders als das zuvor Beschriebene {\it Handle}, nicht 
+eindeutig, so dass eine Suchanfrage auch mehrere Treffer liefern kann.
+Folgendes Beispiel liefert eine einzelne Resource anhand ihres Namens:
+
+\begin{lstlisting}
+homepage = Website("Homepage", "my_handle")
+guard.add_resource(homepage)
+
+page = guard.get_resource(name = "Homepage")
+print "Page name:", page.get_name()
+\end{lstlisting}
+
+\item {\bf Attribute}: Wurde einer Resource ein Attribut zugeordnet
+(siehe Abschnitt \ref{details:resources:attributes}), so kann dieses 
+ebenfalls als Suchkriterium angegeben werden:
+
+\begin{lstlisting}
+result = guard.get_resources(attribute = {'my_attribute': 'my_value',
+                                          'attribute2':   'my_other_value'})
+\end{lstlisting}
+
+Werden, wie im Beispiel, mehrere Attribute angegeben, so wird die Suche mit 
+logischer UND-Verknüpfung durchgeführt.
+
+\item {\bf Python-Klasse (Python-Typ)}: 
+
+Enthält ein Resource-Baum (siehe auch Abschnitt \ref{intro:resources}) 
+Objekte verschieder Python-Typen, so kann es nützlich sein, nur 
+auf Objekte eines bestimmten Typs zuzugreifen. Gegeben sei zum Beispiel 
+folgender Resource-Baum; die Begriffe in den Klammern geben jeweils den 
+Objekttyp an:
+
+\begin{indentverb}
+Passenger (UserGroup)
+  |- Crew (UserGroup)
+  |   |- Han Solo (Person)
+  |   `- R2D2 (Robot)
+  `- Luke Skywalker (Person)
+\end{indentverb}
+
+Seien die Resource-Typen ({\it UserGroup}, {\it Person}, {\it Robot}) wie 
+folgt definiert:
+
+\begin{lstlisting}
+class UserGroup(ResourceGroup):
+    pass
+class User(Resource):
+    pass
+class Person(User):
+    pass
+class Robot(User):
+    pass
+guard.register_type([UserGroup, Person, Robot])
+\end{lstlisting}
+
+Wir verwenden folgende Anfrage um eine Liste alle Resourcen vom Typ 
+``Person'' aus diesem Baum zu holen:
+
+\begin{lstlisting}
+result = guard.get_resources(type = Person)
+for person in result:
+    print "Person:", person.get_name()
+\end{lstlisting}
+
+Von der Suchanfrage erhalten wir hier ``Han Solo'' und ``Luke Skywalker''.
+
+Eine weitere, sehr praktische Möglichkeit zum Empfangen von Resourcen 
+mittels Python-Typ funktioniert mittels Python's {\bf Typ-Introspection} 
+Feature. Da \product die Basistypen aller Objekte kennt, lassen sich 
+auch alle Objekte des Typs ``User'' abfragen:
+
+\begin{lstlisting}
+result = guard.get_resources(type = User)
+for user in result:
+    print "User:", user.get_name()
+\end{lstlisting}
+
+Die Suchanfrage enthält dann auch alle Subtypen von User, also hier 
+``Han Solo'', ``R2D2'' und ``Luke Skywalker''.
+\end{enumerate}
+
+
+\subsubsection{\label{details:resources:modify}Ändern einer Resource}
+
+Das Ändern von existierenden Resourcen ähnelt dem oben dargestellten 
+Anlegen neuer Resourcen. Beispiel:
+
+\begin{lstlisting}
+class Website(ResourceGroup):
+    pass
+
+guard.register_type(Website)
+homepage = Website("Homepage", "home")
+guard.add_resource(None, homepage)
+
+# The resource is now saved. Let's make a change.
+homepage.set_name("Welcome!")
+homepage.set_handle("my_new_handle")
+guard.save_resource(homepage)
+\end{lstlisting}
+
+Es wird also lediglich die Methode {\it save\_resource()} anstelle von
+{\it add\_resource()} verwendet.
+
+
+\subsubsection{\label{details:resources:delete}Löschen einer Resource}
+
+Die einfachste Art eine Resource zu löschen ist, sie an die 
+{\it delete\_resource()}-Methode zu übergeben:
+
+\begin{lstlisting}
+class Website(ResourceGroup):
+    pass
+
+guard.register_type(Website)
+homepage = Website("Homepage", "home")
+guard.add_resource(None, homepage)
+
+# The resource is now saved. Let's delete it.
+guard.delete_resource(homepage)
+\end{lstlisting}
+
+Nicht immer steht jedoch die Objektinstanz wie im Beispiel zur Verfügung.
+Deswegen steht - wie beim Finden - auch zum Löschen eine Methode bereit, 
+die zu löschende Resourcen anhand von Suchkriterien entfernt. Es 
+können die in Abschnitt \ref{details:resources:find} angegebenen Kriterien 
+verwendet werden. Auch hier ein Beispiel:
+
+\begin{lstlisting}
+deleted = guard.delete_resource_from_match(handle = "home")
+print "%s resources deleted!" % deleted
+\end{lstlisting}
+
+
+\subsection{Aktionen}
+\subsubsection{Wozu Aktionen?}
+
+Bevor einer Resource ein bestimmtes Recht gegeben oder verweigert wird, wird 
+\product zunächst darüber informiert welche Aktionen überhaupt 
+existieren. Die folgenden Abschnitte beschreiben, wie Aktionen in definiert 
+und verwaltet werden.
+
+\subsubsection{Erstellen einer Aktion}
+
+Zum Anlegen einer Aktion muss diese lediglich instanziert und an \product 
+übergeben werden. Wir tun dies Beispielhaft fürs Lesen und Schreiben:
+
+\begin{lstlisting}
+read  = Action("Read")
+write = Action("Write", "write")
+guard.add_action([read, write])
+\end{lstlisting}
+
+Im Beispiel ist auch zu sehen, dass dem Konstruktor der ``Write''-Aktion 
+ein weiteres Argument mitgegeben wird. Dieses ist ein {\it Handle} zum 
+späteren auffinden der Aktion. Die Funktionalität ist mit dem Handle bei 
+Resourcen äquivalent, siehe Abschnitt \ref{details:resources:add}.
+
+
+\subsubsection{\label{details:actions:find}Finden von Aktionen}
+
+Soll nur genau ein Ergebnis ermittelt werden, so verwenden wir die Methode 
+{\it get\_action()}. Diese Methode schlägt fehl, wenn mehr als ein Ergebnis 
+gefunden wurde. Zum Finden von mehreren Suchergebnissen verwenden wir die 
+Methode {\it get\_actions()}.
+
+Die Liste möglicher Kriterien ist bei beiden Methoden identisch und im 
+folgenden aufgelistet:
+
+\begin{enumerate}
+\item {\bf ID}: Jeder gespeicherten Aktion ordnet \product automatisch
+eine ID zu - dieser Integer-Wert ist eindeutig und kann jederzeit verwendet 
+werden, um eine Aktion wieder aus der Datenbank auszulesen.
+
+\begin{lstlisting}
+guard.add_action(Action("Read a File", "read"))
+action_id = read.get_id()
+
+# Find the action.
+action = guard.get_action(id = action_id)
+print "Action name:", action.get_name()
+\end{lstlisting}
+
+\item {\bf Handle}: Ähnlich wie die Datenbank-ID bietet das {\it Handle} 
+eine Möglichkeit um eine spezifische, bekannte Aktion zu empfangen. Dieses 
+Handle lässt sich jedoch, anders als die ID, frei vergeben (siehe 
+Abschnitt \ref{details:resources:add}). Auch hier folgt ein Beispiel:
+
+\begin{lstlisting}
+guard.add_action(Action("Read a File", "read"))
+
+action = guard.get_action(handle = "read")
+print "Action name:", action.get_name()
+\end{lstlisting}
+
+\item {\bf Aktions-Name}: Jede Aktion hat einen Namen, nämlich den 
+Bezeichner, der dem Konstruktor als notwendiges erstes Argument 
+übergeben wurde.
+Dieser Name ist, anders als das zuvor Beschriebene {\it Handle}, nicht 
+eindeutig, so dass eine Suchanfrage auch mehrere Treffer liefern kann.
+Folgendes Beispiel liefert eine einzelne Aktion anhand ihres Namens:
+
+\begin{lstlisting}
+action = guard.get_action(name = "Read a File")
+\end{lstlisting}
+
+\item {\bf Python-Klasse (Python-Typ)}: 
+
+Werden von {\it Action} abgeleitete Python-Klassen an \product übergeben, 
+so lassen sich auch die Python-Typen zum auffinden von Objekten nutzen.
+
+Seien die Aktions-Typen {\it UserAction} und {\it WebsiteAction} wie 
+folgt definiert:
+
+\begin{lstlisting}
+class MyAction(Action):
+    pass
+class UserAction(MyAction):
+    pass
+class WebsiteAction(MyAction):
+    pass
+guard.register_type([UserAction, WebsiteAction])
+guard.add_action(UserAction("Edit User"))
+guard.add_action(WebsiteAction("Edit Website"))
+\end{lstlisting}
+
+Wir verwenden folgende Anfrage um eine Liste alle Aktionen vom Typ 
+``UserAction'' zu holen:
+
+\begin{lstlisting}
+for action in guard.get_actions(type = UserAction):
+    print "Action:", action.get_name()
+\end{lstlisting}
+
+Von der Suchanfrage erhalten wir hier nur die Aktion ``Edit User''.
+
+Auch hier lassen sich dank {\bf Typ-Introspection} die Subtypen einer 
+Klasse empfangen, da \product die Basistypen aller Objekte kennt.
+Beispiel:
+
+\begin{lstlisting}
+for action in guard.get_actions(type = MyAction):
+    print "Action:", action.get_name()
+\end{lstlisting}
+
+Die Suchanfrage enthält dann auch alle Subtypen von MyAction, also hier 
+``Edit User'' und ``Edit Website''.
+\end{enumerate}
+
+
+\subsubsection{Ändern einer Aktion}
+
+Auch hier wird vorgegangen wie beim Neuanlegen einer Aktion:
+
+\begin{lstlisting}
+read = Action("Read")
+guard.add_action(read)
+
+# Change an action.
+read.set_handle("read")
+guard.save_action(read)
+\end{lstlisting}
+
+
+\subsubsection{Löschen einer Aktion}
+
+Liegt die Objektinstanz bereits vor, kann die {\it delete\_action()}-Methode 
+wie folgt verwendet werden:
+
+\begin{lstlisting}
+read  = Action("Read")
+write = Action("Write")
+guard.add_action([read, write])
+
+# Delete an action.
+guard.delete_action(read)
+\end{lstlisting}
+
+Eine andere Möglichkeit ist die Nutzung von Suchkriterien mit der 
+{\it delete\_action\_from\_match()}-Methode:
+
+\begin{lstlisting}
+guard.delete_action(id = 1234)
+\end{lstlisting}
+
+Die Liste akzeptierter Suchkriterien ist mit der Methode {\it get\_actions()} 
+identisch.
+
+
+\subsection{ACLs}
+\subsubsection{Was ist eine ACL?}
+
+Eine ACL gibt an ob eine Resource das Recht hat auf eine andere gegebene 
+Resource zuzugreifen. Anhand von ACLs werden also die Rechte eines Benutzers 
+oder einer Gruppe bestimmt. Die genaue Funktionsweise von ACLs bleibt für 
+den Benutzer von \product unsichtbar, ihm bleibt lediglich die Aufgabe 
+erhalten \product über die Rechte zu informieren, die er einer Resource 
+zuordnen möchte.
+
+\subsubsection{Formale Beschreibung von ACLs}
+
+Eine Access-List (ACL) kann als ein Tupel (A, R, C, p) verstanden werden, 
+wobei gilt:
+
+\begin{itemize}
+\item A ist ein Aktor, also zum Beispiel ein menschlicher Benutzer oder 
+eine Benutzergruppe.
+\item R ist eine Resource, auf die ein Zugriff geregelt werden soll; zum 
+Beispiel eine Internetseite.
+\item C ist eine Aktion, zum Beispiel ``lesen'', ``schreiben'', ``springen'', ...
+\item p ist entweder Wahr oder Falsch.
+\end{itemize}
+
+\hint{Um die Handhabung zu vereinfachen werden in \product Aktoren und 
+Resourcen durch Klassen desselben Typs repräsentiert; Aktoren als auch 
+Resourcen sind Objekte des Typs {\it Resource}.}
+
+\product ist dafür zuständig, eine Menge vorhandener ACLs anzulegen, zu 
+verwalten und zu durchsuchen - die von \product bereitgestellten Methoden 
+zum Arbeiten mit ACLs können also formal als Funktionen auf einer Menge 
+ACLs beschrieben werden. Im Folgenden werden diese Funktionen beschrieben.
+
+
+\subsubsection{Zuordnen eines Rechtes}
+
+Gegeben sei folgender Resource-Baum:
+
+\begin{indentverb}
+Everybody
+  |- Administrators
+  |   `- Luke Skywalker
+  `- Users
+      |- Han Solo
+      `- R2D2
+Homepage
+  |- Subpage 1
+  |   |- Subpage 1.1
+  |   `- Subpage 1.2
+  `- Subpage 2
+\end{indentverb}
+
+Wir wollen nun die Rechtevergabe so gestalten, dass die folgenden Kriterien 
+erfüllt sind:
+
+\begin{itemize}
+\item Administratoren können die Namen aller anderen Benutzer ändern.
+\item Administratoren können alle Webseiten sehen und editieren.
+\item Normale Benutzer ({\it Users}) können alle Webseiten ausser Subpage 1
+und deren Kinder sehen.
+\item Alle anderen können nur die Homepage sehen.
+\end{itemize}
+
+Im folgenden Programmbeispiel beschränken wir uns auf die Rechtevergabe;
+die Definition und der Umgang mit Resourcen wird in Abschnitt 
+\ref{details:resources:add} näher erläutert.
+
+\begin{lstlisting}
+class UserAction(Action):
+    pass
+class WebsiteAction(Action):
+    pass
+guard.register_type([UserAction, WebsiteAction])
+
+# Create actions.
+edit_user    = UserAction("Edit User")
+view_website = WebsiteAction("View Website")
+edit_website = WebsiteAction("Edit Website")
+guard.add_action([edit_user, view_website, edit_website])
+
+# Assign permissions.
+guard.grant(administrators, edit_user, everybody)
+guard.grant(administrators, view_website, homepage)
+guard.grant(administrators, edit_website, homepage)
+guard.grant(users, view_website, homepage)
+guard.deny(users, view_website, subpage1)
+guard.grant(everybody, view_website, homepage)
+guard.deny(everybody, view_website, subpage1)
+guard.deny(everybody, view_website, subpage2)
+\end{lstlisting}
+
+Jeder Aufruf der {\it grant()}- oder {\it deny()}-Methode entspricht hier 
+dem erstellen einer neuen ACL.
+Die Zuweisungen der Rechte lassen sich auch wie folgt abkürzen:
+
+\begin{lstlisting}
+guard.grant(administrators, edit_user, everybody)
+guard.grant(administrators, [view_website, edit_website], homepage)
+guard.grant(users, view_website, [homepage, subpage1])
+guard.grant(everybody, view_website, homepage)
+guard.deny(everybody, view_website, [subpage1, subpage2])
+\end{lstlisting}
+
+Damit sind die oben genannten Rechte definiert und gespeichert. Es sei an 
+der Stelle erwähnt, dass die Reihenfolge der Rechtevergabe {\it keine} Rolle 
+spielt; das Auflösen der Vererbung geschiet zur Laufzeit.
+
+
+\subsubsection{Ändern eines Rechtes}
+
+Sollen bereits vergebene Rechte angepasst werden, so bieten sich zwei 
+Möglichkeiten:
+
+\begin{enumerate}
+\item Ein Recht soll umgekehrt werden, d.h. entweder einer Erlaubnis 
+wird in ein Verbot geändert, oder ein Verbot in eine Erlaubnis. Dies 
+entspricht dem Austausch einer vorhandenen ACL. Beispiel:
+
+\begin{lstlisting}
+guard.grant(users, view_website, subpage1)
+
+# The following command changes the ACL.
+guard.deny(users, view_website, subpage1)
+\end{lstlisting}
+
+\item Ein Recht soll widerrufen werden, d.h. eine Erlaubnis wird entfernt, 
+so dass für die Resource zukünftig die Standard-Einstellungen gelten. Dies 
+entspricht dem Entfernen einer ACL.
+
+\begin{lstlisting}
+guard.grant(users, view_website, subpage1)
+
+# The following command deletes the ACL.
+guard.delete_permission(users, view_website, subpage1)
+\end{lstlisting}
+\end{enumerate}
+
+
+\subsubsection{Abfragen eines Rechtes}
+
+Wurden die Rechte mittels der oben gezeigten Methoden definiert, so ist nun 
+zum Überprüfen einer Zugriffsberechtigung nur folgende, einfache Anfrage 
+zu nutzen:
+
+\begin{lstlisting}
+if guard.has_permission(users, view_website, subpage1):
+    print "Yes"
+else:
+    print "No"
+\end{lstlisting}
+
+Natürlich stehen in der Praxis nicht immer die Objektinstanzen zur 
+Verfügung, die dieser Methode übergeben werden. Deswegen stellt \product 
+die Methode {\it delete\_permission\_from\_id()} zur Verfügung, die die 
+ID der Objekte als Argumente akzeptiert:
+
+\begin{lstlisting}
+if guard.has_permission_from_id(user.get_id(), view_website_id, subpage1_id):
+    print "Yes"
+else:
+    print "No"
+\end{lstlisting}
+
+
+\subsubsection{Finden von ACLs}
+
+Der vorherige Abschnitt zeigt, wie ein einzelnes Recht unter Beachtung von 
+Vererbung aufgelöst und abgefragt werden kann. Um die genau definierten 
+Rechte detaillierter abzufragen kann es jedoch sinnvoll sein zu erfahren, 
+welche ACL denn zur Erlaubnis oder zum Ablehnen einer Zugriffsberechtigung 
+führt. Vielleicht möchten sie aber auch einfach eine Liste aller vorhandenen 
+ACLs einsehen.
+
+In beiden Fällen hilft die Methode {\it get\_permission\_list\_from\_id()} 
+weiter. Sie erzeugt eine Liste aller ACLs, die den übergebenen Suchkriterien 
+genügen.
+
+\hint{Das Suchergebnis dieser Methode enthält {\it nicht} die Resourcen, die 
+ein Recht nur geerbt haben. Vererbung wird hier also ignoriert!}
+
+Zum Suchen unter Einschluss der geerbten Rechte verwenden wir stattdessen 
+{\it get\_permission\_list\_from\_id\_with\_inheritance()}.
+
+In den folgenden Beispielen gehen wir davon aus, dass folgender 
+Resource-Baum bereits definiert ist:
+
+\begin{indentverb}
+Everybody
+  |- Administrators
+  |   `- Luke Skywalker
+  `- Users
+      |- Han Solo
+      `- R2D2
+Homepage
+  |- Subpage 1
+  |   |- Subpage 1.1
+  |   `- Subpage 1.2
+  `- Subpage 2
+\end{indentverb}
+
+Folgende Suchkriterien werden von diesen beiden Methoden unterstützt:
+
+\begin{enumerate}
+\item {\bf Aktions-ID}: Diese wird als {\it action\_id}-Argument übergeben.
+Im Beispiel erfragen wir alle gesetzten Leserechte eines Benutzers:
+
+\begin{lstlisting}
+guard.grant(administrator, view, homepage)
+guard.grant(administrator, view, subpage1_1)
+guard.deny(administrator, view, subpage2)
+
+result = guard.get_permission_list_from_id(administrator.get_id(),
+                                           action_id = view.get_id())
+\end{lstlisting}
+
+Das Ergebnis enthält hier drei ACLs, die hier durch folgende Tupel 
+beschrieben werden:
+
+\begin{lstlisting}
+(administrator, view, homepage,   True)
+(administrator, view, subpage1_1, True)
+(administrator, view, subpage2,   False)
+\end{lstlisting}
+
+\item {\bf Resource-ID}: Um zu bestimmen, welche Rechte ein Benutzer an 
+einer bestimmten Resource hat, lässt sich folgende Anfrage benutzen:
+
+\begin{lstlisting}
+guard.grant(administrator, remove, homepage)
+guard.grant(administrator, view,   subpage1)
+guard.grant(administrator, edit,   subpage1)
+
+result = guard.get_permission_list_from_id(administrator.get_id(),
+                                           resource_id = subpage1.get_id())
+\end{lstlisting}
+
+Diese Anfrage ergibt zwei Ergebnisse:
+
+\begin{lstlisting}
+(administrator, view, subpage1, True)
+(administrator, edit, subpage1, True)
+\end{lstlisting}
+
+\item {\bf Aktionstyp}: Ähnlich wie beim Suchen nach Aktionen lässt sich 
+auch hier das Ergebnis auf ACLs einschränken, die für Aktionen eines 
+bestimmten Typs definiert wurden. Wir verweisen zur Erklärung auf Abschnitt 
+\ref{details:actions:find}.
+
+\item {\bf Resourcetyp}: Auch hier wird das Suchergebnis auf jene ACLs 
+eingeschränkt, die für Resourcen des gegebenen Typs definiert wurden.
+Zur weiteren Erklärung von Resource-Typen siehe \ref{details:resources:find}.
+\end{enumerate}
+
+In allen Beispielen kann die erzeugte Liste der ACLs wie folgt ausgegeben 
+werden:
+
+\begin{lstlisting}
+for acl in result:
+    uid    = acl.get_actor_id()
+    action = acl.get_action().get_name()
+    rid    = acl.get_resource_id()
+    if acl.get_permit():
+        msg = "User with ID %s may %s the resource with ID %s."
+        print msg % (uid, action, rid)
+    else:
+        msg = "User with ID %s may not %s the resource with ID %s."
+        print msg % (uid, action, rid)
+\end{lstlisting}
+
+
+\newpage
+\section{Beispiele}
+\subsection{Einfache Rechtevergabe}
+
+\begin{lstlisting}
+from sqlalchemy import create_engine
+from Guard      import *
+
+class Passenger(Resource):
+    pass
+
+class Room(Resource):
+    pass
+
+db    = create_engine('mysql://user:pass@localhost/guard_name')
+guard = DB(db)
+guard.install()
+guard.register_type([Passenger, Room])
+
+han    = Passenger("Han Solo")
+luke   = Passenger("Luke Skywalker")
+bridge = Room("Bridge")
+mr     = Room("Machine Room")
+guard.add_resource(None, [han, luke, bridge, mr])
+
+enter  = Action("Enter")
+repair = Action("Repair")
+guard.add_action(enter)
+guard.add_action(repair)
+
+guard.grant(han, [enter, repair], mr)
+guard.grant(luke, enter, [mr, bridge])
+
+if guard.has_permission(han, enter, mr):
+    print "Permission was granted."
+else:
+    print "Permission was denied."
+\end{lstlisting}
+
+
+\subsection{Rechtevergabe mit Rollenkonzept}
+
+\begin{lstlisting}
+from sqlalchemy import create_engine
+from Guard      import *
+
+class Passenger(Resource):
+    pass
+
+class PassengerGroup(ResourceGroup):
+    pass
+
+class Room(Resource):
+    pass
+
+db    = create_engine('mysql://user:pass@localhost/guard_name')
+guard = DB(db)
+guard.install()
+guard.register_type([Passenger, PassengerGroup, Room])
+
+passengers = PassengerGroup("Passenger Group")
+crew       = PassengerGroup("Crew Members")
+engineers  = PassengerGroup("Engineers")
+guests     = PassengerGroup("Guests")
+guard.add_resource(None, passengers)
+guard.add_resource(passengers, crew)
+guard.add_resource(crew, engineers)
+guard.add_resource(passengers, guests)
+
+han  = Passenger("Han Solo")
+r2d2 = Passenger("R2D2")
+luke = Passenger("Luke Skywalker")
+guard.add_resource(engineers, han)
+guard.add_resource(engineers, r2d2)
+guard.add_resource(crew, luke)
+
+lounge = Room("Lounge")
+bridge = Room("Bridge")
+mr     = Room("Machine Room")
+guard.add_resource(engineers, han)
+guard.add_resource(crew, luke)
+
+enter  = Action("Enter")
+repair = Action("Repair")
+guard.add_action([enter, repair])
+
+guard.grant(crew,      enter,  bridge)
+guard.grant(engineers, enter,  mr)
+guard.grant(engineers, repair, mr)
+guard.grant(guests,    enter,  lounge)
+guard.deny(han, repair, mr)
+\end{lstlisting}
+
+
+\subsection{Rechtevergabe mit Rollenkonzept und Rekursion}
+
+\begin{lstlisting}
+from sqlalchemy import create_engine
+from Guard      import *
+
+class Passenger(Resource):
+    pass
+
+class PassengerGroup(ResourceGroup):
+    pass
+
+class Room(Resource):
+    pass
+
+class Device(Resource):
+    pass
+
+db    = create_engine('mysql://user:pass@localhost/guard_name')
+guard = DB(db)
+guard.install()
+guard.register_type([Passenger, PassengerGroup, Room, Device])
+
+passengers = PassengerGroup("Passenger Group")
+crew       = PassengerGroup("Crew Members")
+engineers  = PassengerGroup("Engineers")
+guests     = PassengerGroup("Guests")
+guard.add_resource(None, passengers)
+guard.add_resource(passengers, crew)
+guard.add_resource(crew, engineers)
+guard.add_resource(passengers, guests)
+
+han  = Passenger("Han Solo")
+r2d2 = Passenger("R2D2")
+luke = Passenger("Luke Skywalker")
+guard.add_resource(engineers, han)
+guard.add_resource(engineers, r2d2)
+guard.add_resource(crew, luke)
+
+lounge = Room("Lounge")
+bridge = Room("Bridge")
+mr     = Room("Machine Room")
+guard.add_resource(engineers, han)
+guard.add_resource(crew, luke)
+
+enter      = Action("Enter")
+repair     = Action("Repair")
+use_device = Action("Use Device")
+guard.add_action([enter, repair, use_device])
+
+thruster = Device("Thruster")
+laser    = Device("Laser")
+ac       = Device("Air Conditioner")
+guard.add_resource(bridge, [thruster, laser, ac])
+
+guard.grant(crew,      enter,      bridge)
+guard.grant(crew,      use_device, bridge)
+guard.deny (han,       use_device, weaponry)
+guard.grant(engineers, enter,      mr)
+guard.grant(engineers, repair,     mr)
+guard.deny (han,       repair,     mr)
+guard.grant(guests,    enter,      lounge)
+\end{lstlisting}
+\end{document}

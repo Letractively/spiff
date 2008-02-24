@@ -2,19 +2,20 @@
 # Generates the API documentation.
 import os, re, sys
 
-doc_file = 'Spiff_Guard.py'
-doc_dir  = 'doc'
-files = ['src/Guard/DBReader.py',
-         'src/Guard/DB.py',
-         'src/Guard/DBObject.py',
-         'src/Guard/ResourcePath.py',
-         'src/Guard/Acl.py',
-         'src/Guard/Action.py',
-         'src/Guard/Resource.py',
-         'src/Guard/ResourceGroup.py']  # Order matters - can't resolve inheritance otherwise.
+doc_dir  = 'api'
+doc_file = os.path.join(doc_dir, 'Spiff_Guard.py')
+files = ['../src/Guard/DBReader.py',
+         '../src/Guard/DB.py',
+         '../src/Guard/DBObject.py',
+         '../src/Guard/ResourcePath.py',
+         '../src/Guard/Acl.py',
+         '../src/Guard/Action.py',
+         '../src/Guard/Resource.py',
+         '../src/Guard/ResourceGroup.py']  # Order matters - can't resolve inheritance otherwise.
 classes = [os.path.splitext(file)[0] for file in files]
 
 # Concatenate the content of all files into one file.
+os.makedirs(doc_dir)
 remove_re = re.compile(r'^from (' + '|'.join(classes) + r') * import .*')
 fp_out    = open(doc_file, 'w')
 for file in files:
