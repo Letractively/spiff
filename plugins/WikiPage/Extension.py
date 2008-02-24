@@ -15,30 +15,33 @@
 import os
 import re
 import sys
-from cgi     import escape
-from string  import split
-from genshi  import Markup
-from difflib import Differ
-from difflib import SequenceMatcher
-
-differ           = Differ()
-sequence_matcher = SequenceMatcher()
+from cgi    import escape
+from string import split
+from genshi import Markup
 
 class Extension:
     def __init__(self, api):
-        self.wiki_word_re  = re.compile("(?:-&gt;(\w+)|([A-Z]\w+[A-Z]\w+))")
-        self.api           = api
-        self.i18n          = api.get_i18n()
-        self.db            = api.get_db()
-        self.page          = api.get_session().get_requested_page()
-        self.wiki2html     = None
-        self.warehouse     = None
-        self.warehouse_mod = None
+        self.api               = api
+        self.i18n              = api.get_i18n()
+        self.db                = api.get_db()
+        self.page              = api.get_session().get_requested_page()
+        self.wiki2html         = None
+        self.warehouse         = None
+        self.warehouse_mod     = None
+        self.__class__.differ  = None
+        self.__class__.matcher = None
 
 
     def __init_wiki(self):
         if self.wiki2html is not None:
             return
+        difflib = __import__('difflib',
+                             globals(),
+                             locals(),
+                             'difflib')
+        self.__class__.differ  = difflib.Differ()
+        self.__class__.matcher = difflib.SequenceMatcher()
+
         module = __import__('WikiMarkup.Wiki2Html',
                             globals(),
                             locals(),
@@ -143,8 +146,8 @@ class Extension:
 
     def __markup_diff(self, content_from, content_to):
         # Start by comparing line wise.
-        lines = differ.compare(content_from.splitlines(1),
-                               content_to.splitlines(1))
+        lines = self.__class__.differ.compare(content_from.splitlines(1),
+                                              content_to.splitlines(1))
 
         # Now compare the lines in more details.
         diff          = []

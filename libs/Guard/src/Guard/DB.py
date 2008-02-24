@@ -14,12 +14,16 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 from DBReader     import DBReader
 from functions    import int2bin
-from sqlalchemy   import *
 from Resource     import Resource
 from ResourcePath import ResourcePath
-import string, datetime
+import datetime
+import sqlalchemy as sa
 
 class DB(DBReader):
+    """
+    Extends the DBReader class with methods for manipulating the database.
+    """
+
     def install(self):
         """
         Installs (or upgrades) database tables.
@@ -55,9 +59,9 @@ class DB(DBReader):
         @return: True on success, False otherwise.
         """
         delete = self._table_map['resource'].delete()
-        result = delete.execute()
+        delete.execute()
         delete = self._table_map['action'].delete()
-        result = delete.execute()
+        delete.execute()
         return True
 
 
@@ -119,9 +123,9 @@ class DB(DBReader):
 
         table  = self._table_map['action']
         update = table.update(table.c.id == action.get_id())
-        result = update.execute(action_type = action.__class__.__name__,
-                                handle      = action.get_handle(),
-                                name        = action.get_name())
+        update.execute(action_type = action.__class__.__name__,
+                       handle      = action.get_handle(),
+                       name        = action.get_name())
         self._action_cache_flush()
         self._action_cache_add(action)
         return True
@@ -191,9 +195,9 @@ class DB(DBReader):
             if type(ids) == type(0):
                 ids = [ids]
             id_where = None
-            for id in ids:
-                id_where = or_(id_where, table.c.id == id)
-            where = and_(where, id_where)
+            for current_id in ids:
+                id_where = sa.or_(id_where, table.c.id == current_id)
+            where = sa.and_(where, id_where)
 
         # Handle.
         if kwargs.has_key('handle'):
@@ -202,14 +206,14 @@ class DB(DBReader):
                 handles = [handles]
             handle_where = None
             for handle in handles:
-                handle_where = or_(handle_where, table.c.handle == handle)
-            where = and_(where, handle_where)
+                handle_where = sa.or_(handle_where, table.c.handle == handle)
+            where = sa.and_(where, handle_where)
 
         # Object type.
         if kwargs.has_key('type'):
             types = kwargs.get('type')
             cond  = self._get_subtype_sql(tbl_a.c.action_type, types)
-            where = and_(where, cond)
+            where = sa.and_(where, cond)
 
         delete = table.delete(where)
         result = delete.execute()
@@ -223,8 +227,8 @@ class DB(DBReader):
         assert resource_id >= 0
         assert name is not None
         table  = self._table_map['resource_attribute']
-        select = table.select(and_(table.c.resource_id == resource_id,
-                                   table.c.name        == name))
+        select = table.select(sa.and_(table.c.resource_id == resource_id,
+                                      table.c.name        == name))
         result = select.execute()
         row    = result.fetchone()
         if row is not None:
@@ -266,22 +270,22 @@ class DB(DBReader):
         assert resource_id >= 0
         assert name is not None
         table  = self._table_map['resource_attribute']
-        update = table.update(and_(table.c.resource_id == resource_id,
+        update = table.update(sa.and_(table.c.resource_id == resource_id,
                                    table.c.name        == name))
         if value is None:
             value = ''
         if type(value) == type(0):
-            result = update.execute(type        = self.attrib_type_int,
-                                    name        = name,
-                                    attr_int    = value)
+            update.execute(type        = self.attrib_type_int,
+                           name        = name,
+                           attr_int    = value)
         elif type(value) == type(True):
-            result = update.execute(type        = self.attrib_type_bool,
-                                    name        = name,
-                                    attr_int    = int(value))
+            update.execute(type        = self.attrib_type_bool,
+                           name        = name,
+                           attr_int    = int(value))
         elif type(value) == type(''):
-            result = update.execute(type        = self.attrib_type_string,
-                                    name        = name,
-                                    attr_string = value)
+            update.execute(type        = self.attrib_type_string,
+                           name        = name,
+                           attr_string = value)
         else:
             raise Exception('Unknown attribute type %s' % type(value))
         return True
@@ -309,10 +313,10 @@ class DB(DBReader):
         table = self._table_map['resource']
         where = None
         for parent in parent_list:
-            where = or_(where, table.c.id == parent.get_id())
+            where = sa.or_(where, table.c.id == parent.get_id())
         values = {table.c.n_children: table.c.n_children + n_children}
         update = table.update(where, values)
-        result = update.execute()
+        update.execute()
 
         transaction.commit()
         return True
@@ -324,7 +328,7 @@ class DB(DBReader):
         table  = self._table_map['resource']
         values = {table.c.n_children: table.c.n_children + n_children}
         update = table.update(table.c.id == resource_id, values = values)
-        result = update.execute()
+        update.execute()
 
 
     def __add_resource1(self, connection, parent_id, resource):
@@ -480,10 +484,10 @@ class DB(DBReader):
 
         table  = self._table_map['resource']
         update = table.update(table.c.id == resource.get_id())
-        result = update.execute(resource_type = resource.__class__.__name__,
-                                handle        = resource.get_handle(),
-                                name          = resource.get_name(),
-                                is_group      = resource.is_group())
+        update.execute(resource_type = resource.__class__.__name__,
+                       handle        = resource.get_handle(),
+                       name          = resource.get_name(),
+                       is_group      = resource.is_group())
 
         # Save the attributes.
         attrib_list = resource.get_attribute_list()
@@ -574,10 +578,10 @@ class DB(DBReader):
                                    tbl_p2.c.id == tbl_m.c.resource_path_id)
         where    = None
         for id in resource_ids:
-            where = or_(where, tbl_p1.c.resource_id == id)
-        children = select([tbl_p2.c.resource_id],
-                          where,
-                          from_obj = [table])
+            where = sa.or_(where, tbl_p1.c.resource_id == id)
+        children = sa.select([tbl_p2.c.resource_id],
+                             where,
+                             from_obj = [table])
 
         # Delete the children. FIXME: This is a workaround for the bug
         # in MySQL mentioned below. In later versions we will be able
@@ -594,9 +598,9 @@ class DB(DBReader):
         # Delete the resource.
         where = None
         for id in resource_ids:
-            where = or_(where, table.c.id == id)
-        delete = table.delete(where)
-        result = delete.execute()
+            where = sa.or_(where, table.c.id == id)
+        delete  = table.delete(where)
+        result  = delete.execute()
         affect += result.rowcount
 
         transaction.commit()
@@ -652,10 +656,10 @@ class DB(DBReader):
         assert resource_id >= 0
         assert permit == True or permit == False
         table  = self._table_map['acl']
-        update = table.update(and_(table.c.actor_id    == actor_id,
+        update = table.update(sa.and_(table.c.actor_id    == actor_id,
                                    table.c.action_id   == action_id,
                                    table.c.resource_id == resource_id))
-        result = update.execute(permit = permit, last_change = datetime.datetime.now())
+        update.execute(permit = permit, last_change = datetime.datetime.now())
         return True
 
 
@@ -676,7 +680,7 @@ class DB(DBReader):
         assert action_id   >= 0
         assert resource_id >= 0
         table  = self._table_map['acl']
-        delete = table.delete(and_(table.c.actor_id    == actor_id,
+        delete = table.delete(sa.and_(table.c.actor_id    == actor_id,
                                    table.c.action_id   == action_id,
                                    table.c.resource_id == resource_id))
         result = delete.execute()
@@ -714,7 +718,7 @@ class DB(DBReader):
         assert action_id   >= 0
         assert resource_id >= 0
         table  = self._table_map['acl']
-        select = table.select(and_(table.c.actor_id    == actor_id,
+        select = table.select(sa.and_(table.c.actor_id    == actor_id,
                                    table.c.action_id   == action_id,
                                    table.c.resource_id == resource_id))
         result = select.execute()

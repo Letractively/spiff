@@ -38,7 +38,7 @@ from CacheDB         import CacheDB
 from Session         import Session
 
 __version__ = '0.0.1'
-bench  = {'start': time.clock()}
+bench       = {'start': time.clock()}
 cfg_file    = 'data/spiff.cfg'
 package_dir = 'data/repo/'
 cfg         = RawConfigParser()

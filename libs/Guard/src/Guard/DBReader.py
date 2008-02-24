@@ -16,12 +16,12 @@ import sys
 import os.path
 import datetime
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from sqlalchemy   import *
 from functions    import bin_path2list, list2bin_path, bin_path2hex_path
 from Acl          import Acl
 from Action       import Action
 from Resource     import Resource
 from ResourcePath import ResourcePath
+import sqlalchemy as sa
 
 class DBReader(object):
     attrib_type_int, attrib_type_bool, attrib_type_string = range(3)
@@ -36,7 +36,7 @@ class DBReader(object):
         @return: The new instance.
         """
         self.db            = db
-        self.db_metadata   = BoundMetaData(self.db)
+        self.db_metadata   = sa.BoundMetaData(self.db)
         self._table_prefix = 'guard_'
         self._table_map    = {}
         self._table_list   = []
@@ -64,71 +64,71 @@ class DBReader(object):
         """
         pfx = self._table_prefix
         self._table_list = []
-        self.__add_table(Table(pfx + 'action', self.db_metadata,
-            Column('id',             Integer,     primary_key = True),
-            Column('action_type',    String(50),  index = True),
-            Column('handle',         String(230), index = True),
-            Column('name',           String(230), unique = True),
+        self.__add_table(sa.Table(pfx + 'action', self.db_metadata,
+            sa.Column('id',             sa.Integer,     primary_key = True),
+            sa.Column('action_type',    sa.String(50),  index = True),
+            sa.Column('handle',         sa.String(230), index = True),
+            sa.Column('name',           sa.String(230), unique = True),
             mysql_engine='INNODB'
         ))
-        self.__add_table(Table(pfx + 'resource', self.db_metadata,
-            Column('id',            Integer,     primary_key = True),
-            Column('resource_type', String(50),  index = True),
-            Column('handle',        String(230), index = True),
-            Column('name',          String(230)),
-            Column('n_children',    Integer,     index = True, default = 0),
-            Column('is_group',      Boolean,     index = True),
+        self.__add_table(sa.Table(pfx + 'resource', self.db_metadata,
+            sa.Column('id',            sa.Integer,     primary_key = True),
+            sa.Column('resource_type', sa.String(50),  index = True),
+            sa.Column('handle',        sa.String(230), index = True),
+            sa.Column('name',          sa.String(230)),
+            sa.Column('n_children',    sa.Integer,     index = True, default = 0),
+            sa.Column('is_group',      sa.Boolean,     index = True),
             mysql_engine='INNODB'
         ))
-        self.__add_table(Table(pfx + 'resource_attribute', self.db_metadata,
-            Column('id',             Integer,     primary_key = True),
-            Column('resource_id',    Integer,     index = True),
-            Column('name',           String(50),  index = True),
-            Column('type',           Integer),
-            Column('attr_string',    TEXT),
-            Column('attr_int',       Integer),
-            ForeignKeyConstraint(['resource_id'],
-                                 [pfx + 'resource.id'],
-                                 ondelete = 'CASCADE'),
+        self.__add_table(sa.Table(pfx + 'resource_attribute', self.db_metadata,
+            sa.Column('id',             sa.Integer,     primary_key = True),
+            sa.Column('resource_id',    sa.Integer,     index = True),
+            sa.Column('name',           sa.String(50),  index = True),
+            sa.Column('type',           sa.Integer),
+            sa.Column('attr_string',    sa.TEXT),
+            sa.Column('attr_int',       sa.Integer),
+            sa.ForeignKeyConstraint(['resource_id'],
+                                    [pfx + 'resource.id'],
+                                    ondelete = 'CASCADE'),
             mysql_engine='INNODB'
         ))
-        self.__add_table(Table(pfx + 'resource_path', self.db_metadata,
-            Column('id',             Integer,     primary_key = True),
-            Column('path',           Binary(255), index = True),
-            Column('depth',          Integer,     index = True),
-            Column('resource_id',    Integer,     index = True),
-            ForeignKeyConstraint(['resource_id'],
-                                 [pfx + 'resource.id'],
-                                 ondelete = 'CASCADE'),
+        self.__add_table(sa.Table(pfx + 'resource_path', self.db_metadata,
+            sa.Column('id',             sa.Integer,     primary_key = True),
+            sa.Column('path',           sa.Binary(255), index = True),
+            sa.Column('depth',          sa.Integer,     index = True),
+            sa.Column('resource_id',    sa.Integer,     index = True),
+            sa.ForeignKeyConstraint(['resource_id'],
+                                    [pfx + 'resource.id'],
+                                    ondelete = 'CASCADE'),
             mysql_engine='INNODB'
         ))
-        self.__add_table(Table(pfx + 'path_ancestor_map', self.db_metadata,
-            Column('resource_path_id',  Integer, index = True),
-            Column('ancestor_path_id',  Integer, index = True),
-            ForeignKeyConstraint(['resource_path_id'],
-                                 [pfx + 'resource_path.id'],
-                                 ondelete = 'CASCADE'),
-            ForeignKeyConstraint(['ancestor_path_id'],
-                                 [pfx + 'resource_path.id'],
-                                 ondelete = 'CASCADE'),
+        self.__add_table(sa.Table(pfx + 'path_ancestor_map', self.db_metadata,
+            sa.Column('resource_path_id',  sa.Integer, index = True),
+            sa.Column('ancestor_path_id',  sa.Integer, index = True),
+            sa.ForeignKeyConstraint(['resource_path_id'],
+                                    [pfx + 'resource_path.id'],
+                                    ondelete = 'CASCADE'),
+            sa.ForeignKeyConstraint(['ancestor_path_id'],
+                                    [pfx + 'resource_path.id'],
+                                    ondelete = 'CASCADE'),
             mysql_engine='INNODB'
         ))
-        self.__add_table(Table(pfx + 'acl', self.db_metadata,
-            Column('id',             Integer, primary_key = True),
-            Column('actor_id',       Integer, index = True),
-            Column('action_id',      Integer, index = True),
-            Column('resource_id',    Integer, index = True),
-            Column('permit',         Boolean, index = True),
-            Column('last_change',    DateTime, default = func.now()),
-            ForeignKeyConstraint(['actor_id'],
-                                 [pfx + 'resource.id'],
-                                 ondelete = 'CASCADE'),
-            ForeignKeyConstraint(['action_id'],
-                                 [pfx + 'action.id'],
-                                 ondelete = 'CASCADE'),
-            ForeignKeyConstraint(['resource_id'],
-                                 [pfx + 'resource.id'],
-                                 ondelete = 'CASCADE'),
+        self.__add_table(sa.Table(pfx + 'acl', self.db_metadata,
+            sa.Column('id',             sa.Integer, primary_key = True),
+            sa.Column('actor_id',       sa.Integer, index = True),
+            sa.Column('action_id',      sa.Integer, index = True),
+            sa.Column('resource_id',    sa.Integer, index = True),
+            sa.Column('permit',         sa.Boolean, index = True),
+            sa.Column('last_change',    sa.DateTime, default = sa.func.now()),
+            sa.ForeignKeyConstraint(['actor_id'],
+                                    [pfx + 'resource.id'],
+                                    ondelete = 'CASCADE'),
+            sa.ForeignKeyConstraint(['action_id'],
+                                    [pfx + 'action.id'],
+                                    ondelete = 'CASCADE'),
+            sa.ForeignKeyConstraint(['resource_id'],
+                                    [pfx + 'resource.id'],
+                                    ondelete = 'CASCADE'),
             mysql_engine='INNODB'
         ))
 
@@ -179,7 +179,7 @@ class DBReader(object):
                 raise AttributeError(err)
             conds.append(column == name)
             conds += [column == t.__name__ for t in objtype.__subclasses__()]
-        return or_(*conds)
+        return sa.or_(*conds)
 
 
     def __register_type(self, objtype):
@@ -335,8 +335,8 @@ class DBReader(object):
             if type(ids) == type(0):
                 ids = [ids]
             for id in ids:
-                id_where = or_(id_where, tbl_a.c.id == id)
-            where = and_(where, id_where)
+                id_where = sa.or_(id_where, tbl_a.c.id == id)
+            where = sa.and_(where, id_where)
 
         # Handle.
         if kwargs.has_key('handle'):
@@ -345,14 +345,14 @@ class DBReader(object):
             if type(handles) != type([]):
                 handles = [handles]
             for handle in handles:
-                handle_where = or_(handle_where, tbl_a.c.handle == handle)
-            where = and_(where, handle_where)
+                handle_where = sa.or_(handle_where, tbl_a.c.handle == handle)
+            where = sa.and_(where, handle_where)
 
         # Object type.
         if kwargs.has_key('type'):
             types = kwargs.get('type')
             cond  = self._get_subtype_sql(tbl_a.c.action_type, types)
-            where = and_(where, cond)
+            where = sa.and_(where, cond)
 
         select = table.select(where,
                               use_labels = True,
@@ -436,8 +436,8 @@ class DBReader(object):
 
     def _load_attribute(self, resource, name):
         tbl_a = self._table_map['resource_attribute']
-        sel   = tbl_a.select(and_(tbl_a.c.resource_id == resource.get_id(),
-                                  tbl_a.c.name        == name),
+        sel   = tbl_a.select(sa.and_(tbl_a.c.resource_id == resource.get_id(),
+                                     tbl_a.c.name        == name),
                              limit = 1)
         res   = sel.execute()
         row   = res.fetchone()
@@ -457,8 +457,8 @@ class DBReader(object):
                 ids = [ids]
             id_where = None
             for id in ids:
-                id_where = or_(id_where, tbl_r.c.id == id)
-            where = and_(where, id_where)
+                id_where = sa.or_(id_where, tbl_r.c.id == id)
+            where = sa.and_(where, id_where)
 
         # Handle.
         if kwargs.has_key('handle'):
@@ -467,8 +467,8 @@ class DBReader(object):
                 handles = [handles]
             handle_where = None
             for handle in handles:
-                handle_where = or_(handle_where, tbl_r.c.handle == handle)
-            where = and_(where, handle_where)
+                handle_where = sa.or_(handle_where, tbl_r.c.handle == handle)
+            where = sa.and_(where, handle_where)
 
         # Name.
         if kwargs.has_key('name'):
@@ -477,31 +477,31 @@ class DBReader(object):
                 names = [names]
             name_where = None
             for name in names:
-                name_where = or_(name_where, tbl_r.c.name == name)
-            where = and_(where, name_where)
+                name_where = sa.or_(name_where, tbl_r.c.name == name)
+            where = sa.and_(where, name_where)
 
         # Object type.
         if kwargs.has_key('type'):
             types = kwargs.get('type')
             cond  = self._get_subtype_sql(tbl_r.c.resource_type, types)
-            where = and_(where, cond)
+            where = sa.and_(where, cond)
 
         # Attributes.
         if kwargs.has_key('attribute'):
             table = tbl_r.outerjoin(tbl_a, tbl_r.c.id == tbl_a.c.resource_id)
             for attr, value in kwargs.get('attribute').iteritems():
                 if type(value) == type(0):
-                    where = and_(where,
-                                 tbl_a.c.type     == self.attrib_type_int,
-                                 tbl_a.c.attr_int == int(value))
+                    where = sa.and_(where,
+                                    tbl_a.c.type     == self.attrib_type_int,
+                                    tbl_a.c.attr_int == int(value))
                 elif type(value) == type(True):
-                    where = and_(where,
-                                 tbl_a.c.type     == self.attrib_type_bool,
-                                 tbl_a.c.attr_int == int(value))
+                    where = sa.and_(where,
+                                    tbl_a.c.type     == self.attrib_type_bool,
+                                    tbl_a.c.attr_int == int(value))
                 elif type(value) == type(''):
-                    where = and_(where,
-                                 tbl_a.c.type        == self.attrib_type_string,
-                                 tbl_a.c.attr_string == value)
+                    where = sa.and_(where,
+                                    tbl_a.c.type        == self.attrib_type_string,
+                                    tbl_a.c.attr_string == value)
                 else:
                     raise Exception('Unknown attribute type %s' % type(value))
         elif offset == 0 and limit == 0:
@@ -545,10 +545,10 @@ class DBReader(object):
         """
         table, where = self.__get_resource_sql(**kwargs)
         tbl_r        = self._table_map['resource']
-        sel          = select([tbl_r.c.id],
-                              where,
-                              from_obj = [table],
-                              limit    = 1)
+        sel          = sa.select([tbl_r.c.id],
+                                 where,
+                                 from_obj = [table],
+                                 limit    = 1)
         result = sel.execute()
         if result.fetchone() is not None:
             return True
@@ -613,9 +613,9 @@ class DBReader(object):
         table  = table.outerjoin(tbl_p1, tbl_r.c.id  == tbl_p1.c.resource_id)
         table  = table.outerjoin(tbl_m,  tbl_p1.c.id == tbl_m.c.resource_path_id)
         table  = table.outerjoin(tbl_p2, tbl_p2.c.id == tbl_m.c.ancestor_path_id)
-        where  = and_(where,
-                      tbl_p2.c.resource_id == parent_id,
-                      tbl_p1.c.depth == tbl_p2.c.depth + 1)
+        where  = sa.and_(where,
+                         tbl_p2.c.resource_id == parent_id,
+                         tbl_p1.c.depth == tbl_p2.c.depth + 1)
 
         select = table.select(where,
                               order_by   = [tbl_p1.c.resource_id],
@@ -679,13 +679,13 @@ class DBReader(object):
         table  = table.outerjoin(tbl_p1, tbl_r.c.id  == tbl_p1.c.resource_id)
         table  = table.outerjoin(tbl_m,  tbl_p1.c.id == tbl_m.c.ancestor_path_id)
         table  = table.outerjoin(tbl_p2, tbl_p2.c.id == tbl_m.c.resource_path_id)
-        where  = and_(where, tbl_p2.c.depth == tbl_p1.c.depth + 1)
+        where  = sa.and_(where, tbl_p2.c.depth == tbl_p1.c.depth + 1)
         where2 = None
         for id in child_ids:
             if type(id) != type(0):
                 id = id.get_id()
-            where2 = or_(where2, tbl_p2.c.resource_id == id)
-        where = and_(where, where2)
+            where2 = sa.or_(where2, tbl_p2.c.resource_id == id)
+        where = sa.and_(where, where2)
 
         select = table.select(where,
                               order_by   = [tbl_p1.c.resource_id],
@@ -725,9 +725,9 @@ class DBReader(object):
         """
         assert id is not None
         table  = self._table_map['resource_path']
-        query  = select([table.c.path],
-                        table.c.resource_id == id,
-                        from_obj = [table])
+        query  = sa.select([table.c.path],
+                           table.c.resource_id == id,
+                           from_obj = [table])
         result = query.execute()
         row    = result.fetchone()
         if not row:
@@ -764,18 +764,18 @@ class DBReader(object):
         tbl_m2 = self._table_map['path_ancestor_map'].alias('m2')
         tbl_p4 = self._table_map['resource_path'].alias('p4')
         tbl = tbl_p1.outerjoin(tbl_m1, tbl_p1.c.id == tbl_m1.c.resource_path_id)
-        tbl = tbl.outerjoin(tbl_p2, or_(tbl_p2.c.id == tbl_p1.c.id,
-                                        tbl_p2.c.id == tbl_m1.c.ancestor_path_id))
+        tbl = tbl.outerjoin(tbl_p2, sa.or_(tbl_p2.c.id == tbl_p1.c.id,
+                                           tbl_p2.c.id == tbl_m1.c.ancestor_path_id))
         tbl = tbl.outerjoin(tbl_ac, tbl_p2.c.resource_id == tbl_ac.c.resource_id)
         tbl = tbl.outerjoin(tbl_p3, tbl_p3.c.id == tbl_ac.c.actor_id)
         tbl = tbl.outerjoin(tbl_m2, tbl_p3.c.id == tbl_m2.c.ancestor_path_id)
-        tbl = tbl.outerjoin(tbl_p4, or_(tbl_p4.c.id == tbl_p3.c.id,
-                                        tbl_p4.c.id == tbl_m2.c.resource_path_id))
-        sel = select([tbl_ac.c.permit],
-                     and_(tbl_p1.c.resource_id == resource_id,
-                          tbl_ac.c.action_id   == action_id,
-                          tbl_p4.c.resource_id == actor_id),
-                     order_by   = [desc(tbl_p2.c.depth), desc(tbl_p3.c.depth)],
+        tbl = tbl.outerjoin(tbl_p4, sa.or_(tbl_p4.c.id == tbl_p3.c.id,
+                                           tbl_p4.c.id == tbl_m2.c.resource_path_id))
+        sel = sa.select([tbl_ac.c.permit],
+                     sa.and_(tbl_p1.c.resource_id == resource_id,
+                             tbl_ac.c.action_id   == action_id,
+                             tbl_p4.c.resource_id == actor_id),
+                     order_by   = [sa.desc(tbl_p2.c.depth), sa.desc(tbl_p3.c.depth)],
                      use_labels = True,
                      from_obj   = [tbl])
 
@@ -850,39 +850,39 @@ class DBReader(object):
         tbl = tbl.outerjoin(tbl_a1, tbl_a1.c.id == tbl_ac.c.action_id)
 
         if kwargs.has_key('action_id'):
-            where = and_(where, tbl_ac.c.action_id == kwargs['action_id'])
+            where = sa.and_(where, tbl_ac.c.action_id == kwargs['action_id'])
 
         if kwargs.has_key('resource_id'):
-            where = and_(where, tbl_p1.c.resource_id == kwargs['resource_id'])
+            where = sa.and_(where, tbl_p1.c.resource_id == kwargs['resource_id'])
 
         if kwargs.has_key('permit'):
-            where = and_(where, tbl_ac.c.permit == kwargs['permit'])
+            where = sa.and_(where, tbl_ac.c.permit == kwargs['permit'])
 
         if kwargs.has_key('action_type'):
             types = kwargs.get('action_type')
             cond  = self._get_subtype_sql(tbl_a1.c.action_type, types)
-            where = and_(where, cond)
+            where = sa.and_(where, cond)
 
         if kwargs.has_key('resource_type'):
             tbl_r1 = self._table_map['resource'].alias('r1')
             tbl    = tbl.outerjoin(tbl_r1, tbl_r1.c.id == tbl_ac.c.resource_id)
             types  = kwargs.get('resource_type')
             cond   = self._get_subtype_sql(tbl_r1.c.resource_type, types)
-            where  = and_(where, cond)
+            where  = sa.and_(where, cond)
 
-        sel = select([tbl_ac.c.id,
-                      tbl_ac.c.actor_id,
-                      tbl_ac.c.resource_id,
-                      tbl_ac.c.permit,
-                      tbl_a1.c.id,
-                      tbl_a1.c.name,
-                      tbl_a1.c.handle],
-                     where,
-                     order_by   = [tbl_p3.c.path, tbl_p1.c.path],
-                     use_labels = True,
-                     limit      = limit,
-                     offset     = offset,
-                     from_obj   = [tbl])
+        sel = sa.select([tbl_ac.c.id,
+                         tbl_ac.c.actor_id,
+                         tbl_ac.c.resource_id,
+                         tbl_ac.c.permit,
+                         tbl_a1.c.id,
+                         tbl_a1.c.name,
+                         tbl_a1.c.handle],
+                        where,
+                        order_by   = [tbl_p3.c.path, tbl_p1.c.path],
+                        use_labels = True,
+                        limit      = limit,
+                        offset     = offset,
+                        from_obj   = [tbl])
 
         # Collect all permissions.
         result   = sel.execute()
@@ -918,7 +918,7 @@ class DBReader(object):
         tbl_p1 = self._table_map['resource_path'].alias('p1')
         if kwargs.has_key('actor_id'):
             actor_id = kwargs['actor_id']
-            where    = and_(where, tbl_p1.c.resource_id == actor_id)
+            where    = sa.and_(where, tbl_p1.c.resource_id == actor_id)
 
         # All paths that are a parent of the path.
         tbl_m1 = self._table_map['path_ancestor_map'].alias('m1')
@@ -927,14 +927,14 @@ class DBReader(object):
         # Still all paths that are a child of the direct match, and also the
         # direct match itself.
         tbl_p2 = self._table_map['resource_path'].alias('p2')
-        tbl = tbl.outerjoin(tbl_p2, or_(tbl_p2.c.id == tbl_p1.c.id,
-                                        tbl_p2.c.id == tbl_m1.c.ancestor_path_id))
+        tbl = tbl.outerjoin(tbl_p2, sa.or_(tbl_p2.c.id == tbl_p1.c.id,
+                                           tbl_p2.c.id == tbl_m1.c.ancestor_path_id))
 
         # All ACLs that reference the given actor or any of its parents.
         tbl_ac1 = self._table_map['acl'].alias('ac1')
         tbl = tbl.outerjoin(tbl_ac1, tbl_p2.c.resource_id == tbl_ac1.c.actor_id)
         if kwargs.has_key('permit'):
-            where  = and_(where, tbl_ac1.c.permit == kwargs['permit'])
+            where  = sa.and_(where, tbl_ac1.c.permit == kwargs['permit'])
 
         # Path of the resource that is referenced by the ACL.
         tbl_p3 = self._table_map['resource_path'].alias('p3')
@@ -946,21 +946,21 @@ class DBReader(object):
 
         # Paths of all children of the resource, and also the resource itself.
         tbl_p4 = self._table_map['resource_path'].alias('p4')
-        tbl = tbl.outerjoin(tbl_p4, or_(tbl_p4.c.id == tbl_p3.c.id,
-                                        tbl_p4.c.id == tbl_m2.c.resource_path_id))
+        tbl = tbl.outerjoin(tbl_p4, sa.or_(tbl_p4.c.id == tbl_p3.c.id,
+                                           tbl_p4.c.id == tbl_m2.c.resource_path_id))
         if kwargs.has_key('resource_id'):
-            where = and_(where, tbl_p4.c.resource_id == kwargs['resource_id'])
+            where = sa.and_(where, tbl_p4.c.resource_id == kwargs['resource_id'])
 
         # Informative only.
         tbl_a1 = self._table_map['action'].alias('a1')
         tbl = tbl.outerjoin(tbl_a1, tbl_a1.c.id == tbl_ac1.c.action_id)
         if kwargs.has_key('action_id'):
             action_id = kwargs['action_id']
-            where     = and_(where, tbl_a1.c.id == action_id)
+            where     = sa.and_(where, tbl_a1.c.id == action_id)
         if kwargs.has_key('action_type'):
             types = kwargs.get('action_type')
             cond  = self._get_subtype_sql(tbl_a1.c.action_type, types)
-            where = and_(where, cond)
+            where = sa.and_(where, cond)
 
         # Informative only.
         if kwargs.has_key('resource_type'):
@@ -968,7 +968,7 @@ class DBReader(object):
             tbl    = tbl.outerjoin(tbl_r1, tbl_r1.c.id == tbl_p4.c.resource_id)
             types  = kwargs.get('resource_type')
             cond   = self._get_subtype_sql(tbl_r1.c.resource_type, types)
-            where  = and_(where, cond)
+            where  = sa.and_(where, cond)
 
         # Informative only.
         if kwargs.has_key('actor_type'):
@@ -976,12 +976,12 @@ class DBReader(object):
             tbl    = tbl.outerjoin(tbl_r2, tbl_r2.c.id == tbl_p2.c.resource_id)
             types  = kwargs.get('resource_type')
             cond   = self._get_subtype_sql(tbl_r2.c.resource_type, types)
-            where  = and_(where, cond)
+            where  = sa.and_(where, cond)
 
         # Get all ACLs that control the same resource/action as the ACL above.
         tbl_ac2 = self._table_map['acl'].alias('ac2')
-        tbl = tbl.outerjoin(tbl_ac2, and_(tbl_ac1.c.action_id   == tbl_ac2.c.action_id,
-                                          tbl_ac1.c.resource_id == tbl_ac2.c.resource_id))
+        tbl = tbl.outerjoin(tbl_ac2, sa.and_(tbl_ac1.c.action_id   == tbl_ac2.c.action_id,
+                                             tbl_ac1.c.resource_id == tbl_ac2.c.resource_id))
         
         # Get a list of all the actors that perform the action.
         tbl_p5 = self._table_map['resource_path'].alias('p5')
@@ -993,11 +993,11 @@ class DBReader(object):
         
         # Get the list of all the children.
         tbl_p6 = self._table_map['resource_path'].alias('p6')
-        tbl = tbl.outerjoin(tbl_p6, or_(tbl_m3.c.resource_path_id == tbl_p6.c.id,
-                                        tbl_p5.c.id               == tbl_p6.c.id))
+        tbl = tbl.outerjoin(tbl_p6, sa.or_(tbl_m3.c.resource_path_id == tbl_p6.c.id,
+                                           tbl_p5.c.id               == tbl_p6.c.id))
         if kwargs.has_key('actor_id'):
             actor_id = kwargs['actor_id']
-            where = and_(where, tbl_p6.c.resource_id == actor_id)
+            where    = sa.and_(where, tbl_p6.c.resource_id == actor_id)
 
         return tbl, where, tbl_ac1, tbl_a1, tbl_p1, tbl_p2, tbl_p4, tbl_p5
 
@@ -1040,22 +1040,22 @@ class DBReader(object):
         group_by = [tbl_ac1.c.actor_id,
                     tbl_ac1.c.action_id,
                     tbl_ac1.c.resource_id]
-        sel = select([tbl_ac1.c.id,
-                      tbl_ac1.c.actor_id,
-                      tbl_ac1.c.resource_id,
-                      tbl_ac1.c.permit,
-                      tbl_a1,
-                      tbl_p1.c.resource_id,
-                      tbl_p2.c.depth.label('p2_depth'),
-                      func.max(tbl_p5.c.depth).label('p5_max_depth')],
-                     where,
-                     from_obj   = [tbl],
-                     use_labels = True,
-                     limit      = limit,
-                     offset     = offset,
-                     group_by   = group_by,
-                     having     = 'p2_depth = p5_max_depth',
-                     order_by   = [tbl_p2.c.path, tbl_p4.c.path])
+        sel = sa.select([tbl_ac1.c.id,
+                         tbl_ac1.c.actor_id,
+                         tbl_ac1.c.resource_id,
+                         tbl_ac1.c.permit,
+                         tbl_a1,
+                         tbl_p1.c.resource_id,
+                         tbl_p2.c.depth.label('p2_depth'),
+                         sa.func.max(tbl_p5.c.depth).label('p5_max_depth')],
+                        where,
+                        from_obj   = [tbl],
+                        use_labels = True,
+                        limit      = limit,
+                        offset     = offset,
+                        group_by   = group_by,
+                        having     = 'p2_depth = p5_max_depth',
+                        order_by   = [tbl_p2.c.path, tbl_p4.c.path])
 
         # Collect all permissions.
         #print sel
@@ -1103,9 +1103,9 @@ class DBReader(object):
         group_by = [tbl_ac1.c.actor_id,
                     tbl_ac1.c.action_id,
                     tbl_ac1.c.resource_id]
-        sel = select([tbl_ac1.c.last_change.label('last_change'),
-                      tbl_p2.c.depth.label('p2_depth'),
-                      func.max(tbl_p5.c.depth).label('p5_max_depth')],
+        sel = sa.select([tbl_ac1.c.last_change.label('last_change'),
+                        tbl_p2.c.depth.label('p2_depth'),
+                        sa.func.max(tbl_p5.c.depth).label('p5_max_depth')],
                      where,
                      from_obj   = [tbl],
                      use_labels = True,
@@ -1113,8 +1113,8 @@ class DBReader(object):
                      having     = 'p2_depth = p5_max_depth',
                      order_by   = [tbl_p2.c.path, tbl_p4.c.path])
         sel = sel.alias('permission_changes')
-        sel = select([func.max(sel.c.last_change).label('last_change')])
-        sel = select([tbl_ac1.c.last_change])
+        sel = sa.select([sa.func.max(sel.c.last_change).label('last_change')])
+        sel = sa.select([tbl_ac1.c.last_change])
 
         result = sel.execute()
         row    = result.fetchone()
