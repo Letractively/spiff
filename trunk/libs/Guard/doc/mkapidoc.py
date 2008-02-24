@@ -12,10 +12,11 @@ files = ['../src/Guard/DBReader.py',
          '../src/Guard/Action.py',
          '../src/Guard/Resource.py',
          '../src/Guard/ResourceGroup.py']  # Order matters - can't resolve inheritance otherwise.
-classes = [os.path.splitext(file)[0] for file in files]
+classes = [os.path.splitext(os.path.basename(file))[0] for file in files]
 
 # Concatenate the content of all files into one file.
-os.makedirs(doc_dir)
+if not os.path.exists(doc_dir):
+    os.makedirs(doc_dir)
 remove_re = re.compile(r'^from (' + '|'.join(classes) + r') * import .*')
 fp_out    = open(doc_file, 'w')
 for file in files:
@@ -34,5 +35,3 @@ os.system('epydoc ' + ' '.join(['--html',
                                 '--inheritance=grouped',
                                 '-v',
                                 '-o %s' % doc_dir, doc_file]))
-
-os.remove(doc_file)
