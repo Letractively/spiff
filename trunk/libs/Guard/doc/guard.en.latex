@@ -1,11 +1,10 @@
 \input{guard.latex}   % Import common styles.
-\usepackage{german}   % German language, old orthography.
-\fancyhead[L]{Benutzerhandbuch}
-\fancyfoot[C]{Seite \thepage}
-\title{\productname\ Version \productversion\\
-Benutzerhandbuch\\
+\fancyhead[L]{User Documentation}
+\fancyfoot[C]{Page \thepage}
+\title{\productname\ Release \productversion\\
+User Documentation\\
 \vspace{5 mm}
-\large Generische Access-Lists für Python}
+\large Generic Access Lists for Python}
 \author{Samuel Abels}
 
 \begin{document}
@@ -13,13 +12,13 @@ Benutzerhandbuch\\
 \tableofcontents
 
 \newpage
-\section{Einführung}
-\subsection{Wozu \productname?}
+\section{Introduction}
+\subsection{Why \productname?}
 
-\product ist ein Library zur Implementation von User- und Gruppenkonzepten 
-in Python-Applikationen. Es stellt Access-Listen zur Rechtevergabe 
-bereit und verwaltet User und zur Verfügung stehende Resourcen.
-\product wurde mit dem Ziel entwickelt, folgende Anforderungen zu erfüllen:
+\product is a library for implementing user and group concepts in Python
+applications. It provides access lists for defining permissions and manages 
+users and available resources.
+\product was developed with the following objectives in mind:
 
 \begin{itemize}
 \item Es werden {\bf frei definierbare Rechteklassen} unterstützt, d.h. es 
@@ -1226,3 +1225,4 @@ guard.deny (han,       repair,     mr)
 guard.grant(guests,    enter,      lounge)
 \end{lstlisting}
 \end{document}
+
