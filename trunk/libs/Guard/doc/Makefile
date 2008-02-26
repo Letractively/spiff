@@ -19,7 +19,7 @@ apidocs:
 
 clean:
 	rm -Rf api handbook.*
-	rm -f *.aux *.log *.toc *.pdf
+	rm -f *.aux *.log *.out *.pdf *.toc
 
 publish: handbook apidocs
 	scp -r handbook.* *.pdf api/* kd10243@goliath.speedpartner.de:/home/kd10243/spiff.debain.org/static/docs/spiff_guard/
