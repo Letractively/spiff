@@ -2,10 +2,14 @@ HANDBOOKS=guard.de.latex
 
 all: handbook apidocs
 
-handbook:
-	# Run twice, required to resolve references.
+pdf:
+	# Run each call of pdflatex twice, required to resolve references.
 	for FILE in $(HANDBOOKS); do \
 		pdflatex -halt-on-error $$FILE && pdflatex $$FILE; \
+	done
+
+handbook: pdf
+	for FILE in $(HANDBOOKS); do \
 		LOCALE=`echo $$FILE | sed 's/[^\.]*\.//; s/\..*//'`; \
 		latex2html -nonavigation -split 0 -html_version 4.0,unicode -mkdir -dir handbook.$$LOCALE $$FILE; \
 	done

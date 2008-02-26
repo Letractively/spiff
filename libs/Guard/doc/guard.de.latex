@@ -12,6 +12,16 @@
 \newcommand{\productversion}{2.0 }
 \newcommand{\product}{{\it \productname} }
 
+% Make references clickable.
+\usepackage[colorlinks,hyperindex]{hyperref}
+\hypersetup{%
+  pdftitle    = {\productname\ Version \productversion},
+  pdfkeywords = {spiff guard},
+  pdfauthor   = {The Law Offices of Anita C. Johnson},
+  colorlinks  = true,
+  %linkcolor   = blue,
+}
+
 % Initialize headers and footers.
 \pagestyle{fancy}            % Use fancyhdr to render page headers/footers.
 \fancyhf{}                   % Clear out old header/footer definition.
