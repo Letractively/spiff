@@ -1,0 +1,82 @@
+\documentclass[a4paper,oneside,10pt]{scrartcl}
+\usepackage[left=1cm,right=1cm,top=1.0cm,bottom=1.5cm,includeheadfoot]{geometry}
+\usepackage[utf8]{inputenc}  % Replace "utf8" by "latin1" if your editor sucks.
+\usepackage{fancyhdr}        % Better header and footer support.
+\usepackage{titlesec}        % Alternative section titles.
+\usepackage{amssymb}         % Math support.
+\usepackage{amsmath}         % Math declarations.
+
+% Variables.
+\newcommand{\productname}{Spiff Guard}
+\newcommand{\productversion}{2.0 }
+\newcommand{\product}{{\it \productname} }
+
+% Make references clickable.
+\usepackage[colorlinks,hyperindex]{hyperref}
+\hypersetup{%
+  pdftitle    = {\productname\ Version \productversion},
+  pdfkeywords = {spiff guard},
+  pdfauthor   = {Samuel Abels},
+  colorlinks  = true,
+  %linkcolor   = blue,
+}
+
+% Initialize headers and footers.
+\pagestyle{fancy}            % Use fancyhdr to render page headers/footers.
+\fancyhf{}                   % Clear out old header/footer definition.
+
+% Header
+\fancyhead[L]{User Documentation}
+\fancyhead[R]{\productname\ \productversion}
+\renewcommand{\headrulewidth}{0.5pt}
+
+% Footer
+\fancyfoot[C]{Page \thepage}
+\renewcommand{\footrulewidth}{0.5pt}
+
+% Enumerate using letters.
+\renewcommand{\labelenumi}{\alph{enumi})}
+
+% Set source code options.
+\usepackage{listings}
+\lstset{language=python}
+\lstset{commentstyle=\textit}
+\lstset{showstringspaces=false}
+\lstset{aboveskip=.1in,belowskip=.1in,xleftmargin=2em,basewidth=5pt}
+
+% Do not indent paragraphs.
+\parindent=0em
+
+% Preformatted, indented text.
+\usepackage{verbatim}
+\makeatletter
+\newenvironment{indentverb}
+  {\def\verbatim@processline{%
+  \hspace*{2em}\the\verbatim@line\par}%
+  \verbatim}
+  {\endverbatim}
+\makeatother
+
+% Title
+\title{\productname\ Release \productversion\\
+User Documentation\\
+\vspace{5 mm}
+\large Generic Access Lists for Python}
+
+% Hint boxes.
+\usepackage{color}
+\definecolor{nb}{gray}{.90}
+\newcommand{\hint}[1]{
+  \begin{center}
+  \colorbox{nb}{
+    \begin{tabular}{ll}
+      \Large ! &
+      \begin{minipage}{.92\linewidth}{
+        \vspace{2mm}
+        \sf #1
+        \vspace{2mm}
+      }\end{minipage}
+    \end{tabular}
+  }
+  \end{center}
+}
