@@ -75,3 +75,11 @@ class SpiffPackage(Package):
                                       self._mkapikey())
 
         return True
+
+
+    def render(self):
+        instance = self.load()
+        instance.on_render_request()
+        output = self._parent.package_api.get_output()
+        self._parent.package_api.clear_output()
+        return output

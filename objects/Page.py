@@ -50,10 +50,7 @@ class Page(ResourceGroup):
             if output is not None:
                 return output
 
-        extension = package.load()
-        extension.on_render_request()
-        output = api.get_output()
-        api.clear_output()
+        output = package.render()
         if package.get_attribute('cacheable') == True:
             api.get_cache().add(descriptor, output)
         else:
