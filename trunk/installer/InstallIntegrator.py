@@ -12,9 +12,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-from Task       import Task
-from Integrator import PackageManager, Api
-from sqlalchemy import *
+from Task         import Task
+from Integrator   import PackageManager, Api
+from SpiffPackage import SpiffPackage
+from sqlalchemy   import *
 
 class InstallIntegrator(Task):
     def __init__(self):
@@ -24,7 +25,7 @@ class InstallIntegrator(Task):
     def install(self, environment):
         guard = environment.get_attribute('guard_db')
         assert guard is not None
-        integrator = PackageManager(guard, Api())
+        integrator = PackageManager(guard, Api(), package = SpiffPackage)
         integrator.install()
         environment.set_attribute('integrator_db', integrator)
         return Task.success
