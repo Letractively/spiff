@@ -1,37 +1,35 @@
-* PageEditor: Ask before deleting a page.
+* Move the package testing code out of pkg.py into functions/package.py.
+* Make testing work for already installed packages.
+* Move the extension load mechanism out of Spiff Integrator and into 
+a new functions/package.py. This also requires getting rid of 
+PackageManager.get_package_from_instance().
+* Improve the extension API.
+* Make the layout table styleable (and style it).
 
-* Core: Make the layout table styleable (and style it).
+PageEditor
+----------
+* Ask before deleting a page.
+* Add a way to initialize the canvas using a layout language.
+* Add support for restoring the layout.
+* Make the list of available extensions more pretty and use an icon.
 
-* PageEditor: Add a way to initialize the canvas using a layout language.
-
-* PageEditor: Add support for restoring the layout.
-
-* Extensions: Add a width recommendation attribute to the XML.
-
-* Extensions: Add icon file attribute to the XML.
-
-* PageEditor: Make the list of available extensions more pretty and use an
-  icon.
-
+Extensions
+----------
+* Add a width recommendation attribute to the XML.
+* Add an icon file attribute to the XML.
 * Create an admin GUI for installing extensions.
+* Implement a Menu extension.
+* Create a NavigationBar ("breadcrumbs") extension.
+* Implement a RecentChanges extension.
+* Implement a MenuBar extension.
 
-* User Manager: Test better whether the permission escalation prevention
-  works.
+User Manager
+------------
+* Test better whether the permission escalation prevention works.
 
-* WikiPage: Make it easier for other plugins to use the wiki. For example,
+WikiPage
+--------
+* Make it easier for other plugins to use the wiki. For example,
   the items in the Guestbook plugin should be displayed using versioned Wiki
   markup, with features like embedded images coming for free. This is
   currently hard to do and requires a lot of code duplication.
-
-* Implement a Menu extension.
-
-* Create a NavigationBar ("breadcrumbs") extension.
-
-* Implement a RecentChanges extension.
-
-* Implement a MenuBar extension.
-
-
-Long Term
-----------
-* Integrator/Extensions: Get the signal permission checks right.
