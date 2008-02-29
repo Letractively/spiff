@@ -40,11 +40,10 @@ class PackageManager(object):
         """
         assert guard       is not None
         assert package_api is not None
-        self.package_dir     = None
-        self.package_api     = package_api
-        self.package_cls     = kwargs.get('package', Package)
-        self.package_db      = PackageDB(guard, self.package_cls)
-        self.__package_cache = {}
+        self.package_dir = None
+        self.package_api = package_api
+        self.package_cls = kwargs.get('package', Package)
+        self.package_db  = PackageDB(guard, self.package_cls)
         package_api._activate(self)
 
 
@@ -121,10 +120,6 @@ class PackageManager(object):
         """
         package._set_filename(package.get_module_dir())
         package._set_parent(self)
-
-
-    def _load_notify(self, package, module):
-        self.__package_cache[module] = package
 
 
     def install(self):
@@ -355,6 +350,23 @@ class PackageManager(object):
         return package
 
 
+    def get_package_from_id(self, id):
+        """
+        Returns the package with the given id.
+
+        @type  id: int
+        @param id: The id of the package as returned by get_id().
+        @rtype:  Package
+        @return: The package, or None if none was found.
+        """
+        assert id is not None
+        package = self.package_db.get_package_from_id(id)
+        if not package:
+            return None
+        self.__init_package(package)
+        return package
+
+
     def get_package_from_name(self, name):
         """
         Returns the best version of the package with the given name. If
@@ -371,16 +383,3 @@ class PackageManager(object):
             return None
         self.__init_package(package)
         return package
-
-
-    def get_package_from_instance(self, instance):
-        """
-        Given an instance of the loaded package, this function returns the
-        corresponding package.
-
-        @type  instance: object
-        @param instance: The instance of the package.
-        @rtype:  Package
-        @return: The corresponding package if it exists, None otherwise.
-        """
-        return self.__package_cache.get(instance)

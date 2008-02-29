@@ -37,16 +37,19 @@ class Page(ResourceGroup):
 
 
     def __replace_extension_descriptor(self, descriptor, api):
-        output = api.get_cache().get(descriptor)
-        if output is not None:
-            return output
-
+        # Retrieve the extension, but do not yet load it.
         integrator = api.get_integrator()
         package    = integrator.get_package_from_descriptor(descriptor)
         if package is None:
             output = "Whoops... extension %s not found!" % repr(descriptor)
             self.__non_cacheable_found = True
             return output
+
+        if package.check_cache():
+            output = api.get_cache().get(descriptor)
+            if output is not None:
+                return output
+
         extension = package.load()
         extension.on_render_request()
         output = api.get_output()

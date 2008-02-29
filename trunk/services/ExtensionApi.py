@@ -48,6 +48,11 @@ class ExtensionApi(Api):
         return caller
 
 
+    def __get_package_from_key(self, key):
+        assert key is not None
+        return self._manager.get_package_from_id(key)
+
+
     def get_data_dir(self):
         return os.path.join(os.path.dirname(__file__), '..', 'data')
 
@@ -112,10 +117,8 @@ class ExtensionApi(Api):
         return self.__cache
 
 
-    def flush_cache(self, **kwargs):
-        extension = self.__get_caller()
-        assert extension is not None
-        package = self._manager.get_package_from_instance(extension)
+    def flush_cache(self, key, **kwargs):
+        package = self.__get_package_from_key(key)
         assert package is not None
         self.__cache.flush(package.get_handle(), **kwargs)
 

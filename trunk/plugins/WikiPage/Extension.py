@@ -19,9 +19,16 @@ from cgi    import escape
 from string import split
 from genshi import Markup
 
+def check_cache(api, api_key):
+    if api.get_post_data('save') is not None:
+        api.flush_cache(api_key)
+        return False
+    return True
+
 class Extension:
-    def __init__(self, api):
+    def __init__(self, api, api_key):
         self.api               = api
+        self.api_key           = api_key
         self.i18n              = api.get_i18n()
         self.db                = api.get_db()
         self.page              = api.get_session().get_requested_page()
@@ -246,7 +253,7 @@ class Extension:
             return (None, [msg])
 
         # FIXME: We need more fine-grained control over what is and what isn't outdated.
-        self.api.flush_cache()
+        self.api.flush_cache(self.api_key)
         return (item, [])
 
 
@@ -355,12 +362,6 @@ class Extension:
 
         # Show the editor.
         self.api.render('edit.tmpl', **tmpl_args)
-
-
-    def on_spiff_page_open(self, args):
-        save = self.api.get_post_data('save')
-        if save is not None:
-            self.api.flush_cache()
 
 
     def on_render_request(self):

@@ -1,5 +1,3 @@
-* Move PackageManager.get_package_from_instance() out of Integrator, and make
-the parent notification obsolete.
 * Improve the extension API.
 * Make the layout table styleable (and style it).
 

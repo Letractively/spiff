@@ -17,7 +17,8 @@ from Integrator import Package
 class SpiffPackage(Package):
     def __init__(self, *args, **kwargs):
         Package.__init__(self, *args, **kwargs)
-        self.__module = None
+        self.__module   = None
+        self.__instance = None
 
 
     def test(self):
@@ -38,6 +39,10 @@ class SpiffPackage(Package):
         return True
 
 
+    def _mkapikey(self):
+        return self.get_id() #FIXME: There are probably better keys...
+
+
     def load(self):
         """
         Imports the package, creates an instance, and returns a reference
@@ -48,12 +53,25 @@ class SpiffPackage(Package):
         @return: The instance of package.
         """
         assert self._parent is not None
-        if self.__module is not None:
-            return self.__module
+        if self.__instance is not None:
+            return self.__instance
+        if self.__module is None:
+            self.__module = __import__(self.get_module_dir())
 
-        module   = __import__(self.get_module_dir())
-        instance = module.Extension(self._parent.package_api)
+        self.__instance = self.__module.Extension(self._parent.package_api,
+                                                  self._mkapikey())
+        return self.__instance
 
-        self.__module = instance
-        self._parent._load_notify(self, instance)
-        return self.__module
+
+    def check_cache(self):
+        if self.get_attribute('cacheable') == False:
+            return False
+
+        modname = self.get_module_dir() + '.Extension'
+        module  = __import__(modname, globals(), locals(), ['check_cache'])
+
+        if 'check_cache' in dir(module):
+            return module.check_cache(self._parent.package_api,
+                                      self._mkapikey())
+
+        return True

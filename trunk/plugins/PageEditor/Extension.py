@@ -17,7 +17,7 @@ from LayoutParser import LayoutParser
 from Page         import Page
 
 class Extension:
-    def __init__(self, api):
+    def __init__(self, api, api_key):
         self.api        = api
         self.session    = api.get_session()
         self.i18n       = api.get_i18n()
