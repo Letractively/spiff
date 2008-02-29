@@ -1,8 +1,5 @@
-* Move the package testing code out of pkg.py into functions/package.py.
-* Make testing work for already installed packages.
-* Move the extension load mechanism out of Spiff Integrator and into 
-a new functions/package.py. This also requires getting rid of 
-PackageManager.get_package_from_instance().
+* Move PackageManager.get_package_from_instance() out of Integrator, and make
+the parent notification obsolete.
 * Improve the extension API.
 * Make the layout table styleable (and style it).
 

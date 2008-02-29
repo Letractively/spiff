@@ -14,7 +14,6 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import os, sys, re
 from genshi.input import XML
-from Package      import Package
 
 whitespace = re.compile(r'\s+')
 
@@ -23,14 +22,14 @@ class Parser(object):
         pass
 
 
-    def parse_file(self, filename):
+    def parse_file(self, filename, package_cls):
         infile = open(filename, 'r')
         xml    = infile.read()
         infile.close()
-        return self.parse_string(xml)
+        return self.parse_string(xml, package_cls)
 
 
-    def parse_string(self, xml):
+    def parse_string(self, xml, package_cls):
         assert xml is not None
         xml = XML(xml)
 
@@ -39,7 +38,7 @@ class Parser(object):
         name    = str(xml.select('package/name/').select('text()')).strip()
         release = str(xml.select('package/release/text()')).strip()
         descr   = str(xml.select('package/description[@lang=""]/text()'))
-        package = Package(name, handle, release)
+        package = package_cls(name, handle, release)
         package.set_description(whitespace.sub(' ', descr.strip()))
 
         # Author information.

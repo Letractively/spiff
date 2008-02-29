@@ -36,6 +36,7 @@ from PageDB          import PageDB
 from UserDB          import UserDB
 from CacheDB         import CacheDB
 from Session         import Session
+from SpiffPackage    import SpiffPackage
 
 __version__ = '0.0.1'
 bench       = {'start': time.clock()}
@@ -232,15 +233,18 @@ def run():
             return
     bench['cache_check'] = time.clock() - start
 
-    # Set up the plugin manager (Integrator).
+    # Set up the plugin manager (Integrator). Note that the constructor
+    # of PackageManager also associates the api with a reference to the
+    # PackageManager instance.
     api = ExtensionApi(guard     = guard,
                        page_db   = page_db,
                        cache     = cache,
                        session   = session,
                        get_data  = get_data,
                        post_data = post_data)
-    pm = PackageManager(guard, api)
+    pm = PackageManager(guard, api, package = SpiffPackage)
     pm.set_package_dir(package_dir)
+
     bench['set_up'] = time.clock() - bench['start'] - bench['page_find']
     start           = time.clock()
 
