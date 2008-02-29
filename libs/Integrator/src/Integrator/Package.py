@@ -15,7 +15,6 @@
 import sys
 import os.path
 from Guard     import Resource
-from Callback  import Callback
 from functions import descriptor_parse, version_is_greater
 
 class Package(Resource):
@@ -259,66 +258,6 @@ class Package(Resource):
         return dependencies.keys()
 
 
-    def _add_signal(self, uri):
-        """
-        Define that this package sends the given signal.
-        """
-        if self.__signals is None:
-            self.__signals = [uri]
-            return
-        self.__signals.append(uri)
-
-
-    def _defer_signal_list(self):
-        self.__signals = None
-
-
-    def get_signal_list(self):
-        """
-        Returns the list of signals that this package may send.
-
-        @rtype:  list[string]
-        @return: A list of signal URIs.
-        """
-        if self.__signals is not None:
-            return self.__signals
-        assert self.__parent is not None
-        db             = self.__parent.package_db
-        id             = self.get_id()
-        self.__signals = db.get_signal_list_from_package_id(id)
-        return self.__signals
-
-
-    def _add_listener(self, uri):
-        """
-        Define that this package listens to the given signal.
-        """
-        if self.__listeners is None:
-            self.__listeners = [uri]
-            return
-        self.__listeners.append(uri)
-
-
-    def _defer_listener_list(self):
-        self.__listeners = None
-
-
-    def get_listener_list(self):
-        """
-        Returns the list of signals to which this package may respond.
-
-        @rtype:  list[string]
-        @return: A list of signal URIs.
-        """
-        if self.__listeners is not None:
-            return self.__listeners
-        assert self.__parent is not None
-        db               = self.__parent.package_db
-        id               = self.get_id()
-        self.__listeners = db.get_listener_list_from_package_id(id)
-        return self.__listeners
-
-
     def get_module_dir(self):
         """
         Returns the name of the directory in which this package is
@@ -345,12 +284,6 @@ class Package(Resource):
 
         module   = __import__(self.get_module_dir())
         instance = module.Extension(self.__parent.package_api)
-
-        for uri in self.get_listener_list():
-            func_name = 'on_' + uri.replace(':', '_').replace('/', '_')
-            func     = getattr(instance, func_name)
-            listener = Callback(func, uri)
-            self.__parent.event_bus.add_listener(listener)
 
         self.__module = instance
         self.__parent._load_notify(self, instance)

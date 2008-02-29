@@ -159,8 +159,4 @@ class Extension:
 
 
     def on_render_request(self):
-        self.api.emit('render_start')
-
         self.__page_editor_show()
-
-        self.api.emit('render_end')

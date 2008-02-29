@@ -54,16 +54,6 @@ class Parser(object):
         if str(xml.select('package/behavior/recursive')) != '':
             package.set_attribute('recursive', True)
 
-        # Signals sent by this package.
-        list = xml.select('package/behavior/signal/attribute::uri')
-        for item in list:
-            package._add_signal(item.strip())
-
-        # Signals retrieved by this package.
-        list = xml.select('package/behavior/listen/attribute::uri')
-        for item in list:
-            package._add_listener(item.strip())
-
         # Runtime dependencies.
         list = xml.select('package/depends/runtime/text()')
         for kind, data, pos in list:

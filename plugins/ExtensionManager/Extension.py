@@ -22,8 +22,4 @@ class Extension:
 
 
     def on_render_request(self):
-        self.api.emit('render_start')
-
         self.api.render('show.tmpl')
-
-        self.api.emit('render_end')

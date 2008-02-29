@@ -14,8 +14,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 class Extension:
     def __init__(self, api):
-        api.emit('render_start')
-        api.emit('render_end')
+        pass
     
     def on_spiff_render_start(self, **args):
         pass

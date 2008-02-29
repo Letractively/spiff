@@ -364,7 +364,6 @@ class Extension:
 
 
     def on_render_request(self):
-        self.api.emit('render_start')
         errors = []
         self.__init_wiki()
 
@@ -396,5 +395,3 @@ class Extension:
             self.__show_editor(item, alias, may_edit)
         else:
             self.__show_page(item, may_edit)
-
-        self.api.emit('render_end')

@@ -16,7 +16,6 @@ import sys
 import os.path
 from sqlalchemy      import *
 from Package         import Package
-from Callback        import Callback
 from Guard.functions import make_handle_from_string
 from functions       import *
 
@@ -78,26 +77,6 @@ class PackageDB(object):
                                  [guard_pfx + 'resource.id'],
                                  ondelete = 'CASCADE'),
             ForeignKeyConstraint(['dependency_id'],
-                                 [guard_pfx + 'resource.id'],
-                                 ondelete = 'CASCADE'),
-            useexisting = True,
-            mysql_engine='INNODB'
-        ))
-        self.__add_table(Table(pfx + 'package_signal', metadata,
-            Column('id',         Integer,     primary_key = True),
-            Column('package_id', Integer,     index = True),
-            Column('uri',        String(255), index = True),
-            ForeignKeyConstraint(['package_id'],
-                                 [guard_pfx + 'resource.id'],
-                                 ondelete = 'CASCADE'),
-            useexisting = True,
-            mysql_engine='INNODB'
-        ))
-        self.__add_table(Table(pfx + 'package_listener', metadata,
-            Column('id',         Integer,     primary_key = True),
-            Column('package_id', Integer,     index = True),
-            Column('uri',        String(255), index = True),
-            ForeignKeyConstraint(['package_id'],
                                  [guard_pfx + 'resource.id'],
                                  ondelete = 'CASCADE'),
             useexisting = True,
@@ -247,48 +226,6 @@ class PackageDB(object):
             package._add_dependency(dependency)
         return True
 
-    
-    def __link_package_id_to_signal(self, package_id, uri):
-        """
-        Associates the given package with the given signal.
-
-        @type  package_id: int
-        @param package_id: The id of the package to be associated.
-        @type  uri: URI of a signal.
-        @param uri: The signal to be associated.
-        @rtype:  int
-        @return: The id of the signal, or <0 if an error occured.
-        """
-        assert package_id >= 0
-        assert uri is not None
-        
-        table  = self._table_map['package_signal']
-        query  = table.insert()
-        result = query.execute(package_id = package_id, uri = uri)
-        assert result is not None
-        return result.last_inserted_ids()[0]
-
-
-    def __link_package_id_to_listener(self, package_id, uri):
-        """
-        Associates the given package with the given listener.
-
-        @type  package_id: int
-        @param package_id: The id of the package to be associated.
-        @type  uri: URI of a listener.
-        @param uri: The listener to be associated.
-        @rtype:  int
-        @return: The id of the listener, or <0 if an error occured.
-        """
-        assert package_id >= 0
-        assert uri is not None
-        
-        table  = self._table_map['package_listener']
-        query  = table.insert()
-        result = query.execute(package_id = package_id, uri = uri)
-        assert result is not None
-        return result.last_inserted_ids()[0]
-
 
     def __get_package_id_list_rdepends(self, package):
         """
@@ -358,14 +295,6 @@ class PackageDB(object):
         # Insert the package into the ACL resource table.
         self._guard.add_resource(None, package)
         
-        # Insert the list of signals that this extension may send.
-        for uri in package.get_signal_list():
-            self.__link_package_id_to_signal(package.get_id(), uri)
-
-        # Insert the list of events to which this extension may respond.
-        for uri in package.get_listener_list():
-            self.__link_package_id_to_listener(package.get_id(), uri)
-
         # Create a link to all dependencies (direct dependencies and
         # indirect dependencies as well).
         for descriptor in package.get_dependency_list():
@@ -658,48 +587,3 @@ class PackageDB(object):
         @return: A list containing all versions of the requested package.
         """
         return self._guard.get_resources(name = name, type = Package)
-
-
-    def get_listener_list_from_package_id(self, package_id):
-        """
-        Returns the list of listeners that the package with the given
-        id has registered.
-
-        @type  package_id: integer
-        @param package_id: The id of the package.
-        @rtype:  list[string]
-        @return: A list of URIs.
-        """
-        assert package_id is not None
-        
-        table  = self._table_map['package_listener']
-        query  = select([table.c.uri],
-                        table.c.package_id == package_id,
-                        from_obj = [table])
-        result = query.execute()
-        assert result is not None
-
-        uri_list = []
-        for row in result:
-            uri_list.append(row[table.c.uri])
-        return uri_list
-
-
-    def get_listener_id_list_from_uri(self, uri):
-        """
-        Returns a list of all ids of packages that are subscribed to the
-        signal with the given URI.
-
-        @type  uri: URI of an event. % wildcard allowed.
-        @param uri: The event to look for.
-        @rtype:  list[int]
-        @return: A list containing all associated package ids, None on error.
-        """
-        assert uri is not None
-        
-        table  = self._table_map['package_listener']
-        query  = select([table.c.package_id],
-                        table.c.uri.like(uri),
-                        from_obj = [table])
-        result = query.execute()
-        return [row[table.c.package_id] for row in result]

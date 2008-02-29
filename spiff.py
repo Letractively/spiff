@@ -91,8 +91,9 @@ def get_footer():
                          txt     = gettext).render('text')
 
 
-def print_benchmark(api):
-    bench['total'] = time.clock() - bench['start']
+def print_benchmark(api = None):
+    tmpl_render_time = api and api.template_render_time or 0
+    bench['total']   = time.clock() - bench['start']
     times = [['total',
               'Total rendering time is %ss.' % bench.get('total', 0),
               False],
@@ -107,9 +108,6 @@ def print_benchmark(api):
               False],
              ['package_load',
               'Spent %ss loading packages.' % bench.get('package_load', 0),
-              False],
-             ['page_open_signal',
-              '"page_open" signal needed %ss.' % bench.get('page_open_signal', 0),
               False],
              ['permission_check',
               'Time spent checking permissions is %ss.' % bench.get('permission_check', 0),
@@ -127,7 +125,7 @@ def print_benchmark(api):
               'Time spent adding to cache is %ss.' % bench.get('cache_add', 0),
               False],
              ['template',
-              'Spent %ss rendering templates.' % api.template_render_time,
+              'Spent %ss rendering templates.' % tmpl_render_time,
               False]]
     for item in times:
         try:
@@ -188,19 +186,10 @@ def run():
     page               = page_db.get(page_handle)
     bench['page_find'] = time.clock() - start
 
-    # Set up the plugin manager (Integrator).
-    session = Session(guard, requested_page = page)
-    cache   = CacheDB(guard, session)
-    api     = ExtensionApi(guard     = guard,
-                           page_db   = page_db,
-                           cache     = cache,
-                           session   = session,
-                           get_data  = get_data,
-                           post_data = post_data)
-    pm = PackageManager(guard, api)
-    pm.set_package_dir(package_dir)
+    # Set up the session and the HTML cache.
+    session         = Session(guard, requested_page = page)
+    cache           = CacheDB(guard, session)
     bench['set_up'] = time.clock() - bench['start'] - bench['page_find']
-    start           = time.clock()
 
     # Can not open some pages by addressing them directly.
     if get_data.has_key('page') \
@@ -239,54 +228,58 @@ def run():
         bench['cache_check'] = time.clock() - start
         if output is not None:
             print output
-            print_benchmark(api)
+            print_benchmark()
             return
     bench['cache_check'] = time.clock() - start
+
+    # Set up the plugin manager (Integrator).
+    api = ExtensionApi(guard     = guard,
+                       page_db   = page_db,
+                       cache     = cache,
+                       session   = session,
+                       get_data  = get_data,
+                       post_data = post_data)
+    pm = PackageManager(guard, api)
+    pm.set_package_dir(package_dir)
+    bench['set_up'] = time.clock() - bench['start'] - bench['page_find']
+    start           = time.clock()
 
     # Ending up here the entire page was not cached.
     # Make sure that the caller has permission to retrieve this page.
     # If the caller currently has no permission, load the login
     # extension to give it the opportunity to perform the login.
     start = time.clock()
-    if page.get_attribute('private') and not session.may('view'):
-        login = page_db.get('admin/login')
-        for descriptor in login.get_extension_handle_list():
-            package = pm.get_package_from_descriptor(descriptor)
-            package.load()
-    bench['package_load'] = time.clock() - start
-
-    # Now that we may have redirected the user to another page, let the
-    # extension API know that.
-    session.set_requested_page(page)
-
-    # The login extension may catch the following signal and perform the login.
-    start = time.clock()
-    api.emit_sync('spiff:page_open')
-    bench['page_open_signal'] = time.clock() - start
-
-    # At this point the login was performed. Check the permission.
-    start = time.clock()
     if (page.get_attribute('private') and not session.may('view')) \
-      or get_data.has_key('login'):
+      or api.get_post_data('login') is not None \
+      or api.get_post_data('logout') is not None:
         page = page_db.get('admin/login')
         session.set_requested_page(page)
     bench['permission_check'] = time.clock() - start
 
-    # Render the layout.
-    start = time.clock()
-    output = get_headers(api)
-    bench['render_header'] = time.clock() - start
-    start = time.clock()
-    output += page.get_output(api)
+    # Render the layout. This invokes the plugins, which in turn may
+    # request some HTTP headers to be sent. So we need to fetch the 
+    # list of headers after that!
+    start  = time.clock()
+    output = page.get_output(api)
     bench['render_plugins'] = time.clock() - start
-    start = time.clock()
-    output += get_footer()
+
+    # Now that all plugins are completed we may retrieve a list of headers.
+    start   = time.clock()
+    headers = get_headers(api)
+    bench['render_header'] = time.clock() - start
+
+    # Get the footer, excluding benchmark information.
+    start  = time.clock()
+    footer = get_footer()
     bench['render_footer'] = time.clock() - start
 
-    start = time.clock()
+    # Cache the page (if it is cacheable).
+    start  = time.clock()
+    output = headers + output + footer
     if page.is_cacheable() and len(api.get_http_headers()) == 0:
         cache.add_page(output)
     bench['cache_add'] = time.clock() - start
 
+    # Yippie.
     print output
     print_benchmark(api)
