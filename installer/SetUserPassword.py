@@ -26,6 +26,7 @@ from User         import User
 from Session      import Session
 from PageDB       import PageDB
 from Integrator   import PackageManager
+from SpiffPackage import SpiffPackage
 
 class SetUserPassword(Task):
     def __init__(self, handle):
@@ -54,7 +55,9 @@ class SetUserPassword(Task):
                                      page_db   = page_db,
                                      get_data  = get_data,
                                      post_data = post_data)
-        self.integrator = PackageManager(self.guard, extension_api)
+        self.integrator = PackageManager(self.guard,
+                                         extension_api,
+                                         package = SpiffPackage)
         self.integrator.set_package_dir('../data/repo')
 
 
