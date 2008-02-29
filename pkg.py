@@ -3,7 +3,7 @@ sys.path.insert(0, 'libs')
 sys.path.insert(0, 'libs/Guard/src/')
 sys.path.insert(0, 'libs/Integrator/src/')
 sys.path.insert(0, 'services')
-import MySQLdb, Guard, spiff
+import MySQLdb, Guard, spiff, shutil
 from sqlalchemy   import *
 from Integrator   import PackageManager, \
                          Package, \
@@ -14,6 +14,9 @@ from ExtensionApi import ExtensionApi
 from FooLib       import OptionParser
 from PageDB       import PageDB
 from Session      import Session
+from traceback    import print_exc
+from tempfile     import mkdtemp
+
 
 actions = ('check_dependencies',
            'create',
@@ -204,8 +207,49 @@ def list(pm, descriptor = None):
 
 
 def test(pm, package):
-    #FIXME
-    print "!! Test functionality is not yet implemented..."
+    print "Testing %s..." % package.get_name()
+    tmpdir = mkdtemp('')
+    pm.set_package_dir(tmpdir)
+    print "Installing in %s" % tmpdir
+    try:
+        install(pm, package)
+    except:
+        print 'Error: Installation failed.'
+        shutil.rmtree(tmpdir)
+        raise
+
+    # Ending up here, the package was properly installed in the target
+    # directory. Load it.
+    try:
+        instance = package.load()
+    except Exception, e:
+        print 'Error: Unable to load package (%s).' % package.get_name()
+        shutil.rmtree(tmpdir)
+        if package.get_id() is not None:
+            pm.remove_package(package)
+        print_exc()
+        return False
+
+    # Check whether the package has an install() method.
+    install_func = None
+    try:
+        install_func = getattr(instance, 'install')
+    except:
+        pass
+    if install_func is not None:
+        print "Package has an install() method."
+
+    # Call the install method.
+    try:
+        pass
+        # some day we may be smart enough to call install_func() here.
+    except Exception, e:
+        print 'Error in install_func() of %s.' % package.get_name()
+        shutil.rmtree(install_dir)
+        pm.remove_package_from_id(id)
+        print_exc()
+        return False
+
     return True
 
 

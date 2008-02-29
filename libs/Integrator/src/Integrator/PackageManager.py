@@ -253,34 +253,6 @@ class PackageManager(object):
             self.remove_package_from_id(id)
             raise IOError('Unable to copy: %s' % e)
 
-        # Ending up here, the package was properly installed in the target
-        # directory. Load it.
-        try:
-            instance = package.load()
-        except:
-            print 'Error: Unable to load package (%s).' % package.get_name()
-            shutil.rmtree(new_install_dir)
-            self.remove_package_from_id(id)
-            raise
-
-        # Check whether the package has an install() method.
-        install_func = None
-        try:
-            install_func = getattr(instance, 'install')
-        except:
-            pass
-        if install_func is None:
-            return package
-
-        # Call the install method.
-        try:
-            install_func()
-        except:
-            print 'Error in install_func() of %s.' % package.get_name()
-            shutil.rmtree(install_dir)
-            self.remove_package_from_id(id)
-            raise
-
 
     def remove_package(self, package):
         """
