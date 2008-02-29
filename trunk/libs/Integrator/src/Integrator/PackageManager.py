@@ -15,8 +15,6 @@
 from PackageDB import PackageDB
 from Package   import Package
 from tempfile  import mkdtemp
-from EventBus  import EventBus
-from Callback  import Callback
 from Parser    import Parser
 from Exception import IntegratorException, UnmetDependency
 import os
@@ -45,7 +43,6 @@ class PackageManager(object):
         self.package_db      = PackageDB(guard)
         self.package_dir     = None
         self.package_api     = package_api
-        self.event_bus       = EventBus()
         self.__package_cache = {}
         package_api._activate(self)
 
@@ -106,8 +103,6 @@ class PackageManager(object):
         """
         package._set_filename(package.get_module_dir())
         package._set_parent(self)
-        package._defer_signal_list()
-        package._defer_listener_list()
 
 
     def _load_notify(self, package, module):
@@ -382,25 +377,3 @@ class PackageManager(object):
         @return: The corresponding package if it exists, None otherwise.
         """
         return self.__package_cache.get(instance)
-
-
-    def get_listeners(self, uri):
-        """
-        Returns a list of all packages that are subscribed to the signal
-        with the given URI.
-
-        @type  uri: string
-        @param uri: The URI of the signal.
-        @rtype:  list[Package]
-        @return: The list of packages.
-        """
-        # Retrieve a list of all package ids that are listeners.
-        id_list = self.package_db.get_listener_id_list_from_uri(uri)
-        if len(id_list) == 0:
-            return []
-
-        # Retrieve the corresponding packages.
-        list = self.package_db.get_package_list(id = id_list)
-        for package in list:
-            self.__init_package(package)
-        return list

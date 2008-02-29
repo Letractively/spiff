@@ -25,8 +25,7 @@ class Api(object):
 
     def _activate(self, manager):
         assert manager is not None
-        self._manager   = manager
-        self._event_bus = manager.event_bus
+        self._manager = manager
         self._on_api_activate()
 
 
@@ -35,39 +34,3 @@ class Api(object):
         May be overwritten.
         """
         pass
-
-
-    def __emit(self, uri, args, synchronous):
-        assert is_valid_uri(uri)
-        #FIXME: Check signal permissions!
-        subscribers = self._manager.get_listeners(uri)
-        for package in subscribers:
-            package.load()
-        if synchronous:
-            self._event_bus.emit_sync(uri, args)
-        else:
-            self._event_bus.emit(uri, args)
-
-
-    def emit(self, uri, args = None):
-        """
-        Send an asynchronous signal on the event bus.
-
-        @type  uri: string
-        @param uri: A unique identifier (name) for the signal.
-        @type  args: object
-        @param args: Passed on to subscribers of the signal.
-        """
-        return self.__emit(uri, args, False)
-
-
-    def emit_sync(self, uri, args = None):
-        """
-        Send a synchronous signal on the event bus.
-
-        @type  uri: string
-        @param uri: A unique identifier (name) for the signal.
-        @type  args: object
-        @param args: Passed on to subscribers of the signal.
-        """
-        return self.__emit(uri, args, True)

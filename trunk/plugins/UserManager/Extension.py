@@ -416,7 +416,6 @@ class Extension:
 
 
     def on_render_request(self):
-        self.api.emit('render_start')
         i18n = self.i18n
 
         # Find out which item was requested.
@@ -484,5 +483,3 @@ class Extension:
             self.__show_group(resource, path, errors)
         else:
             self.__show_user(resource, path, errors)
-
-        self.api.emit('render_end')

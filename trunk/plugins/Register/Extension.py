@@ -121,13 +121,10 @@ class Extension:
 
 
     def on_render_request(self):
-        self.__api.emit('render_start')
-
         # If the user is already logged in do nothing.
         user = self.__session.get_user()
         if user is not None:
             self.__api.render('complete.tmpl', user = user)
-            self.__api.emit('render_end')
             return
 
         # If the link in the confirmation email was clicked, try
@@ -135,7 +132,6 @@ class Extension:
         confirm = self.__api.get_get_data('confirm')
         if confirm:
             self.confirm()
-            self.__api.emit('render_end')
             return
 
         # If the registration form was submitted, attempt to create
@@ -143,9 +139,7 @@ class Extension:
         register = self.__api.get_post_data('register')
         if register:
             self.register()
-            self.__api.emit('render_end')
             return
 
         # Else just show the registration form.
         self.__api.render('register.tmpl')
-        self.__api.emit('render_end')

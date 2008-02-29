@@ -1,5 +1,4 @@
-from Parser    import Parser
-from functions import *
+from unquote import unquote
 
 import inspect
 __all__ = [name for name, obj in locals().items()
