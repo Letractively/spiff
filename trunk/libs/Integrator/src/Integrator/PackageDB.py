@@ -15,12 +15,11 @@
 import sys
 import os.path
 from sqlalchemy      import *
-from Package         import Package
 from Guard.functions import make_handle_from_string
 from functions       import *
 
 class PackageDB(object):
-    def __init__(self, guard):
+    def __init__(self, guard, package_cls):
         """
         Instantiates a new DB.
         
@@ -29,13 +28,14 @@ class PackageDB(object):
         @rtype:  DB
         @return: The new instance.
         """
-        self.db                  = guard.db
-        self._guard              = guard
-        self._table_prefix       = 'integrator_'
-        self._table_map          = {}
-        self._table_list         = []
+        self.db            = guard.db
+        self._guard        = guard
+        self._table_prefix = 'integrator_'
+        self._table_map    = {}
+        self._table_list   = []
+        self._package_cls  = package_cls
         self.__update_table_names()
-        self._guard.register_type(Package)
+        self._guard.register_type(package_cls)
 
 
     def __add_table(self, table):
@@ -148,7 +148,7 @@ class PackageDB(object):
         @rtype:  Boolean
         @return: True on success, False otherwise.
         """
-        self._guard.delete_resource_from_match(type = Package)
+        self._guard.delete_resource_from_match(type = self._package_cls)
         return True
 
 
@@ -444,7 +444,7 @@ class PackageDB(object):
         attribute = {'version': version}
         package   = self._guard.get_resource(handle    = handle,
                                              attribute = attribute,
-                                             type      = Package)
+                                             type      = self._package_cls)
         if package is None:
             return None
         self.__load_dependency_descriptor_list(package)
@@ -558,7 +558,7 @@ class PackageDB(object):
             return []
         packages = self._guard.get_resources(offset,
                                              limit,
-                                             type = Package,
+                                             type = self._package_cls,
                                              **kwargs)
         return packages
 
@@ -573,7 +573,8 @@ class PackageDB(object):
         @rtype:  list[Package]
         @return: A list containing all versions of the requested package.
         """
-        return self._guard.get_resources(handle = handle, type = Package)
+        return self._guard.get_resources(handle = handle,
+                                         type   = self._package_cls)
 
 
     def get_version_list_from_name(self, name):
@@ -586,4 +587,5 @@ class PackageDB(object):
         @rtype:  list[Package]
         @return: A list containing all versions of the requested package.
         """
-        return self._guard.get_resources(name = name, type = Package)
+        return self._guard.get_resources(name = name,
+                                         type = self._package_cls)

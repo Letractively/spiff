@@ -5,12 +5,10 @@ def suite():
     tests = ['testApi']
     return unittest.TestSuite(map(ApiTest, tests))
 
-from Api      import Api
-from EventBus import EventBus
+from Api import Api
 
 class ApiTest(unittest.TestCase):
     def testApi(self):
-        eb  = EventBus()
         api = Api()
 
         #Note: Methods are not tested here, but in the

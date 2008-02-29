@@ -42,8 +42,7 @@ class Package(Resource):
         self.__dependencies = {}
         self.__signals      = []
         self.__listeners    = []
-        self.__parent       = kwargs.get('parent')
-        self.__module       = None
+        self._parent        = kwargs.get('parent')
         if version is not None:
             self.set_version(version)
 
@@ -77,7 +76,7 @@ class Package(Resource):
 
 
     def _set_parent(self, parent):
-        self.__parent = parent
+        self._parent = parent
 
 
     def matches(self, descriptor):
@@ -269,22 +268,10 @@ class Package(Resource):
         return 'package' + str(self.get_id())
 
 
-    def load(self):
+    def test(self):
         """
-        Imports the package, creates an instance, and returns a reference
-        to it. Always returns a reference to the same instance if called
-        multiple times.
-
-        @rtype:  object
-        @return: The instance of package.
+        May be overriden to implement additional tests that are performed 
+        before a package is installed. The test succeeds if the method returns
+        True. The test fails otherwise.
         """
-        assert self.__parent is not None
-        if self.__module is not None:
-            return self.__module
-
-        module   = __import__(self.get_module_dir())
-        instance = module.Extension(self.__parent.package_api)
-
-        self.__module = instance
-        self.__parent._load_notify(self, instance)
-        return self.__module
+        return True

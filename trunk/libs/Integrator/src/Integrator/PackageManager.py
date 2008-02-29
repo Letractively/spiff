@@ -29,7 +29,7 @@ class PackageManager(object):
     The API that you want to use.
     """
 
-    def  __init__(self, guard, package_api):
+    def  __init__(self, guard, package_api, **kwargs):
         """
         Constructor.
 
@@ -40,9 +40,10 @@ class PackageManager(object):
         """
         assert guard       is not None
         assert package_api is not None
-        self.package_db      = PackageDB(guard)
         self.package_dir     = None
         self.package_api     = package_api
+        self.package_cls     = kwargs.get('package', Package)
+        self.package_db      = PackageDB(guard, self.package_cls)
         self.__package_cache = {}
         package_api._activate(self)
 
@@ -82,6 +83,23 @@ class PackageManager(object):
                 outfile.write(zfobj.read(name))
                 outfile.close()
         return target
+
+
+    def __install_file(self, filename):
+        if not os.path.exists(filename):
+            raise IOError('%s: No such file or directory' % filename)
+
+        # Install files.
+        if os.path.isdir(filename):
+            # Copy the directory into the target directory.
+            install_dir = self.__install_directory(filename)
+        else:
+            # Unpack the package into the target directory.
+            install_dir = self.__install_archive(filename)
+        if not install_dir:
+            raise IntegratorException('Unable to copy or unpack %s' % filename)
+
+        return install_dir
 
 
     def __read_xml_from_package(self, filename):
@@ -150,7 +168,7 @@ class PackageManager(object):
 
         # Create the default package.
         if package is None:
-            package = Package(os.path.basename(dirname))
+            package = self.package_cls(os.path.basename(dirname))
             package.set_author('Unknown Author')
             package.set_author_email('unknown@unknown.com')
             package.set_version('0.0.1')
@@ -188,10 +206,39 @@ class PackageManager(object):
         # Install files.
         xml     = self.__read_xml_from_package(filename)
         parser  = Parser()
-        package = parser.parse_string(xml)
+        package = parser.parse_string(xml, self.package_cls)
         package._set_filename(filename)
 
         return package
+
+
+    def test_package(self, package):
+        """
+        Tests the given package without installing it. Returns without an
+        error on success, raises an exception if the test failed.
+        This also invokes the test() method of the package and if it
+        returns False, the test is cancelled unsuccessfully.
+
+        @type  package: Package
+        @param package: The package to install.
+        """
+        filename    = package.get_filename()
+        install_dir = self.__install_file(filename)
+
+        # Check dependencies.
+        for descriptor in package.get_dependency_list():
+            if not self.package_db.get_package_from_descriptor(descriptor):
+                shutil.rmtree(install_dir)
+                raise UnmetDependency()
+
+        # Test.
+        package._set_parent(self)
+        package._set_filename(package.get_module_dir())
+        result = package.test()
+
+        shutil.rmtree(install_dir)
+        if not result:
+            raise IntegratorException('Package test failed.')
 
 
     def install_package(self, package):
@@ -202,20 +249,8 @@ class PackageManager(object):
         @type  package: Package
         @param package: The package to install.
         """
-        filename = package.get_filename()
-
-        if not os.path.exists(filename):
-            raise IOError('%s: No such file or directory' % filename)
-
-        # Install files.
-        if os.path.isdir(filename):
-            # Copy the directory into the target directory.
-            install_dir = self.__install_directory(filename)
-        else:
-            # Unpack the package into the target directory.
-            install_dir = self.__install_archive(filename)
-        if not install_dir:
-            raise IntegratorException('Unable to copy or unpack %s' % filename)
+        filename    = package.get_filename()
+        install_dir = self.__install_file(filename)
 
         # Check dependencies.
         for descriptor in package.get_dependency_list():
@@ -274,7 +309,7 @@ class PackageManager(object):
         @type  id: int
         @param id: The id of the package to remove.
         """
-        package = Package('', parent = self)
+        package = self.package_cls('', parent = self)
         package.set_id(id)
         return self.remove_package(package)
 

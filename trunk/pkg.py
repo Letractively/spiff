@@ -6,7 +6,6 @@ sys.path.insert(0, 'services')
 import MySQLdb, Guard, spiff, shutil
 from sqlalchemy   import *
 from Integrator   import PackageManager, \
-                         Package, \
                          version_is_greater, \
                          InvalidDescriptor
 from ConfigParser import RawConfigParser
@@ -16,6 +15,7 @@ from PageDB       import PageDB
 from Session      import Session
 from traceback    import print_exc
 from tempfile     import mkdtemp
+from SpiffPackage import SpiffPackage
 
 
 actions = ('check_dependencies',
@@ -107,11 +107,11 @@ api     = ExtensionApi(guard     = guard,
                        post_data = object)
 
 # Init the package manager.
-pm = PackageManager(guard, api)
+pm = PackageManager(guard, api, package = SpiffPackage)
 pm.set_package_dir(spiff.package_dir)
 
 
-def check_dependencies(pm, package):
+def pkg_check_dependencies(pm, package):
     print "Checking dependencies of %s..." % package.get_name(),
     error = False
     for dependency in package.get_dependency_list():
@@ -124,13 +124,13 @@ def check_dependencies(pm, package):
     return True
 
 
-def create(pm, directory):
+def pkg_create(pm, directory):
     if os.path.exists(directory):
         print "%s: file already exists" % directory
         return False
 
     print "Creating an empty package in %s." % directory
-    package = Package(os.path.basename(directory))
+    package = SpiffPackage(os.path.basename(directory))
     package.set_author('Unknown Author')
     package.set_author_email('unknown@unknown.com')
     package.set_version('0.0.1')
@@ -144,8 +144,8 @@ def create(pm, directory):
     return True
 
 
-def install(pm, package):
-    if not check_dependencies(pm, package):
+def pkg_install(pm, package):
+    if not pkg_check_dependencies(pm, package):
         return False
     installed = pm.get_package_from_descriptor(package.get_handle())
     if installed is not None:
@@ -156,7 +156,7 @@ def install(pm, package):
         if version_is_greater(installed.get_version(), package.get_version()):
             print "Installed version is newer, downgrade aborted."
             return False
-        return update(pm, package)
+        return pkg_update(pm, package)
     print "Installing new package %s." % package.get_name()
     try:
         pm.install_package(package)
@@ -166,7 +166,7 @@ def install(pm, package):
     return True
 
 
-def remove(pm, descriptor):
+def pkg_remove(pm, descriptor):
     try:
         package = pm.get_package_from_descriptor(descriptor)
     except InvalidDescriptor, e:
@@ -189,12 +189,12 @@ def remove(pm, descriptor):
     return True
 
 
-def show(pm, package):
+def pkg_show(pm, package):
     package.dump()
     return True
 
 
-def list(pm, descriptor = None):
+def pkg_list(pm, descriptor = None):
     packages = pm.get_package_list()
     for package in packages:
         try:
@@ -206,55 +206,29 @@ def list(pm, descriptor = None):
     return True
 
 
-def test(pm, package):
+def pkg_test(pm, package):
     print "Testing %s..." % package.get_name()
+    # Set up.
     tmpdir = mkdtemp('')
     pm.set_package_dir(tmpdir)
+
+    # Test.
     print "Installing in %s" % tmpdir
     try:
-        install(pm, package)
+        pm.test_package(package)
     except:
-        print 'Error: Installation failed.'
+        print 'Error: Test failed!'
         shutil.rmtree(tmpdir)
         raise
 
-    # Ending up here, the package was properly installed in the target
-    # directory. Load it.
-    try:
-        instance = package.load()
-    except Exception, e:
-        print 'Error: Unable to load package (%s).' % package.get_name()
-        shutil.rmtree(tmpdir)
-        if package.get_id() is not None:
-            pm.remove_package(package)
-        print_exc()
-        return False
-
-    # Check whether the package has an install() method.
-    install_func = None
-    try:
-        install_func = getattr(instance, 'install')
-    except:
-        pass
-    if install_func is not None:
-        print "Package has an install() method."
-
-    # Call the install method.
-    try:
-        pass
-        # some day we may be smart enough to call install_func() here.
-    except Exception, e:
-        print 'Error in install_func() of %s.' % package.get_name()
-        shutil.rmtree(install_dir)
-        pm.remove_package_from_id(id)
-        print_exc()
-        return False
-
+    # Done.
+    print 'Test successfully completed!'
+    shutil.rmtree(tmpdir)
     return True
 
 
-def update(pm, package):
-    if not check_dependencies(pm, package):
+def pkg_update(pm, package):
+    if not pkg_check_dependencies(pm, package):
         return False
     installed = pm.get_package_from_descriptor(package.get_handle())
     if installed is None:
@@ -267,13 +241,13 @@ def update(pm, package):
     return True
 
 if action == 'list' and len(packages) == 0:
-    list(pm)
+    pkg_list(pm)
 
 for filename in packages:
     if action in ('create', 'remove', 'list'):
-        result = locals()[action](pm, filename)
+        result = locals()['pkg_' + action](pm, filename)
     else:
         package = pm.read_package(filename)
-        result  = locals()[action](pm, package)
+        result  = locals()['pkg_' + action](pm, package)
     if result is False:
         sys.exit(1)

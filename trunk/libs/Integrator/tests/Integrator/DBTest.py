@@ -7,8 +7,7 @@ def suite():
              'testCheckDependencies',
              'testRegisterExtension',
              'testUnregisterExtension',
-             'testGetExtension',
-             'testCallback']
+             'testGetExtension']
     return unittest.TestSuite(map(DBTest, tests))
 
 import MySQLdb
@@ -18,9 +17,6 @@ from sqlalchemy.orm import clear_mappers
 from ConfigParser   import RawConfigParser
 from PackageDB      import PackageDB
 from Package        import Package
-
-def dummy_callback(args):
-    pass
 
 class DBTest(unittest.TestCase):
     def setUp(self):
@@ -38,7 +34,7 @@ class DBTest(unittest.TestCase):
         self.engine = create_engine(dbn)
         clear_mappers()
         self.guard  = Guard.DB(self.engine)
-        self.extdb  = PackageDB(self.guard)
+        self.extdb  = PackageDB(self.guard, Package)
 
         # Install.
         self.assert_(self.extdb.uninstall())
@@ -140,17 +136,6 @@ class DBTest(unittest.TestCase):
         self.assert_(len(list) == 2)
         self.assert_(list[0].get_handle() == 'spiff')
         self.assert_(list[1].get_handle() == 'spiff')
-
-
-    def testCallback(self):
-        self.assert_(self.extdb.clear_database())
-        package = Package('Spiff')
-        package.set_version('0.1.2')
-        package._add_listener('always')
-        self.extdb.add_package(package)
-
-        list = self.extdb.get_listener_id_list_from_uri('always')
-        self.assert_(len(list) == 1)
 
 if __name__ == '__main__':
     unittest.TextTestRunner(verbosity = 2).run(suite())
