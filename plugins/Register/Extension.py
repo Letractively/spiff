@@ -17,7 +17,7 @@ from urlutil import get_request_uri
 from User    import User
 
 class Extension:
-    def __init__(self, api):
+    def __init__(self, api, api_key):
         self.__api      = api
         self.i18n       = api.get_i18n()
         self.__session  = api.get_session()

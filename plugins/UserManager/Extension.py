@@ -20,7 +20,7 @@ from UserAction import UserAction
 from UserDB     import UserDB
 
 class Extension:
-    def __init__(self, api):
+    def __init__(self, api, api_key):
         self.api    = api
         self.i18n   = api.get_i18n()
         self.guard  = api.get_guard()

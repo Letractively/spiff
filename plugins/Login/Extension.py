@@ -21,7 +21,7 @@ class Extension:
     login_failure,  \
     login_open = range(4)
 
-    def __init__(self, api):
+    def __init__(self, api, api_key):
         self.__api     = api
         self.__session = api.get_session()
         self.__status  = self.login_open
