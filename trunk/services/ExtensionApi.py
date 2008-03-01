@@ -15,7 +15,7 @@
 import os.path, sys, cPickle, time
 from stat       import ST_MTIME
 from gettext    import gettext
-from urlutil    import *
+from urlutil    import get_uri, get_puri, get_request_uri, get_uri_attr
 from Integrator import Api
 from Cookie     import SimpleCookie
 
@@ -209,7 +209,9 @@ class ExtensionApi(Api):
         self.__output = tmpl.generate(plugin_dir  = dirname,
                                       web_dir     = '/web',
                                       uri         = get_uri,
+                                      puri        = get_puri,
                                       request_uri = get_request_uri,
+                                      uri_attr    = get_uri_attr,
                                       txt         = gettext,
                                       **kwargs).render('xhtml')
         self.template_render_time += time.clock() - start

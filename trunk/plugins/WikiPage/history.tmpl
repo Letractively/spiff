@@ -1,22 +1,22 @@
 <div class="content"
      xmlns:py="http://genshi.edgewall.org/"
      py:with="img_dir = plugin_dir + '/img'">
-  <h1><a href="${request_uri(action = None)}" py:content="name" /></h1>
+  <h1><a href="${puri()}" py:content="name" /></h1>
   <py:for each="error in errors">
   <font color="red" py:content="error" /><br/>
   </py:for>
-  <form action="${request_uri(action = ['diff'])}" method="post">
+  <form action="${puri()}" method="get">
   <table cellpadding="3" cellspacing="0">
     <tr>
       <td colspan="7">
+        <input type="hidden" name="page"   value="${uri_attr('page')}" />
+        <input type="hidden" name="action" value="diff" />
         <input type="submit"
-               name="diff"
                value="${txt('Compare selected versions')}" /><br/>
       </td>
     </tr>
     <tr py:for="revision in revisions"
-        py:with="rev_url = request_uri(action   = None,
-                                       revision = [revision.get_revision()])">
+        py:with="rev_url = puri(revision = [revision.get_revision()])">
       <td>
         <input type="radio"
                name="revision1"
@@ -41,7 +41,7 @@
       <td width="20">&nbsp;</td>
       <td align="left"
           width="200"
-          py:content="revision.get_attribute('user_name') or 'System'" />
+          py:content="revision.get_username()" />
     </tr>
   </table>
   </form>
