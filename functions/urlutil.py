@@ -16,10 +16,20 @@ import os, cgi
 from mod_rewrite import mod_rewrite_enabled
 use_mod_rewrite = mod_rewrite_enabled()
 
-def get_uri(page, *args, **kwargs):
+def get_uri(page, *keep, **kwargs):
     """
     Returns a URL with the given attributes.
+
+    @type  keep: list[string]
+    @param keep: A list of arguments to extract from the current URL.
     """
+    # Extract variables from the current URL.
+    vars = cgi.parse()
+    for var in keep:
+        value = vars.get(var, None)
+        if value is not None:
+            kwargs[var] = value
+
     # Build the path of the URL.
     if use_mod_rewrite:
         url = '/'
@@ -42,7 +52,15 @@ def get_uri(page, *args, **kwargs):
     return url
 
 
-def get_request_uri(*args, **kwargs):
+def get_puri(*args, **kwargs):
+    """
+    Returns a url that points to the current path, and preserves the 
+    'page' attribute. Also appends the given arguments to the URL.
+    """
+    return get_uri('', 'page', **kwargs)
+
+
+def get_request_uri(**kwargs):
     """
     Returns the URL string that the client requested. Also appends the given
     variables to the argument list.
@@ -92,3 +110,7 @@ def get_request_uri(*args, **kwargs):
             url += '&'
         url += key + '=' + str(vars[key][0])
     return url
+
+
+def get_uri_attr(name):
+    return cgi.parse().get(name, [''])[0]

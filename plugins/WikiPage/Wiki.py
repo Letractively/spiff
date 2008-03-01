@@ -20,6 +20,7 @@ import Warehouse
 from cgi        import escape
 from genshi     import Markup
 from WikiMarkup import Wiki2Html
+from WikiPage   import WikiPage
 
 class Wiki(object):
     def __init__(self, db, **kwargs):
@@ -28,6 +29,8 @@ class Wiki(object):
         self.__class__.differ  = difflib.Differ()
         self.__class__.matcher = difflib.SequenceMatcher()
         self.wiki2html         = Wiki2Html()
+        if kwargs.has_key('directory'):
+            self.warehouse.set_directory(kwargs.get('directory'))
         if kwargs.has_key('wiki_word_handler'):
             self.wiki2html.set_wiki_word_handler(kwargs.get('wiki_word_handler'))
         if kwargs.has_key('wiki_url_handler'):
@@ -38,14 +41,22 @@ class Wiki(object):
         self.warehouse.set_directory(directory)
 
 
+    def set_wiki_word_handler(self, handler):
+        self.wiki2html.set_wiki_word_handler(handler)
+
+
+    def set_url_handler(self, handler):
+        self.wiki2html.set_url_handler(handler)
+
+
     def __markup_diff_line(self, line_from, line_to):
         #print "IN_FROM:", line_from
         #print "IN_TO:  ", line_to
-        sequence_matcher.set_seq1(line_from)
-        sequence_matcher.set_seq2(line_to)
+        self.__class__.matcher.set_seq1(line_from)
+        self.__class__.matcher.set_seq2(line_to)
         line_from_new = ''
         line_to_new   = ''
-        for opcode in sequence_matcher.get_opcodes():
+        for opcode in self.__class__.matcher.get_opcodes():
             if opcode[0] == 'equal':
                 line_from_new += escape(line_from[opcode[1]:opcode[2]])
                 line_to_new   += escape(line_to[opcode[3]:opcode[4]])
@@ -162,30 +173,6 @@ class Wiki(object):
         return diff
 
 
-    def save_page(self, alias, content, user):
-        item = Warehouse.Item(alias)
-        item.set_content(content)
-        item.set_attribute(user_name = user)
-        return self.warehouse.add_file(item)
-
-
-    def get_revision_list(self, alias, offset, limit):
-        return self.warehouse.get_file_list_from_alias(alias,
-                                                       True,
-                                                       offset,
-                                                       limit)
-
-
-    def get_diff_html(self, alias, revision1, revision2):
-        item1 = self.warehouse.get_file_from_alias(alias, int(revision1))
-        item2 = self.warehouse.get_file_from_alias(alias, int(revision2))
-        assert item1 is not None
-        assert item2 is not None
-        content_from = item1.get_content()
-        content_to   = item2.get_content()
-        return self.__markup_diff(content_from, content_to)
-
-
     def __get_page_item(self, alias, revision = None):
         if revision is not None:
             item = self.warehouse.get_file_from_alias(alias, int(revision))
@@ -195,22 +182,68 @@ class Wiki(object):
 
 
     def has_page(self, alias):
+        """
+        @rtype:  bool
+        @return: True if a page with the given alias exists, False otherwise.
+        """
         return self.warehouse.get_file_from_alias(alias) is not None
 
 
-    def get_page_content(self, alias, revision = None):
+    def get_page(self, alias, revision = None):
+        """
+        Returns the page with the given alias and the given revision. If a 
+        revision was not given, the most recent version is returned.
+
+        @rtype:  WikiPage
+        @return: The page with the given alias, ot None if it does not exist.
+        """
         item = self.__get_page_item(alias, revision)
         assert item.get_filename() is not None
         assert len(item.get_filename()) > 0
-        return unicode(item.get_content(), 'utf-8')
+        return WikiPage(self, None, item = item)
 
 
-    def get_page_html(self, alias, revision = None):
-        item = self.__get_page_item(alias, revision)
+    def save_page(self, page):
+        """
+        Saves the given page in the database.
 
-        # Convert to html.
-        assert item.get_filename() is not None
-        assert len(item.get_filename()) > 0
-        self.wiki2html.read(item.get_filename())
-        
-        return unicode(self.wiki2html.html, 'utf-8')
+        @type  page: WikiPage
+        @param page: The page to be saved.
+        @rtype:  bool
+        @return: True on success, False otherwise.
+        """
+        return self.warehouse.add_file(page.item)
+
+
+    def get_revision_list(self, alias, offset = 0, limit = 0):
+        """
+        Returns the list of all revisions of the given page in the
+        database. The result may be restricted by the given offset
+        and limit.
+
+        @type  alias: string
+        @param alias: The alias of the page.
+        @type  offset: int
+        @param offset: The offset of the first result.
+        @type  limit: int
+        @param limit: The maximum number of results.
+        @rtype:  list[WikiPage]
+        @return: A list of wiki pages.
+        """
+        result = []
+        for item in self.warehouse.get_file_list_from_alias(alias,
+                                                            True,
+                                                            offset,
+                                                            limit):
+            result.append(WikiPage(self, '', item = item))
+        return result
+
+
+    def get_diff(self, alias, revision1, revision2):
+        item1 = self.warehouse.get_file_from_alias(alias, int(revision1))
+        item2 = self.warehouse.get_file_from_alias(alias, int(revision2))
+        assert item1 is not None
+        assert item2 is not None
+        content_from = item1.get_content()
+        content_to   = item2.get_content()
+        return self.__markup_diff(content_from, content_to)

@@ -4,12 +4,12 @@
 <table py:if="may_edit">
   <tr>
     <td>
-      <a href="${request_uri(action = ['edit'])}"
+      <a href="${puri(action = ['edit'])}"
          py:content="txt('Edit this content')" />
     </td>
     <td>&nbsp;</td>
     <td>
-      <a href="${request_uri(action = ['history'], revision = None)}"
+      <a href="${puri(action = ['history'])}"
          py:content="txt('Show older versions of this page')" />
     </td>
   </tr>
