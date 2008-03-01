@@ -13,16 +13,18 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import os, re, sha, smtplib, random
-from urlutil import get_request_uri
-from User    import User
+from ExtensionController import ExtensionController
+from urlutil             import get_request_uri
+from User                import User
 
-class Extension:
+class Controller(ExtensionController):
     def __init__(self, api, api_key):
+        ExtensionController.__init__(self, api, api_key)
         self.__api      = api
         self.i18n       = api.get_i18n()
         self.__session  = api.get_session()
         self.__guard    = api.get_guard()
-        self.server     = 'mail.speedpartner.de'
+        self.server     = 'mail.speedpartner.de' #FIXME: Make configurable
         self.mail_from  = 'no-reply@debain.org'
 
 
@@ -120,7 +122,7 @@ class Extension:
         self.__api.render('complete.tmpl', user = user)
 
 
-    def on_render_request(self):
+    def index(self, **kwargs):
         # If the user is already logged in do nothing.
         user = self.__session.get_user()
         if user is not None:

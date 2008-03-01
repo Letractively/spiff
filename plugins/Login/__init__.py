@@ -1,2 +1,2 @@
-__all__ = ['Extension']
-from Extension import Extension
+__all__ = ['Controller']
+from Controller import Controller

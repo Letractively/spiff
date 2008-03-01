@@ -1,4 +1,15 @@
-* Improve the extension API.
+* Simplify the WikiPage controller as much as humanly possible.
+* Simplify other extensions by making use of the new controller features.
+* Move plugin templates into a dedicated subdirectory.
+* Change the ExtensionController such that it automatically falls back to
+a matching template if a matching method does not exist.
+* Change the ExtensionController such that it automatically shows a database
+resource if neither a template nor a method exist.
+* Change the SpiffExtension class to use a default controller if a controller
+was not defined.
+* Find better place for the Controller.py:check_cache() function.
+* Write a replacement for Python dictionaries that supports a maximum size,
+and use that for limiting the cache size everywhere.
 * Make the layout table styleable (and style it).
 
 PageEditor
