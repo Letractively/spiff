@@ -13,15 +13,16 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import Guard
-from string     import split
-from User       import User
-from Group      import Group
-from UserAction import UserAction
-from UserDB     import UserDB
+from ExtensionController import ExtensionController
+from string              import split
+from User                import User
+from Group               import Group
+from UserAction          import UserAction
+from UserDB              import UserDB
 
-class Extension:
+class Controller(ExtensionController):
     def __init__(self, api, api_key):
-        self.api    = api
+        ExtensionController.__init__(self, api, api_key)
         self.i18n   = api.get_i18n()
         self.guard  = api.get_guard()
         self.userdb = UserDB(self.guard)
@@ -415,7 +416,7 @@ class Extension:
         return None
 
 
-    def on_render_request(self):
+    def index(self, **kwargs):
         i18n = self.i18n
 
         # Find out which item was requested.

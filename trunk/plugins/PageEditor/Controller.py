@@ -12,13 +12,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-from string       import split
-from LayoutParser import LayoutParser
-from Page         import Page
+from ExtensionController import ExtensionController
+from string              import split
+from LayoutParser        import LayoutParser
+from Page                import Page
 
-class Extension:
+class Controller(ExtensionController):
     def __init__(self, api, api_key):
-        self.api        = api
+        ExtensionController.__init__(self, api, api_key)
         self.session    = api.get_session()
         self.i18n       = api.get_i18n()
         self.integrator = api.get_integrator()
@@ -120,7 +121,7 @@ class Extension:
         return True
 
 
-    def __page_editor_show(self):
+    def index(self, **kwargs):
         # Save the page, if requested.
         if (self.api.get_post_data('save')   is not None or
             self.api.get_post_data('create') is not None):
@@ -150,13 +151,9 @@ class Extension:
                 extensions.append(extension)
 
         self.api.render('show.tmpl',
-                        name            = name,
-                        extensions      = extensions,
-                        is_new_page     = is_new_page,
-                        may_edit_page   = self.api.get_session().may('edit'),
-                        layout          = layout,
-                        errors          = self.__errors)
-
-
-    def on_render_request(self):
-        self.__page_editor_show()
+                        name          = name,
+                        extensions    = extensions,
+                        is_new_page   = is_new_page,
+                        may_edit_page = self.api.get_session().may('edit'),
+                        layout        = layout,
+                        errors        = self.__errors)

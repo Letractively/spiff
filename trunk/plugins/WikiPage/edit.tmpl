@@ -1,12 +1,12 @@
 <div class="content"
      xmlns:py="http://genshi.edgewall.org/"
      py:with="img_dir = plugin_dir + '/img'">
-  <h1><a href="${request_uri(edit = None, revision = None)}"
+  <h1><a href="${request_uri(action = None, revision = None)}"
          py:content="name" /></h1>
   <py:for each="error in errors">
   <font color="red" py:content="error" /><br/>
   </py:for>
-  <form action="${request_uri(edit = None, revision = None)}" method="post">
+  <form action="${request_uri(action = ['save'], revision = None)}" method="post">
   <textarea py:if="may_edit"
             name="wiki_markup"
             rows="30"

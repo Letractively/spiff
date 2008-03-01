@@ -39,6 +39,36 @@ class ExtensionApi(Api):
         self.template_render_time = 0
 
 
+    def __unpack_get_value(self, value):
+        if type(value) == type(''):
+            return value
+        elif type(value) == type([]):
+            return value[0]
+        assert False # No such type.
+
+
+    def __unpack_get_data(self, input):
+        output = {}
+        for key in input:
+            output[key] = self.__unpack_get_value(input[key])
+        return output
+
+
+    def __unpack_post_value(self, value):
+        if type(value) == type(''):
+            return value
+        elif type(value) != type([]):
+            return value.value
+        return [self.__unpack_post_value(v) for v in value]
+
+
+    def __unpack_post_data(self, input):
+        output = {}
+        for key in input:
+            output[key] = self.__unpack_post_value(input[key])
+        return output
+
+
     def __get_caller(self):
         frame = sys._getframe(2)
         try:
@@ -57,8 +87,9 @@ class ExtensionApi(Api):
         return os.path.join(os.path.dirname(__file__), '..', 'data')
 
 
-    def get_get_data(self, name, unpack = True):
-        #FIXME: Do we need to check the permission of the caller?
+    def get_get_data(self, name = None, unpack = True):
+        if name is None:
+            return self.__unpack_get_data(self.__get_data)
         if not self.__get_data.has_key(name):
             return None
         if unpack:
@@ -66,8 +97,9 @@ class ExtensionApi(Api):
         return self.__get_data[name]
 
 
-    def get_post_data(self, name, unpack = True):
-        #FIXME: Do we need to check the permission of the caller?
+    def get_post_data(self, name = None, unpack = True):
+        if name is None:
+            return self.__unpack_post_data(self.__post_data)
         if not self.__post_data.has_key(name):
             return None
         field = self.__post_data[name]
@@ -146,8 +178,8 @@ class ExtensionApi(Api):
         assert extension
 
         # Point dirname to the path of the plugin that made the call.
-        classname  = '%s' % extension.__class__
-        subdirname = '/'.join(classname.split('.')[:-2])
+        classname  = '%s' % extension.__module__
+        subdirname = classname.split('.')[0]
         dirname    = os.path.join('data/repo/', subdirname)
         tmpl_path  = os.path.join(dirname, filename)
         cache_dir  = os.path.join(self.get_data_dir(), 'cache')
