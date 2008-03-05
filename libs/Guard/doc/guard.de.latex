@@ -22,19 +22,20 @@ bereit und verwaltet User und zur Verfügung stehende Resourcen.
 \product wurde mit dem Ziel entwickelt, folgende Anforderungen zu erfüllen:
 
 \begin{itemize}
-\item Es werden {\bf frei definierbare Rechteklassen} unterstützt, d.h. es 
-werden keine festen Rechtetypen (z.B. ``lesen'', ``schreiben'') vorgegeben.
-
 \item Gruppen können {\bf schachtelbar} definiert werden und die 
 {\bf Vererbung von Rechten} wird unterstützt - ähnlich der Vererbung beim 
 typischen Klassendesign.
+
+\item Die Verwendung der API ist weitestgehend {\bf intuitiv}.
+
+\item Es werden {\bf frei definierbare Rechteklassen} unterstützt, d.h. es 
+werden kein fester Satz an Rechtetypen (z.B. ``lesen'', ``schreiben'', ...) 
+vorgegeben.
 
 \item Um eine hohe {\bf Skalierbarkeit} zu erreichen, gewährleisten folgende 
 Lese- und Schreib-Operationen auf das System Antworten in nahezu konstanter 
 Zeit: Anlegen neuer Benutzer und Gruppen, Ändern der Rechtevergabe, Abfragen 
 der Rechte eines Benutzers.
-
-\item Die Verwendung der API ist weitestgehend {\bf intuitiv}.
 
 \item Mit Hilfe der Datenbankabstraktions-Bibliothek ``SQL Alchemy'' wird 
 die {\bf Unabhängigkeit vom verwendeten Datenbanksystem} erreicht.
@@ -791,7 +792,7 @@ Eine andere Möglichkeit ist die Nutzung von Suchkriterien mit der
 {\it delete\_action\_from\_match()}-Methode:
 
 \begin{lstlisting}
-guard.delete_action(id = 1234)
+guard.delete_action_from_match(id = 1234)
 \end{lstlisting}
 
 Die Liste akzeptierter Suchkriterien ist mit der Methode {\it get\_actions()} 
@@ -951,7 +952,7 @@ else:
 
 Natürlich stehen in der Praxis nicht immer die Objektinstanzen zur 
 Verfügung, die dieser Methode übergeben werden. Deswegen stellt \product 
-die Methode {\it delete\_permission\_from\_id()} zur Verfügung, die die 
+die Methode {\it has\_permission\_from\_id()} zur Verfügung, die die 
 ID der Objekte als Argumente akzeptiert:
 
 \begin{lstlisting}
