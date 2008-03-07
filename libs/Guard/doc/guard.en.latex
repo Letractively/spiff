@@ -71,6 +71,7 @@ an instance of \product by passing the database connection as an argument.
 Calling the install() method causes the required database tables to be 
 created in the connected database, if those tables do not yet exist.
 
+
 \subsection{\label{intro:resources}Creating Resources}
 
 In \product, any user, group, or object that is to be accessed, is 
@@ -139,7 +140,8 @@ guard.grant(han, [enter, repair], mr)
 guard.grant(luke, enter, [mr, bridge])
 \end{lstlisting}
 
-Now that permissions are defined they may be checked in the following way:
+To later check whether Han Solo may enter the machine room the following 
+request may be used:
 
 \begin{lstlisting}
 if guard.has_permission(han, enter, mr):
@@ -176,8 +178,8 @@ tree may be created:
 \end{indentverb}
 
 (Names in brackets represent resource groups, and other names represent 
-simple Resources.)
-To build this tree we first need to define the resource types, and inform 
+simple resources.)
+To build this tree we first define the resource types, and inform 
 \product of their existence:
 
 \begin{lstlisting}
@@ -186,7 +188,7 @@ class PassengerGroup(ResourceGroup):
 guard.register_type(PassengerGroup)
 \end{lstlisting}
 
-We assemble the tree in the next step:
+We then assemble the tree in the next step:
 
 \begin{lstlisting}
 # Create the groups.
@@ -329,12 +331,13 @@ This is shown in the following tree:
 Due to inheritance the following effective permissions are assigned:
 
 \begin{itemize}
-\item Passengers have no permissions.
-\item Crew members have no permissions.
+\item Passengers have no permission.
+\item Crew members have no permission.
 \item Engineers may use any device.
 \item Han Solo may use any device, except weapons.
 \item R2D2 may use any device.
 \item Luke Skywalker may not use any device.
+\item Guests have no permission.
 \end{itemize}
 
 \product even supports self-referencing permissions. For example, it can 
@@ -351,6 +354,18 @@ other crew members, such that the following permission is assigned:
   `- [Guests]
 \end{indentverb}
 
+This results in the following permissions:
+
+\begin{itemize}
+\item Passengers have no permission.
+\item Crew members have no permission.
+\item Engineers have no permission.
+\item Han Solo has no permission.
+\item R2D2 has no permission.
+\item Luke Skywalker may command crew members, engineers, Han Solo and R2D2.
+\item Guests have no permission.
+\end{itemize}
+
 
 \newpage
 \section{Details}
@@ -358,21 +373,23 @@ other crew members, such that the following permission is assigned:
 \subsection{Using Resources}
 \subsubsection{\label{details:resources:add}Creating a Resource}
 
-To create a resource it is enough to define a class that inherits from 
-{\it Resource}. We define a resource type ``Website'' as an example:
+In \product, users, groups, and any other objects for which permissions 
+are defined, are represented by {\it Resource} objects.
+To create a such a resource it is enough to define a class that inherits 
+from {\it Resource}. We define a resource type ``Website'' as an example:
 
 \begin{lstlisting}
 class Website(Resource):
-    def __init__(self, name):
-        Resource.__init__(self, name)
-        self.content = "<h1>Empty Page</h1>"
-
+    pass
 guard.register_type(Website)
 \end{lstlisting}
 
-The method {\it register\_type()} informs \product, that it is responsible 
+The class {\it Website} defines a resource type.
+The method {\it register\_type()} informs \product that it is responsible 
 for managing resources of that type. Any class that is used with \product 
-needs to be registered in this may.
+needs to be registered in this way. This will let \product provide you with 
+additional ways for finding resources, as we will show in section 
+\ref{details:resources:find}.
 
 To save an instance of that class in the database it is now passed to the 
 {\it add\_resource()} method:
@@ -411,10 +428,7 @@ Using the ResourceGroup object, the following code completes the example:
 
 \begin{lstlisting}
 class Website(ResourceGroup):
-    def __init__(self, name):
-        ResourceGroup.__init__(self, name)
-        self.content = "<h1>Empty Page</h1>"
-
+    pass
 guard.register_type(Website)
 
 homepage = Website("Homepage")
@@ -446,6 +460,7 @@ homepage.set_handle("home")
 
 Instructions on how to find resources using the handle are shown in section 
 \ref{details:resources:find}.
+
 
 \subsubsection{\label{details:resources:attributes}Assigning Attributes}
 

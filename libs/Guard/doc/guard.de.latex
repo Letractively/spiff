@@ -56,7 +56,8 @@ Folgende Kontaktmöglichkeiten bieten wir an: \\
 \section{Schnellüberblick}
 \subsection{Initialisierung}
 
-Zunächst wird \product wie folgt initialisiert:
+Bevor mit \product Rechte verwaltet werden, muss dieses zunächst wie 
+folgt initialisiert werden:
 
 \begin{lstlisting}
 from sqlalchemy import create_engine
@@ -68,10 +69,14 @@ guard.install()
 
 Es wird also zunächst eine Verbindung mit der Datenbank hergestellt und mit 
 dieser dann \product instanziert. Der Aufruf der install()-Methode bewirkt 
-das Erstellen der benötigten Tabellen in der verbundenen Datenbank.
+das Erstellen der benötigten Tabellen in der verbundenen Datenban, sofern 
+diese noch nicht existieren.
+
 
 \subsection{\label{intro:resources}Anlegen von Resourcen}
 
+In \product wird jeder Benutzer, jede Gruppe und jedes Objekt, auf das 
+zugegriffen wird, durch Objekte des Typs {\it Resource} repräsentiert.
 Ein Client (API-Nutzer) wird nun zunächst die Resourcen-Typen definieren, 
 zwischen denen die Rechte geregelt werden sollen. Möchte der Programmierer 
 Beispielsweise die Zutrittsrechte von Passagieren auf die Räume eines 
@@ -122,16 +127,17 @@ guard.add_action(repair)
 \end{lstlisting}
 
 Damit sind alle Voraussetzungen erfüllt um die Rechte in \product 
-vergeben zu können. Wir geben nun Han Solo das Recht, den Maschinenraum 
-zu betreten und dort Dinge zu reparieren, während Luke Skywalker nur 
-Zutrittsrechte bekommt, aber auch auf die Brücke darf:
+vergeben zu können. Wir gewähren nun Han Solo das Recht, den Maschinenraum 
+zu betreten und dort Dinge zu reparieren, während Luke Skywalker zwar nur 
+Zutrittsrechte bekommt, dafür aber auch auf die Brücke darf.
 
 \begin{lstlisting}
 guard.grant(han, [enter, repair], mr)
 guard.grant(luke, enter, [mr, bridge])
 \end{lstlisting}
 
-Damit sind die Rechte definiert und können wie folgt geprüft werden:
+Um später zu prüfen, ob Han Solo den Maschinenraum betreten darf, 
+reicht folgende Anfrage:
 
 \begin{lstlisting}
 if guard.has_permission(han, enter, mr):
@@ -146,13 +152,17 @@ else:
 Wir setzen das obige Beispiel fort. In einem Raumschiff wäre es schön, 
 wenn man die Rechte in Gruppen separieren könnte, so dass z.B. alle 
 Mitglieder der Crew automatisch Zutritt zur Brücke erhalten, ohne dies 
-jedes mal explizit für sie definieren zu müssen. Ähnlich erhalten alle 
-Gäste Zutritt zur Lounge. In \product gibt es dafür Resource-Gruppen 
-als Typ {\it ResourceGroup}. Dieser Typ ist nur eine spezialisierte Form 
-einer Resource und unterscheidet sich nur dadurch, dass er Kinder haben 
-darf. Resource-Gruppen lassen sich beliebig schachteln, so dass sich ein 
-Baum aus Resourcen erstellen lässt. In unserem Beispiel wollen wir nun 
-folgenden Baum definieren:
+jedes mal explizit für jedes Mitglied definieren zu müssen. Ähnlich 
+erhalten alle Gäste Zutritt zur Lounge.
+
+In \product lassen sich deswegen Resourcen gruppieren. Solche Gruppen 
+werden mit Hilfe des Typs {\it ResourceGroup} realisiert. Dieser Typ ist 
+eine spezialisierte Form des bekannten Typs {\it Resource} und unterscheidet 
+sich nur dadurch, dass er Kinder haben darf.
+
+Resource-Gruppen lassen sich beliebig schachteln, so dass sich ein Baum aus 
+Resourcen erstellen lässt. In unserem Beispiel wollen wir nun folgenden Baum 
+definieren:
 
 \begin{indentverb}
 [Passengers]
@@ -165,10 +175,9 @@ folgenden Baum definieren:
   `- [Guests]
 \end{indentverb}
 
-(Geklammerte Ausdrücke repräsentieren dabei jeweils Resource-Gruppen, andere 
+(Geklammerte Ausdrücke repräsentieren Resource-Gruppen, andere 
 repräsentieren einfache Resourcen.)
-Wie oben müssen dafür zunächst die Typen definiert und \product mitgeteilt 
-werden:
+Wie oben werden nun zunächst die Typen definiert und \product mitgeteilt:
 
 \begin{lstlisting}
 class PassengerGroup(ResourceGroup):
@@ -215,11 +224,11 @@ guard.grant(guests,    enter,  lounge)
 guard.deny (han,       repair, mr)
 \end{lstlisting}
 
-Um nun die Rechte für alle Resourcen, die im Baum unter der Gruppe ``Crew'' 
-zu finden sind zu definieren, reicht es völlig, dieses Recht nur der Gruppe 
-zuzuweisen. Die Rechte vererben sich dabei bis auf beliebige Tiefe abwärts, 
-gelten also auch für Han Solo und R2D2.
-Folgende Darstellung verdeutlicht die Rechtevergabe:
+Um die Rechte für alle Resourcen, die im Baum unter der Gruppe ``Crew'' zu 
+finden sind zu definieren, reicht es dann völlig, dieses Recht nur der 
+Gruppe zuzuweisen. Die Rechte vererben sich dabei herab zu den Kindern. 
+Die Vererbung setzt sich dabei bis auf beliebige Tiefe fort, gilt also auch 
+für Han Solo und R2D2. Folgende Abbildung verdeutlicht die Rechtevergabe:
 
 \begin{indentverb}
 [Passengers]
@@ -234,22 +243,28 @@ Folgende Darstellung verdeutlicht die Rechtevergabe:
 Durch diese Rechtevergabe ergeben sich aufgrund von Vererbung folgende Rechte:
 
 \begin{itemize}
+\item Passagiere haben keine Rechte.
+\item Crew-Mitglieder dürfen auf die Brücke.
+\item Ingenieure dürfen auf die Brücke, ausserdem dürfen sie in den 
+Maschinenraum betreten und reparieren.
 \item Han Solo darf die Brücke betreten. Er darf den Maschinenraum betreten, 
 aber nicht reparieren.
 \item R2D2 darf die Brücke und den Maschinenraum betreten, ausserdem darf er 
 den Maschinenraum reparieren.
 \item Luke Skywalker darf die Brücke betreten.
+\item Gäste dürfen in die Lounge.
+\item Alle anderen Rechte werden verweigert.
 \end{itemize}
 
 
 \subsection{Gruppieren von Resourcen}
 
-Ähnlich wie die Verwendung von Resource-Gruppen für die Definition von 
-Benutzergruppen (Aktoren) lassen sich Resource-Gruppen aber auch für die 
-Verwaltung der Resourcen verwenden, auf die Zugriff genommen wird. Möchte 
-man nun zum Beispiel die Rechte auf der Brücke genauer auf Steuerinstrumente 
-aufschlüsseln, so ist mit dem bisher vorgestellten Verfahren nur folgender 
-Weg realisierbar:
+Es wurde gezeigt, wie sich Resource-Gruppen zur Definition von 
+Benutzergruppen (Aktoren) verwenden lassen. Sie erfüllen aber noch einen 
+weiteren Zweck. Mit ihnen lassen sich nämlich auch die Resourcen gruppieren, 
+auf die Zugriff genommen wird. Möchte man nun zum Beispiel die Rechte auf 
+der Brücke genauer auf Steuerinstrumente aufschlüsseln, so ist dies mit dem 
+bisher vorgestellten Verfahren nur auf folgende Weise realisierbar:
 
 \begin{lstlisting}
 class Device(Resource):
@@ -273,8 +288,8 @@ guard.grant(crew, use_device, thruster)
 
 Wird die Anzahl der Instrumente sehr gross, so kann dies sehr viel Aufwand 
 bedeuten. \product bietet deswegen die Möglichkeit, die Rechte auch für 
-diese einmal gesammelt zu definieren, indem diese wieder in Gruppen definiert 
-werden. So ist folgende Rechtedefinition denkbar:
+diese zu gruppieren und gesammelt zu definieren, indem sie in Gruppen 
+organisiert werden. So ist folgende Rechtedefinition denkbar:
 
 \begin{indentverb}
 [Devices] <-- use ------- Han Solo
@@ -312,15 +327,19 @@ werden, wie in folgender Abbildung verdeutlicht:
 Durch Vererbung ergeben sich damit folgende Rechte:
 
 \begin{itemize}
+\item Passagiere haben keine Rechte.
+\item Mitglieder der Crew haben keine Rechte.
+\item Ingenieure dürfen alle Geräte benutzen.
 \item R2D2 darf alle Geräte verwenden.
 \item Han Solo darf alle Geräte ausser den Waffen verwenden.
 \item Luke Skywalker darf keine Geräte verwenden.
+\item Gäste haben keine Rechte.
 \end{itemize}
 
 \product unterstützt weiterhin sogar die Selbstreferenzierung von 
 Resourcen. Beispielsweise kann es komfortabel sein die Möglichkeit zu 
-haben, Luke Skywalker das Recht zu geben, andere Mitglieder der Crew zu 
-kommandieren, die Rechte also entsprechend folgender Darstellung zu setzen:
+haben, Luke Skywalker das Recht zu geben, andere Mitglieder der eigenen Crew 
+zu kommandieren, die Rechte also entsprechend folgender Darstellung zu setzen:
 
 \begin{indentverb}
 [Passengers]
@@ -332,6 +351,19 @@ kommandieren, die Rechte also entsprechend folgender Darstellung zu setzen:
   `- [Guests]
 \end{indentverb}
 
+Dadurch gelten folgende Rechte:
+
+\begin{itemize}
+\item Passagiere haben keine Rechte.
+\item Mitglieder der Crew haben keine Rechte.
+\item Ingenieure haben keine Rechte.
+\item Han Solo hat keine Rechte.
+\item R2D2 hat keine Rechte.
+\item Luke Skywalker darf Crew-Mitglieder, Ingenieure, Han Solo und R2D2 
+kommandieren.
+\item Gäste haben keine Rechte.
+\end{itemize}
+
 
 \newpage
 \section{Details}
@@ -339,24 +371,27 @@ kommandieren, die Rechte also entsprechend folgender Darstellung zu setzen:
 \subsection{Arbeiten mit Resourcen}
 \subsubsection{\label{details:resources:add}Erstellen einer Resource}
 
-Zum Anlegen einer beliebigen Resource reicht es, dafür eine Klasse zu 
-definieren, die vom Typ {\it Resource} erbt. Wir definieren als Bespiel
+In \product werden Benutzer, Gruppen, und alle Objekte, für die 
+Zugriffsrechte definiert werden, durch Objekte des Typs {\it Resource} 
+repräsentiert.
+Zum Anlegen einer solchen Resource reicht es, dafür eine Klasse zu 
+definieren, die vom Typ {\it Resource} erbt. Wir definieren beispielhaft 
 eine Resource vom Typ ``Website''.
 
 \begin{lstlisting}
 class Website(Resource):
-    def __init__(self, name):
-        Resource.__init__(self, name)
-        self.content = "<h1>Empty Page</h1>"
-
+    pass
 guard.register_type(Website)
 \end{lstlisting}
 
-Die Methode {\it register\_type()} teilt \product mit, dass es für die 
-Verwaltung einer Resource zuständig ist. Jede Klasse, die mit \product 
-verwendet wird, muss zunächst auf diese Weise registriert werden.
+Die Klasse {\it Website} definiert einen Resourcetyp. Die Methode 
+{\it register\_type()} teilt \product mit, dass es für die 
+Verwaltung dieses Resourcentyps zuständig ist. Jede Klasse, die mit 
+\product verwendet wird, muss zunächst auf diese Weise registriert werden. 
+Dies eröffnet uns zusätzliche Möglichkeiten beim Finden von Resourcen, 
+wie wir in Abschnitt \ref{details:resources:find} sehen werden.
 
-Um nun die Instanz zu speichern wird diese wie folgt an die 
+Um die Instanz zu speichern wird diese wie folgt an die 
 {\it add\_resource()}-Methode übergeben:
 
 \begin{lstlisting}
@@ -366,20 +401,21 @@ guard.add_resource(None, homepage)
 
 Damit ist eine Repräsentation des Objektes in der Datenbank gespeichert 
 und kann später wieder geladen werden. Das erste Argument der Methode 
-({\it None}) gibt hier an, dass die gespeicherte Webseite keine Eltern hat, 
-sondern ein alleinstehendes Objekt ist.
+(hier {\it None}) gibt hier an, dass die gespeicherte Webseite keine Eltern 
+hat, sondern ein alleinstehendes Objekt ist.
 
-Beim speichern einer Resource wird ihr automatisch eine eindeutige ID 
-zugeordnet, die später zum auffinden wieder verwendet werden kann. Auf diese
-ID vom Typ {\it Integer} kann über die Resource-Methode {\it get\_id()} 
-zugegriffen werden. Ein Beispiel für die Verwendung der ID ist im Abschnitt 
-\ref{details:resources:find} enthalten.
+Beim Speichern einer beliebigen Resource wird ihr automatisch eine eindeutige 
+ID zugeordnet, die später zum auffinden wieder verwendet werden kann. Auf 
+diese ID vom Typ {\it Integer} kann über die Resource-Methode 
+{\it get\_id()} zugegriffen werden. Ein Beispiel für die Verwendung der ID 
+ist in Abschnitt \ref{details:resources:find} zu finden.
 
-Wir wollen nun aber weitere Webseiten als Kinder der Homepage ablegen. Die
-Klassendefinition der Webseite haben wir aber zuvor so gestaltet, dass diese 
-vom Typ {\it Resource} erbt. Hier ist ein wichtiger Aspekt zu beachten: 
+Wir wollen nun aber zunächst weitere Webseiten als Kinder der Homepage 
+ablegen. Die Klassendefinition der Webseite haben wir aber zuvor so 
+gestaltet, dass diese vom Typ {\it Resource} erbt. Hier ist ein wichtiger 
+Aspekt zu beachten: 
 Objekte des Typs {\it Resource} können keine Kinder haben. Der folgende 
-Aufruf wird deswegen mit einer Exception abbrechen:
+Aufruf wird deswegen fehlschlagen und mit einer Exception abbrechen:
 
 \begin{lstlisting}
 page = Website("Another Page")
@@ -391,10 +427,7 @@ Deswegen ist zu beachten: Objekte, die Kinder haben dürfen, erben vom Typ
 
 \begin{lstlisting}
 class Website(ResourceGroup):
-    def __init__(self, name):
-        ResourceGroup.__init__(self, name)
-        self.content = "<h1>Empty Page</h1>"
-
+    pass
 guard.register_type(Website)
 
 homepage = Website("Homepage")
@@ -427,13 +460,15 @@ homepage.set_handle("home")
 Wie dieser Bezeichner zum Auffinden der Resource verwendet werden kann 
 zeigen wir in Abschnitt \ref{details:resources:find}.
 
+
 \subsubsection{\label{details:resources:attributes}Zuweisen von Attributen}
 
 Wir haben gesehen, wie eigene Resourcen definiert und in \product abgelegt 
-werden können. Nun werden wir einer solchen Resource zusätzliche 
-Informationen zuordnen, die zusammen mit dem Objekt in der Datenbank 
-gespeichert werden. Dazu unterstützt \product {\it Attribute}, die wie im 
-folgenden Beispiel gespeichert werden können:
+werden können. In der Praxis werden wir den definierten Resourcen meist 
+weitere Attribute und Methoden zuordnen, die zudem Möglicherweise sogar 
+zusammen mit dem Objekt in der Datenbank gespeichert werden. Dazu 
+unterstützt \product {\it Attribute}, die wie im folgenden Beispiel 
+gespeichert werden können:
 
 \begin{lstlisting}
 class User(Resource):
@@ -453,7 +488,7 @@ print "Email address:", user.get_attribute("email")
 \end{lstlisting}
 
 Die Methoden {\it set\_attribute()} und {\it get\_attribute()} werden in der 
-Praxis üblicherweise wie folgt benutzt:
+Praxis zum Beispiel wie folgt benutzt:
 
 \begin{lstlisting}
 class Website(ResourceGroup):
@@ -468,7 +503,7 @@ class Website(ResourceGroup):
 
 \subsubsection{\label{details:resources:find}Finden von Resourcen}
 
-\product stellt zwei Methoden zur Verfügung, um existierende Resourcen 
+\product bietet zwei Möglichkeiten existierende Resourcen 
 abzurufen. Die erste Methode, {\it get\_resources()} ermittelt anhand der 
 übergebenen Suchkriterien eine {\it Liste} an Suchergebnissen.
 Eine zweite Methode, {\it get\_resource()} kann verwendet werden, wenn 
@@ -509,9 +544,9 @@ print "Page name:", page.get_name()
 
 \item {\bf Resource-Name}: Jede Resource hat einen Namen, nämlich den 
 Bezeichner, der dem Resource-Konstruktor als notwendiges erstes Argument 
-übergeben wurde.
-Dieser Name ist, anders als das zuvor Beschriebene {\it Handle}, nicht 
-eindeutig, so dass eine Suchanfrage auch mehrere Treffer liefern kann.
+übergeben wurde. Dieser Name ist, im Gegensatz zum zuvor beschriebenen 
+{\it Handle}, nicht eindeutig, so dass eine Suchanfrage auch mehrere Treffer 
+liefern kann.
 Folgendes Beispiel liefert eine einzelne Resource anhand ihres Namens:
 
 \begin{lstlisting}
@@ -539,7 +574,7 @@ logischer UND-Verknüpfung durchgeführt.
 Enthält ein Resource-Baum (siehe auch Abschnitt \ref{intro:resources}) 
 Objekte verschieder Python-Typen, so kann es nützlich sein, nur 
 auf Objekte eines bestimmten Typs zuzugreifen. Gegeben sei zum Beispiel 
-folgender Resource-Baum; die Begriffe in den Klammern geben jeweils den 
+folgender Resource-Baum; die Begriffe in Klammern geben jeweils den 
 Objekttyp an:
 
 \begin{indentverb}
@@ -565,7 +600,7 @@ class Robot(User):
 guard.register_type([UserGroup, Person, Robot])
 \end{lstlisting}
 
-Wir verwenden folgende Anfrage um eine Liste alle Resourcen vom Typ 
+Wir verwenden folgende Anfrage um eine Liste aller Resourcen vom Typ 
 ``Person'' aus diesem Baum zu holen:
 
 \begin{lstlisting}
