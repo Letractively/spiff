@@ -1,6 +1,5 @@
 \input{guard.latex}   % Import common styles.
 \usepackage{german}   % German language, old orthography.
-\fancyhead[L]{Benutzerhandbuch}
 \fancyfoot[C]{Seite \thepage}
 \title{\productname\ Version \productversion\\
 Benutzerhandbuch\\
@@ -22,7 +21,7 @@ bereit und verwaltet User und zur Verfügung stehende Resourcen.
 \product wurde mit dem Ziel entwickelt, folgende Anforderungen zu erfüllen:
 
 \begin{itemize}
-\item Gruppen können {\bf schachtelbar} definiert werden und die 
+\item Benutzergruppen können {\bf schachtelbar} definiert werden und die 
 {\bf Vererbung von Rechten} wird unterstützt - ähnlich der Vererbung beim 
 typischen Klassendesign.
 

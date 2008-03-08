@@ -7,8 +7,8 @@
 \usepackage{amsmath}         % Math declarations.
 
 % Variables.
+\input{version.latex}
 \newcommand{\productname}{Spiff Guard}
-\newcommand{\productversion}{2.0 }
 \newcommand{\product}{{\it \productname} }
 
 % Make references clickable.
@@ -26,8 +26,9 @@
 \fancyhf{}                   % Clear out old header/footer definition.
 
 % Header
-\fancyhead[L]{User Documentation}
-\fancyhead[R]{\productname\ \productversion}
+%\fancyhead[C]{\bfseries \productname}
+\fancyhead[L]{\leftmark}
+\fancyhead[R]{\MakeUppercase{\rightmark}}
 \renewcommand{\headrulewidth}{0.5pt}
 
 % Footer
