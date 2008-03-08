@@ -585,7 +585,7 @@ Passenger (UserGroup)
   `- Luke Skywalker (Person)
 \end{indentverb}
 
-Seien die Resource-Typen ({\it UserGroup}, {\it Person}, {\it Robot}) wie 
+Seien die Resource-Typen {\it UserGroup}, {\it Person}, {\it Robot} wie 
 folgt definiert:
 
 \begin{lstlisting}
@@ -614,7 +614,7 @@ Von der Suchanfrage erhalten wir hier ``Han Solo'' und ``Luke Skywalker''.
 Eine weitere, sehr praktische Möglichkeit zum Empfangen von Resourcen 
 mittels Python-Typ funktioniert mittels Python's {\bf Typ-Introspection} 
 Feature. Da \product die Basistypen aller Objekte kennt, lassen sich 
-auch alle Objekte des Typs ``User'' abfragen:
+damit auch alle Objekte des Typs ``User'' abfragen:
 
 \begin{lstlisting}
 result = guard.get_resources(type = User)
@@ -668,7 +668,7 @@ guard.delete_resource(homepage)
 \end{lstlisting}
 
 Nicht immer steht jedoch die Objektinstanz wie im Beispiel zur Verfügung.
-Deswegen steht - wie beim Finden - auch zum Löschen eine Methode bereit, 
+Deswegen stellt \product - wie beim Finden - auch hier eine Methode bereit, 
 die zu löschende Resourcen anhand von Suchkriterien entfernt. Es 
 können die in Abschnitt \ref{details:resources:find} angegebenen Kriterien 
 verwendet werden. Auch hier ein Beispiel:
@@ -684,8 +684,8 @@ print "%s resources deleted!" % deleted
 
 Bevor einer Resource ein bestimmtes Recht gegeben oder verweigert wird, wird 
 \product zunächst darüber informiert welche Aktionen überhaupt 
-existieren. Die folgenden Abschnitte beschreiben, wie Aktionen in definiert 
-und verwaltet werden.
+existieren. Die folgenden Abschnitte beschreiben, wie Aktionen in \product 
+definiert und verwaltet werden.
 
 \subsubsection{Erstellen einer Aktion}
 
@@ -701,7 +701,7 @@ guard.add_action([read, write])
 Im Beispiel ist auch zu sehen, dass dem Konstruktor der ``Write''-Aktion 
 ein weiteres Argument mitgegeben wird. Dieses ist ein {\it Handle} zum 
 späteren auffinden der Aktion. Die Funktionalität ist mit dem Handle bei 
-Resourcen äquivalent, siehe Abschnitt \ref{details:resources:add}.
+Resourcen äquivalent, siehe dazu Abschnitt \ref{details:resources:add}.
 
 
 \subsubsection{\label{details:actions:find}Finden von Aktionen}
@@ -743,7 +743,7 @@ print "Action name:", action.get_name()
 \item {\bf Aktions-Name}: Jede Aktion hat einen Namen, nämlich den 
 Bezeichner, der dem Konstruktor als notwendiges erstes Argument 
 übergeben wurde.
-Dieser Name ist, anders als das zuvor Beschriebene {\it Handle}, nicht 
+Dieser Name ist, im Gegensatz zum zuvor Beschriebenen {\it Handle}, nicht 
 eindeutig, so dass eine Suchanfrage auch mehrere Treffer liefern kann.
 Folgendes Beispiel liefert eine einzelne Aktion anhand ihres Namens:
 
@@ -797,7 +797,7 @@ Die Suchanfrage enthält dann auch alle Subtypen von MyAction, also hier
 
 \subsubsection{Ändern einer Aktion}
 
-Auch hier wird vorgegangen wie beim Neuanlegen einer Aktion:
+Es wird vorgegangen wie beim Neuanlegen einer Aktion:
 
 \begin{lstlisting}
 read = Action("Read")
@@ -808,11 +808,14 @@ read.set_handle("read")
 guard.save_action(read)
 \end{lstlisting}
 
+Der Unterschied liegt also lediglich in der Verwendung von 
+{\it save\_resource()} anstelle von {\it add\_resource()}.
+
 
 \subsubsection{Löschen einer Aktion}
 
-Liegt die Objektinstanz bereits vor, kann die {\it delete\_action()}-Methode 
-wie folgt verwendet werden:
+Liegt die Objektinstanz bereits vor, so kann die 
+{\it delete\_action()}-Methode wie folgt verwendet werden:
 
 \begin{lstlisting}
 read  = Action("Read")
@@ -823,34 +826,34 @@ guard.add_action([read, write])
 guard.delete_action(read)
 \end{lstlisting}
 
-Eine andere Möglichkeit ist die Nutzung von Suchkriterien mit der 
-{\it delete\_action\_from\_match()}-Methode:
+Eine andere Möglichkeit ist die Nutzung von Suchkriterien mit der Methode 
+{\it delete\_action\_from\_match()}:
 
 \begin{lstlisting}
 guard.delete_action_from_match(id = 1234)
 \end{lstlisting}
 
 Die Liste akzeptierter Suchkriterien ist mit der Methode {\it get\_actions()} 
-identisch.
+identisch (Abschnitt \ref{details:actions:find}).
 
 
 \subsection{ACLs}
 \subsubsection{Was ist eine ACL?}
 
-Eine ACL gibt an ob eine Resource das Recht hat auf eine andere gegebene 
-Resource zuzugreifen. Anhand von ACLs werden also die Rechte eines Benutzers 
-oder einer Gruppe bestimmt. Die genaue Funktionsweise von ACLs bleibt für 
-den Benutzer von \product unsichtbar, ihm bleibt lediglich die Aufgabe 
-erhalten \product über die Rechte zu informieren, die er einer Resource 
-zuordnen möchte.
+Eine ACL (Access-List) gibt an, ob eine Resource das Recht hat auf eine 
+andere gegebene Resource zuzugreifen. Anhand von ACLs werden also die 
+Rechte eines Benutzers oder einer Gruppe bestimmt. Die genaue 
+Funktionsweise von ACLs bleibt für den Benutzer von \product unsichtbar, 
+ihm bleibt lediglich die Aufgabe erhalten \product über die Rechte zu 
+informieren, die er einer Resource zuordnen möchte.
+
 
 \subsubsection{Formale Beschreibung von ACLs}
 
-Eine Access-List (ACL) kann als ein Tupel (A, R, C, p) verstanden werden, 
-wobei gilt:
+Eine ACL kann als ein Tupel (A, R, C, p) verstanden werden, wobei gilt:
 
 \begin{itemize}
-\item A ist ein Aktor, also zum Beispiel ein menschlicher Benutzer oder 
+\item A ist ein Aktor, zum Beispiel ein menschlicher Benutzer oder 
 eine Benutzergruppe.
 \item R ist eine Resource, auf die ein Zugriff geregelt werden soll; zum 
 Beispiel eine Internetseite.
@@ -926,7 +929,7 @@ guard.deny(everybody, view_website, subpage2)
 \end{lstlisting}
 
 Jeder Aufruf der {\it grant()}- oder {\it deny()}-Methode entspricht hier 
-dem erstellen einer neuen ACL.
+dem Erstellen einer neuen ACL.
 Die Zuweisungen der Rechte lassen sich auch wie folgt abkürzen:
 
 \begin{lstlisting}
@@ -944,12 +947,12 @@ spielt; das Auflösen der Vererbung geschiet zur Laufzeit.
 
 \subsubsection{Ändern eines Rechtes}
 
-Sollen bereits vergebene Rechte angepasst werden, so bieten sich zwei 
+Sollen bereits vergebene Berechtigungen angepasst werden, so bieten sich zwei 
 Möglichkeiten:
 
 \begin{enumerate}
-\item Ein Recht soll umgekehrt werden, d.h. entweder einer Erlaubnis 
-wird in ein Verbot geändert, oder ein Verbot in eine Erlaubnis. Dies 
+\item Ein Recht soll umgekehrt werden, d.h. entweder wird eine Erlaubnis 
+in ein Verbot geändert, oder ein Verbot in eine Erlaubnis. Dies 
 entspricht dem Austausch einer vorhandenen ACL. Beispiel:
 
 \begin{lstlisting}
@@ -986,9 +989,9 @@ else:
 \end{lstlisting}
 
 Natürlich stehen in der Praxis nicht immer die Objektinstanzen zur 
-Verfügung, die dieser Methode übergeben werden. Deswegen stellt \product 
-die Methode {\it has\_permission\_from\_id()} zur Verfügung, die die 
-ID der Objekte als Argumente akzeptiert:
+Verfügung, die dieser Methode hier übergeben werden. Deswegen stellt 
+\product die Methode {\it has\_permission\_from\_id()} zur Verfügung, 
+die die ID der Objekte als Argumente akzeptiert:
 
 \begin{lstlisting}
 if guard.has_permission_from_id(user.get_id(), view_website_id, subpage1_id):
@@ -1012,10 +1015,10 @@ weiter. Sie erzeugt eine Liste aller ACLs, die den übergebenen Suchkriterien
 genügen.
 
 \hint{Das Suchergebnis dieser Methode enthält {\it nicht} die Resourcen, die 
-ein Recht nur geerbt haben. Vererbung wird hier also ignoriert!}
+ein Recht nur geerbt haben. Vererbung wird hier also ignoriert.}
 
-Zum Suchen unter Einschluss der geerbten Rechte verwenden wir stattdessen 
-{\it get\_permission\_list\_from\_id\_with\_inheritance()}.
+Zum Suchen unter Einschluss der geerbten Rechte stellt \product stattdessen 
+{\it get\_permission\_list\_from\_id\_with\_inheritance()} zur Verfügung.
 
 In den folgenden Beispielen gehen wir davon aus, dass folgender 
 Resource-Baum bereits definiert ist:
@@ -1059,7 +1062,7 @@ beschrieben werden:
 \end{lstlisting}
 
 \item {\bf Resource-ID}: Um zu bestimmen, welche Rechte ein Benutzer an 
-einer bestimmten Resource hat, lässt sich folgende Anfrage benutzen:
+einer bestimmten Resource hat, lässt sich folgender Aufruf nutzen:
 
 \begin{lstlisting}
 guard.grant(administrator, remove, homepage)
@@ -1084,7 +1087,8 @@ bestimmten Typs definiert wurden. Wir verweisen zur Erklärung auf Abschnitt
 
 \item {\bf Resourcetyp}: Auch hier wird das Suchergebnis auf jene ACLs 
 eingeschränkt, die für Resourcen des gegebenen Typs definiert wurden.
-Zur weiteren Erklärung von Resource-Typen siehe \ref{details:resources:find}.
+Zur weiteren Erklärung von Resource-Typen siehe Abschnitt 
+\ref{details:resources:find}.
 \end{enumerate}
 
 In allen Beispielen kann die erzeugte Liste der ACLs wie folgt ausgegeben 
