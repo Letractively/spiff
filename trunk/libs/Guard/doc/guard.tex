@@ -1,13 +1,26 @@
-\documentclass[a4paper,oneside,10pt]{scrartcl}
-\usepackage[left=1cm,right=1cm,top=1.0cm,bottom=1.5cm,includeheadfoot]{geometry}
+\documentclass[a4paper,oneside,11pt]{scrartcl}
+\usepackage[left=2cm,right=2cm,top=2.0cm,bottom=2.5cm,includeheadfoot]{geometry}
 \usepackage[utf8]{inputenc}  % Replace "utf8" by "latin1" if your editor sucks.
 \usepackage{fancyhdr}        % Better header and footer support.
 \usepackage{titlesec}        % Alternative section titles.
 \usepackage{amssymb}         % Math support.
 \usepackage{amsmath}         % Math declarations.
 
+% GraphViz support
+\usepackage{graphicx}
+\usepackage[x11names, rgb]{xcolor}
+\usepackage{tikz}            % Drawing shapes.
+\usepackage{caption}         % Captions for graphviz figures.
+\usetikzlibrary{snakes,arrows,shapes}
+\newcommand{\mygraph}[2]{%
+  \vspace{1em}
+  \includegraphics[width=15cm]{figures/#1.png}
+  \captionof{figure}{#2}
+  \vspace{1em}
+}
+
 % Variables.
-\input{version.latex}
+\input{version.tex}
 \newcommand{\productname}{Spiff Guard}
 \newcommand{\product}{{\it \productname} }
 

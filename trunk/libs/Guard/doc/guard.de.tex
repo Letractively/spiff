@@ -1,4 +1,4 @@
-\input{guard.latex}   % Import common styles.
+\input{guard.tex}     % Import common styles.
 \usepackage{german}   % German language, old orthography.
 \fancyfoot[C]{Seite \thepage}
 \title{\productname\ Version \productversion\\
@@ -43,13 +43,30 @@ die {\bf Unabhängigkeit vom verwendeten Datenbanksystem} erreicht.
 Im Folgenden werden wir zunächst einen groben Überblick über die Verwendung 
 \product verschaffen.
 
+\subsection{Rechtliches}
+
+\product und das vorliegende Benutzerhandbuch werden unter den Bedingungen 
+der GNU GPL (General Public License) Version 2 zur Verfügung gestellt. Eine 
+Kopie der GPL sollten sie zusammen mit \product erhalten haben; falls nicht, 
+so können sie diese unter der folgenden Adresse einsehen:
+
+\vspace{1em}
+\url{http://www.gnu.org/licenses/gpl-2.0.txt}
+\vspace{1em}
+
+Sollte diese Lizenz ihren Anforderungen nicht genügen, können sie sich 
+gerne unter Angabe der Gründe über die im nächsten Abschnitt 
+angegebenen Kontaktmöglichkeiten mit uns in Verbindung setzen - vielleicht 
+lässt sich eine Lösung herbeiführen, die beide Seiten zufrieden stellt.
+
+
 \subsection{Kontaktinformation \& Feedback}
 
 Sollten sie Verbesserungsvorschläge oder Korrekturen für \product oder 
 die \product-Dokumentation haben, so werden diese dankbar entgegengenommen.
 Folgende Kontaktmöglichkeiten bieten wir an: \\
 
-\input{contact.latex}
+\input{contact.tex}
 
 \newpage
 \section{Schnellüberblick}
@@ -146,7 +163,7 @@ else:
 \end{lstlisting}
 
 
-\subsection{Verwendung des Rollenkonzeptes}
+\subsection{\label{intro:groups}Verwendung des Rollenkonzeptes}
 
 Wir setzen das obige Beispiel fort. In einem Raumschiff wäre es schön, 
 wenn man die Rechte in Gruppen separieren könnte, so dass z.B. alle 
@@ -163,19 +180,9 @@ Resource-Gruppen lassen sich beliebig schachteln, so dass sich ein Baum aus
 Resourcen erstellen lässt. In unserem Beispiel wollen wir nun folgenden Baum 
 definieren:
 
-\begin{indentverb}
-[Passengers]
-  |- [Crew Members]
-  |   |- [Engineers]
-  |   |   |- Han Solo
-  |   |   `- R2D2
-  |   |- [Catering]
-  |   `- Luke Skywalker
-  `- [Guests]
-\end{indentverb}
+\mygraph{intro_groups1}{Ellipsen repräsentieren Resource-Gruppen, Rechtecke 
+repräsentieren einfache Resourcen.}
 
-(Geklammerte Ausdrücke repräsentieren Resource-Gruppen, andere 
-repräsentieren einfache Resourcen.)
 Wie oben werden nun zunächst die Typen definiert und \product mitgeteilt:
 
 \begin{lstlisting}
