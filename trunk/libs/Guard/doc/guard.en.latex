@@ -1,5 +1,4 @@
 \input{guard.latex}   % Import common styles.
-\fancyhead[L]{User Documentation}
 \fancyfoot[C]{Page \thepage}
 \title{\productname\ Release \productversion\\
 User Documentation\\
