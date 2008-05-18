@@ -1,3 +1,4 @@
+from DB           import DB
 from Driver       import Driver
 from WorkflowInfo import WorkflowInfo
 from JobInfo      import JobInfo

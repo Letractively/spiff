@@ -1,13 +1,12 @@
 import sys, unittest, re, os.path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src', 'Workflow'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
 def suite():
     tests = ['testWorkflow']
     return unittest.TestSuite(map(WorkflowTest, tests))
 
-from Tasks import *
-from Workflow   import Workflow
-from Job        import Job
+from Workflow       import Workflow, Job
+from Workflow.Tasks import *
 
 def print_name(branch_node, task):
     job         = branch_node.job

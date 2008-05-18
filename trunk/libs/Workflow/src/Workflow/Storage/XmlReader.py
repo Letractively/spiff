@@ -16,8 +16,8 @@
 import os, re
 import xml.dom.minidom as minidom
 import Workflow
-import Tasks
-from Exception import StorageException
+import Workflow.Tasks
+from Workflow.Exception import StorageException
 
 class XmlReader(object):
     """
@@ -32,15 +32,15 @@ class XmlReader(object):
 
         # Create a list of tag names out of the task names.
         self.task_map = {}
-        for name in dir(Tasks):
+        for name in dir(Workflow.Tasks):
             if name.startswith('_'):
                 continue
-            module = Tasks.__dict__[name]
+            module = Workflow.Tasks.__dict__[name]
             name   = re.sub(r'(.)([A-Z])', r'\1-\2', name).lower()
             self.task_map[name] = module
 
-        self.logical_tags = {'equals':     Tasks.Condition.EQUAL,
-                             'not-equals': Tasks.Condition.NOT_EQUAL}
+        self.logical_tags = {'equals':     Workflow.Tasks.Condition.EQUAL,
+                             'not-equals': Workflow.Tasks.Condition.NOT_EQUAL}
 
 
     def _raise(self, error):
@@ -67,7 +67,7 @@ class XmlReader(object):
             kwargs['right'] = value
         else:
             kwargs['right_attribute'] = attrib
-        return Tasks.Assign(name, **kwargs)
+        return Workflow.Tasks.Assign(name, **kwargs)
 
 
     def _read_assign_list(self, workflow, start_node):
@@ -119,7 +119,7 @@ class XmlReader(object):
             kwargs['right'] = term2_value
         else:
             kwargs['right_attribute'] = term2_attrib
-        return Tasks.Condition(self.logical_tags[op], **kwargs)
+        return Workflow.Tasks.Condition(self.logical_tags[op], **kwargs)
 
 
     def _read_condition(self, workflow, start_node):
@@ -286,7 +286,7 @@ class XmlReader(object):
 
         # Read all tasks and create a list of successors.
         workflow             = Workflow.Workflow(name, filename)
-        self.read_tasks = {'end': (Tasks.Task(workflow, 'End'), [])}
+        self.read_tasks = {'end': (Workflow.Tasks.Task(workflow, 'End'), [])}
         for node in start_node.childNodes:
             if node.nodeType != minidom.Node.ELEMENT_NODE:
                 continue

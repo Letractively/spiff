@@ -14,9 +14,9 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 import re
-from BranchNode import *
-from Exception  import WorkflowException
-from Task       import Task
+from Workflow           import BranchNode
+from Workflow.Exception import WorkflowException
+from Task               import Task
 
 class Condition(object):
     EQUAL,          \

@@ -16,13 +16,13 @@
 import sys
 import os.path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from sqlalchemy import *
-from Exceptions import WorkflowServerException
-from DB         import DB
-from JobInfo    import JobInfo
-from TaskInfo   import TaskInfo
-from Storage    import XmlReader
-from Job        import Job
+from sqlalchemy       import *
+from Exceptions       import WorkflowServerException
+from DB               import DB
+from JobInfo          import JobInfo
+from TaskInfo         import TaskInfo
+from Workflow.Storage import XmlReader
+from Workflow.Job     import Job
 
 class Driver(object):
     """

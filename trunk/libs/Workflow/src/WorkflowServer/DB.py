@@ -16,12 +16,12 @@
 import sys
 import os.path
 import Workflow
-import Storage
+import Workflow.Storage
 import sqlalchemy.orm as orm
-from sqlalchemy       import *
-from WorkflowInfo     import WorkflowInfo
-from JobInfo          import JobInfo
-from TaskInfo         import TaskInfo
+from sqlalchemy   import *
+from WorkflowInfo import WorkflowInfo
+from JobInfo      import JobInfo
+from TaskInfo     import TaskInfo
 
 class DB(object):
     attrib_type_int, attrib_type_bool, attrib_type_string = range(3)
@@ -36,14 +36,11 @@ class DB(object):
         @return: The new instance.
         """
         self.db            = db
-        self.db_metadata   = BoundMetaData(self.db)
-        # sqlalchemy 0.4
-        #self.db_metadata   = MetaData(self.db)
-        #self.session_maker = orm.sessionmaker(bind          = self.db,
-        #                                      autoflush     = True,
-        #                                      transactional = True)
-        #self.session       = self.session_maker()
-        self.session       = create_session()
+        self.db_metadata   = MetaData(self.db)
+        self.session_maker = orm.sessionmaker(bind          = self.db,
+                                              autoflush     = True,
+                                              transactional = True)
+        self.session       = self.session_maker()
         self.xml_parser    = None
         self._table_prefix = 'workflow_'
         self._table_list   = []
@@ -77,7 +74,7 @@ class DB(object):
                       Column('id',     Integer,      primary_key = True),
                       Column('handle', String(200),  unique      = True),
                       Column('name',   String(50)),
-                      Column('xml',    String(230)),
+                      Column('xml',    Text),
                       mysql_engine = 'INNODB')
         if not self._initialized:
             mapper = orm.mapper(WorkflowInfo, table)
@@ -99,7 +96,7 @@ class DB(object):
             mapper = orm.mapper(JobInfo,
                                 table,
                                 properties = {
-                                    'instance': deferred(table.c.instance)
+                                    'instance': orm.deferred(table.c.instance)
                                 })
         self.__add_table(table)
 
@@ -144,9 +141,6 @@ class DB(object):
         """
         self.db_metadata.drop_all()
         return True
-        #for table in self._table_list[::-1]:
-        #    table.drop(checkfirst = True)
-        #return True
 
 
     def clear_database(self):
@@ -211,28 +205,29 @@ class DB(object):
 
 
     def get_workflow_info(self, **filter):
-        return self.session.query(WorkflowInfo).select_by(**filter)
+        return [r for r in self.session.query(WorkflowInfo).filter_by(**filter)]
 
 
     def get_job_info(self, **filter):
-        return self.session.query(JobInfo).select_by(**filter)
+        return [r for r in self.session.query(JobInfo).filter_by(**filter)]
 
 
     def get_task_info(self, **filter):
-        return self.session.query(TaskInfo).select_by(**filter)
+        return [r for r in self.session.query(TaskInfo).filter_by(**filter)]
 
 
     def delete(self, object):
         if object is None:
             raise Exception('object argument is None')
         self.session.delete(object)
-        self.session.flush()
+        self.session.commit()
+        #self.session.flush()
 
 
     def save(self, object):
         if object is None:
             raise Exception('object argument is None')
-        result = self.session.save(object)
-        #self.session.commit() #sqlalchemy0.4
-        self.session.flush()
+        result = self.session.save_or_update(object)
+        self.session.commit()
+        #self.session.flush()
         return result

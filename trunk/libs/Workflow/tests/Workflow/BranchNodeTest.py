@@ -1,15 +1,13 @@
 import sys, unittest, re, os.path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src', 'Workflow'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
 def suite():
     tests = ['testTree']
     return unittest.TestSuite(map(BranchNodeTest, tests))
 
-from Workflow   import Workflow
-from Job        import Job
-from Tasks      import Task
-from Exception  import WorkflowException
-from BranchNode import *
+from Workflow           import Workflow, BranchNode
+from Workflow.Tasks     import Task
+from Workflow.Exception import WorkflowException
 
 class BranchNodeTest(unittest.TestCase):
     def setUp(self):
