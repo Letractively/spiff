@@ -13,8 +13,8 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
-from BranchNode import *
-from Exception  import WorkflowException
+from Workflow           import BranchNode
+from Workflow.Exception import WorkflowException
 
 class Assign(object):
     def __init__(self, left_attribute, **kwargs):
@@ -141,9 +141,9 @@ class Task(object):
         if an error was detected.
         """
         if self.id is None:
-            raise WorkflowException(self, 'Task is not yet instanciated.')
+            raise Exception.WorkflowException(self, 'Task is not yet instanciated.')
         if len(self.inputs) < 1:
-            raise WorkflowException(self, 'No input task connected.')
+            raise Exception.WorkflowException(self, 'No input task connected.')
 
 
     def cancel(self, branch_node):
@@ -196,17 +196,17 @@ class Task(object):
             seen = []
         elif self in seen:
             return
-        if branch_node.has_state(BranchNode.PREDICTED):
+        if branch_node.has_state(BranchNode.BranchNode.PREDICTED):
             seen.append(self)
-        if not branch_node.has_state(BranchNode.COMPLETED) \
-            and not branch_node.has_state(BranchNode.CANCELLED):
+        if not branch_node.has_state(BranchNode.BranchNode.COMPLETED) \
+            and not branch_node.has_state(BranchNode.BranchNode.CANCELLED):
             self._predict(branch_node)
         for node in branch_node.children:
             node.task.predict(node, seen)
 
 
     def _predict(self, branch_node):
-        branch_node.update_children(self.outputs, BranchNode.PREDICTED)
+        branch_node.update_children(self.outputs, BranchNode.BranchNode.PREDICTED)
 
 
     def _ready_to_proceed(self, branch_node):
@@ -262,7 +262,7 @@ class Task(object):
             mutex.unlock()
 
         if result:
-            branch_node.set_state(BranchNode.COMPLETED)
+            branch_node.set_state(BranchNode.BranchNode.COMPLETED)
         branch_node.job.task_completed_notify(self)
 
         return result

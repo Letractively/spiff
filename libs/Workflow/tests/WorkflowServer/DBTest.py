@@ -1,6 +1,5 @@
 import sys, unittest, re, os.path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src', 'Workflow'))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src', 'WorkflowServer'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
 def suite():
     tests = ['testInstall',
@@ -13,10 +12,8 @@ import MySQLdb
 from ConfigParser   import RawConfigParser
 from sqlalchemy     import *
 from sqlalchemy.orm import clear_mappers
-from DB             import DB
-from WorkflowInfo   import WorkflowInfo
-from JobInfo        import JobInfo
-from TaskInfo       import TaskInfo
+from WorkflowServer import WorkflowInfo, JobInfo, TaskInfo
+import WorkflowServer
 
 class DBTest(unittest.TestCase):
     def connectDB(self):
@@ -37,7 +34,7 @@ class DBTest(unittest.TestCase):
 
     def setUp(self):
         self.connectDB()
-        self.db = DB(self.engine)
+        self.db = WorkflowServer.DB(self.engine)
 
 
     def testInstall(self):

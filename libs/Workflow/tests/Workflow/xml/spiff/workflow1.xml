@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?> 
-<process-definition name="flow" revision="1.6">
+<process-definition name="Test Workflow" revision="1.6">
     <description>
     A test workflow that contains all possible tasks.
     </description>

@@ -14,11 +14,11 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 import os.path
-from BranchNode import *
-from Exception  import WorkflowException
-from Storage    import XmlReader
-from Job        import Job
-from Task       import Task
+from Workflow.BranchNode import BranchNode
+from Workflow.Exception  import WorkflowException
+from Workflow.Storage    import XmlReader
+from Task                import Task
+import Workflow.Job
 
 class SubWorkflow(Task):
     """
@@ -82,9 +82,10 @@ class SubWorkflow(Task):
         xml_reader    = XmlReader()
         workflow_list = xml_reader.parse_file(self.file)
         workflow      = workflow_list[0]
-        subjob        = Job(workflow,
-                            on_complete      = self._on_subjob_completed,
-                            on_complete_data = branch_node)
+        callback      = self._on_subjob_completed
+        subjob        = Workflow.Job(workflow,
+                                     on_complete      = callback,
+                                     on_complete_data = branch_node)
         # Assign variables, if so requested.
         for assignment in self.in_assign:
             assignment.assign(branch_node.job, subjob)

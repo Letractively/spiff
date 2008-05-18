@@ -13,10 +13,10 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
-from BranchNode  import *
-from Exception   import WorkflowException
-from Task        import Task
-from ThreadStart import ThreadStart
+from Workflow.BranchNode import BranchNode
+from Workflow.Exception  import WorkflowException
+from Task                import Task
+from ThreadStart         import ThreadStart
 
 class ThreadSplit(Task):
     """

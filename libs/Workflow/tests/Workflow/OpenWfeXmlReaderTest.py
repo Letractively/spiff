@@ -1,13 +1,13 @@
 import sys, unittest, re, os.path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src', 'Workflow'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
 def suite():
     tests = ['testParseString', 'testParseFile', 'testRunWorkflow']
     return unittest.TestSuite(map(OpenWfeXmlReaderTest, tests))
 
 from WorkflowTest      import print_name
-from Storage           import OpenWfeXmlReader
-from Job               import Job
+from Workflow          import Job
+from Workflow.Storage  import OpenWfeXmlReader
 from xml.parsers.expat import ExpatError
 
 class OpenWfeXmlReaderTest(unittest.TestCase):
