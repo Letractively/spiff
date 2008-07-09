@@ -51,13 +51,19 @@ class Task(object):
 
     def __init__(self, parent, name, **kwargs):
         """
-        Constructor.
+        Constructor. May also have properties/attributes passed.
+
+        The difference between the assignment of a property using 
+        property_assign versus pre_assign and post_assign is that 
+        changes made using property_assign are task-local, i.e. they are 
+        not visible to other tasks.
 
         parent -- a reference to the parent (Task)
         name -- a name for the task (string)
         kwargs -- may contain the following keys:
                   lock -- a list of locks that is aquired on entry of
                   execute() and released on leave of execute().
+                  property_assign -- a list of attribute name/value pairs
                   pre_assign -- a list of attribute name/value pairs
                   post_assign -- a list of attribute name/value pairs
         """
