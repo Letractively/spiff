@@ -1,8 +1,0 @@
-To install this package, simply copy it into your Python
-site-packages directory.
-
-Alternatively, you can also run
-
-  easy_install "Spiff Workflow"
-
-if your system is set up to support easy_install.
