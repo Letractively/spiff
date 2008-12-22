@@ -1,5 +1,0 @@
-* Move unit tests to tests/ directory.
-* Rewrite the Python parser using Python's own parser module.
-  See http://docs.python.org/lib/node867.html
-* Implement a parser for C files.
-* Implement a parser for DoxyGen API docs.
