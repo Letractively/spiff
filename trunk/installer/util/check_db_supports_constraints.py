@@ -1,4 +1,4 @@
-# Copyright (C) 2006 Samuel Abels, http://debain.org
+# Copyright (C) 2008 Samuel Abels, http://debain.org
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2, as
@@ -12,7 +12,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-from SpiffGuard import Action
+from sqlalchemy import *
 
-class UserAction(Action):
-    pass
+def check_db_supports_constraints(dbn):
+    name   = 'Checking the database for constraint support'
+    engine = create_engine(dbn)
+    try:
+        conn = engine.connect()
+    except:
+        return name, False, 'Connection failed.'
+    if dbn.startswith('mysql'):
+        res = conn.execute('show variables like "have_innodb"')
+        if res.fetchone()[1] != 'YES':
+            return name, False, 'MySQL without InnoDB support.'
+    return name, True, None

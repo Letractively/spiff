@@ -1,0 +1,41 @@
+<div xmlns:py="http://genshi.edgewall.org/" xmlns:xi="http://www.w3.org/2001/XInclude" py:strip="True">
+<h2>Activating The Admin User.</h2>
+
+<xi:include py:with="items = errors" href="checklist.tmpl" />
+
+<p py:if="errors" />
+Please enter a password for your administrator account.
+
+<p/>
+<form method='post' action='?step=${nextstep}'>
+<table width='100%'>
+  <tr>
+    <td>Username:</td>
+    <td>&nbsp;</td>
+    <td width='100%'>${username}</td>
+  </tr>
+  <tr>
+    <td>Password:</td>
+    <td>&nbsp;</td>
+    <td width='100%'>
+      <input type="password" name="password1" />
+    </td>
+  </tr>
+  <tr>
+    <td>Repeat:</td>
+    <td>&nbsp;</td>
+    <td width='100%'>
+      <input type="password" name="password2" />
+    </td>
+  </tr>
+</table>
+
+<hr/>
+<table width='100%'>
+  <tr>
+    <td width='100%'></td>
+    <td><input type='submit' value='Continue'/></td>
+  </tr>
+</table>
+</form>
+</div>

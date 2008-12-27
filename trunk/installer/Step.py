@@ -12,7 +12,27 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-from SpiffGuard import Action
+from genshi.template import TemplateLoader
+from genshi.template import MarkupTemplate
 
-class UserAction(Action):
-    pass
+class Step(object):
+    def __init__(self, id, request, state):
+        self.id      = id
+        self.request = request
+        self.state   = state
+
+
+    def render(self, filename, **kwargs):
+        loader  = TemplateLoader(['.'])
+        tmpl    = loader.load(filename, None, MarkupTemplate)
+        next_id = self.id + 1
+        output  = tmpl.generate(nextstep = next_id, **kwargs).render('xhtml')
+        self.request.write(output)
+
+
+    def check(self):
+        return True
+
+
+    def submit(self):
+        return True

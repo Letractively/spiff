@@ -1,0 +1,17 @@
+<div xmlns:py="http://genshi.edgewall.org/" xmlns:xi="http://www.w3.org/2001/XInclude" py:strip="True">
+<h2>Checking Requirements.</h2>
+
+Checking whether your environment is set up to support Spiff.
+
+<xi:include py:with="items = results" href="checklist.tmpl" />
+
+<hr/>
+<form py:if="success" method='post' action='?step=${nextstep}'>
+<table width='100%'>
+  <tr>
+    <td width='100%'></td>
+    <td><input type='submit' value='Continue'/></td>
+  </tr>
+</table>
+</form>
+</div>

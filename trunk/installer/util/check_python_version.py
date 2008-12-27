@@ -12,7 +12,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-from SpiffGuard import Action
+import sys
 
-class UserAction(Action):
-    pass
+def check_python_version(min_version, max_version = None):
+    name = 'Checking the Python version of the server'
+    if sys.version_info < min_version:
+        hint = 'The Python version is too old (%s).' % sys.__version__
+        return name, False, hint
+    if max_version is not None and sys.version_info > max_version:
+        hint = 'Unsupported Python version %s.' % sys.__version__
+        return name, False, hint
+    return name, True, None

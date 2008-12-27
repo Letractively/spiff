@@ -12,7 +12,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-from SpiffGuard import Action
+import os.path
 
-class UserAction(Action):
-    pass
+def check_file_exists(filename):
+    name = 'Checking whether file "%s" exists' % filename
+    if os.path.exists(filename):
+        return name, True, None
+    return name, False, 'The file was not found.'

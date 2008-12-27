@@ -12,9 +12,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-from Page       import Page
-from PageAction import PageAction
-from PageBox    import PageBox
+try:
+    from mod_python import apache
+    Page       = apache.import_module('../objects/Page.py').Page
+    PageAction = apache.import_module('../objects/PageAction.py').PageAction
+    PageBox    = apache.import_module('../objects/PageBox.py').PageBox
+except:
+    from objects import Page
+    from objects import PageAction
+    from objects import PageBox
 
 class PageDB(object):
     def __init__(self, guard):
@@ -36,7 +42,7 @@ class PageDB(object):
 
     def get_responsible_page(self, handle):
         """
-        Returns the Page that is responsible for drawing the given
+        Returns the Page object that is responsible for drawing the given
         page.
         """
         # Attempt to get the page using the path.
