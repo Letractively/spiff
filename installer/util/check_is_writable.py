@@ -12,7 +12,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-from SpiffGuard import Action
+import os
 
-class UserAction(Action):
-    pass
+def check_is_writable(filename):
+    name = 'Checking whether "%s" is writable' % filename
+    if os.access(filename, os.W_OK):
+        return name, True, None
+    hint = 'Permission to write was denied. Please grant write' \
+         + ' permission to the web server.'
+    return name, False, hint

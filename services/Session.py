@@ -13,19 +13,24 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import os, sha
-from Cookie     import SimpleCookie
-from User       import User
-from PageAction import PageAction
+try:
+    from mod_python import apache
+    User       = apache.import_module('../objects/User.py').User
+    PageAction = apache.import_module('../objects/PageAction.py').PageAction
+except:
+    from objects import User
+    from objects import PageAction
 
 class Session(object):
     def __init__(self, guard, **kwargs):
         assert kwargs.has_key('requested_page')
         assert guard is not None
         self.__guard          = guard
+        self.__request        = kwargs['request']
         self.__current_user   = None
         self.__requested_page = kwargs['requested_page']
         try:
-            sid = SimpleCookie(os.environ['HTTP_COOKIE'])['sid'].value
+            sid = self.request.get_cookie('sid')[0]
         except:
             sid = None
         self.__sid = sid
@@ -56,6 +61,10 @@ class Session(object):
         for acl in acls:
             string += str(acl)
         return sha.new(string).hexdigest()
+
+
+    def get_env(self, name):
+        return self.__request.get_env(name)
 
 
     def set_requested_page(self, page):
@@ -124,7 +133,7 @@ class Session(object):
         user.set_attribute('permission_hash', self._get_permission_hash(user))
         self.__guard.save_resource(user)
         self.__current_user = user
-        headers = {'Set-Cookie': 'sid=%s; path=/' % self.__sid}
+        self.__request.set_cookie('sid', self.__sid)
         return headers
 
 

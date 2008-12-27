@@ -1,21 +1,18 @@
 import sys, os, os.path
-sys.path.insert(0, 'libs')
-sys.path.insert(0, 'libs/Guard/src/')
-sys.path.insert(0, 'libs/Integrator/src/')
-sys.path.insert(0, 'services')
-import MySQLdb, Guard, spiff, shutil
-from sqlalchemy   import *
-from Integrator   import PackageManager, \
-                         version_is_greater, \
-                         InvalidDescriptor
-from ConfigParser import RawConfigParser
-from ExtensionApi import ExtensionApi
-from FooLib       import OptionParser
-from PageDB       import PageDB
-from Session      import Session
-from traceback    import print_exc
-from tempfile     import mkdtemp
-from SpiffPackage import SpiffPackage
+import MySQLdb, SpiffGuard, config, shutil
+from sqlalchemy      import *
+from SpiffIntegrator import PackageManager, \
+                            version_is_greater, \
+                            InvalidDescriptor
+from ConfigParser    import RawConfigParser
+from services        import ExtensionApi
+from FooLib          import OptionParser
+from services        import PageDB
+from services        import Session
+from traceback       import print_exc
+from tempfile        import mkdtemp
+from objects         import SpiffPackage
+from UrlLib          import DummyRequest
 
 
 actions = ('check_dependencies',
@@ -28,7 +25,7 @@ actions = ('check_dependencies',
            'update')
 
 def usage():
-    print "Spiff %s" % spiff.__version__
+    print "Spiff %s" % config.__version__
     print "Copyright (C) 2007 by Samuel Abels <http://debain.org>."
     print "Syntax: python pkg.py [options] action package [package ...]"
     print "  action:  Any of the following:"
@@ -59,7 +56,7 @@ if options['help']:
 
 # Show the version number, if requested.
 if options['version']:
-    print "Spiff %s" % __version__
+    print "Spiff %s" % config.__version__
     sys.exit()
 
 # Get package names.
@@ -85,30 +82,31 @@ if action not in ('create', 'remove', 'list'):
             sys.exit(1)
 
 # Read config.
-if not os.path.exists(spiff.cfg_file):
+if not os.path.exists(config.cfg_file):
     print "Please configure Spiff before using this tool."
     sys.exit(1)
-cfg = RawConfigParser()
-cfg.read(spiff.cfg_file)
-dbn = cfg.get('database', 'dbn')
+config.cfg.read(config.cfg_file)
+dbn = config.cfg.get('database', 'dbn')
 
 # Connect to MySQL and set up Spiff Guard.
 db    = create_engine(dbn)
-guard = Guard.DB(db)
+guard = SpiffGuard.DB(db)
 
 # Set up an environment for the package manager.
 page_db = PageDB(guard)
 page    = page_db.get('default')
-session = Session(guard, requested_page = page)
+request = DummyRequest()
+session = Session(guard, request = request, requested_page = page)
 api     = ExtensionApi(guard     = guard,
                        page_db   = page_db,
                        session   = session,
+                       request   = request,
                        get_data  = object,
                        post_data = object)
 
 # Init the package manager.
 pm = PackageManager(guard, api, package = SpiffPackage)
-pm.set_package_dir(spiff.package_dir)
+pm.set_package_dir(config.package_dir)
 
 
 def pkg_check_dependencies(pm, package):

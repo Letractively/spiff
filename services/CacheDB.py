@@ -169,7 +169,7 @@ class CacheDB(object):
         """
         permissions = self._get_permission_hash()
         page        = self.__session.get_requested_page()
-        uri         = os.environ["QUERY_STRING"]
+        uri         = self.__session.get_env('QUERY_STRING')
         table       = self._table_map['cache_item']
         #print "GET:", permissions, page.get_id(), uri
         sel         = select([table.c.content],
@@ -189,7 +189,7 @@ class CacheDB(object):
     def add(self, section, content):
         permissions = self._get_permission_hash()
         page        = self.__session.get_requested_page()
-        uri         = os.environ["QUERY_STRING"]
+        uri         = self.__session.get_env('QUERY_STRING')
         insert      = self._table_map['cache_item'].insert()
         result      = insert.execute(page_id     = page.get_id(),
                                      permissions = permissions,
@@ -217,7 +217,7 @@ class CacheDB(object):
     def is_fresh(self, section):
         permissions = self._get_permission_hash()
         page        = self.__session.get_requested_page()
-        uri         = os.environ["QUERY_STRING"]
+        uri         = self.__session.get_env('QUERY_STRING')
         table       = self._table_map['cache_item']
         sel         = select([table.c.id],
                              and_(table.c.page_id     == page.get_id(),

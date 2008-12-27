@@ -1,4 +1,4 @@
-# Copyright (C) 2006 Samuel Abels, http://debain.org
+# Copyright (C) 2008 Samuel Abels, http://debain.org
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2, as
@@ -12,78 +12,53 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-import sys, cgi, os.path
-sys.path.insert(0, '../libs/')
-sys.path.insert(0, '../libs/Constructor/src/')
-sys.path.insert(0, '../libs/Guard/src/')
-sys.path.insert(0, '../libs/Integrator/src/')
-sys.path.insert(0, '../libs/Warehouse/src/')
-sys.path.insert(0, '../objects')
-sys.path.insert(0, '../services')
-sys.path.insert(0, '../functions')
-from genshi.template    import TextTemplate
-from genshi.template    import TemplateLoader
-from Constructor        import *
-from Constructor.Task   import *
-from InstallGuard       import InstallGuard
-from InstallCacheDB     import InstallCacheDB
-from InstallIntegrator  import InstallIntegrator
-from InstallWarehouse   import InstallWarehouse
-from InstallExtension   import InstallExtension
+import sys, cgi, os, os.path
+from genshi.template import TemplateLoader
+from genshi.template import TextTemplate
+sys.path.insert(0, '.')
+sys.path.insert(0, '..')
+os.chdir(os.path.dirname(__file__))
+import config
+from Welcome            import Welcome
+from CheckRequirements  import CheckRequirements
+from DatabaseSetup      import DatabaseSetup
 from CreateDefaultSetup import CreateDefaultSetup
-from SetUserPassword    import SetUserPassword
+from CreateDefaultUser  import CreateDefaultUser
+from Done               import Done
+from StateDB            import StateDB
 
-print 'Content-Type: text/html'
-print
+steps = [Welcome,
+         CheckRequirements,
+         DatabaseSetup,
+         CreateDefaultSetup,
+         CreateDefaultUser,
+         Done]
 
-config_tmpl = os.path.join(os.path.dirname(__file__), 'spiff.cfg.tmpl')
-config_file = os.path.join(os.path.dirname(__file__), '../data/spiff.cfg')
+def run(request):
+    # Render the header.
+    loader = TemplateLoader(['.'])
+    tmpl   = loader.load('header.tmpl', None, TextTemplate)
+    output = tmpl.generate(version = config.__version__).render('text')
+    request.write(output)
 
-# Set Spiff Constructor up.
-loader      = TemplateLoader(['.'])
-template    = loader.load('install.tmpl', None, TextTemplate)
-environment = WebEnvironment(cgi.FieldStorage(), template)
-constructor = Constructor(environment)
-constructor.set_app_version('0.1')
+    # Perform the task.
+    state_db     = StateDB(os.path.join(config.data_dir, 'installer_states'))
+    step_id      = int(request.get_get_data('step', [0])[0])
+    prev_step_id = step_id - 1
+    state        = state_db.get(prev_step_id)
+    step_cls     = steps[step_id]
 
-# Installation requirement checks.
-checks = [CheckPythonVersion((2, 3, 0, '', 0)),
-          DirExists('../data/'),
-          FileIsWritable('../data/')]
-constructor.append(CheckList('Checking installation requirements', checks))
+    if request.has_post_data():
+        prev_step = steps[prev_step_id](prev_step_id, request, state)
+        if prev_step.check() and prev_step.submit():
+            state_db.save(step_id, state)
+            step = step_cls(step_id, request, state)
+            step.show()
+    else:
+        step = step_cls(step_id, request, state)
+        step.show()
 
-# Database setup.
-constructor.append(CollectDBInfo(['mysql4']))
-constructor.append(CheckDBConnection())
-constructor.append(CopyFile(config_tmpl, config_file))
-constructor.append(SaveDBConfig(config_file))
-constructor.append(CheckDBSupportsConstraints())
-
-# Other installation tasks.
-tasks = [
-    CreateDir('../data/repo'),
-    CreateDir('../data/uploads'),
-    CreateDir('../data/warehouse'),
-    CreateDir('../data/cache'),
-    InstallGuard(),
-    InstallIntegrator(),
-    InstallWarehouse(),
-    InstallCacheDB()
-]
-constructor.append(CreateDefaultSetup('Creating default setup', tasks))
-constructor.append(SetUserPassword('admin'))
-
-# Install core extensions.
-tasks = [
-    InstallExtension('../plugins/Spiff'),
-    InstallExtension('../plugins/Login'),
-    InstallExtension('../plugins/Register'),
-    InstallExtension('../plugins/AdminCenter'),
-    InstallExtension('../plugins/UserManager'),
-    InstallExtension('../plugins/PageEditor'),
-    InstallExtension('../plugins/ExtensionManager'),
-    InstallExtension('../plugins/WikiPage'),
-]
-constructor.append(CheckList('Installing core extensions', tasks))
-constructor.append(InstallationCompleted())
-result = constructor.install()
+    # Render the footer.
+    tmpl   = loader.load('footer.tmpl', None, TextTemplate)
+    output = tmpl.generate().render('text')
+    request.write(output)

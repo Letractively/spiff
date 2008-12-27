@@ -1,0 +1,36 @@
+<div xmlns:py="http://genshi.edgewall.org/" xmlns:xi="http://www.w3.org/2001/XInclude" py:strip="True">
+<h2>Creating Your Default Setup.</h2>
+
+Building an environment for your website.
+
+<h3>Creating Spiff Directories</h3>
+<xi:include py:with="items = results1" href="checklist.tmpl" />
+
+<h3>Setting Up Required Python Modules</h3>
+<xi:include py:with="items = results2" href="checklist.tmpl" />
+
+<h3>Installing Spiff Extensions</h3>
+<xi:include py:with="items = results3" href="checklist.tmpl" />
+
+<h3>Defining permission types</h3>
+<xi:include py:with="items = results4" href="checklist.tmpl" />
+
+<h3>Creating users and content</h3>
+<xi:include py:with="items = results5" href="checklist.tmpl" />
+
+<h3>Assigning extensions to pages</h3>
+<xi:include py:with="items = results6" href="checklist.tmpl" />
+
+<h3>Assigning default permissions</h3>
+<xi:include py:with="items = results7" href="checklist.tmpl" />
+
+<hr/>
+<form py:if="success" method='post' action='?step=${nextstep}'>
+<table width='100%'>
+  <tr>
+    <td width='100%'></td>
+    <td><input type='submit' value='Continue'/></td>
+  </tr>
+</table>
+</form>
+</div>

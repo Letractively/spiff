@@ -1,0 +1,27 @@
+<div py:if="items" xmlns:py="http://genshi.edgewall.org/" py:strip="True">
+<p/>
+<table width="100%" cellpadding="0">
+  <div py:for="name, result, hint in items" py:strip="True">
+  <tr>
+    <td>${name}</td>
+    <td>&nbsp;</td>
+    <td align="right">
+      <font py:if="result == True" color="green">Success</font>
+      <font py:if="result == False" color="red">Failed</font>
+    </td>
+  </tr>
+  <py:if test="hint">
+    <tr>
+      <td>
+        <font size="-1" py:content="hint" />
+      </td>
+      <td colspan="2">
+      </td>
+    </tr>
+    <tr>
+      <td colspan="3" height="5"></td>
+    </tr>
+  </py:if>
+  </div>
+</table>
+</div>

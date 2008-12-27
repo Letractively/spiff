@@ -13,60 +13,25 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import os.path, sys, cPickle, time
-from stat       import ST_MTIME
-from gettext    import gettext
-from urlutil    import get_uri, get_puri, get_request_uri, get_uri_attr
-from Integrator import Api
-from Cookie     import SimpleCookie
-
+from stat            import ST_MTIME
+from gettext         import gettext
+from SpiffIntegrator import Api
 
 class ExtensionApi(Api):
     def __init__(self, **kwargs):
         assert kwargs.has_key('session')
         assert kwargs.has_key('guard')
         assert kwargs.has_key('page_db')
-        assert kwargs.has_key('get_data')
-        assert kwargs.has_key('post_data')
+        assert kwargs.has_key('request')
         Api.__init__(self)
         self.__session        = kwargs['session']
         self.__guard          = kwargs['guard']
         self.__cache          = kwargs.get('cache')
         self.__page_db        = kwargs['page_db']
-        self.__get_data       = kwargs['get_data']
-        self.__post_data      = kwargs['post_data']
+        self.__request        = kwargs['request']
         self.__http_headers   = []
         self.__output         = ''
         self.template_render_time = 0
-
-
-    def __unpack_get_value(self, value):
-        if type(value) == type(''):
-            return value
-        elif type(value) == type([]):
-            return value[0]
-        assert False # No such type.
-
-
-    def __unpack_get_data(self, input):
-        output = {}
-        for key in input:
-            output[key] = self.__unpack_get_value(input[key])
-        return output
-
-
-    def __unpack_post_value(self, value):
-        if type(value) == type(''):
-            return value
-        elif type(value) != type([]):
-            return value.value
-        return [self.__unpack_post_value(v) for v in value]
-
-
-    def __unpack_post_data(self, input):
-        output = {}
-        for key in input:
-            output[key] = self.__unpack_post_value(input[key])
-        return output
 
 
     def __get_caller(self):
@@ -88,29 +53,21 @@ class ExtensionApi(Api):
 
 
     def get_get_data(self, name = None, unpack = True):
-        if name is None:
-            return self.__unpack_get_data(self.__get_data)
-        if not self.__get_data.has_key(name):
+        value = self.__request.get_get_data(name)
+        if value is None:
             return None
         if unpack:
-            return self.__get_data[name][0]
-        return self.__get_data[name]
+            return value[0]
+        return value
 
 
     def get_post_data(self, name = None, unpack = True):
-        if name is None:
-            return self.__unpack_post_data(self.__post_data)
-        if not self.__post_data.has_key(name):
+        value = self.__request.get_post_data(name)
+        if value is None:
             return None
-        field = self.__post_data[name]
-        if type(field) != type([]):
-            if unpack:
-                return field.value
-            return [field.value]
-        values = []
-        for item in field:
-            values.append(item.value)
-        return values
+        if unpack:
+            return value[0]
+        return value
 
 
     def get_requested_uri(self, *args, **kwargs):
@@ -208,10 +165,9 @@ class ExtensionApi(Api):
             fp.close()
         self.__output = tmpl.generate(plugin_dir  = dirname,
                                       web_dir     = '/web',
-                                      uri         = get_uri,
-                                      puri        = get_puri,
-                                      request_uri = get_request_uri,
-                                      uri_attr    = get_uri_attr,
+                                      uri         = self.request.get_uri,
+                                      puri        = self.request.get_current_url,
+                                      request_uri = self.request.get_current_url,
                                       txt         = gettext,
                                       **kwargs).render('xhtml')
         self.template_render_time += time.clock() - start

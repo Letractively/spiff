@@ -12,7 +12,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-from SpiffGuard import Action
+import os.path
+from ConfigParser import RawConfigParser
 
-class UserAction(Action):
-    pass
+__version__   = '0.0.1'
+data_dir      = os.path.join(os.path.dirname(__file__), 'data')
+plugin_dir    = os.path.join(os.path.dirname(__file__), 'plugins')
+cfg_file      = os.path.join(data_dir, 'spiff.cfg')
+package_dir   = os.path.join(data_dir, 'repo')
+upload_dir    = os.path.join(data_dir, 'uploads')
+warehouse_dir = os.path.join(data_dir, 'warehouse')
+cache_dir     = os.path.join(data_dir, 'cache')
+installer_dir = os.path.join(os.path.dirname(__file__), 'installer')
+cfg           = RawConfigParser()
+cfg.read(cfg_file)

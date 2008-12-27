@@ -13,7 +13,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import sha
-from Guard import ResourceGroup
+from SpiffGuard import ResourceGroup
 
 class User(ResourceGroup):
     def _hash_password(self, password):

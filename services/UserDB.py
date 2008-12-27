@@ -12,9 +12,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-from User       import User
-from Group      import Group
-from UserAction import UserAction
+try:
+    from mod_python import apache
+    User       = apache.import_module('../objects/User.py').User
+    Group      = apache.import_module('../objects/Group.py').Group
+    UserAction = apache.import_module('../objects/UserAction.py').UserAction
+except:
+    from objects import User
+    from objects import Group
+    from objects import UserAction
 
 class UserDB(object):
     def __init__(self, guard):

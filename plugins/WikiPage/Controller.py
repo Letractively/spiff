@@ -15,11 +15,17 @@
 import os
 import re
 import sys
-from genshi              import Markup
-from string              import split
-from ExtensionController import ExtensionController
-from Wiki                import Wiki
-from WikiPage            import WikiPage
+from genshi import Markup
+from string import split
+try:
+    from mod_python import apache
+    ExtensionController = apache.import_module('../../services/ExtensionController.py').ExtensionController
+    Wiki     = apache.import_module('./Wiki.py').Wiki
+    WikiPage = apache.import_module('./WikiPage.py').WikiPage
+except:
+    from ExtensionController import ExtensionController
+    from Wiki                import Wiki
+    from WikiPage            import WikiPage
 
 def check_cache(api, api_key):
     if api.get_post_data('save') is not None:

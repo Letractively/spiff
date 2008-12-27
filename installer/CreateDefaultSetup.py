@@ -1,4 +1,4 @@
-# Copyright (C) 2006 Samuel Abels, http://debain.org
+# Copyright (C) 2008 Samuel Abels, http://debain.org
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2, as
@@ -12,383 +12,453 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-import os, cgi
-from Task         import Task
-from Task         import CheckList
-from Form         import Form
-from StockButton  import StockButton
-from User         import User
-from Group        import Group
-from Page         import Page
-from UserAction   import UserAction
-from PageAction   import PageAction
+import config, util, os.path
+from services   import PageDB
+from objects    import UserAction, PageAction
+from sqlalchemy import create_engine
+from Step       import Step
 
-class CreateDefaultSetup(CheckList):
-    def _print_result(self, environment, done, allow_retry = True):
-        if done:
-            markup = '{variable check_done "True"}'
-            markup += self._result_markup
-            form = Form(markup, [StockButton('next_button')])
-        elif allow_retry:
-            form = Form(self._result_markup, [StockButton('retry_button')])
-        else:
-            form = Form(self._result_markup, [])
-        environment.render_markup(form)
+class CreateDefaultSetup(Step):
+    def __init__(self, id, request, state):
+        Step.__init__(self, id, request, state)
+        # Install files and directories.
+        self.result1 = [util.create_dir(config.package_dir),
+                        util.create_dir(config.upload_dir),
+                        util.create_dir(config.warehouse_dir),
+                        util.create_dir(config.cache_dir),
+                        util.merge_rawconfig_file('spiff.cfg.tmpl',
+                                                  config.cfg_file)]
+
+        # Set up Python modules.
+        self.result2 = [util.create_dir(config.package_dir),
+                        self._connect_db(),
+                        self._install_guard(),
+                        self._install_integrator(),
+                        self._install_warehouse(),
+                        self._install_cache()]
+
+        # Install extensions.
+        extensions = ['Spiff',
+                      'Login',
+                      'Register',
+                      'AdminCenter',
+                      'UserManager',
+                      'PageEditor',
+                      'ExtensionManager',
+                      'WikiPage']
+        self.result3 = [self._install_extension(e) for e in extensions]
+
+        # Define permission types.
+        permissions = [(UserAction, 'administer',   'Administer User'),
+                       (UserAction, 'view',         'View User'),
+                       (UserAction, 'edit',         'Edit User'),
+                       (UserAction, 'moderate',     'Moderate User'),
+                       (PageAction, 'create',       'Create Page'),
+                       (PageAction, 'view',         'View Page'),
+                       (PageAction, 'edit',         'Edit Page'),
+                       (PageAction, 'edit_content', 'Edit Page Content'),
+                       (PageAction, 'delete',       'Delete Page')]
+        self.result4 = [self._create_permission(*p) for p in permissions]
+
+        # Create users and pages.
+        resources = {
+            'Group|everybody|Everybody|': {
+                'Group|administrators|Administrators|': {
+                    'User|admin|Administrator|': {}
+                },
+                'Group|users|Users|': {
+                    'User|anonymous|Anonymous George|': {}
+                }
+            },
+            'Page|default|Wiki|': {},
+            'Page|admin|Admin Center|': {
+                'Page|admin/register|User Registration|': {},
+                'Page|admin/login|System Login|': {},
+                'Page|admin/users|User Manager|private=1': {},
+                'Page|admin/page|Page Editor|private=1': {},
+                'Page|admin/extensions|Extension Manager|private=1': {}
+            }
+        }
+        self.result5 = self._create_resource_tree(None, None, resources)
+
+        # Assign extensions to pages.
+        extensions = [
+            ('default',          'spiff_core_wiki_page',         True),
+            ('admin',            'spiff_core_admin_center',      True),
+            ('admin/register',   'spiff_core_register',          False),
+            ('admin/login',      'spiff_core_login',             False),
+            ('admin/users',      'spiff_core_user_manager',      True),
+            ('admin/page',       'spiff_core_page_editor',       False),
+            ('admin/extensions', 'spiff_core_extension_manager', False)
+        ]
+        self.result6 = self._assign_extensions(extensions)
+
+        # Assign default permissions.
+        permissions = {
+            'Deny: Group|everybody -> Group|everybody':
+                [(UserAction, 'administer'),
+                 (UserAction, 'view'),
+                 (UserAction, 'edit'),
+                 (UserAction, 'moderate')],
+            'Deny: Group|everybody -> Page|default,Page|admin':
+                [(PageAction, 'create'),
+                 (PageAction, 'view'),
+                 (PageAction, 'edit'),
+                 (PageAction, 'edit_content'),
+                 (PageAction, 'delete')],
+            'Grant: Group|administrators -> Group|everybody':
+                [(UserAction, 'administer'),
+                 (UserAction, 'view'),
+                 (UserAction, 'edit'),
+                 (UserAction, 'moderate')],
+            'Grant: Group|administrators -> Page|default,Page|admin':
+                [(PageAction, 'create'),
+                 (PageAction, 'view'),
+                 (PageAction, 'edit'),
+                 (PageAction, 'edit_content'),
+                 (PageAction, 'delete')],
+            'Grant: Group|users -> Group|everybody':
+                [(UserAction, 'view')],
+            'Grant: Group|users -> Page|default':
+                [(PageAction, 'view')]
+        }
+        self.result7 = self._assign_permissions(permissions)
+
+        # Done.
+        all_results  = self.result1 \
+                     + self.result2 \
+                     + self.result3 \
+                     + self.result4 \
+                     + self.result5 \
+                     + self.result6 \
+                     + self.result7
+        self.failed  = False in [r for n, r, e in all_results]
+
+        if not self.failed:
+            name, result, hint = self._save_config()
+            self.failed        = not result
+            self.result1.append((name, result, hint))
 
 
-    def __create_action(self, name, handle, type):
-        assert name   is not None
-        assert handle is not None
-        caption  = "Creating action '%s'" % name
-        action   = self.guard.get_action(handle = handle, type = type)
-        if not action:
-            action = type(name, handle)
-            try:
-                self.guard.add_action(action)
-            except:
-                self._add_result(caption, Task.failure)
-                self._print_result(self.environment, False)
-                return None
-        self._add_result(caption, Task.success)
-        return action
+    def _save_config(self):
+        name = 'Writing final configuration file'
+        try:
+            from ConfigParser import RawConfigParser
+            parser = RawConfigParser()
+            parser.read(config.cfg_file)
+            parser.set('database',  'dbn',     self.state.dbn)
+            parser.set('installer', 'version', config.__version__)
+            parser.write(open(config.cfg_file, 'w'))
+        except Exception, e:
+            return name, False, str(e)
+        return name, True, None
 
 
-    def __create_user_action(self, name, handle):
-        return self.__create_action(name, handle, UserAction)
+    def _connect_db(self):
+        name = 'Connecting to the database'
+        try:
+            self.db = create_engine(self.state.dbn)
+        except Exception, e:
+            return name, False, str(e)
+        return name, True, None
 
 
-    def __create_page_action(self, name, handle):
-        return self.__create_action(name, handle, PageAction)
+    def _install_guard(self):
+        name = 'Installing database tables for SpiffGuard'
+        try:
+            from SpiffGuard import DB as GuardDB
+            self.guard = GuardDB(self.db)
+            if not self.guard.install():
+                raise Exception('install() returned False')
+
+            # Register Spiff's object types.
+            from services import PageDB  # Import required to resolve Page.
+            from objects  import User
+            from objects  import Group
+            from objects  import Page
+            from objects  import UserAction
+            from objects  import PageAction
+            self.guard.register_type([User,
+                                      Group,
+                                      Page,
+                                      UserAction,
+                                      PageAction])
+        except Exception, e:
+            return name, False, str(e)
+        return name, True, None
 
 
-    def __create_resource(self,
-                          parent,
-                          name,
-                          handle,
-                          type,
-                          private = False):
-        assert name   is not None
-        assert handle is not None
-        caption  = "Creating resource '%s'" % name
-        resource = self.guard.get_resource(handle = handle, type = type)
+    def _install_integrator(self):
+        name = 'Installing database tables for SpiffIntegrator'
+        try:
+            from SpiffIntegrator import PackageManager, Api
+            from services        import PageDB  # Required to resolve Page.
+            from objects         import SpiffPackage
+            pm = PackageManager(self.guard, Api(), package = SpiffPackage)
+            if not pm.install():
+                raise Exception('install() returned False')
+        except Exception, e:
+            return name, False, str(e)
+        return name, True, None
+
+
+    def _install_warehouse(self):
+        name = 'Installing database tables for SpiffWarehouse'
+        try:
+            from SpiffWarehouse import DB as WarehouseDB
+            warehouse = WarehouseDB(self.db)
+            if not warehouse.install():
+                raise Exception('install() returned False')
+        except Exception, e:
+            return name, False, str(e)
+        return name, True, None
+
+
+    def _install_cache(self):
+        name = 'Installing database tables for internal caching'
+        try:
+            from services import Session
+            from services import CacheDB
+            session = Session(self.guard,
+                              request        = self.request,
+                              requested_page = object)
+            cache   = CacheDB(self.guard, session)
+            if not cache.install():
+                raise Exception('install() returned False')
+        except Exception, e:
+            return name, False, str(e)
+        return name, True, None
+
+
+    def _install_extension(self, filename):
+        from SpiffIntegrator import PackageManager
+        from services        import ExtensionApi
+        from services        import Session
+        from services        import PageDB
+        from objects         import SpiffPackage
+        name = 'Installing extension "%s"' % filename
+        try:
+            page_db       = PageDB(self.guard)
+            session       = Session(self.guard,
+                                    request        = self.request,
+                                    requested_page = None)
+            extension_api = ExtensionApi(session = session,
+                                         guard   = self.guard,
+                                         page_db = page_db,
+                                         request = self.request)
+            integrator    = PackageManager(self.guard,
+                                           extension_api,
+                                           package = SpiffPackage)
+            integrator.set_package_dir(config.package_dir)
+            filename = os.path.join(config.plugin_dir, filename)
+            package  = integrator.read_package(filename)
+            integrator.install_package(package)
+        except Exception, e:
+            return name, False, str(e)
+        return name, True, None
+
+
+    def _get_resource_from_handle(self, type, handle):
+        # Load the corresponding class.
+        try:
+            cls = __import__('objects.' + type,
+                             globals(),
+                             locals()).__dict__[type]
+        except Exception, e:
+            raise Exception('Failed to load parent class: %s' % str(e))
+
+        # Find the resource.
+        resource = self.guard.get_resource(handle = handle, type = cls)
         if not resource:
-            resource = type(name, handle)
-            if private:
-                resource.set_attribute('private', True)
-            if parent is None:
-                parent_id = None
-            else:
-                parent_id = parent.get_id()
-            self.guard.add_resource(parent_id, resource)
-        self._add_result(caption, Task.success)
+            raise Exception('Required resource "%s" not found.' % handle)
         return resource
 
 
-    def __create_group(self, parent, name, handle):
-        return self.__create_resource(parent, name, handle, Group)
+    def _get_resource_id_from_handle(self, type, handle):
+        if handle is None:
+            return None
+        return self._get_resource_from_handle(type, handle).get_id()
 
 
-    def __create_user(self, parent, name, handle):
-        return self.__create_resource(parent, name, handle, User)
+    def _create_resource(self,
+                         parent_type,
+                         parent_handle,
+                         resource_type,
+                         resource_handle,
+                         resource_name,
+                         **kwargs):
+        """
+        @type  kwargs: dict
+        @param kwargs: May contain attributes for the new resource.
+        """
+        name = 'Creating %s "%s"' % (resource_type, resource_name)
+
+        # Load the corresponding class.
+        try:
+            resource_cls = __import__('objects.' + resource_type,
+                                      globals(),
+                                      locals()).__dict__[resource_type]
+        except Exception, e:
+            return name, False, str(e)
+
+        # Check whether the resource already exists.
+        try:
+            resource = self.guard.get_resource(handle = resource_handle,
+                                               type   = resource_cls)
+        except Exception, e:
+            return name, False, str(e)
+        if resource:
+            return name, True, 'Skipped because it already exists.'
+
+        # Create an instance of the resource.
+        resource = resource_cls(resource_name, resource_handle)
+        for key, value in kwargs.iteritems():
+            resource.set_attribute(key, value)
+
+        # Find the parent resource.
+        try:
+            parent_id = self._get_resource_id_from_handle(parent_type,
+                                                          parent_handle)
+        except Exception, e:
+            return name, False, str(e)
+
+        # Save the resource.
+        self.guard.add_resource(parent_id, resource)
+        try:
+            self.guard.add_resource(parent_id, resource)
+        except Exception, e:
+            return name, False, str(e)
+        return name, True, None
 
 
-    def __create_page(self, parent, name, handle, private = False):
-        return self.__create_resource(parent, name, handle, Page, private)
+    def _create_resource_tree(self, parent_type, parent_handle, root):
+        results = []
+        for node, children in root.iteritems():
+            # Parse the descriptor.
+            type, handle, name, other = node.split('|')
+            if other != '':
+                attribs = dict([pair.split('=') for pair in other.split(',')])
+            else:
+                attribs = {}
+
+            # Create the resource.
+            result = self._create_resource(parent_type,
+                                           parent_handle,
+                                           type,
+                                           handle,
+                                           name)
+            results.append(result)
+            results += self._create_resource_tree(type, handle, children)
+        return results
 
 
-    def __assign_extension(self, environment, page, extension, caption):
-        page.assign_extension(extension)
-        if not self.guard.save_resource(page):
-            self._add_result(caption, Task.failure)
-            self._print_result(environment, False)
+    def _create_permission(self, action_cls, action_handle, action_name):
+        name = 'Creating permission type "%s"' % action_name
+
+        # Check whether the permission type already exists.
+        try:
+            action = self.guard.get_action(handle = action_handle,
+                                           type   = action_cls)
+        except Exception, e:
+            return name, False, str(e)
+        if action:
+            return name, True, 'Skipped because it already exists.'
+
+        # Create the action.
+        action = action_cls(action_name, action_handle)
+        try:
+            self.guard.add_action(action)
+        except Exception, e:
+            return name, False, str(e)
+        return name, True, None
+
+
+    def _get_action_from_handle(self, cls, handle):
+        action = self.guard.get_action(handle = handle, type = cls)
+        if not action:
+            raise Exception('Required action "%s" not found.' % handle)
+        return action
+
+
+    def _get_resources_from_descriptor(self, descriptor):
+        resources = []
+        for descr in descriptor.split(','):
+            resource_type, resource_handle = descr.split('|')
+            resource = self._get_resource_from_handle(resource_type,
+                                                      resource_handle)
+            resources.append(resource)
+        return resources
+
+
+    def _get_actions_from_permissions(self, permissions):
+        actions = []
+        for action_cls, action_handle in permissions:
+            action = self._get_action_from_handle(action_cls, action_handle)
+            actions.append(action)
+        return actions
+
+
+    def _assign_permissions(self, permissions):
+        results = []
+        for descriptor, permissions in permissions.iteritems():
+            # Parse the given descriptor string.
+            grantdeny,     relation        = descriptor.split(': ')
+            actor_descr,   resource_descr  = relation.split(' -> ')
+            actor_type,    actor_handle    = actor_descr.split('|')
+            permit                         = grantdeny == 'Grant'
+
+            # Fetch the associated objects from the database.
+            name = 'Assigning permission %s -> %s' % (actor_descr, resource_descr)
+            try:
+                actors    = self._get_resources_from_descriptor(actor_descr)
+                resources = self._get_resources_from_descriptor(resource_descr)
+                actions   = self._get_actions_from_permissions(permissions)
+            except Exception, e:
+                results.append((name, False, str(e)))
+                continue
+
+            # Assign the permission.
+            try:
+                self.guard.grant(actors, actions, resources)
+            except Exception, e:
+                results.append((name, False, str(e)))
+                continue
+            results.append((name, True, None))
+        return results
+
+
+    def _assign_extensions(self, extensions):
+        results = []
+        for page_handle, extension_handle, recursive in extensions:
+            name = 'Assigning %s to %s' % (extension_handle, page_handle)
+            page = self._get_resource_from_handle('Page', page_handle)
+            page.assign_extension(extension_handle)
+            if recursive:
+                page.set_attribute('recursive', True)
+            try:
+                if not self.guard.save_resource(page):
+                    raise Exception('Failed to save the resource.')
+            except Exception, e:
+                results.append((name, False, str(e)))
+                continue
+            results.append((name, True, None))
+        return results
+
+
+    def show(self):
+        self.render('CreateDefaultSetup.tmpl',
+                    results1 = self.result1,
+                    results2 = self.result2,
+                    results3 = self.result3,
+                    results4 = self.result4,
+                    results5 = self.result5,
+                    results6 = self.result6,
+                    results7 = self.result7,
+                    success  = not self.failed)
+
+
+    def check(self):
+        if self.failed:
+            self.show()
             return False
-        self._add_result(caption, Task.success)
         return True
-
-
-    def install(self, environment):
-        # See if we are done first.
-        result = environment.get_interaction_result()
-        if result is not None and result.get('check_done') is not None:
-            return Task.success
-
-        # Execute child tasks.
-        self._result_markup += '{subtitle "Installing required components"}'
-        result = Task.success
-        for task in self._child_task:
-            result = task.install(environment)
-            self._add_result(task.get_name(), result)
-            if result is not Task.success:
-                self._print_result(environment, False)
-                return result
-
-        # Now, create our default setup.
-        self.environment = environment
-        self.guard       = environment.get_attribute('guard_db')
-
-        #########
-        # Create users and groups.
-        #########
-        self._result_markup += '{subtitle "Creating users and groups"}'
-
-        group_everybody = self.__create_group(None, 'Everybody', 'everybody')
-        if group_everybody is None:
-            return Task.failure
-
-        group_admin = self.__create_group(group_everybody,
-                                          'Administrators',
-                                          'administrators')
-        if group_admin is None:
-            return Task.failure
-
-        user_admin = self.__create_user(group_admin, 'Administrator', 'admin')
-        if user_admin is None:
-            return Task.failure
-
-        group_users = self.__create_group(group_everybody, 'Users', 'users')
-        if group_users is None:
-            return Task.failure
-
-        user_anonymous = self.__create_user(group_users,
-                                            'Anonymous George',
-                                            'anonymous')
-        if user_anonymous is None:
-            return Task.failure
-
-        #########
-        # Create user permissions.
-        #########
-        self._result_markup += '{subtitle "Creating user permissions"}'
-
-        user_action_admin = self.__create_user_action('Administer User',
-                                                      'administer')
-        if user_action_admin is None:
-            return Task.failure
-
-        user_action_view = self.__create_user_action('View User',
-                                                     'view')
-        if user_action_view is None:
-            return Task.failure
-
-        user_action_edit = self.__create_user_action('Edit User',
-                                                     'edit')
-        if user_action_edit is None:
-            return Task.failure
-
-        user_action_moderate = self.__create_user_action('Moderate User',
-                                                         'moderate')
-        if user_action_moderate is None:
-            return Task.failure
-
-        #########
-        # Assign user permissions.
-        #########
-        self._result_markup += '{subtitle "Assigning user permissions"}'
-        caption = 'Denying all permissions for Everybody'
-        actions = [user_action_admin,
-                   user_action_view,
-                   user_action_edit,
-                   user_action_moderate]
-        try:
-            self.guard.deny(group_everybody, actions, group_everybody)
-        except:
-            self._add_result(caption, Task.failure)
-            self._print_result(environment, False)
-            return Task.failure
-        self._add_result(caption, Task.success)
-
-        caption = 'Granting all access to Administrators'
-        try:
-            self.guard.grant(group_admin, actions, group_everybody)
-        except:
-            self._add_result(caption, Task.failure)
-            self._print_result(environment, False)
-            return Task.failure
-        self._add_result(caption, Task.success)
-
-        caption = 'Granting view permission to Users'
-        actions = [user_action_view]
-        try:
-            self.guard.grant(group_users, actions, group_everybody)
-        except:
-            self._add_result(caption, Task.failure)
-            self._print_result(environment, False)
-            return Task.failure
-        self._add_result(caption, Task.success)
-
-        #########
-        # Create pages.
-        #########
-        self._result_markup += '{subtitle "Creating page"}'
-
-        page_default = self.__create_page(None, 'Wiki', 'default')
-        if page_default is None:
-            return Task.failure
-
-        page_admin = self.__create_page(None,
-                                        'Admin Center',
-                                        'admin',
-                                        True)
-        if page_admin is None:
-            return Task.failure
-
-        page_admin_register = self.__create_page(page_admin,
-                                                 'User Registration',
-                                                 'admin/register')
-        if page_admin_register is None:
-            return Task.failure
-
-        page_admin_login = self.__create_page(page_admin,
-                                              'System Login',
-                                              'admin/login')
-        if page_admin_login is None:
-            return Task.failure
-
-        page_admin_users = self.__create_page(page_admin,
-                                              'User Manager',
-                                              'admin/users',
-                                              True)
-        if page_admin_users is None:
-            return Task.failure
-
-        page_admin_page = self.__create_page(page_admin,
-                                             'Page Editor',
-                                             'admin/page',
-                                             True)
-        if page_admin_page is None:
-            return Task.failure
-
-        page_admin_extensions = self.__create_page(page_admin,
-                                                   'Extension Manager',
-                                                   'admin/extensions',
-                                                   True)
-        if page_admin_extensions is None:
-            return Task.failure
-
-        #########
-        # Assign extensions to the pages.
-        #########
-        # Assign the wiki page extension to the homepage.
-        caption = 'Assign default page to a wiki'
-        page_default.set_attribute('recursive', True)
-        if not self.__assign_extension(environment,
-                                       page_default,
-                                       'spiff_core_wiki_page',
-                                       caption):
-            return Task.failure
-
-        # Assign an extension to the admin/register page.
-        caption = 'Assign user registration extension to a system page'
-        if not self.__assign_extension(environment,
-                                       page_admin_register,
-                                       'spiff_core_register',
-                                       caption):
-            return Task.failure
-
-        # Assign an extension to the admin/login page.
-        caption = 'Assign login extension to a system page'
-        if not self.__assign_extension(environment,
-                                       page_admin_login,
-                                       'spiff_core_login',
-                                       caption):
-            return Task.failure
-
-        # Assign an extension to the admin page.
-        caption = 'Assign admin center extension to a system page'
-        page_admin.set_attribute('recursive', True)
-        if not self.__assign_extension(environment,
-                                       page_admin,
-                                       'spiff_core_admin_center',
-                                       caption):
-            return Task.failure
-
-        # Assign an extension to the admin/users page.
-        caption = 'Assign user manager extension to a system page'
-        page_admin_users.set_attribute('recursive', True)
-        if not self.__assign_extension(environment,
-                                       page_admin_users,
-                                       'spiff_core_user_manager',
-                                       caption):
-            return Task.failure
-
-        # Assign an extension to the admin/page page.
-        caption = 'Assign page editor extension to a system page'
-        if not self.__assign_extension(environment,
-                                       page_admin_page,
-                                       'spiff_core_page_editor',
-                                       caption):
-            return Task.failure
-
-        # Assign an extension to the admin/extensions page.
-        caption = 'Assign extension manager to a system page'
-        if not self.__assign_extension(environment,
-                                       page_admin_extensions,
-                                       'spiff_core_extension_manager',
-                                       caption):
-            return Task.failure
-
-        #########
-        # Create page permissions.
-        #########
-        self._result_markup += '{subtitle "Creating page permissions"}'
-
-        page_action_view = self.__create_page_action('View Page',
-                                                     'view')
-        if page_action_view is None:
-            return Task.failure
-
-        page_action_create = self.__create_page_action('Create Page',
-                                                       'create')
-        if page_action_create is None:
-            return Task.failure
-
-        page_action_edit = self.__create_page_action('Edit Page',
-                                                     'edit')
-        if page_action_edit is None:
-            return Task.failure
-
-        page_action_edit_content = self.__create_page_action('Edit Page Content',
-                                                             'edit_content')
-        if page_action_edit_content is None:
-            return Task.failure
-
-        page_action_delete = self.__create_page_action('Delete Page',
-                                                       'delete')
-        if page_action_delete is None:
-            return Task.failure
-
-        #########
-        # Assign page permissions.
-        #########
-        self._result_markup += '{subtitle "Assigning page permissions"}'
-        caption = 'Granting all permissions to administrators'
-        actions = [page_action_create,
-                   page_action_view,
-                   page_action_edit,
-                   page_action_edit_content,
-                   page_action_delete]
-        page = [page_default, page_admin]
-        try:
-            self.guard.grant(group_admin, actions, page)
-        except:
-            self._add_result(caption, Task.failure)
-            self._print_result(environment, False)
-            return Task.failure
-        self._add_result(caption, Task.success)
-
-        caption = 'Granting view permissions to users'
-        page = [page_default]
-        try:
-            self.guard.grant(group_users, page_action_view, page)
-        except:
-            self._add_result(caption, Task.failure)
-            self._print_result(environment, False)
-            return Task.failure
-        self._add_result(caption, Task.success)
-
-        self._print_result(environment, result == Task.success)
-        return Task.interact
-
-    
-    def uninstall(self, environment):
-        return Task.success

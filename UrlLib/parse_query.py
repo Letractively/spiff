@@ -3,8 +3,8 @@ from unquote import unquote
 def parse_query(query, keep_blank_values=0, strict_parsing=0):
     """Parse a URL query string and return the components as a dictionary.
 
-    Based on the cgi.parse_qs method.This is a utility function provided
-    with urlparse so that users need not use cgi module for
+    Based on the cgi.parse_qs method. This is a utility function provided
+    by urlparse so that users need not use the cgi module for
     parsing the url query string.
 
         Arguments:
