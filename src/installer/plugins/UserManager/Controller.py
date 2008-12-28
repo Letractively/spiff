@@ -12,6 +12,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+import gettext
+_ = gettext.gettext
 import SpiffGuard
 from string   import split
 from services import ExtensionController
@@ -23,7 +25,6 @@ from objects  import UserAction
 class Controller(ExtensionController):
     def __init__(self, api, api_key):
         ExtensionController.__init__(self, api, api_key)
-        self.i18n   = api.get_i18n()
         self.guard  = api.get_guard()
         self.userdb = UserDB(self.guard)
 
@@ -32,7 +33,6 @@ class Controller(ExtensionController):
         assert user is not None
         assert not user.is_group()
         assert path is not None
-        i18n = self.i18n
 
         # Make sure that current_user has "view" permissions on it.
         current_user = self.api.get_session().get_user()
@@ -41,7 +41,7 @@ class Controller(ExtensionController):
             assert view is not None
             if not self.guard.has_permission(current_user, view, user):
                 user     = User(user.get_name())
-                errors   = [i18n("You do not have permission to view " +
+                errors   = [_("You do not have permission to view " +
                                  "this user.")]
 
         # Collect information for the browser.
@@ -73,7 +73,6 @@ class Controller(ExtensionController):
         assert group is not None
         assert group.is_group()
         assert path is not None
-        i18n = self.i18n
 
         # Make sure that current_user has "view" permissions on it.
         current_user = self.api.get_session().get_user()
@@ -82,7 +81,7 @@ class Controller(ExtensionController):
             assert view is not None
             if not self.guard.has_permission(current_user, view, group):
                 group     = Group(group.get_name())
-                errors    = [i18n("You do not have permission to view " +
+                errors    = [_("You do not have permission to view " +
                                   "this group.")]
 
         # Collect information for the browser.
@@ -118,7 +117,6 @@ class Controller(ExtensionController):
     def __save_resource(self, resource):
         assert resource is not None
         self.guard = self.guard
-        i18n     = self.i18n
         
         # Retrieve form data.
         get_data             = self.api.get_get_data
@@ -148,24 +146,24 @@ class Controller(ExtensionController):
 
         # Parent ID must be >= 0.
         if parent_id is None or parent_id < 0:
-            msg = i18n("Invalid parent id.")
+            msg = _("Invalid parent id.")
             errors.append(msg)
 
         # A resource can not be its own parent/child.
         elif parent_id == resource.get_id():
-            msg = i18n("A resource can not be its own parent.")
+            msg = _("A resource can not be its own parent.")
             errors.append(msg)
 
         # Users and groups must have a parent, except existing ones.
         elif resource.get_id() is None and parent_id == 0:
-            msg = i18n("Can not create a user or group without a parent.")
+            msg = _("Can not create a user or group without a parent.")
             errors.append(msg)
 
         # So a parent was given - make sure that it exists.
         elif parent_id > 0:
             parent = self.guard.get_resource(id = parent_id)
             if parent is None:
-                msg = i18n("Specified parent does not exist.")
+                msg = _("Specified parent does not exist.")
                 errors.append(msg)
 
         # Check permissions.
@@ -179,7 +177,7 @@ class Controller(ExtensionController):
                                         type   = UserAction)
             assert admin is not None
             if not self.guard.has_permission(current_user, admin, parent):
-                return [i18n("You do not have permission to add a group.")]
+                return [_("You do not have permission to add a group.")]
 
         # If the given group already exists, make sure that current_user
         # has "edit" permissions on it.
@@ -187,7 +185,7 @@ class Controller(ExtensionController):
             edit = self.guard.get_action(handle = 'edit', type = UserAction)
             assert edit is not None
             if not self.guard.has_permission(current_user, edit, resource):
-                return [i18n("You do not have permission to edit this group.")]
+                return [_("You do not have permission to edit this group.")]
 
         # If the given user already exists, make sure that current_user
         # has "edit" permissions on it.
@@ -196,34 +194,34 @@ class Controller(ExtensionController):
                                        type   = UserAction)
             assert edit is not None
             if not self.guard.has_permission(current_user, edit, resource):
-                return [i18n("You do not have permission to edit this user.")]
+                return [_("You do not have permission to edit this user.")]
 
         # Minimum name length.
         if name is None or len(name) < 2:
-            msg = i18n("The name must be at least two characters long.")
+            msg = _("The name must be at least two characters long.")
             errors.append(msg)
 
         # Make sure that the user/group name does not yet exist.
         elif resource.get_id() is None:
             res = self.guard.get_resource(name = name, type = User)
             if res is not None and res.is_group():
-                msg = i18n("A group with the given name already exists.")
+                msg = _("A group with the given name already exists.")
                 errors.append(msg)
             elif res is not None:
-                msg = i18n("A user with the given name already exists: %s" % res.get_name())
+                msg = _("A user with the given name already exists: %s" % res.get_name())
                 errors.append(msg)
 
         # Groups require the use_group_permission field.
         if resource.is_group():
             if use_group_permission not in [0, 1]:
-                msg = i18n("Group has an invalid default owner.")
+                msg = _("Group has an invalid default owner.")
                 errors.append(msg)
 
         # New users require the default_owner_id field set to either 0 or
         # to the parent_id.
         elif parent is not None and resource.get_id() is None:
             if default_owner_id != 0 and default_owner_id != parent_id:
-                msg = i18n("Specified parent does not exist.")
+                msg = _("Specified parent does not exist.")
                 errors.append(msg)
 
         # Existing users require the default_owner_id field set to either 0
@@ -237,7 +235,7 @@ class Controller(ExtensionController):
                         found = True
                         break
             if not found:
-                msg = i18n("User has an invalid default owner.")
+                msg = _("User has an invalid default owner.")
                 errors.append(msg)
 
         # Make sure that the user/group names for which permissions were
@@ -247,7 +245,7 @@ class Controller(ExtensionController):
             res = self.guard.get_resource(name = rname, type = User)
             if res is not None:
                 continue
-            msg = i18n("User or group '%s' does not exists." % rname)
+            msg = _("User or group '%s' does not exists." % rname)
             errors.append(msg)
 
             # Make sure that a user does not have two sets of permissions
@@ -257,10 +255,10 @@ class Controller(ExtensionController):
                 continue
 
             if res.is_group():
-                msg = i18n("Permission for group '%s' was specified twice."
+                msg = _("Permission for group '%s' was specified twice."
                            % rname)
             else:
-                msg = i18n("Permission for user '%s' was specified twice."
+                msg = _("Permission for user '%s' was specified twice."
                            % rname)
             errors.append(msg)
 
@@ -316,7 +314,7 @@ class Controller(ExtensionController):
                                                                action_id,
                                                                resource_id)
                 if par_permit and not cur_permit:
-                    return [i18n("Permission change would escalate rights " +
+                    return [_("Permission change would escalate rights " +
                                  "above the currently logged in user.")]
                 assert self.guard.delete_permission_from_id(actor_id,
                                                             action.get_id(),
@@ -343,7 +341,7 @@ class Controller(ExtensionController):
                                                                action_id,
                                                                resource_id)
                 if par_permit and not cur_permit:
-                    return [i18n("Permission change would escalate rights " +
+                    return [_("Permission change would escalate rights " +
                                  "above the currently logged in user.")]
                 assert self.guard.delete_permission_from_id(actor_id,
                                                             action.get_id(),
@@ -377,7 +375,7 @@ class Controller(ExtensionController):
                 if not self.guard.has_permission_from_id(current_user_id,
                                                          action_id,
                                                          resource_id):
-                    return [i18n("Permission change would escalate rights " +
+                    return [_("Permission change would escalate rights " +
                                  "above the currently logged in user.")]
                 assert self.guard.grant_from_id(resource.get_id(),
                                                 action_id,
@@ -408,17 +406,15 @@ class Controller(ExtensionController):
         assert edit is not None
         permit = self.guard.has_permission(current_user, edit, resource)
         if not permit and resource.is_group():
-            return [i18n("You do not have permission to delete this group.")]
+            return [_("You do not have permission to delete this group.")]
         elif not permit:
-            return [i18n("You do not have permission to delete this user.")]
+            return [_("You do not have permission to delete this user.")]
 
         assert self.guard.delete_resource(resource) > 0
         return None
 
 
     def index(self, **kwargs):
-        i18n = self.i18n
-
         # Find out which item was requested.
         path_str = self.api.get_get_data('path_str')
         if path_str is None:
@@ -462,7 +458,7 @@ class Controller(ExtensionController):
             children = self.guard.get_resource_children(resource)
             if len(children) > 0:
                 #FIXME: Rather ask what to do with the children.
-                errors = [i18n("Group can not be deleted because " +
+                errors = [_("Group can not be deleted because " +
                                     "it still has users in it.")]
             else:
                 errors   = self.__delete_resource(resource)

@@ -89,10 +89,6 @@ class ExtensionApi(Api):
         return self.__http_headers
 
 
-    def get_i18n(self):
-        return gettext
-
-
     def get_db(self):
         #FIXME: Check permission of the caller!
         return self.__guard.db

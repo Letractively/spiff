@@ -16,6 +16,8 @@ import os
 import re
 import sys
 import config
+import gettext
+_ = gettext.gettext
 from genshi   import Markup
 from string   import split
 from services import ExtensionController
@@ -103,7 +105,6 @@ class Controller(ExtensionController):
         if kwargs.has_key('cancel'):
             return self.index()
 
-        i18n     = self.api.get_i18n()
         may_edit = self.api.get_session().may('edit_content')
         alias    = self.__get_alias()
         page     = WikiPage(self.wiki, alias)
@@ -112,11 +113,11 @@ class Controller(ExtensionController):
         
         # Save.
         if not may_edit:
-            errors = [i18n('No permission to save this page.')]
+            errors = [_('No permission to save this page.')]
         elif kwargs.get('wiki_markup', '') == '':
-            errors = [i18n('No text was entered...')]
+            errors = [_('No text was entered...')]
         elif not self.wiki.save_page(page):
-            errors = [i18n('Sorry, there was an internal error.' \
+            errors = [_('Sorry, there was an internal error.' \
                          + ' The page could not be saved.')]
         else:
             errors = []
@@ -133,7 +134,6 @@ class Controller(ExtensionController):
 
 
     def edit(self, **kwargs):
-        i18n     = self.api.get_i18n()
         may_edit = self.api.get_session().may('edit_content')
         name     = self.__get_page_name()
         revision = kwargs.get('revision')
@@ -141,9 +141,9 @@ class Controller(ExtensionController):
 
         errors = []
         if not may_edit:
-            errors.append(i18n('You are not allowed to edit this page.'))
+            errors.append(_('You are not allowed to edit this page.'))
         elif page is None:
-            errors.append(i18n('You are editing a new page.'))
+            errors.append(_('You are editing a new page.'))
 
         # Show the page.
         self.api.render('edit.tmpl',
@@ -154,7 +154,6 @@ class Controller(ExtensionController):
 
 
     def diff(self, **kwargs):
-        i18n     = self.api.get_i18n()
         may_edit = self.api.get_session().may('edit_content')
         name     = self.__get_page_name()
         diff     = self.wiki.get_diff(self.__get_alias(),
@@ -168,7 +167,6 @@ class Controller(ExtensionController):
 
 
     def history(self, **kwargs):
-        i18n     = self.api.get_i18n()
         may_edit = self.api.get_session().may('edit_content')
         name     = self.__get_page_name()
         offset   = kwargs.get('offset', 0)
@@ -183,7 +181,6 @@ class Controller(ExtensionController):
 
 
     def index(self, **kwargs):
-        i18n     = self.api.get_i18n()
         may_edit = self.api.get_session().may('edit_content')
         revision = kwargs.get('revision')
         page     = self.wiki.get_page(self.__get_alias(), revision)
@@ -192,7 +189,7 @@ class Controller(ExtensionController):
         if page is None:
             return self.edit(**kwargs)
         elif revision:
-            errors.append(self.i18n('Showing old revision %s' % revision))
+            errors.append(_('Showing old revision %s' % revision))
 
         # Show the page.
         self.api.render('show.tmpl',
