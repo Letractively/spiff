@@ -431,7 +431,11 @@ class CreateDefaultSetup(Step):
         results = []
         for page_handle, extension_handle, recursive in extensions:
             name = 'Assigning %s to %s' % (extension_handle, page_handle)
-            page = self._get_resource_from_handle('Page', page_handle)
+            try:
+                page = self._get_resource_from_handle('Page', page_handle)
+            except Exception, e:
+                results.append((name, False, str(e)))
+                continue
             page.assign_extension(extension_handle)
             if recursive:
                 page.set_attribute('recursive', True)
