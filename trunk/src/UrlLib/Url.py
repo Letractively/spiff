@@ -13,6 +13,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import os
+from urllib import quote
 
 class Url(object):
     def __init__(self, request, path = ''):
@@ -40,9 +41,11 @@ class Url(object):
 
     def set_var(self, key, value):
         pos = self.find_var(key)
-        if pos >= 0:
+        if pos >= 0 and value is None:
+            del self.vars[pos]
+        elif pos >= 0:
             self.vars[pos] = (key, value)
-        else:
+        elif value is not None:
             self.vars.append((key, value))
 
 
@@ -51,7 +54,7 @@ class Url(object):
             return self.path
         vars = []
         for key, value in self.vars:
-            vars.append('%s=%s' % (key, value)) #FIXME: Urlencode!
+            vars.append('%s=%s' % (quote(key), quote(value)))
         if self.rewrite:
             return self.path + '/' + '/'.join(vars) #FIXME: Improve rewriting.
         return self.path + '?' + '&'.join(vars)

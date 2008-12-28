@@ -167,8 +167,8 @@ class ExtensionApi(Api):
         self.__output = tmpl.generate(plugin_dir  = dirname,
                                       web_dir     = '/web',
                                       uri         = Url(self.__request),
-                                      puri        = self.__request.get_current_url,
-                                      request_uri = self.__request.get_current_url,
+                                      puri        = self.get_requested_uri,
+                                      request_uri = self.get_requested_uri,
                                       txt         = gettext,
                                       **kwargs).render('xhtml')
         self.template_render_time += time.clock() - start

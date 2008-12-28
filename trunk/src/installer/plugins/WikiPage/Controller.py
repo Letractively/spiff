@@ -66,7 +66,7 @@ class Controller(ExtensionController):
 
         # The user is viewing the homepage of his web presence.
         if alias is None:
-            url = self.api.get_requested_uri(page     = [word],
+            url = self.api.get_requested_uri(page     = word,
                                              revision = None,
                                              action   = None)
             return (url, word)
@@ -87,7 +87,7 @@ class Controller(ExtensionController):
             stack.append(word)
         else:
             stack[-1] = word
-        url = self.api.get_requested_uri(page     = ['/'.join(stack)],
+        url = self.api.get_requested_uri(page     = '/'.join(stack),
                                          revision = None,
                                          action   = None)
         return (url, word)
@@ -95,7 +95,7 @@ class Controller(ExtensionController):
 
     def __wiki_url_handler(self, url, word):
         if url.find(':') == -1:
-            url = self.api.get_requested_uri(page     = [url],
+            url = self.api.get_requested_uri(page     = url,
                                              revision = None,
                                              action   = None)
         return (url, word)

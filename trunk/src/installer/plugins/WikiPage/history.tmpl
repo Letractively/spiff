@@ -16,7 +16,7 @@
       </td>
     </tr>
     <tr py:for="revision in revisions"
-        py:with="rev_url = puri(revision = [revision.get_revision()])">
+        py:with="rev_url = puri(revision = revision.get_revision())">
       <td>
         <input type="radio"
                name="revision1"
