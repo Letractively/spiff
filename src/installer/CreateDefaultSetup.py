@@ -21,6 +21,8 @@ from Step       import Step
 class CreateDefaultSetup(Step):
     def __init__(self, id, request, state):
         Step.__init__(self, id, request, state)
+        self.plugin_dir = os.path.join(config.installer_dir, 'plugins')
+
         # Install files and directories.
         self.result1 = [util.create_dir(config.package_dir),
                         util.create_dir(config.upload_dir),
@@ -264,7 +266,7 @@ class CreateDefaultSetup(Step):
                                            extension_api,
                                            package = SpiffPackage)
             integrator.set_package_dir(config.package_dir)
-            filename = os.path.join(config.plugin_dir, filename)
+            filename = os.path.join(self.plugin_dir, filename)
             package  = integrator.read_package(filename)
             integrator.install_package(package)
         except OSError, e:
