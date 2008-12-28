@@ -19,7 +19,7 @@ class Url(object):
         self.request = request
         self.path    = ''
         self.vars    = []
-        self.rewrite = self.request.has_data('rewrite', 1)
+        self.rewrite = self.request.has_get_data('rewrite', 1)
         if self.rewrite:
             self.set_var('rewrite', 1)
 
@@ -29,7 +29,7 @@ class Url(object):
 
 
     def find_var(self, key, value = None):
-        for pos, my_key, my_value in enumerate(self.vars):
+        for pos, (my_key, my_value) in enumerate(self.vars):
             if my_key != key:
                 continue
             if value is not None and my_value != value:

@@ -16,6 +16,7 @@ import os.path, sys, cPickle, time
 from stat            import ST_MTIME
 from gettext         import gettext
 from SpiffIntegrator import Api
+from UrlLib          import Url
 
 class ExtensionApi(Api):
     def __init__(self, **kwargs):
@@ -54,6 +55,8 @@ class ExtensionApi(Api):
 
     def get_get_data(self, name = None, unpack = True):
         value = self.__request.get_get_data(name)
+        if name is None:
+            return value
         if value is None:
             return None
         if unpack:
@@ -63,6 +66,8 @@ class ExtensionApi(Api):
 
     def get_post_data(self, name = None, unpack = True):
         value = self.__request.get_post_data(name)
+        if name is None:
+            return value
         if value is None:
             return None
         if unpack:
@@ -70,8 +75,8 @@ class ExtensionApi(Api):
         return value
 
 
-    def get_requested_uri(self, *args, **kwargs):
-        return get_request_uri(**kwargs)
+    def get_requested_uri(self, **kwargs):
+        return self.__request.get_current_url(**kwargs).get_string()
 
 
     def append_http_headers(self, *args, **kwargs):
@@ -165,9 +170,9 @@ class ExtensionApi(Api):
             fp.close()
         self.__output = tmpl.generate(plugin_dir  = dirname,
                                       web_dir     = '/web',
-                                      uri         = self.request.get_uri,
-                                      puri        = self.request.get_current_url,
-                                      request_uri = self.request.get_current_url,
+                                      uri         = Url(self.__request),
+                                      puri        = self.__request.get_current_url,
+                                      request_uri = self.__request.get_current_url,
                                       txt         = gettext,
                                       **kwargs).render('xhtml')
         self.template_render_time += time.clock() - start
