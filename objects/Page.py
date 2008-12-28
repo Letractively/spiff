@@ -13,11 +13,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 from SpiffGuard import ResourceGroup
-try:
-    from mod_python import apache
-    LayoutParser = apache.import_module('../services/LayoutParser.py').LayoutParser
-except:
-    from services import LayoutParser
+from services   import LayoutParser
 
 class Page(ResourceGroup):
     def __init__(self, name, handle = None):

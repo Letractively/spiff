@@ -13,13 +13,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import os, sha
-try:
-    from mod_python import apache
-    User       = apache.import_module('../objects/User.py').User
-    PageAction = apache.import_module('../objects/PageAction.py').PageAction
-except:
-    from objects import User
-    from objects import PageAction
+from objects import User
+from objects import PageAction
 
 class Session(object):
     def __init__(self, guard, **kwargs):

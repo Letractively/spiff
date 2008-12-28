@@ -15,9 +15,7 @@
 import sys, cgi, os, os.path
 from genshi.template import TemplateLoader
 from genshi.template import TextTemplate
-sys.path.insert(0, '.')
 sys.path.insert(0, '..')
-os.chdir(os.path.dirname(__file__))
 import config
 from Welcome            import Welcome
 from CheckRequirements  import CheckRequirements
@@ -48,7 +46,7 @@ def run(request):
     state        = state_db.get(prev_step_id)
     step_cls     = steps[step_id]
 
-    if request.has_post_data():
+    if prev_step_id >= 0:
         prev_step = steps[prev_step_id](prev_step_id, request, state)
         if prev_step.check() and prev_step.submit():
             state_db.save(step_id, state)

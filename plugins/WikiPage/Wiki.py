@@ -16,16 +16,16 @@ import os
 import re
 import sys
 import difflib
-import Warehouse
-from cgi        import escape
-from genshi     import Markup
-from WikiMarkup import Wiki2Html
-from WikiPage   import WikiPage
+import SpiffWarehouse
+from cgi             import escape
+from genshi          import Markup
+from SpiffWikiMarkup import Wiki2Html
+from WikiPage        import WikiPage
 
 class Wiki(object):
     def __init__(self, db, **kwargs):
         self.db                = db
-        self.warehouse         = Warehouse.DB(db)
+        self.warehouse         = SpiffWarehouse.DB(db)
         self.__class__.differ  = difflib.Differ()
         self.__class__.matcher = difflib.SequenceMatcher()
         self.wiki2html         = Wiki2Html()
