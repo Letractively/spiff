@@ -12,26 +12,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+import os.path, sys
+from ConfigParser import RawConfigParser
 
-class Button(object):
-    def __init__(self, name, caption):
-        assert name    is not None
-        assert caption is not None
-        self.__name    = name
-        self.__caption = caption
-
-
-    def set_name(self, name):
-        self.__name = name
-
-
-    def get_name(self):
-        return self.__name
-
-
-    def set_caption(self, caption):
-        self.__caption = caption
-
-
-    def get_caption(self):
-        return self.__caption
+sys.path.insert(0, '.')
+__version__   = '0.0.1'
+base_dir      = os.path.dirname(__file__)
+installer_dir = os.path.join(base_dir, 'installer')
+data_dir      = os.path.join(base_dir, 'data')
+cfg_file      = os.path.join(data_dir, 'spiff.cfg')
+package_dir   = os.path.join(data_dir, 'repo')
+upload_dir    = os.path.join(data_dir, 'uploads')
+warehouse_dir = os.path.join(data_dir, 'warehouse')
+cache_dir     = os.path.join(data_dir, 'cache')
+cfg           = RawConfigParser()
+cfg.read(cfg_file)
