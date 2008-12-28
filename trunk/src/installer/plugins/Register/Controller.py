@@ -12,6 +12,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+import gettext
+_ = gettext.gettext
 import os, re, sha, smtplib, random
 from services import ExtensionController
 from objects  import User
@@ -20,7 +22,6 @@ class Controller(ExtensionController):
     def __init__(self, api, api_key):
         ExtensionController.__init__(self, api, api_key)
         self.__api      = api
-        self.i18n       = api.get_i18n()
         self.__session  = api.get_session()
         self.__guard    = api.get_guard()
         self.server     = 'mail.speedpartner.de' #FIXME: Make configurable
@@ -37,27 +38,26 @@ class Controller(ExtensionController):
 
         # Perform some checks on the input values.
         error = None
-        i18n  = self.i18n
         if handle == "":
-            error = i18n("Invalid login name!")
+            error = _("Invalid login name!")
         elif firstname == "":
-            error = i18n("Invalid first name!")
+            error = _("Invalid first name!")
         elif lastname == "":
-            error = i18n("Invalid last name!")
+            error = _("Invalid last name!")
         elif not re.match(r'\w+\@\w+\.\w+', email):
-            error = i18n("Invalid email address!")
+            error = _("Invalid email address!")
         elif password1 == "":
-            error = i18n("Please enter a password!")
+            error = _("Please enter a password!")
         elif password1 != password2:
-            error = i18n("Passwords do not match!")
+            error = _("Passwords do not match!")
         else:
             # Check whether the username is already taken.
             res = self.__guard.get_resource(handle = handle,
                                             type   = User)
             if res is not None and res.is_group():
-                error = i18n("A group with the given name already exists.")
+                error = _("A group with the given name already exists.")
             elif res is not None:
-                error = i18n("A user with the given name already exists.")
+                error = _("A user with the given name already exists.")
 
         # Bail out if an error was found.
         if error is not None:

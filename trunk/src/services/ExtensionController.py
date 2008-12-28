@@ -17,4 +17,3 @@ class ExtensionController(object):
     def __init__(self, api, api_key):
         self.api     = api
         self.api_key = api_key
-        self.i18n    = api.get_i18n()

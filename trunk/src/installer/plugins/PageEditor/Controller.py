@@ -12,6 +12,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+import gettext
+_ = gettext.gettext
 from string   import split
 from services import ExtensionController
 from services import LayoutParser
@@ -21,7 +23,6 @@ class Controller(ExtensionController):
     def __init__(self, api, api_key):
         ExtensionController.__init__(self, api, api_key)
         self.session    = api.get_session()
-        self.i18n       = api.get_i18n()
         self.integrator = api.get_integrator()
         self.page_db    = api.get_page_db()
         
@@ -36,10 +37,10 @@ class Controller(ExtensionController):
     def _layout_data_handler(self, data):
         extension = self.integrator.get_package_from_name(data)
         if extension is None:
-            self.__errors.append(self.i18n('Invalid extension in layout.'))
+            self.__errors.append(_('Invalid extension in layout.'))
             return ''
         elif extension.get_handle() in self.__hidden:
-            self.__errors.append(self.i18n('Hidden extension in layout.'))
+            self.__errors.append(_('Hidden extension in layout.'))
             return ''
 
         #FIXME: Check permission of the extension!
@@ -48,17 +49,15 @@ class Controller(ExtensionController):
 
 
     def __page_save(self):
-        i18n = self.i18n
-
         # Retrieve/check data.
         page_str = self.api.get_get_data('page')
         new      = self.api.get_post_data('create')
         name     = self.api.get_post_data('name')   or ''
         layout   = self.api.get_post_data('layout') or ''
         if name == '':
-            self.__errors.append(i18n('Page name is missing'))
+            self.__errors.append(_('Page name is missing'))
         if layout == '':
-            self.__errors.append(i18n('Layout is missing'))
+            self.__errors.append(_('Layout is missing'))
         if len(self.__errors) > 0:
             return False
 
@@ -72,7 +71,7 @@ class Controller(ExtensionController):
 
         # Check whether the caller has permission to edit this page.
         if not self.api.get_session().may('edit'):
-            err = i18n('Insufficient rights to change this page.')
+            err = _('Insufficient rights to change this page.')
             self.__errors.append(err)
             return False
 
@@ -87,37 +86,34 @@ class Controller(ExtensionController):
         page.set_name(name)
         page.set_attribute('layout', parser.layout)
         if new and not self.page_db.add(parent, page):
-            self.__errors.append(i18n('Error while creating the page.'))
+            self.__errors.append(_('Error while creating the page.'))
         elif not self.page_db.save(page):
-            self.__errors.append(i18n('Error while saving the page.'))
+            self.__errors.append(_('Error while saving the page.'))
             return False
 
-        self.__errors.append(i18n('Page saved.'))
+        self.__errors.append(_('Page saved.'))
         self.session.set_requested_page(page)
         return True
 
 
     def __page_delete(self):
-        i18n = self.i18n
-
         # Retrieve/check data.
         page = self.session.get_requested_page()
         assert page is not None
         if page.get_handle() == 'default':
-            self.__errors.append(i18n('Can not delete the default page'))
+            self.__errors.append(_('Can not delete the default page'))
             return False
 
         # Check whether the caller has permission to edit this page.
         if not self.api.get_session().may('delete'):
-            self.__errors.append(i18n('Insufficient rights to delete this' +
-                                      ' page.'))
+            self.__errors.append(_('Insufficient rights to delete this page.'))
             return False
 
         if not self.page_db.delete(page):
-            self.__errors.append(i18n('Error while deleting the page.'))
+            self.__errors.append(_('Error while deleting the page.'))
             return False
 
-        self.__errors.append(i18n('Page deleted.'))
+        self.__errors.append(_('Page deleted.'))
         return True
 
 
@@ -135,7 +131,7 @@ class Controller(ExtensionController):
         is_new_page = self.api.get_get_data('new_page') or False
         if is_new_page:
             page_str = self.api.get_get_data('page')
-            name     = self.i18n('New Page')
+            name     = _('New Page')
             layout   = ''
             if page_str is not None and page_str != '':
                 name = page_str.split('/')[-1]
