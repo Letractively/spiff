@@ -12,7 +12,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-import sys, cgi, os, os.path, time
+import sys, cgi, os, os.path, time, config
 import MySQLdb, SpiffGuard, config
 from SpiffIntegrator import PackageManager
 from sqlalchemy      import *
@@ -22,14 +22,8 @@ from genshi.template import MarkupTemplate
 from gettext         import gettext
 from string          import split
 from ConfigParser    import RawConfigParser
-from mod_python      import apache
-
-ExtensionApi    = apache.import_module('services/ExtensionApi').ExtensionApi
-PageDB          = apache.import_module('services/PageDB').PageDB
-UserDB          = apache.import_module('services/UserDB').UserDB
-CacheDB         = apache.import_module('services/CacheDB').CacheDB
-Session         = apache.import_module('services/Session').Session
-SpiffPackage    = apache.import_module('objects/SpiffPackage').SpiffPackage
+from services        import ExtensionApi, PageDB, UserDB, CacheDB, Session
+from objects         import SpiffPackage
 
 bench = {'start': time.clock()}
 

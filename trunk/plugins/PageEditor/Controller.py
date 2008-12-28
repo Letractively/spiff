@@ -12,10 +12,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-from ExtensionController import ExtensionController
-from string              import split
-from LayoutParser        import LayoutParser
-from Page                import Page
+from string   import split
+from services import ExtensionController
+from services import LayoutParser
+from objects  import Page
 
 class Controller(ExtensionController):
     def __init__(self, api, api_key):

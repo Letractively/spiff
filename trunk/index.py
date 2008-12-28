@@ -1,4 +1,6 @@
 #!/usr/bin/python
+import os, os.path
+os.chdir(os.path.dirname(__file__))
 try:
     import spiff
     if __name__ == '__main__':
@@ -9,12 +11,13 @@ try:
 except Exception, e:
     print 'Content-Type: text/html; charset=utf-8'
     print
-    raise
+    import traceback, sys
+    traceback.print_exc(file=sys.stdout)
+    sys.exit(1)
 
 def index(req):
-    from mod_python import apache
-    Request = apache.import_module('./UrlLib/Request.py')
-    request = Request.ModPythonRequest(req)
+    from UrlLib import ModPythonRequest
+    request = ModPythonRequest(req)
     spiff.run(request)
     request.flush()
     #return request.status

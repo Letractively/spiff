@@ -253,6 +253,8 @@ class CreateDefaultSetup(Step):
             filename = os.path.join(config.plugin_dir, filename)
             package  = integrator.read_package(filename)
             integrator.install_package(package)
+        except OSError, e:
+            return name, False, str(e)
         except Exception, e:
             return name, False, str(e)
         return name, True, None

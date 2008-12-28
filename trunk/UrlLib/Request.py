@@ -13,18 +13,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import os, cgi
-
-try:
-    from mod_python import apache
-    def import_module(self, name):
-        return apache.import_module(name)
-except:
-    def import_module(self, name):
-        return __import__(name, globals(), locals(), [''])
+from Url import Url
 
 class Request(object):
     def __init__(self):
-        self.url_cls      = None
         self.status       = 200;
         self.content_type = 'text/html; charset=utf-8'
         self.data         = ''
@@ -58,9 +50,7 @@ class Request(object):
 
 
     def get_url(self, path = ''):
-        if self.url_cls is None:
-            raise Exception('Url class is not loaded.')
-        return self.url_cls(self, path)
+        return Url(self, path)
 
 
     def get_current_url(self):
@@ -135,7 +125,6 @@ class CgiRequest(Request):
         from Cookie import SimpleCookie
         self.headers      = []
         self.headers_sent = False
-        self.url_cls      = __import__('Url', globals(), locals(), ['']).Url
         self.get_data     = cgi.parse_qs(self.get_env('QUERY_STRING'))
         self.post_data    = cgi.FieldStorage()
 
@@ -188,6 +177,7 @@ class CgiRequest(Request):
 
     def has_post_data(self, key = None, value = None):
         if key is None:
+            raise Exception(self.post_data)
             return len(self.post_data) > 0
         if value is None:
             self.post_data.has_key(key)
@@ -195,11 +185,11 @@ class CgiRequest(Request):
 
 
     def get_post_data(self, key = None, default = None):
-        if name is None:
+        if key is None:
             return self.__unpack_post_data(self.post_data)
-        if not self.post_data.has_key(name):
+        if not self.post_data.has_key(key):
             return default
-        field = self.post_data[name]
+        field = self.post_data[key]
         if type(field) != type([]):
             return [field.value]
         values = []
@@ -237,9 +227,9 @@ class ModPythonRequest(Request):
     def __init__(self, request):
         from mod_python      import apache, Cookie
         from mod_python.util import FieldStorage
+        from Url             import Url
         Request.__init__(self)
         self.request   = request
-        self.url_cls   = apache.import_module('./Url.py').Url
         self.env       = apache.build_cgi_env(request)
         self.get_data  = cgi.parse_qs(self.get_env('QUERY_STRING'))
         self.post_data = self.__unpack_post_data(request.form)

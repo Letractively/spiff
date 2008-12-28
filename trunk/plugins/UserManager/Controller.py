@@ -12,13 +12,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-import Guard
-from ExtensionController import ExtensionController
-from string              import split
-from User                import User
-from Group               import Group
-from UserAction          import UserAction
-from UserDB              import UserDB
+import SpiffGuard
+from string   import split
+from services import ExtensionController
+from services import UserDB
+from objects  import User
+from objects  import Group
+from objects  import UserAction
 
 class Controller(ExtensionController):
     def __init__(self, api, api_key):
@@ -132,7 +132,7 @@ class Controller(ExtensionController):
         resource_list        = post_data('resource[]',   False) or []
         permission_list      = post_data('permission[]', False) or []
         if path_str is not None:
-            path = Guard.ResourcePath(path_str) # FIXME: Take reference from elsewhere.
+            path = SpiffGuard.ResourcePath(path_str) # FIXME: Take reference from elsewhere.
         if path is not None:
             parent_id = path.get_parent_id()
         if resource.is_group() and parent_id is None:
@@ -424,9 +424,9 @@ class Controller(ExtensionController):
         if path_str is None:
             resource = self.guard.get_resource(handle = 'everybody',
                                                type   = Group)
-            path = Guard.ResourcePath([resource.get_id()])
+            path = SpiffGuard.ResourcePath([resource.get_id()])
         else:
-            path = Guard.ResourcePath(path_str)
+            path = SpiffGuard.ResourcePath(path_str)
 
         # Fetch the requested user or group info.
         errors = []

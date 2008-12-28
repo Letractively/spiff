@@ -13,9 +13,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 import os, re, sha, smtplib, random
-from ExtensionController import ExtensionController
-from urlutil             import get_request_uri
-from User                import User
+from services import ExtensionController
+from objects  import User
 
 class Controller(ExtensionController):
     def __init__(self, api, api_key):
@@ -87,7 +86,7 @@ class Controller(ExtensionController):
         # Format activation email.
         #FIXME: Make configurable.
         domain    = 'http://' + os.environ['HTTP_HOST']
-        vars      = get_request_uri(confirm = [1], key = [key])
+        vars      = self.__api.get_requested_uri(confirm = [1], key = [key])
         url       = domain + vars
         filename  = os.path.join(os.path.dirname(__file__), 'confirmation.txt')
         file      = open(filename)
