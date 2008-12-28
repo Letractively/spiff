@@ -1,5 +1,6 @@
 from unquote import unquote
 from Request import DummyRequest, CgiRequest, ModPythonRequest
+from Url     import Url
 
 import inspect
 __all__ = [name for name, obj in locals().items()

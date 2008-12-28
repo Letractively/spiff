@@ -206,9 +206,23 @@ class CreateDefaultSetup(Step):
         name = 'Installing database tables for SpiffWarehouse'
         try:
             from SpiffWarehouse import DB as WarehouseDB
+            from SpiffWarehouse import Item
             warehouse = WarehouseDB(self.db)
+            warehouse.set_directory(config.warehouse_dir)
             if not warehouse.install():
                 raise Exception('install() returned False')
+            homepage = os.path.join(os.path.dirname(__file__), 'homepage.txt')
+            markup   = os.path.join(os.path.dirname(__file__), 'markup.txt')
+
+            # Add the text of the homepage.
+            item = Item('default')
+            item.set_source_filename(homepage)
+            warehouse.add_file(item)
+
+            # Add a description of the wiki markup language.
+            item = Item('WikiMarkup')
+            item.set_source_filename(markup)
+            warehouse.add_file(item)
         except Exception, e:
             return name, False, str(e)
         return name, True, None

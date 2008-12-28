@@ -53,10 +53,12 @@ class Request(object):
         return Url(self, path)
 
 
-    def get_current_url(self):
+    def get_current_url(self, **kwargs):
         # Extract variables from the current URL.
-        url  = self.get_url()
+        url = self.get_url()
         for key, value in self.get_get_data().iteritems():
+            url.set_var(key, value)
+        for key, value in kwargs.iteritems():
             url.set_var(key, value)
         return url
 
