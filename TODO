@@ -1,3 +1,8 @@
+* Support session handling in UrlLib.Request.
+* Combine the old Session object with UrlLib.Request somehow.
+* Implement ModPythonRequest.get_cookie().
+* Make the header and footer templates work.
+
 * Simplify the WikiPage controller as much as humanly possible.
 * Simplify other extensions by making use of the new controller features.
 * Move plugin templates into a dedicated subdirectory.
