@@ -11,9 +11,9 @@ Email:  spam2 ad debain dod org
 Installation requirements
 -------------------------
 Your web server will have to support the following:
+- WSGI, CGI, or mod_python
 - Python 2.3 or better
-- CGI
-- MySQL 4 or better
+- MySQL 5 or better
 
 
 Installation Instructions

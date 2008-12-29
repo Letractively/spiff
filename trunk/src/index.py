@@ -1,23 +1,21 @@
 #!/usr/bin/python
 import os, os.path
 os.chdir(os.path.dirname(__file__))
-try:
-    import spiff
-    if __name__ == '__main__':
-        from UrlLib import CgiRequest
-        request = CgiRequest()
-        spiff.run(request)
-        request.flush()
-except Exception, e:
-    print 'Content-Type: text/plain; charset=utf-8'
-    print
-    import traceback, sys
-    traceback.print_exc(file=sys.stdout)
-    sys.exit(1)
+import config  # Configures sys.path.
 
+# This handler runs Spiff.
+def handler(request):
+    import spiff
+    runner = spiff.Runner(request)
+    runner.run()
+
+# Hook for most adapters.
+if __name__ == '__main__':
+    from pywsgi import RequestHandler
+    request_handler = RequestHandler(handler)
+
+# Special cased hook for mod_python.
 def index(req):
-    from UrlLib import ModPythonRequest
+    from pywsgi import ModPythonRequest
     request = ModPythonRequest(req)
-    spiff.run(request)
-    request.flush()
-    #return request.status
+    request.handle(handler)
