@@ -12,7 +12,7 @@ from services        import Session
 from traceback       import print_exc
 from tempfile        import mkdtemp
 from objects         import SpiffPackage
-from UrlLib          import DummyRequest
+from pywsgi          import DummyRequest
 
 
 actions = ('check_dependencies',

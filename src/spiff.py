@@ -276,8 +276,3 @@ class Runner(object):
         # Yippie.
         self.request.write(output)
         self.request.write(get_benchmark(api))
-
-def run(request):
-    sys.stderr = sys.stdout
-    runner = Runner(request)
-    return runner.run()

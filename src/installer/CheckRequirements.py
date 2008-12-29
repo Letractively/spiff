@@ -22,6 +22,7 @@ class CheckRequirements(Step):
                         util.check_python_version((2, 3, 0, '', 0)),
                         util.check_dir_exists(config.data_dir),
                         util.check_is_writable(config.data_dir),
+                        util.check_python_module_exists('pywsgi'),
                         util.check_python_module_exists('SpiffGuard'),
                         util.check_python_module_exists('SpiffIntegrator'),
                         util.check_python_module_exists('SpiffSignal'),

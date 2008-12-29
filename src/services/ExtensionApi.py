@@ -16,7 +16,7 @@ import os.path, sys, cPickle, time
 from stat            import ST_MTIME
 from gettext         import gettext
 from SpiffIntegrator import Api
-from UrlLib          import Url
+from pywsgi          import Url
 
 class ExtensionApi(Api):
     def __init__(self, **kwargs):
