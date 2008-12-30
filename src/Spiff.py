@@ -12,9 +12,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-import sys, cgi, os, os.path, time, config, sha
+import sys, cgi, os, os.path, config, sha
 import MySQLdb, SpiffGuard, config
 from SpiffIntegrator import PackageManager
+from Benchmarker     import Benchmarker
 from sqlalchemy      import *
 from genshi.template import TemplateLoader
 from genshi.template import TextTemplate
@@ -25,71 +26,13 @@ from ConfigParser    import RawConfigParser
 from services        import ExtensionApi, PageDB, UserDB, CacheDB
 from objects         import SpiffPackage, User
 
-bench = {'start': time.clock()}
-
-def get_benchmark(api = None):
-    tmpl_render_time = api and api.template_render_time or 0
-    bench['total']   = time.clock() - bench['start']
-    times = [['total',
-              'Total rendering time is %ss.' % bench.get('total', 0),
-              False],
-             ['set_up',
-              'Set-up time is %ss.' % bench.get('set_up', 0),
-              False],
-             ['page_find',
-              'Time for looking up the page is %ss.' % bench.get('page_find', 0),
-              False],
-             ['cache_check',
-              'Spent %ss checking the cache.' % bench.get('cache_check', 0),
-              False],
-             ['package_load',
-              'Spent %ss loading packages.' % bench.get('package_load', 0),
-              False],
-             ['permission_check',
-              'Time spent checking permissions is %ss.' % bench.get('permission_check', 0),
-              False],
-             ['render_header',
-              'Render time spent on header is %ss.' % bench.get('render_header', 0),
-              False],
-             ['render_plugins',
-              'Render time spent in plugins is %ss.' % bench.get('render_plugins', 0),
-              False],
-             ['render_footer',
-              'Render time spent in footer is %ss.' % bench.get('render_footer', 0),
-              False],
-             ['cache_add',
-              'Time spent adding to cache is %ss.' % bench.get('cache_add', 0),
-              False],
-             ['template',
-              'Spent %ss rendering templates.' % tmpl_render_time,
-              False]]
-    for item in times:
-        try:
-            if config.cfg.getboolean('benchmark', 'show_%s_time' % item[0]):
-                item[2] = True
-        except:
-            pass
-    if True not in [s for n, t, s in times]:
-        return ''
-    result = '<table width="100%">'
-    for name, text, show in times:
-        if not show:
-            continue
-        result += '  <tr>'
-        result += '    <td class="benchmark" id="%s" align="center">' % name
-        result += '    %s' % text
-        result += '    </td>'
-        result += '  </tr>'
-    result += '</table>'
-    return result
-
-
 class Spiff(object):
     def __init__(self, request):
         self.request        = request
         self.guard          = None
         self.current_user   = None
         self.requested_page = None
+        self.bench          = Benchmarker()
         self.output         = ''
         #self.db.echo = 1
 
@@ -257,17 +200,16 @@ class Spiff(object):
             return
 
         # Find the current page using the given cgi variables.
-        page_db            = PageDB(self.get_guard())
-        user_db            = UserDB(self.get_guard())
-        page_handle        = self.request.get_get_data('page', ['default'])[0]
-        start              = time.clock()
-        page               = page_db.get(page_handle)
-        bench['page_find'] = time.clock() - start
+        page_db     = PageDB(self.get_guard())
+        user_db     = UserDB(self.get_guard())
+        page_handle = self.request.get_get_data('page', ['default'])[0]
+        page        = page_db.get(page_handle)
+        self.bench.snapshot('page_find', 'Looked up the page in %ss.')
 
         # Set up the session and the HTML cache.
         self.request.start_session()
         cache           = CacheDB(self, self.get_guard())
-        bench['set_up'] = time.clock() - bench['start'] - bench['page_find']
+        self.bench.snapshot('set_up', 'Set-up time is %ss.')
 
         # Can not open some pages by addressing them directly.
         if self.request.has_get_data('page') \
@@ -291,22 +233,21 @@ class Spiff(object):
             self.request.set_status(404)
             self.request.write('Default page not found.')
             return
-        bench['page_find'] += time.clock() - start
+        self.bench.snapshot('page_open', 'Opened the page in %ss.')
 
         # If the output of ALL extensions is cached (combined), there is no need
         # to redraw the page, including headers and footer.
         # Note that the cache only returns pages corresponding to the permissions
         # of the current user, so this is safe.
         self.requested_page = page
-        start = time.clock()
         if self.request.get_env('REQUEST_METHOD') == 'GET':
             output               = cache.get_page()
-            bench['cache_check'] = time.clock() - start
+            self.bench.snapshot('cache_check', 'Spent %ss checking the cache.')
             if output is not None:
                 self.request.write(output)
                 self.request.write(get_benchmark())
                 return
-        bench['cache_check'] = time.clock() - start
+        self.bench.snapshot('cache_check', 'Spent %ss checking the cache.')
 
         # Set up the plugin manager (Integrator). Note that the constructor
         # of PackageManager also associates the api with a reference to the
@@ -318,47 +259,41 @@ class Spiff(object):
                            request = self.request)
         pm = PackageManager(self.get_guard(), api, package = SpiffPackage)
         pm.set_package_dir(config.package_dir)
-
-        bench['set_up'] = time.clock() - bench['start'] - bench['page_find']
-        start           = time.clock()
+        self.bench.snapshot('package_load', 'Package manager loaded in %ss.')
 
         # Ending up here the entire page was not cached.
         # Make sure that the caller has permission to retrieve this page.
         # If the caller currently has no permission, load the login
         # extension to give it the opportunity to perform the login.
-        start = time.clock()
         if (page.get_attribute('private') and not self.current_user_may('view')) \
           or self.request.has_post_data('login') \
           or self.request.has_post_data('logout'):
             page = page_db.get('admin/login')
             self.requested_page = page
-        bench['permission_check'] = time.clock() - start
+        self.bench.snapshot('permission_check', 'Permission checked in %ss.')
 
         # Render the layout. This invokes the plugins, which in turn may
         # request some HTTP headers to be sent. So we need to fetch the 
         # list of headers after that!
-        start       = time.clock()
         page_output = page.get_output(api)
-        bench['render_plugins'] = time.clock() - start
+        self.bench.snapshot('render_plugins', 'Plugins rendered in %ss.')
 
         # Now that all plugins are completed we may retrieve a list of headers.
-        start = time.clock()
         self._render_headers()
-        bench['render_header'] = time.clock() - start
+        self.bench.snapshot('render_header', 'Headers rendered in %ss.')
 
         self.output += page_output
 
         # Get the footer, excluding benchmark information.
-        start = time.clock()
         self._render_text_template('footer.tmpl')
-        bench['render_footer'] = time.clock() - start
+        self.bench.snapshot('render_footer', 'Footer rendered in %ss.')
 
         # Cache the page (if it is cacheable).
-        start = time.clock()
         if page.is_cacheable() and len(self.request.get_headers()) == 0:
             cache.add_page(self.output)
-        bench['cache_add'] = time.clock() - start
+        self.bench.snapshot('cache_add', 'Added to cache in %ss.')
 
         # Yippie.
         self.request.write(self.output)
-        self.request.write(get_benchmark(api))
+        self.bench.snapshot_total('total', 'Total rendering time is %ss.')
+        self.request.write(self.bench.get_html())
