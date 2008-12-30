@@ -1,5 +1,4 @@
 * Rewrite/cleanup the PageDB.
-* Rename spiff.py to Spiff.py.
 * Clean the Spiff class up.
 * Clean up session handling. Store the user id in the session.
 * Make the header and footer templates work.
