@@ -96,13 +96,10 @@ guard = SpiffGuard.DB(db)
 page_db = PageDB(guard)
 page    = page_db.get('default')
 request = DummyRequest()
-session = Session(guard, request = request, requested_page = page)
-api     = ExtensionApi(guard     = guard,
+api     = ExtensionApi(object,
+                       guard     = guard,
                        page_db   = page_db,
-                       session   = session,
-                       request   = request,
-                       get_data  = object,
-                       post_data = object)
+                       request   = request)
 
 # Init the package manager.
 pm = PackageManager(guard, api, package = SpiffPackage)

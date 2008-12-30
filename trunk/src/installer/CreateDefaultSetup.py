@@ -233,12 +233,8 @@ class CreateDefaultSetup(Step):
     def _install_cache(self):
         name = 'Installing database tables for internal caching'
         try:
-            from services import Session
             from services import CacheDB
-            session = Session(self.guard,
-                              request        = self.request,
-                              requested_page = object)
-            cache   = CacheDB(self.guard, session)
+            cache = CacheDB(object, self.guard)
             if not cache.install():
                 raise Exception('install() returned False')
         except Exception, e:
@@ -249,16 +245,12 @@ class CreateDefaultSetup(Step):
     def _install_extension(self, filename):
         from SpiffIntegrator import PackageManager
         from services        import ExtensionApi
-        from services        import Session
         from services        import PageDB
         from objects         import SpiffPackage
         name = 'Installing extension "%s"' % filename
         try:
             page_db       = PageDB(self.guard)
-            session       = Session(self.guard,
-                                    request        = self.request,
-                                    requested_page = None)
-            extension_api = ExtensionApi(session = session,
+            extension_api = ExtensionApi(object,
                                          guard   = self.guard,
                                          page_db = page_db,
                                          request = self.request)
