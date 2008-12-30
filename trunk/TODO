@@ -2,6 +2,7 @@
 * Clean the Spiff class up.
 * Clean up session handling. Store the user id in the session.
 * Make the header and footer templates work.
+* Add request adapter name to the footer.
 * See whether the TemplateLoader may be re-used instead of creating a
 new instance every time.
 
