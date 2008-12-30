@@ -5,7 +5,7 @@ import config  # Configures sys.path.
 
 # This handler runs Spiff.
 def handler(request):
-    from spiff import Spiff
+    from Spiff import Spiff
     Spiff(request).run()
 
 # Hook for most adapters.
