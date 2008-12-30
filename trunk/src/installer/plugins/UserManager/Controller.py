@@ -35,7 +35,7 @@ class Controller(ExtensionController):
         assert path is not None
 
         # Make sure that current_user has "view" permissions on it.
-        current_user = self.api.get_session().get_user()
+        current_user = self.api.get_current_user()
         if user.get_id() is not None:
             view = self.guard.get_action(handle = 'view', type = UserAction)
             assert view is not None
@@ -75,7 +75,7 @@ class Controller(ExtensionController):
         assert path is not None
 
         # Make sure that current_user has "view" permissions on it.
-        current_user = self.api.get_session().get_user()
+        current_user = self.api.get_current_user()
         if group.get_id() is not None:
             view = self.guard.get_action(handle = 'view', type = UserAction)
             assert view is not None
@@ -167,7 +167,7 @@ class Controller(ExtensionController):
                 errors.append(msg)
 
         # Check permissions.
-        current_user    = self.api.get_session().get_user()
+        current_user    = self.api.get_current_user()
         current_user_id = current_user.get_id()
 
         # If the given user/group is new, make sure that current_user has
@@ -399,7 +399,7 @@ class Controller(ExtensionController):
         assert resource is not None
 
         # Check permissions.
-        current_user = self.api.get_session().get_user()
+        current_user = self.api.get_current_user()
 
         # Make sure that current_user has "edit" permissions on it.
         edit = self.guard.get_action(handle = 'edit', type = UserAction)

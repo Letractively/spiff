@@ -22,7 +22,6 @@ class Controller(ExtensionController):
     def __init__(self, api, api_key):
         ExtensionController.__init__(self, api, api_key)
         self.__api      = api
-        self.__session  = api.get_session()
         self.__guard    = api.get_guard()
         self.server     = 'mail.speedpartner.de' #FIXME: Make configurable
         self.mail_from  = 'no-reply@debain.org'
@@ -123,7 +122,7 @@ class Controller(ExtensionController):
 
     def index(self, **kwargs):
         # If the user is already logged in do nothing.
-        user = self.__session.get_user()
+        user = self.api.get_current_user()
         if user is not None:
             self.__api.render('complete.tmpl', user = user)
             return

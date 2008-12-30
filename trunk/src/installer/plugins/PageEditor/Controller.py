@@ -22,7 +22,6 @@ from objects  import Page
 class Controller(ExtensionController):
     def __init__(self, api, api_key):
         ExtensionController.__init__(self, api, api_key)
-        self.session    = api.get_session()
         self.integrator = api.get_integrator()
         self.page_db    = api.get_page_db()
         
@@ -64,13 +63,13 @@ class Controller(ExtensionController):
         # Fetch the page from the database, or instanciate a new one.
         if new:
             page   = Page(name)
-            parent = page_str and self.session.get_requested_page() or None
+            parent = page_str and self.api.get_requested_page() or None
         else:
-            page = self.session.get_requested_page()
+            page = self.api.get_requested_page()
         assert page is not None
 
         # Check whether the caller has permission to edit this page.
-        if not self.api.get_session().may('edit'):
+        if not self.api.current_user_.may('edit'):
             err = _('Insufficient rights to change this page.')
             self.__errors.append(err)
             return False
@@ -92,20 +91,20 @@ class Controller(ExtensionController):
             return False
 
         self.__errors.append(_('Page saved.'))
-        self.session.set_requested_page(page)
+        self.api.set_requested_page(page)
         return True
 
 
     def __page_delete(self):
         # Retrieve/check data.
-        page = self.session.get_requested_page()
+        page = self.api.get_requested_page()
         assert page is not None
         if page.get_handle() == 'default':
             self.__errors.append(_('Can not delete the default page'))
             return False
 
         # Check whether the caller has permission to edit this page.
-        if not self.api.get_session().may('delete'):
+        if not self.api.current_user_may('delete'):
             self.__errors.append(_('Insufficient rights to delete this page.'))
             return False
 
@@ -126,7 +125,7 @@ class Controller(ExtensionController):
             self.__page_delete()
 
         # Collect data.
-        page = self.session.get_requested_page()
+        page = self.api.get_requested_page()
         assert page is not None
         is_new_page = self.api.get_get_data('new_page') or False
         if is_new_page:
@@ -150,6 +149,6 @@ class Controller(ExtensionController):
                         name          = name,
                         extensions    = extensions,
                         is_new_page   = is_new_page,
-                        may_edit_page = self.api.get_session().may('edit'),
+                        may_edit_page = self.api.current_user_may('edit'),
                         layout        = layout,
                         errors        = self.__errors)

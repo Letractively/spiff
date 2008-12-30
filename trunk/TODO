@@ -3,7 +3,10 @@
 * Clean the Spiff class up.
 * Clean up session handling. Store the user id in the session.
 * Make the header and footer templates work.
+* See whether the TemplateLoader may be re-used instead of creating a
+new instance every time.
 
+-----------------
 * Simplify the WikiPage controller as much as humanly possible.
 * Simplify other extensions by making use of the new controller features.
 * Move plugin templates into a dedicated subdirectory.

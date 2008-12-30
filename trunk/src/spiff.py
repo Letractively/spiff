@@ -12,7 +12,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-import sys, cgi, os, os.path, time, config
+import sys, cgi, os, os.path, time, config, sha
 import MySQLdb, SpiffGuard, config
 from SpiffIntegrator import PackageManager
 from sqlalchemy      import *
@@ -90,6 +90,7 @@ class Spiff(object):
         self.guard          = None
         self.current_user   = None
         self.requested_page = None
+        self.output         = ''
         #self.db.echo = 1
 
 
@@ -104,8 +105,59 @@ class Spiff(object):
         return self.request.get_env(name)
 
 
+    def set_requested_page(self, page):
+        self.requested_page = page
+
+
     def get_requested_page(self):
         return self.requested_page
+
+
+    def get_requested_uri(self, **kwargs):
+        return self.request.get_current_url(**kwargs).get_string()
+
+
+    def _get_permission_hash(self, user):
+        """
+        This function returns a string that identifies all permissions
+        of the given user on the current group.
+        FIXME: this sounds like a hack, and should not be here anyway.
+        """
+        page   = self.get_requested_page()
+        string = page.get_attribute('private') and 'p' or 'np'
+        if user is None:
+            return string
+        acls = self.guard.get_permission_list_with_inheritance(actor    = user,
+                                                               resource = page)
+        for acl in acls:
+            string += str(acl)
+        return sha.new(string).hexdigest()
+
+
+    def login(self, username, password):
+        """
+        Attempts to login the user with the given name/password.
+        """
+        if username is None or password is None:
+            return None
+        user = self.guard.get_resource(handle = username, type = User)
+        if user is None:
+            return None
+        if user.is_inactive():
+            return None
+        if not user.has_password(password):
+            return None
+        #FIXME: saving this as user attributes is an evil hack.
+        user.set_attribute('sid',             self.request.get_session().get_id())
+        user.set_attribute('permission_hash', self._get_permission_hash(user))
+        self.guard.save_resource(user)
+        self.current_user = user
+        return user
+
+
+    def logout(self):
+        self.request.get_session().destroy()
+        self.current_user = None
 
 
     def get_current_user(self):
@@ -127,49 +179,53 @@ class Spiff(object):
         return self.current_user
 
 
-    def _get_admin_links(self, api):
-        api.render('admin_header.tmpl',
-                   current_user  = user,
-                   may_edit_page = True)
-        return api.get_output()
+    def current_user_may(self, action_handle, page = None):
+        if page is None:
+            page = self.get_requested_page()
+
+        # If the page is publicly available there's no need to ask the DB.
+        private = page.get_attribute('private') or False
+        if action_handle == 'view' and not private:
+            return True
+
+        # Get the currently logged in user.
+        user = self.get_current_user()
+        if user is None:
+            return False
+
+        # Ask the DB whether permission shall be granted.
+        action = self.guard.get_action(type   = PageAction,
+                                       handle = action_handle)
+        if self.guard.has_permission(user, action, page):
+            return True
+        return False 
 
 
-    def _get_headers(self, api, content_type = 'text/html; charset=utf-8'):
-        return '' #FIXME
-        # Print the HTTP header.
-        headers = api.get_http_headers()
-        output  = 'Content-Type: %s\n' % content_type
-        for k, v in headers:
-            output += '%s: %s\n' % (k, v)
-        output += '\n'
-
-        # Load and display the HTML header.
-        loader  = TemplateLoader(['web'])
-        tmpl    = loader.load('header.tmpl',  None, TextTemplate)
-        output += tmpl.generate(web_dir      = '/web',
-                                current_user = api.get_current_user(),
-                                txt          = gettext).render('text')
-
-        # If the user has special rights, show links to the admin pages.
-        if api.current_user_may('edit'):
-            output += get_admin_links(loader, api.get_current_user())
-
-        # Display the top banner.
-        tmpl    = loader.load('header2.tmpl', None, MarkupTemplate)
-        output += tmpl.generate(web_dir      = '/web',
-                                uri          = get_uri,
-                                request_uri  = get_request_uri,
-                                current_user = api.get_current_user(),
-                                txt          = gettext).render('xhtml')
-        return output
+    def _render_text_template(self, filename, **kwargs):
+        loader       = TemplateLoader(['web'])
+        tmpl         = loader.load(filename, None, TextTemplate)
+        self.output += tmpl.generate(web_dir      = '/web',
+                                     current_user = self.get_current_user(),
+                                     txt          = gettext,
+                                     **kwargs).render('text')
 
 
-    def _get_footer(self, api):
-        return '' #FIXME
-        loader = TemplateLoader(['web'])
-        tmpl   = loader.load('footer.tmpl', None, TextTemplate)
-        return tmpl.generate(web_dir = '/web',
-                             txt     = gettext).render('text')
+    def _render_xhtml_template(self, filename, **kwargs):
+        loader       = TemplateLoader(['web'])
+        tmpl         = loader.load(filename, None, MarkupTemplate)
+        self.output += tmpl.generate(web_dir      = '/web',
+                                     uri          = self.get_requested_uri,
+                                     request_uri  = self.get_requested_uri,
+                                     current_user = self.get_current_user(),
+                                     txt          = gettext,
+                                     **kwargs).render('xhtml')
+
+
+    def _render_headers(self):
+        self._render_text_template('header.tmpl', styles = [])
+        if self.current_user_may('edit'):
+            self._render_xhtml_template('admin_header.tmpl', may_edit_page = True)
+        self._render_xhtml_template('header2.tmpl')
 
 
     def _check_configured(self):
@@ -203,7 +259,6 @@ class Spiff(object):
         # Find the current page using the given cgi variables.
         page_db            = PageDB(self.get_guard())
         user_db            = UserDB(self.get_guard())
-        post_data          = cgi.FieldStorage()
         page_handle        = self.request.get_get_data('page', ['default'])[0]
         start              = time.clock()
         page               = page_db.get(page_handle)
@@ -272,9 +327,9 @@ class Spiff(object):
         # If the caller currently has no permission, load the login
         # extension to give it the opportunity to perform the login.
         start = time.clock()
-        if (page.get_attribute('private') and not api.current_user_may('view')) \
-          or api.get_post_data('login') is not None \
-          or api.get_post_data('logout') is not None:
+        if (page.get_attribute('private') and not self.current_user_may('view')) \
+          or self.request.has_post_data('login') \
+          or self.request.has_post_data('logout'):
             page = page_db.get('admin/login')
             self.requested_page = page
         bench['permission_check'] = time.clock() - start
@@ -282,27 +337,28 @@ class Spiff(object):
         # Render the layout. This invokes the plugins, which in turn may
         # request some HTTP headers to be sent. So we need to fetch the 
         # list of headers after that!
-        start  = time.clock()
-        output = page.get_output(api)
+        start       = time.clock()
+        page_output = page.get_output(api)
         bench['render_plugins'] = time.clock() - start
 
         # Now that all plugins are completed we may retrieve a list of headers.
-        start   = time.clock()
-        headers = self._get_headers(api)
+        start = time.clock()
+        self._render_headers()
         bench['render_header'] = time.clock() - start
 
+        self.output += page_output
+
         # Get the footer, excluding benchmark information.
-        start  = time.clock()
-        footer = self._get_footer(api)
+        start = time.clock()
+        self._render_text_template('footer.tmpl')
         bench['render_footer'] = time.clock() - start
 
         # Cache the page (if it is cacheable).
-        start  = time.clock()
-        output = headers + output + footer
-        if page.is_cacheable() and len(api.get_http_headers()) == 0:
-            cache.add_page(output)
+        start = time.clock()
+        if page.is_cacheable() and len(self.request.get_headers()) == 0:
+            cache.add_page(self.output)
         bench['cache_add'] = time.clock() - start
 
         # Yippie.
-        self.request.write(output)
+        self.request.write(self.output)
         self.request.write(get_benchmark(api))

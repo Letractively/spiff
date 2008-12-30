@@ -24,8 +24,7 @@ class Controller(ExtensionController):
 
     def __init__(self, api, api_key):
         ExtensionController.__init__(self, api, api_key)
-        self.__session = api.get_session()
-        self.__status  = self.login_open
+        self.__status = self.login_open
 
 
     def __perform_login(self):
@@ -34,22 +33,19 @@ class Controller(ExtensionController):
 
         # A user is trying to log in.
         if self.api.get_post_data('login') is not None and user is not None:
-            headers = self.__session.login(user, password)
-            if headers is None:
+            user = self.api.login(user, password)
+            if user is None:
                 self.__status = self.login_failure
                 return
-            self.api.append_http_headers(**headers)
             self.__status = self.login_success
             return
         elif self.api.get_get_data('logout') is not None:
-            headers = self.__session.logout()
-            assert headers is not None
-            self.api.append_http_headers(**headers)
+            self.api.logout()
             self.__status = self.login_open
             return
 
         # No user is currently logged in.
-        current = self.__session.get_user()
+        current = self.api.get_current_user()
         if current is None:
             self.__status = self.login_open
 
@@ -63,19 +59,20 @@ class Controller(ExtensionController):
         request_uri = self.api.get_requested_uri(login = None)
 
         if self.__status == self.login_done:
-            user = self.__session.get_user()
+            user = self.api.get_current_user()
             assert user is not None
             return self.api.render('login_done.tmpl', user = user)
 
         elif self.__status == self.login_open:
             return self.api.render('login_form.tmpl',
+                                   username = '',
                                    refer_to = quote(request_uri))
 
         elif self.__status == self.login_failure:
             return self.api.render('login_form.tmpl',
+                                   username = '',
                                    refer_to = quote(request_uri),
                                    error    = 'Login failed.')
         elif self.__status == self.login_success:
             refer_to = self.api.get_get_data('refer_to')
-            return self.api.render('login_success.tmpl',
-                                   refer_to = refer_to)
+            return self.api.render('login_success.tmpl', refer_to = refer_to)
