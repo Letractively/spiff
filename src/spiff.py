@@ -22,8 +22,8 @@ from genshi.template import MarkupTemplate
 from gettext         import gettext
 from string          import split
 from ConfigParser    import RawConfigParser
-from services        import ExtensionApi, PageDB, UserDB, CacheDB, Session
-from objects         import SpiffPackage
+from services        import ExtensionApi, PageDB, UserDB, CacheDB
+from objects         import SpiffPackage, User
 
 bench = {'start': time.clock()}
 
@@ -83,9 +83,48 @@ def get_benchmark(api = None):
     result += '</table>'
     return result
 
-class Runner(object):
+
+class Spiff(object):
     def __init__(self, request):
-        self.request = request
+        self.request        = request
+        self.guard          = None
+        self.current_user   = None
+        self.requested_page = None
+        #self.db.echo = 1
+
+
+    def get_guard(self):
+        if self.guard is None:
+            db         = create_engine(config.cfg.get('database', 'dbn'))
+            self.guard = SpiffGuard.DB(db)
+        return self.guard
+
+
+    def get_env(self, name): #FIXME: Probably shouldn't be here.
+        return self.request.get_env(name)
+
+
+    def get_requested_page(self):
+        return self.requested_page
+
+
+    def get_current_user(self):
+        if self.current_user is not None:
+            return self.current_user
+        session = self.request.get_session()
+        if session is None:
+            return None
+        sid = session.get_id()
+        assert sid is not None
+        #FIXME: The sid should not be stored in the DB. Instead, store
+        # the user id in the session.
+        user = self.get_guard().get_resource(attribute = {'sid': sid},
+                                             type      = User)
+        if user is None:
+            self.request.session = None #FIXME: hack
+            return None
+        self.current_user = user
+        return self.current_user
 
 
     def _get_admin_links(self, api):
@@ -105,23 +144,22 @@ class Runner(object):
         output += '\n'
 
         # Load and display the HTML header.
-        session = api.get_session()
         loader  = TemplateLoader(['web'])
         tmpl    = loader.load('header.tmpl',  None, TextTemplate)
         output += tmpl.generate(web_dir      = '/web',
-                                current_user = session.get_user(),
+                                current_user = api.get_current_user(),
                                 txt          = gettext).render('text')
 
         # If the user has special rights, show links to the admin pages.
-        if session.may('edit'):
-            output += get_admin_links(loader, session.get_user())
+        if api.current_user_may('edit'):
+            output += get_admin_links(loader, api.get_current_user())
 
         # Display the top banner.
         tmpl    = loader.load('header2.tmpl', None, MarkupTemplate)
         output += tmpl.generate(web_dir      = '/web',
                                 uri          = get_uri,
                                 request_uri  = get_request_uri,
-                                current_user = session.get_user(),
+                                current_user = api.get_current_user(),
                                 txt          = gettext).render('xhtml')
         return output
 
@@ -162,15 +200,9 @@ class Runner(object):
         if not self._check_installer_deleted():
             return
 
-        # Connect to MySQL and set up Spiff Guard.
-        dbn   = config.cfg.get('database', 'dbn')
-        db    = create_engine(dbn)
-        guard = SpiffGuard.DB(db)
-        #db.echo = 1
-
         # Find the current page using the given cgi variables.
-        page_db            = PageDB(guard)
-        user_db            = UserDB(guard)
+        page_db            = PageDB(self.get_guard())
+        user_db            = UserDB(self.get_guard())
         post_data          = cgi.FieldStorage()
         page_handle        = self.request.get_get_data('page', ['default'])[0]
         start              = time.clock()
@@ -178,10 +210,8 @@ class Runner(object):
         bench['page_find'] = time.clock() - start
 
         # Set up the session and the HTML cache.
-        session         = Session(guard,
-                                  request        = self.request,
-                                  requested_page = page)
-        cache           = CacheDB(guard, session)
+        self.request.start_session()
+        cache           = CacheDB(self, self.get_guard())
         bench['set_up'] = time.clock() - bench['start'] - bench['page_find']
 
         # Can not open some pages by addressing them directly.
@@ -212,7 +242,7 @@ class Runner(object):
         # to redraw the page, including headers and footer.
         # Note that the cache only returns pages corresponding to the permissions
         # of the current user, so this is safe.
-        session.set_requested_page(page)
+        self.requested_page = page
         start = time.clock()
         if self.request.get_env('REQUEST_METHOD') == 'GET':
             output               = cache.get_page()
@@ -226,12 +256,12 @@ class Runner(object):
         # Set up the plugin manager (Integrator). Note that the constructor
         # of PackageManager also associates the api with a reference to the
         # PackageManager instance.
-        api = ExtensionApi(guard     = guard,
-                           page_db   = page_db,
-                           cache     = cache,
-                           session   = session,
-                           request   = self.request)
-        pm = PackageManager(guard, api, package = SpiffPackage)
+        api = ExtensionApi(self,
+                           guard   = self.get_guard(),
+                           page_db = page_db,
+                           cache   = cache,
+                           request = self.request)
+        pm = PackageManager(self.get_guard(), api, package = SpiffPackage)
         pm.set_package_dir(config.package_dir)
 
         bench['set_up'] = time.clock() - bench['start'] - bench['page_find']
@@ -242,11 +272,11 @@ class Runner(object):
         # If the caller currently has no permission, load the login
         # extension to give it the opportunity to perform the login.
         start = time.clock()
-        if (page.get_attribute('private') and not session.may('view')) \
+        if (page.get_attribute('private') and not api.current_user_may('view')) \
           or api.get_post_data('login') is not None \
           or api.get_post_data('logout') is not None:
             page = page_db.get('admin/login')
-            session.set_requested_page(page)
+            self.requested_page = page
         bench['permission_check'] = time.clock() - start
 
         # Render the layout. This invokes the plugins, which in turn may

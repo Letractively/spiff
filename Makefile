@@ -2,7 +2,7 @@ PUBLISH_PATH=/home/sab/backups/code/www
 PUBLISH_HOST=root@debain.org
 VERSION="`python -c 'import os; os.chdir("src"); import config; print config.__version__'`"
 PACKAGE_NAME=spiff-$(VERSION)
-DEPENDS=pywsgi spiff-signal spiff-guard spiff-integrator spiff-warehouse
+DEPENDS=pywsgi spiff-signal spiff-guard spiff-integrator spiff-warehouse spiff-wikimarkup
 
 clean:
 	find . -name "*.pyc" -o -name "*.pyo" | xargs -n1 rm -f

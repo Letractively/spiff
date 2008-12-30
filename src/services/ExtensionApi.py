@@ -17,22 +17,80 @@ from stat            import ST_MTIME
 from gettext         import gettext
 from SpiffIntegrator import Api
 from pywsgi          import Url
+from objects         import User
+from objects         import PageAction
 
 class ExtensionApi(Api):
-    def __init__(self, **kwargs):
-        assert kwargs.has_key('session')
-        assert kwargs.has_key('guard')
-        assert kwargs.has_key('page_db')
-        assert kwargs.has_key('request')
+    def __init__(self, spiff, **kwargs):
         Api.__init__(self)
-        self.__session        = kwargs['session']
+        self.spiff            = spiff
         self.__guard          = kwargs['guard']
         self.__cache          = kwargs.get('cache')
         self.__page_db        = kwargs['page_db']
         self.__request        = kwargs['request']
+        self.__current_user   = None
         self.__http_headers   = []
         self.__output         = ''
         self.template_render_time = 0
+
+
+    def __get_action(self):
+        return self.__guard.get_action(handle = 'view',
+                                       type   = PageAction)
+
+
+    def _get_permission_hash(self, user):
+        """
+        This function returns a string that identifies all permissions
+        of the current user on the current group.
+        """
+        page   = self.get_requested_page()
+        string = page.get_attribute('private') and 'p' or 'np'
+        if user is None:
+            return string
+        guard = self.__guard
+        acls  = guard.get_permission_list_with_inheritance(actor    = user,
+                                                           resource = page)
+        for acl in acls:
+            string += str(acl)
+        return sha.new(string).hexdigest()
+
+
+    def login(self, username, password):
+        """
+        Attempts to login the user with the given name/password.
+        """
+        #print "Login requested for user '%s'." % username
+        if username is None or password is None:
+            return None
+        user = self.__guard.get_resource(handle = username,
+                                         type   = User)
+        if user is None:
+            return None
+        if user.is_inactive():
+            return None
+        if not user.has_password(password):
+            return None
+        #print "Logging in with sid %s..." % self.__sid
+        user.set_attribute('sid',             self.__request.get_session().get_id())
+        user.set_attribute('permission_hash', self._get_permission_hash(user))
+        self.__guard.save_resource(user)
+        self.__current_user = user
+        return headers
+
+
+    def logout(self):
+        self.__current_user = None
+        self.__sid          = None
+        return {'Set-Cookie': 'sid=''; expires=Thu, 01-JAN-1970 00:00:00 GMT;'}
+
+
+    def get_requested_page(self):
+        return self.spiff.get_requested_page()
+
+
+    def get_env(self, name):
+        return self.__request.get_env(name)
 
 
     def __get_caller(self):
@@ -87,6 +145,32 @@ class ExtensionApi(Api):
     def get_http_headers(self):
         #FIXME: Do we need to check the permission of the caller?
         return self.__http_headers
+
+
+    def get_current_user(self):
+        return self.spiff.get_current_user()
+
+
+    def current_user_may(self, action_handle, page = None):
+        if page is None:
+            page = self.spiff.get_requested_page()
+
+        # If the page is publicly available there's no need to ask the DB.
+        private = page.get_attribute('private') or False
+        if action_handle == 'view' and not private:
+            return True
+
+        # Get the currently logged in user.
+        user = self.get_current_user()
+        if user is None:
+            return False
+
+        # Ask the DB whether permission shall be granted.
+        action = self.__guard.get_action(type   = PageAction,
+                                         handle = action_handle)
+        if self.__guard.has_permission(user, action, page):
+            return True
+        return False 
 
 
     def get_db(self):

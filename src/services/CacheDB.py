@@ -16,10 +16,10 @@ import os
 from sqlalchemy import *
 
 class CacheDB(object):
-    def __init__(self, guard, session):
+    def __init__(self, spiff, guard):
+        self.__spiff       = spiff
         self.__guard       = guard
         self.__db          = guard.db
-        self.__session     = session
         self._table_prefix = ''
         self._table_map    = {}
         self._table_list   = []
@@ -137,8 +137,8 @@ class CacheDB(object):
         This function returns a string the identifies all permissions
         of the current user on the current group.
         """
-        user   = self.__session.get_user()
-        page   = self.__session.get_requested_page()
+        user   = self.__spiff.get_current_user()
+        page   = self.__spiff.get_requested_page()
         string = page.get_attribute('private') and 'p' or 'np'
         if user is None:
             return string
@@ -168,8 +168,8 @@ class CacheDB(object):
           has passed, the item is removed from the cache.
         """
         permissions = self._get_permission_hash()
-        page        = self.__session.get_requested_page()
-        uri         = self.__session.get_env('QUERY_STRING')
+        page        = self.__spiff.get_requested_page()
+        uri         = self.__spiff.get_env('QUERY_STRING')
         table       = self._table_map['cache_item']
         #print "GET:", permissions, page.get_id(), uri
         sel         = select([table.c.content],
@@ -188,8 +188,8 @@ class CacheDB(object):
 
     def add(self, section, content):
         permissions = self._get_permission_hash()
-        page        = self.__session.get_requested_page()
-        uri         = self.__session.get_env('QUERY_STRING')
+        page        = self.__spiff.get_requested_page()
+        uri         = self.__spiff.get_env('QUERY_STRING')
         insert      = self._table_map['cache_item'].insert()
         result      = insert.execute(page_id     = page.get_id(),
                                      permissions = permissions,
@@ -216,8 +216,8 @@ class CacheDB(object):
 
     def is_fresh(self, section):
         permissions = self._get_permission_hash()
-        page        = self.__session.get_requested_page()
-        uri         = self.__session.get_env('QUERY_STRING')
+        page        = self.__spiff.get_requested_page()
+        uri         = self.__spiff.get_env('QUERY_STRING')
         table       = self._table_map['cache_item']
         sel         = select([table.c.id],
                              and_(table.c.page_id     == page.get_id(),

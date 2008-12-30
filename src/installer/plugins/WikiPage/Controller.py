@@ -41,13 +41,13 @@ class Controller(ExtensionController):
 
 
     def __get_alias(self):
-        page   = self.api.get_session().get_requested_page()
+        page   = self.api.get_requested_page()
         handle = page is not None and page.get_handle()
         return self.api.get_get_data('page') or handle
 
 
     def __get_page_name(self):
-        page = self.api.get_session().get_requested_page()
+        page = self.api.get_requested_page()
         if self.api.get_get_data('page') is None and page is not None:
             return page.get_name()
         return split(self.__get_alias(), '/')[-1]
@@ -55,7 +55,7 @@ class Controller(ExtensionController):
 
     def __get_user(self):
         # Find the name or IP of the current user.
-        current_user = self.api.get_session().get_user()
+        current_user = self.api.get_current_user()
         if current_user is not None:
             return current_user.get_handle()
         return os.environ["REMOTE_ADDR"]
@@ -73,7 +73,7 @@ class Controller(ExtensionController):
 
         # The user is viewing a sub page of his web presence. Find out if it
         # is a sub-page of this wiki or the wiki homepage.
-        page      = self.api.get_session().get_requested_page()
+        page      = self.api.get_requested_page()
         handle    = page is not None and page.get_handle()
         pos       = alias.find('/')
         wiki_home = pos == -1 and handle and handle == alias
@@ -105,7 +105,7 @@ class Controller(ExtensionController):
         if kwargs.has_key('cancel'):
             return self.index()
 
-        may_edit = self.api.get_session().may('edit_content')
+        may_edit = self.api.current_user_may('edit_content')
         alias    = self.__get_alias()
         page     = WikiPage(self.wiki, alias)
         page.set_username(self.__get_user())
@@ -134,7 +134,7 @@ class Controller(ExtensionController):
 
 
     def edit(self, **kwargs):
-        may_edit = self.api.get_session().may('edit_content')
+        may_edit = self.api.current_user_may('edit_content')
         name     = self.__get_page_name()
         revision = kwargs.get('revision')
         page     = self.wiki.get_page(self.__get_alias(), revision)
@@ -154,7 +154,7 @@ class Controller(ExtensionController):
 
 
     def diff(self, **kwargs):
-        may_edit = self.api.get_session().may('edit_content')
+        may_edit = self.api.current_user_may('edit_content')
         name     = self.__get_page_name()
         diff     = self.wiki.get_diff(self.__get_alias(),
                                       kwargs.get('revision1'),
@@ -167,7 +167,7 @@ class Controller(ExtensionController):
 
 
     def history(self, **kwargs):
-        may_edit = self.api.get_session().may('edit_content')
+        may_edit = self.api.current_user_may('edit_content')
         name     = self.__get_page_name()
         offset   = kwargs.get('offset', 0)
         list     = self.wiki.get_revision_list(self.__get_alias(), offset, 20)
@@ -181,7 +181,7 @@ class Controller(ExtensionController):
 
 
     def index(self, **kwargs):
-        may_edit = self.api.get_session().may('edit_content')
+        may_edit = self.api.current_user_may('edit_content')
         revision = kwargs.get('revision')
         page     = self.wiki.get_page(self.__get_alias(), revision)
 

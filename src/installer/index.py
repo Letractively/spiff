@@ -1,12 +1,13 @@
 #!/usr/bin/python
-import os, os.path
+import os, os.path, sys
 os.chdir(os.path.dirname(__file__))
+sys.path.insert(0, '..')
 import config  # Configures sys.path.
 
 # This handler runs the Spiff installer.
 def handler(request):
     import install
-    spiff.run(request)
+    install.run(request)
 
 # Hook for most adapters.
 if __name__ == '__main__':

@@ -5,9 +5,8 @@ import config  # Configures sys.path.
 
 # This handler runs Spiff.
 def handler(request):
-    import spiff
-    runner = spiff.Runner(request)
-    runner.run()
+    from spiff import Spiff
+    Spiff(request).run()
 
 # Hook for most adapters.
 if __name__ == '__main__':

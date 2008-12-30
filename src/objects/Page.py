@@ -13,7 +13,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 from SpiffGuard import ResourceGroup
-from services   import LayoutParser
+import services
 
 class Page(ResourceGroup):
     def __init__(self, name, handle = None):
@@ -63,7 +63,7 @@ class Page(ResourceGroup):
             return self.__extensions
         self.__extensions = []
         layout            = self.get_attribute('layout')
-        parser            = LayoutParser(layout)
+        parser            = services.LayoutParser(layout)
         parser.set_data_handler(self.__collect_extension_descriptor)
         parser.parse()
         return self.__extensions
@@ -76,7 +76,7 @@ class Page(ResourceGroup):
 
         # Ending up here the page was not cached.
         layout = self.get_attribute('layout')
-        parser = LayoutParser(layout)
+        parser = services.LayoutParser(layout)
         parser.set_data_handler(self.__replace_extension_descriptor,
                                 extension_api)
         parser.parse()

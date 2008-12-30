@@ -21,13 +21,14 @@ for lib in ('pywsgi',
             'spiff-signal',
             'spiff-guard',
             'spiff-integrator',
-            'spiff-warehouse'):
-    dir = os.path.join('libs', lib, 'src')
+            'spiff-warehouse',
+            'spiff-wikimarkup'):
+    dir = os.path.join(os.path.dirname(__file__), 'libs', lib, 'src')
     sys.path.insert(0, dir)
 
 # Define common variables.
 __version__   = '0.0.1'
-base_dir      = os.path.dirname(__file__)
+base_dir      = os.path.abspath(os.path.dirname(__file__))
 installer_dir = os.path.join(base_dir, 'installer')
 data_dir      = os.path.join(base_dir, 'data')
 cfg_file      = os.path.join(data_dir, 'spiff.cfg')
