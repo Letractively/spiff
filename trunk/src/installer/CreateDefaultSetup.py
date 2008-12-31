@@ -28,6 +28,7 @@ class CreateDefaultSetup(Step):
                         util.create_dir(config.upload_dir),
                         util.create_dir(config.warehouse_dir),
                         util.create_dir(config.cache_dir),
+                        util.create_dir(config.session_dir),
                         util.merge_rawconfig_file('spiff.cfg.tmpl',
                                                   config.cfg_file)]
 
