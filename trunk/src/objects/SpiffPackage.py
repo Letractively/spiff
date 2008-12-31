@@ -90,8 +90,8 @@ class SpiffPackage(Package):
 
     def render(self):
         controller = self._get_controller()
-        args       = self._parent.package_api.get_get_data()
-        args.update(self._parent.package_api.get_post_data())
+        args       = dict(self._parent.package_api.get_data())
+        args.update(dict(self._parent.package_api.post_data()))
         action     = args.get('action', 'index')
 
         if action not in dir(controller):

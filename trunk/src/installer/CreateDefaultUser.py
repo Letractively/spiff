@@ -22,8 +22,8 @@ class CreateDefaultUser(Step):
 
 
     def check(self):
-        password1 = self.request.get_post_data('password1')[0].strip()
-        password2 = self.request.get_post_data('password2')[0].strip()
+        password1 = self.request.post_data().get_str('password1', '').strip()
+        password2 = self.request.post_data().get_str('password2', '').strip()
         if password1 == '':
             error = ('Checking password length', False, None)
             self.show(errors = [error])

@@ -143,7 +143,7 @@ class CacheDB(object):
         if user is None:
             return string
         session_data = self.__spiff.request.get_session().data()
-        hash         = session_data.get_first('permission_key')
+        hash         = session_data.get_str('permission_key')
         assert hash is not None
         return hash
 

@@ -25,7 +25,7 @@ from Wiki     import Wiki
 from WikiPage import WikiPage
 
 def check_cache(api, api_key):
-    if api.get_post_data('save') is not None:
+    if api.post_data().get_str('save') is not None:
         api.flush_cache(api_key)
         return False
     return True
@@ -43,12 +43,12 @@ class Controller(ExtensionController):
     def __get_alias(self):
         page   = self.api.get_requested_page()
         handle = page is not None and page.get_handle()
-        return self.api.get_get_data('page') or handle
+        return self.api.get_data().get_str('page') or handle
 
 
     def __get_page_name(self):
         page = self.api.get_requested_page()
-        if self.api.get_get_data('page') is None and page is not None:
+        if self.api.get_data().get_str('page') is None and page is not None:
             return page.get_name()
         return split(self.__get_alias(), '/')[-1]
 
@@ -62,7 +62,7 @@ class Controller(ExtensionController):
 
 
     def __wiki_word_handler(self, url, word):
-        alias = self.api.get_get_data('page')
+        alias = self.api.get_data().get_str('page')
 
         # The user is viewing the homepage of his web presence.
         if alias is None:
