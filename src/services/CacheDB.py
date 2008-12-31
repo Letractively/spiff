@@ -142,7 +142,8 @@ class CacheDB(object):
         string = page.get_attribute('private') and 'p' or 'np'
         if user is None:
             return string
-        hash = user.get_attribute('permission_hash')
+        session_data = self.__spiff.request.get_session().data()
+        hash         = session_data.get_first('permission_key')
         assert hash is not None
         return hash
 

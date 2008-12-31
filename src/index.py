@@ -11,10 +11,10 @@ def handler(request):
 # Hook for most adapters.
 if __name__ == '__main__':
     from pywsgi import RequestHandler
-    request_handler = RequestHandler(handler)
+    request_handler = RequestHandler(handler, session_dir = config.session_dir)
 
 # Special cased hook for mod_python.
 def index(req):
     from pywsgi import ModPythonRequest
-    request = ModPythonRequest(req)
+    request = ModPythonRequest(req, session_dir = config.session_dir)
     request.handle(handler)

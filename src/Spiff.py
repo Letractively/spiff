@@ -24,7 +24,7 @@ from gettext         import gettext
 from string          import split
 from ConfigParser    import RawConfigParser
 from services        import ExtensionApi, PageDB, UserDB, CacheDB
-from objects         import SpiffPackage, User
+from objects         import SpiffPackage, User, PageAction
 
 class Spiff(object):
     def __init__(self, request):
@@ -90,10 +90,9 @@ class Spiff(object):
             return None
         if not user.has_password(password):
             return None
-        #FIXME: saving this as user attributes is an evil hack.
-        user.set_attribute('sid',             self.request.get_session().get_id())
-        user.set_attribute('permission_hash', self._get_permission_hash(user))
-        self.guard.save_resource(user)
+        permission_key = self._get_permission_hash(user)
+        self.request.get_session().data().set('user_id',        user.get_id())
+        self.request.get_session().data().set('permission_key', permission_key)
         self.current_user = user
         return user
 
@@ -111,12 +110,11 @@ class Spiff(object):
             return None
         sid = session.get_id()
         assert sid is not None
-        #FIXME: The sid should not be stored in the DB. Instead, store
-        # the user id in the session.
-        user = self.get_guard().get_resource(attribute = {'sid': sid},
-                                             type      = User)
+        user_id = session.data().get('user_id')
+        if user_id is None:
+            return None
+        user = self.guard.get_resource(id = user_id, type = User)
         if user is None:
-            self.request.session = None #FIXME: hack
             return None
         self.current_user = user
         return self.current_user
@@ -206,9 +204,9 @@ class Spiff(object):
         page        = page_db.get(page_handle)
         self.bench.snapshot('page_find', 'Looked up the page in %ss.')
 
-        # Set up the session and the HTML cache.
+        # Set up the HTML cache.
         self.request.start_session()
-        cache           = CacheDB(self, self.get_guard())
+        cache = CacheDB(self, self.get_guard())
         self.bench.snapshot('set_up', 'Set-up time is %ss.')
 
         # Can not open some pages by addressing them directly.
