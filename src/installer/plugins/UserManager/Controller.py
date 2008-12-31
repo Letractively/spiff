@@ -119,16 +119,16 @@ class Controller(ExtensionController):
         self.guard = self.guard
         
         # Retrieve form data.
-        get_data             = self.api.get_get_data
-        post_data            = self.api.get_post_data
+        get_data             = self.api.get_data()
+        post_data            = self.api.post_data()
         path                 = None
-        path_str             = get_data('path_str')
-        name                 = post_data('name')
-        description          = post_data('description')
-        use_group_permission = post_data('use_group_permission')
-        default_owner_id     = post_data('default_owner_id')
-        resource_list        = post_data('resource[]',   False) or []
-        permission_list      = post_data('permission[]', False) or []
+        path_str             = get_data.get_str('path_str')
+        name                 = post_data.get_str('name')
+        description          = post_data.get_str('description')
+        use_group_permission = post_data.get_bool('use_group_permission')
+        default_owner_id     = post_data.get_int('default_owner_id')
+        resource_list        = post_data.get('resource[]',   [])
+        permission_list      = post_data.get('permission[]', [])
         if path_str is not None:
             path = SpiffGuard.ResourcePath(path_str) # FIXME: Take reference from elsewhere.
         if path is not None:
@@ -416,7 +416,7 @@ class Controller(ExtensionController):
 
     def index(self, **kwargs):
         # Find out which item was requested.
-        path_str = self.api.get_get_data('path_str')
+        path_str = self.api.get_data().get_str('path_str')
         if path_str is None:
             resource = self.guard.get_resource(handle = 'everybody',
                                                type   = Group)
@@ -427,32 +427,32 @@ class Controller(ExtensionController):
         # Fetch the requested user or group info.
         errors = []
         id     = path.get_current_id()
-        if self.api.get_post_data('group_add') is not None:
+        if self.api.post_data().get_bool('group_add'):
             resource = Group('')
             path     = path.append(0)
-        elif self.api.get_post_data('user_add') is not None:
+        elif self.api.post_data().get_bool('user_add'):
             resource = User('')
             path     = path.append(0)
-        elif self.api.get_post_data('group_save') is not None and id == 0:
+        elif self.api.post_data().get_bool('group_save') and id == 0:
             resource = Group('')
             errors   = self.__save_resource(resource)
             if not errors:
                 path = path.crop().append(resource.get_id())
-        elif self.api.get_post_data('group_save') is not None:
+        elif self.api.post_data().get_bool('group_save'):
             resource = self.guard.get_resource(id = id)
             errors   = self.__save_resource(resource)
             path     = path.crop().append(resource.get_id())
-        elif self.api.get_post_data('user_save') is not None and id == 0:
+        elif self.api.post_data().get_bool('user_save') and id == 0:
             resource = User('')
             errors   = self.__save_resource(resource)
             if not errors:
                 path = path.crop().append(resource.get_id())
-        elif self.api.get_post_data('user_save') is not None:
+        elif self.api.post_data().get_bool('user_save'):
             resource = self.guard.get_resource(id = id)
             errors   = self.__save_resource(resource)
             path     = path.crop().append(resource.get_id())
-        elif (self.api.get_post_data('group_delete') is not None and
-              self.api.get_post_data('group_delete_really') == 'yes'):
+        elif (self.api.post_data().get_bool('group_delete') and
+              self.api.post_data().get_str('group_delete_really') == 'yes'):
             resource = self.guard.get_resource(id = id)
             # Check if the group still has users in it.
             children = self.guard.get_resource_children(resource)
@@ -465,8 +465,8 @@ class Controller(ExtensionController):
                 path     = path.crop()
                 id       = path.get_current_id()
                 resource = self.guard.get_resource(id = id)
-        elif (self.api.get_post_data('user_delete') is not None and
-              self.api.get_post_data('user_delete_really') == 'yes'):
+        elif (self.api.post_data().get_bool('user_delete') and
+              self.api.post_data().get_str('user_delete_really') == 'yes'):
             resource = self.guard.get_resource(id = id)
             errors   = self.__delete_resource(resource)
             path     = path.crop()

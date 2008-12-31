@@ -36,10 +36,10 @@ class DatabaseSetup(Step):
 
     def check(self):
         state = self.state
-        state.db_host     = self.request.get_post_data('db_host')[0]
-        state.db_user     = self.request.get_post_data('db_user')[0]
-        state.db_password = self.request.get_post_data('db_password')[0]
-        state.db_name     = self.request.get_post_data('db_name')[0]
+        state.db_host     = self.request.post_data().get_str('db_host')
+        state.db_user     = self.request.post_data().get_str('db_user')
+        state.db_password = self.request.post_data().get_str('db_password')
+        state.db_name     = self.request.post_data().get_str('db_name')
         state.dbn         = self._get_dbn(db_type = 'mysql', **state.__dict__)
 
         # Check the syntax.

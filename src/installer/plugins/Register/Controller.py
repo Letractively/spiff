@@ -28,12 +28,12 @@ class Controller(ExtensionController):
 
 
     def register(self):
-        handle    = self.__api.get_post_data('handle')    or ''
-        firstname = self.__api.get_post_data('firstname') or ''
-        lastname  = self.__api.get_post_data('lastname')  or ''
-        email     = self.__api.get_post_data('email')     or ''
-        password1 = self.__api.get_post_data('password1') or ''
-        password2 = self.__api.get_post_data('password2') or ''
+        handle    = self.__api.post_data().get_str('handle',    '')
+        firstname = self.__api.post_data().get_str('firstname', '')
+        lastname  = self.__api.post_data().get_str('lastname',  '')
+        email     = self.__api.post_data().get_str('email',     '')
+        password1 = self.__api.post_data().get_str('password1', '')
+        password2 = self.__api.post_data().get_str('password2', '')
 
         # Perform some checks on the input values.
         error = None
@@ -105,7 +105,7 @@ class Controller(ExtensionController):
 
     def confirm(self):
         # Find the user from the key.
-        key     = self.__api.get_get_data('key')
+        key     = self.__api.get_data().get_str('key')
         attribs = {'activation_key': key}
         user    = self.__guard.get_resource(attribute = attribs)
         if user is None:
@@ -129,15 +129,13 @@ class Controller(ExtensionController):
 
         # If the link in the confirmation email was clicked, try
         # to activate the account.
-        confirm = self.__api.get_get_data('confirm')
-        if confirm:
+        if self.__api.get_data().get_bool('confirm'):
             self.confirm()
             return
 
         # If the registration form was submitted, attempt to create
         # the account.
-        register = self.__api.get_post_data('register')
-        if register:
+        if self.__api.post_data().get_bool('register'):
             self.register()
             return
 

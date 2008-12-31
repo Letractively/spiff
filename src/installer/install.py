@@ -41,7 +41,7 @@ def run(request):
 
     # Perform the task.
     state_db     = StateDB(os.path.join(config.data_dir, 'installer_states'))
-    step_id      = int(request.get_get_data('step', [0])[0])
+    step_id      = request.get_data().get_int('step')
     prev_step_id = step_id - 1
     state        = state_db.get(prev_step_id)
     step_cls     = steps[step_id]

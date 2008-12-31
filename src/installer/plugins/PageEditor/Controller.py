@@ -49,10 +49,10 @@ class Controller(ExtensionController):
 
     def __page_save(self):
         # Retrieve/check data.
-        page_str = self.api.get_get_data('page')
-        new      = self.api.get_post_data('create')
-        name     = self.api.get_post_data('name')   or ''
-        layout   = self.api.get_post_data('layout') or ''
+        page_str = self.api.get_data().get_str('page')
+        new      = self.api.post_data().get_bool('create')
+        name     = self.api.post_data().get_str('name',   '')
+        layout   = self.api.post_data().get_str('layout', '')
         if name == '':
             self.__errors.append(_('Page name is missing'))
         if layout == '':
@@ -118,18 +118,18 @@ class Controller(ExtensionController):
 
     def index(self, **kwargs):
         # Save the page, if requested.
-        if (self.api.get_post_data('save')   is not None or
-            self.api.get_post_data('create') is not None):
+        if self.api.post_data().get_bool('save') \
+          or self.api.post_data().get_bool('create'):
             self.__page_save()
-        elif self.api.get_post_data('delete') is not None:
+        elif self.api.post_data().get_bool('delete'):
             self.__page_delete()
 
         # Collect data.
         page = self.api.get_requested_page()
         assert page is not None
-        is_new_page = self.api.get_get_data('new_page') or False
+        is_new_page = self.api.get_data().get_bool('new_page')
         if is_new_page:
-            page_str = self.api.get_get_data('page')
+            page_str = self.api.get_data().get_str('page')
             name     = _('New Page')
             layout   = ''
             if page_str is not None and page_str != '':

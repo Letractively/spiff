@@ -28,18 +28,18 @@ class Controller(ExtensionController):
 
 
     def __perform_login(self):
-        user     = self.api.get_post_data('username')
-        password = self.api.get_post_data('password')
+        username = self.api.post_data().get_first('username')
+        password = self.api.post_data().get_first('password')
 
         # A user is trying to log in.
-        if self.api.get_post_data('login') is not None and user is not None:
-            user = self.api.login(user, password)
+        if self.api.post_data().get_bool('login') and username is not None:
+            user = self.api.login(username, password)
             if user is None:
                 self.__status = self.login_failure
                 return
             self.__status = self.login_success
             return
-        elif self.api.get_get_data('logout') is not None:
+        elif self.api.get_data().get_bool('logout'):
             self.api.logout()
             self.__status = self.login_open
             return
@@ -74,5 +74,5 @@ class Controller(ExtensionController):
                                    refer_to = quote(request_uri),
                                    error    = 'Login failed.')
         elif self.__status == self.login_success:
-            refer_to = self.api.get_get_data('refer_to')
+            refer_to = self.api.get_data().get_first('refer_to')
             return self.api.render('login_success.tmpl', refer_to = refer_to)

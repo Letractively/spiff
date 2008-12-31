@@ -200,7 +200,7 @@ class Spiff(object):
         # Find the current page using the given cgi variables.
         page_db     = PageDB(self.get_guard())
         user_db     = UserDB(self.get_guard())
-        page_handle = self.request.get_get_data('page', ['default'])[0]
+        page_handle = self.request.get_data().get_str('page', 'default')
         page        = page_db.get(page_handle)
         self.bench.snapshot('page_find', 'Looked up the page in %ss.')
 
@@ -210,15 +210,15 @@ class Spiff(object):
         self.bench.snapshot('set_up', 'Set-up time is %ss.')
 
         # Can not open some pages by addressing them directly.
-        if self.request.has_get_data('page') \
-          and page_db.is_system_page_handle(self.request.get_get_data('page')[0]):
+        if self.request.get_data().has_key('page') \
+          and page_db.is_system_page_handle(self.request.get_data().get_str('page', '')):
             self.request.set_status(403)
             self.request.write('%s is a system page.' % repr(page_handle))
             return
 
         # If requested, load the content editor.
-        if self.request.has_get_data('new_page') \
-          or self.request.has_get_data('edit_page'):
+        if self.request.get_data().has_key('new_page') \
+          or self.request.get_data().has_key('edit_page'):
             page = page_db.get('admin/page')
 
         # If the specific site was not found, attempt to find a parent that
@@ -243,7 +243,7 @@ class Spiff(object):
             self.bench.snapshot('cache_check', 'Spent %ss checking the cache.')
             if output is not None:
                 self.request.write(output)
-                self.request.write(get_benchmark())
+                self.request.write(self.bench.get_html())
                 return
         self.bench.snapshot('cache_check', 'Spent %ss checking the cache.')
 
@@ -264,8 +264,8 @@ class Spiff(object):
         # If the caller currently has no permission, load the login
         # extension to give it the opportunity to perform the login.
         if (page.get_attribute('private') and not self.current_user_may('view')) \
-          or self.request.has_post_data('login') \
-          or self.request.has_post_data('logout'):
+          or self.request.post_data().has_key('login') \
+          or self.request.post_data().has_key('logout'):
             page = page_db.get('admin/login')
             self.requested_page = page
         self.bench.snapshot('permission_check', 'Permission checked in %ss.')

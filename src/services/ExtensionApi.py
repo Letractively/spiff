@@ -56,6 +56,14 @@ class ExtensionApi(Api):
         return self.__request.get_env(name)
 
 
+    def get_data(self):
+        return self.__request.get_data()
+
+
+    def post_data(self):
+        return self.__request.post_data()
+
+
     def __get_caller(self):
         frame = sys._getframe(2)
         try:
@@ -72,28 +80,6 @@ class ExtensionApi(Api):
 
     def get_data_dir(self):
         return os.path.join(os.path.dirname(__file__), '..', 'data')
-
-
-    def get_get_data(self, name = None, unpack = True):
-        value = self.__request.get_get_data(name)
-        if name is None:
-            return value
-        if value is None:
-            return None
-        if unpack:
-            return value[0]
-        return value
-
-
-    def get_post_data(self, name = None, unpack = True):
-        value = self.__request.get_post_data(name)
-        if name is None:
-            return value
-        if value is None:
-            return None
-        if unpack:
-            return value[0]
-        return value
 
 
     def get_requested_uri(self, **kwargs):
