@@ -24,6 +24,8 @@ class PageDB(object):
         
 
     def is_system_page_handle(self, page_handle):
+        if page_handle is None:
+            return False
         for handle in self.__system_pages:
             if (page_handle + '/').startswith(handle + '/'):
                 return True
@@ -39,6 +41,9 @@ class PageDB(object):
         Returns the Page object that is responsible for drawing the given
         page.
         """
+        if handle is None:
+            handle = 'default'
+
         # Attempt to get the page using the path.
         path = handle.split('/')
         while len(path) > 0:

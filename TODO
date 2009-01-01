@@ -1,8 +1,8 @@
 * Rewrite/cleanup the PageDB.
-* Clean the Spiff class up.
 * Add request adapter name to the footer.
 * See whether the TemplateLoader may be re-used instead of creating a
 new instance every time.
+* Get rid of the evil hack that is set_requested_page().
 
 -----------------
 * Simplify the WikiPage controller as much as humanly possible.
