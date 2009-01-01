@@ -1,3 +1,5 @@
+* Fix URL handling.
+* Make it such that plugins are not copied during their installation to ease debugging.
 * Rewrite/cleanup the PageDB.
 * Add request adapter name to the footer.
 * See whether the TemplateLoader may be re-used instead of creating a
