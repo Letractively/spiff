@@ -12,7 +12,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-import time
+import time, config
 
 class Benchmarker(object):
     def __init__(self):
@@ -28,9 +28,7 @@ class Benchmarker(object):
         self.bench.append((handle, caption, time.clock() - self.start))
 
     def get_html(self):
-        if len(self.bench):
-            return ''
-        result = '<table width="100%">'
+        result = ''
         for handle, caption, snapshot in self.bench:
             try:
                 if not config.cfg.getboolean('benchmark',
@@ -43,5 +41,6 @@ class Benchmarker(object):
             result += ' %s' % (caption % snapshot)
             result += ' </td>'
             result += '</tr>'
-        result += '</table>'
-        return result
+        if result == '':
+            return ''
+        return '<table width="100%">' + result + '</table>'

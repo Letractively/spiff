@@ -162,11 +162,21 @@ class Spiff(object):
                                      **kwargs).render('xhtml')
 
 
-    def _render_headers(self):
+    def _render_head(self):
         self._render_text_template('header.tmpl', styles = [])
         if self.current_user_may('edit'):
             self._render_xhtml_template('admin_header.tmpl', may_edit_page = True)
         self._render_xhtml_template('header2.tmpl')
+
+
+    def _render_footer(self):
+        self._render_text_template('footer.tmpl',
+                                   version = 'Spiff %s' % config.__version__,
+                                   adapter = self.request.get_name())
+        self.bench.snapshot('render_footer', 'Footer rendered in %ss.')
+        self.bench.snapshot_total('total', 'Total rendering time is %ss.')
+        self.request.write(self.output)
+        self.request.write(self.bench.get_html())
 
 
     def _check_configured(self):
@@ -191,59 +201,55 @@ class Spiff(object):
         return False
 
 
+    def refer_to(self, url):
+        self.request.set_status(301)
+        self.request.add_header('Location', url.get_string())
+
+
     def run(self):
         if not self._check_configured():
             return
         if not self._check_installer_deleted():
             return
 
-        # Find the current page using the given cgi variables.
-        page_db     = PageDB(self.get_guard())
-        user_db     = UserDB(self.get_guard())
-        page_handle = self.request.get_data().get_str('page', 'default')
-        page        = page_db.get(page_handle)
-        self.bench.snapshot('page_find', 'Looked up the page in %ss.')
-
-        # Set up the HTML cache.
+        # Set up the session and database adapters.
         self.request.start_session()
-        cache = CacheDB(self, self.get_guard())
+        page_db = PageDB(self.get_guard())
+        user_db = UserDB(self.get_guard())
+        cache   = CacheDB(self, self.get_guard())
         self.bench.snapshot('set_up', 'Set-up time is %ss.')
 
         # Can not open some pages by addressing them directly.
-        if self.request.get_data().has_key('page') \
-          and page_db.is_system_page_handle(self.request.get_data().get_str('page', '')):
+        page_handle = self.request.get_data().get_str('page')
+        if page_db.is_system_page_handle(page_handle):
             self.request.set_status(403)
             self.request.write('%s is a system page.' % repr(page_handle))
             return
 
-        # If requested, load the content editor.
-        if self.request.get_data().has_key('new_page') \
-          or self.request.get_data().has_key('edit_page'):
-            page = page_db.get('admin/page')
-
-        # If the specific site was not found, attempt to find a parent that
+        # Find the current page using the given cgi variables.
+        # If the specific site is not found, attempt to find a parent that
         # handles content recursively.
-        elif page is None:
-            page = page_db.get_responsible_page(page_handle)
+        page = page_db.get_responsible_page(page_handle)
+        self.bench.snapshot('page_find', 'Looked up the page in %ss.')
 
         # If we still have no page, give 404.
         if page is None:
             self.request.set_status(404)
             self.request.write('Default page not found.')
             return
+        self.set_requested_page(page)
         self.bench.snapshot('page_open', 'Opened the page in %ss.')
 
         # If the output of ALL extensions is cached (combined), there is no need
         # to redraw the page, including headers and footer.
         # Note that the cache only returns pages corresponding to the permissions
         # of the current user, so this is safe.
-        self.requested_page = page
-        if self.request.get_env('REQUEST_METHOD') == 'GET':
-            output               = cache.get_page()
+        if not self.request.has_post_data():
+            output = cache.get_page()
             self.bench.snapshot('cache_check', 'Spent %ss checking the cache.')
             if output is not None:
                 self.request.write(output)
-                self.request.write(self.bench.get_html())
+                self._render_footer()
                 return
         self.bench.snapshot('cache_check', 'Spent %ss checking the cache.')
 
@@ -261,30 +267,19 @@ class Spiff(object):
 
         # Ending up here the entire page was not cached.
         # Make sure that the caller has permission to retrieve this page.
-        # If the caller currently has no permission, load the login
-        # extension to give it the opportunity to perform the login.
-        if (page.get_attribute('private') and not self.current_user_may('view')) \
-          or self.request.post_data().has_key('login') \
-          or self.request.post_data().has_key('logout'):
-            page = page_db.get('admin/login')
-            self.requested_page = page
+        if page.get_attribute('private') and not self.current_user_may('view'):
+            url = self.request.get_url(page     = 'admin/login',
+                                       refer_to = self.get_requested_uri())
+            return self.refer_to(url)
         self.bench.snapshot('permission_check', 'Permission checked in %ss.')
 
-        # Render the layout. This invokes the plugins, which in turn may
-        # request some HTTP headers to be sent. So we need to fetch the 
-        # list of headers after that!
-        page_output = page.get_output(api)
-        self.bench.snapshot('render_plugins', 'Plugins rendered in %ss.')
-
-        # Now that all plugins are completed we may retrieve a list of headers.
-        self._render_headers()
+        # Render the HTML headers.
+        self._render_head()
         self.bench.snapshot('render_header', 'Headers rendered in %ss.')
 
-        self.output += page_output
-
-        # Get the footer, excluding benchmark information.
-        self._render_text_template('footer.tmpl')
-        self.bench.snapshot('render_footer', 'Footer rendered in %ss.')
+        # Render the layout. This also invokes the plugins.
+        self.output += page.get_output(api)
+        self.bench.snapshot('render_plugins', 'Plugins rendered in %ss.')
 
         # Cache the page (if it is cacheable).
         if page.is_cacheable() and len(self.request.get_headers()) == 0:
@@ -293,5 +288,4 @@ class Spiff(object):
 
         # Yippie.
         self.request.write(self.output)
-        self.bench.snapshot_total('total', 'Total rendering time is %ss.')
-        self.request.write(self.bench.get_html())
+        self._render_footer()

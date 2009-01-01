@@ -137,6 +137,9 @@ class CacheDB(object):
         This function returns a string the identifies all permissions
         of the current user on the current group.
         """
+        # FIXME: Fetching the user is stupid, and messes up most of the
+        # performance gains. Instead, fetch the permission hash from the
+        # session data thus making this obsolete.
         user   = self.__spiff.get_current_user()
         page   = self.__spiff.get_requested_page()
         string = page.get_attribute('private') and 'p' or 'np'
